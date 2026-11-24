@@ -16,46 +16,52 @@ import type { PluginArgs } from '../plugin.ts'
 import type { GameState } from '../types.ts'
 import { defineFeature } from './feature.ts'
 
-/** The panel that is open: its name, and what it was opened with. */
+/** The open panel, a named piece of UI over the story, with the arguments it was opened with. `state.panel` and `view.panel` hold it. */
 export type OpenPanel = {
-  /** Its name, as the UI knows it: `'shop'`, `'jobs'`, or one of the game's own. */
+  /** The panel's name, which the UI renders it by, such as `'shop'`, `'jobs'` or one of the game's own. */
   panel: string
-  /** What it was opened with, such as `{ vendor: 'cafe' }`. Empty if the effect gave nothing. */
+  /** The panel's arguments, such as `{ vendor: 'cafe' }`. Empty if the effect gave none. */
   with: PluginArgs
   /**
-   * The scene that holds it open, for a scene's own `panel`: it is open for
-   * as long as the scene is, and `closePanel` doesn't close it. Left out for
-   * one the `panel` effect opened.
+   * The scene that holds the panel open, for a scene's own `panel`, which stays open as long as the scene does. It's
+   * left out for a panel the `panel` effect opened.
+   *
+   * `closePanel` doesn't close a panel a scene holds open.
    */
   scene?: string
 }
 
-/** A panel a scene holds open for as long as it is on screen: its name, and what it is opened with. */
-export type ScenePanel = { panel: string; with?: PluginArgs }
+/** A panel a scene declares in its `panel`, held open for as long as the scene is open. `with` is empty if left out. */
+export type ScenePanel = {
+  /** The panel's name, which the UI renders it by. */
+  panel: string
+  /** The panel's arguments, such as `{ vendor: 'cafe' }`. Empty if left out. */
+  with?: PluginArgs
+}
 
-/** What the panels feature adds, as types. */
+/** The panels feature's state, calls, view and reference, as types. */
 export type PanelsShape = {
   state: {
-    /** The panel open over the story, or null. */
+    /** The panel the `panel` effect opened over the story, or null. */
     panel: OpenPanel | null
   }
   effects: {
     /**
-     * Open a panel by name, with what it needs: `{ panel: 'shop', with: { vendor: 'cafe' } }`.
-     * One already open is replaced. `panel: null` closes it.
+     * An effect that opens a panel by name with its arguments, such as `{ panel: 'shop', with: { vendor: 'cafe' } }`.
+     * It replaces a panel already open, and `panel: null` closes it.
      */
     panel: { panel: string | null; with?: PluginArgs }
   }
   commands: {
-    /** Close the open panel: what a UI sends when the player dismisses it. Refused with none open. */
+    /** A command that closes the open panel, which a UI sends when the player dismisses it. The engine refuses it when no panel is open. */
     closePanel: { type: 'closePanel' }
   }
   view: {
-    /** The panel open over the story: one the `panel` effect opened, else the open scene's own, else null. */
+    /** The panel open over the story. It's the one the `panel` effect opened, else the open scene's own, else null. */
     panel: OpenPanel | null
   }
   references: {
-    /** A panel an effect opens, by name, with what it is opened with: asked of the plugins' `references.panels`. */
+    /** A reference to a panel an effect opens, with its arguments. The plugins' `references.panels` check it. */
     openPanel: { openPanel: string; with?: PluginArgs }
   }
 }
@@ -65,6 +71,7 @@ function movedOn(before: GameState, after: GameState): boolean {
   return after.turn !== before.turn || after.sceneId !== before.sceneId
 }
 
+/** The panels feature, which opens panels and closes them as the story moves on. */
 export const panels = defineFeature<PanelsShape>({
   name: 'panels',
   state: {

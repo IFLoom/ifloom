@@ -75,70 +75,82 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** A cheat in the game's content: one entry of `data.cheats.cheats`, the plugin's list of cheats. */
+/**
+ * A cheat the game declares in `data.cheats.cheats`. Using it runs its effects at once, in any scene and through any
+ * lock, and ends no turn unless its effects do.
+ */
 export type CheatDef = {
+  /** The cheat's id, unique among the game's cheats. */
   id: string
-  /** What the player reads, on its button: "+20 coins". */
+  /** The cheat's name, which its button shows, such as "+20 coins". */
   name: string
-  /** A line about it, for the panel. */
+  /** The cheat's line in the cheats panel. */
   description?: string
-  /** What it does, in order, as any effect list runs. */
+  /** The cheat's effects, run in order. It must have at least one. */
   effects: EffectRef[]
   /**
-   * Why it is refused: the first entry whose `when` holds greys the button
-   * out with its reason, or leaves it off the panel with `hide`. A
-   * supporter-only cheat is `{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters' }`.
+   * The cheat's refusals. The first entry whose `when` holds refuses the button with its reason, or leaves the cheat
+   * out of the view with `hide`.
+   *
+   * A supporter-only cheat is `{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters' }`.
    */
   blocked?: Blocked[]
-  /** The heading it is listed under in the panel. Cheats with none come first. */
+  /** The heading the cheat is listed under in the panel. Cheats with none come first. */
   group?: string
   /**
-   * Usable once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`),
-   * as a button's `once` is. `reason` is what the button reads once it's
-   * used: the plugin's `cheats/usedOnce` string, "Already used.", if left out.
+   * The cheat's limit, once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), as a choice's `once` is.
+   *
+   * `reason` is the refusal once it's used. The `cheats/usedOnce` string, "Already used.", if left out.
    */
   once?: Once
 }
 
-/** One use of a cheat: which, and on which turn. */
-export type CheatUse = { cheat: string; turn: number }
+/** A use of a cheat, one entry of `CheatsState.used`. */
+export type CheatUse = {
+  /** The id of the cheat used. */
+  cheat: string
+  /** The turn the cheat was used on. */
+  turn: number
+}
 
-/** What the plugin keeps in a save. */
+/** The log of cheat uses a save keeps. Definitions are read from content, so only the uses are kept. */
 export type CheatsState = {
-  /** Every use of a cheat in this save, oldest first. */
+  /** The save's uses of cheats, oldest first. */
   used: CheatUse[]
 }
 
-/** A cheat as the UI shows it. */
+/** A cheat as the player sees it, in `view.plugins.cheats.cheats`. */
 export type CheatView = {
+  /** The cheat's id. */
   id: string
+  /** The cheat's name. */
   name: string
-  /** What it does, as the player reads it; `''` with none. */
+  /** The cheat's description, or `''` when it has none. */
   description: string
-  /** The heading it goes under, or null. */
+  /** The heading the cheat goes under, or null when it has none. */
   group: string | null
-  /** How often it can be used, as its `once` says: `'game'`, `'turn'`, or null for any number of times. */
+  /** The cheat's `once` limit, `'game'` or `'turn'`, or null when it can be used any number of times. */
   once: 'game' | 'turn' | null
-  /** How many times this save has used it. */
+  /** The number of times this save has used the cheat. */
   used: number
-  /** The button that uses it: greyed out with its reason while blocked or, for a `once` cheat, after its use. */
+  /** The cheat's button. It's refused with its reason while a `blocked` entry holds, or once a `once` cheat is used. */
   button: RenderedChoice
 }
 
-/** What the UI reads at `view.plugins.cheats`. */
+/** The cheats as the player sees them, in `view.plugins.cheats`. */
 export type CheatsView = {
-  /** The cheats the player can see, in the order the game declares them. A blocked one with `hide` is left out. */
+  /** The cheats the player can see, in the order the game declares them. A cheat refused by an entry with `hide` is left out. */
   cheats: CheatView[]
-  /** How many cheats this save has used in all. */
+  /** The number of cheat uses in this save, counting every cheat. */
   used: number
 }
 
-/** The game's cheats: `data.cheats.cheats`, from its content and packs. */
+/** Returns the game's cheats, `data.cheats.cheats` from its content and packs, in declared order. */
 export function cheatsOf(game: Game): CheatDef[] {
   return DATA.cheats.all(game)
 }
 
-/** One of the game's cheats, by id. */
+/** Returns the game's cheat with the id `id`, or undefined when there is none. */
 export function cheatOf(game: Game, id: string): CheatDef | undefined {
   return DATA.cheats.get(game, id)
 }
@@ -261,7 +273,14 @@ const runCheat = (cheat: string): CommandRef => CALLS.commands.use({ id: cheat }
 const cheatUsed = (cheat?: string): Condition => CALLS.conditions.used(cheat === undefined ? undefined : { cheat })
 
 /**
- * The plugin, with its helpers on it: `cheats()` makes the plugin for the
- * game's `plugins`, and content is written with `cheats.use('rich')`.
+ * Returns the cheats plugin, for the game's `plugins`. It cooperates with unlocks, whose `unlocks/has` condition a
+ * supporter-only cheat names in `blocked`.
+ *
+ * Content declares the cheats in `data.cheats.cheats`, and the helpers write its calls, such as `cheats.use('rich')`.
  */
-export const cheats = Object.assign(cheatsPlugin, { use: runCheat, used: cheatUsed })
+export const cheats = Object.assign(cheatsPlugin, {
+  /** Returns the `cheats/use` command, which runs the cheat's effects through any lock and logs the use. */
+  use: runCheat,
+  /** Returns the `cheats/used` condition, which holds once this save has used the cheat, or any cheat when none is named. */
+  used: cheatUsed,
+})

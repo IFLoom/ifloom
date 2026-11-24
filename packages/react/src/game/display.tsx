@@ -10,15 +10,17 @@ import { useGameIfAny } from './context.tsx'
 /** Set inside what must stay drawn whatever the pictures setting says: a layered picture, whose hotspots are play. */
 const KeepPictures = createContext(false)
 
-/** Draws its children's pictures even while the pictures setting is off. */
+/**
+ * Renders its children with their pictures shown even while the game's pictures setting is off. A layered picture uses
+ * it, since its hotspots are play.
+ */
 export function KeepPicturesOn({ children }: { children: ReactNode }) {
   return <KeepPictures.Provider value={true}>{children}</KeepPictures.Provider>
 }
 
 /**
- * Whether pictures are drawn here: false only while the setting the game names
- * in `ui.settings.images` is off. True outside a game, in a game that names
- * none, and inside a layered picture.
+ * Returns false while the setting the game names in `ui.settings.images` is off, and true otherwise. It's true outside
+ * a game, in a game that names no setting and inside `KeepPicturesOn`.
  */
 export function usePicturesShown(): boolean {
   const game = useGameIfAny()
@@ -29,10 +31,10 @@ export function usePicturesShown(): boolean {
 }
 
 /**
- * Copies the setting the game names in `ui.settings.textSize` to
- * `data-text-size` on `<html>`, now and whenever it changes, so the page is
- * sized from its root on every page, the title's included. Draws nothing.
- * `GameShell` has one.
+ * Renders nothing, and copies the setting the game names in `ui.settings.textSize` to `data-text-size` on `<html>`
+ * whenever it changes. The styles size every page from there, the title screen's included.
+ *
+ * `GameShell` renders one.
  */
 export function TextSize() {
   const game = useGameIfAny()

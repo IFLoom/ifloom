@@ -27,9 +27,11 @@ export function gameModule(module: Record<string, unknown>): GameModule {
 }
 
 /**
- * The game a game module builds, with its loader's problems in
- * `describeProblem`'s words and the files it names. `unlocked` packs go to
- * its `build` as `{ unlocked }`.
+ * Returns the game a game module builds, with its problems and warnings as sentences and the files its content names.
+ * It throws when the module's default export isn't made with `defineGame`.
+ *
+ * The problems are the loader's and the warnings the content checker's, each worded by `describeProblem`. `unlocked`
+ * packs go to the module's `build` as `{ unlocked }`.
  */
 export function gameFrom(module: Record<string, unknown>, unlocked: Pack[] = []): { game: Game; problems: string[]; warnings: string[]; files: FileRef[] } {
   const { game, problems } = gameModule(module).build({ unlocked })
@@ -38,11 +40,12 @@ export function gameFrom(module: Record<string, unknown>, unlocked: Pack[] = [])
 }
 
 /**
- * Every file in `files` that isn't in `dir`, as `<where>: no file <dir>/<path>`.
- * The files are the content checker's (`checkGame(game).files`), with their
- * paths as the page asks for them, so `public/` before a build and `dist/`
- * after one. `inlined` lists files that are in the page itself, after
- * `--inline-assets`, which count as there.
+ * Returns a line for each file in `files` that isn't in `dir`, as `<where>: no file <dir>/<path>`. An empty list means
+ * every file is there.
+ *
+ * The files are the content checker's (`checkGame(game).files`), with their paths as the page requests them, so `dir`
+ * is `public/` before a build and `dist/` after one. Paths in `inlined` are inside the page after `--inline-assets`,
+ * and count as there.
  */
 export function checkFiles(files: readonly FileRef[], dir: string, inlined: ReadonlySet<string> = new Set()): string[] {
   const out = new Set<string>()
@@ -53,9 +56,8 @@ export function checkFiles(files: readonly FileRef[], dir: string, inlined: Read
 }
 
 /**
- * Everything wrong with a game: the engine's content checker's problems,
- * once, then, given the game's public folder, every sound, picture and video
- * file that isn't in it.
+ * Returns a line for each problem with a game module's game, the loader's problems first. Given the game's public
+ * folder, it adds each sound, picture and video file that isn't in it.
  */
 export function checkGame(module: Record<string, unknown>, publicDir?: string): string[] {
   const { problems, files } = gameFrom(module)

@@ -13,103 +13,117 @@ import type { CommandRef } from '../calls.ts'
 import { artSrc, MEDIA_MARKUP, mediaType, mediaParts, type VideoFlags, type VideoView } from '../sceneBody.ts'
 import { defineFeature, type FeatureContext, type ResolveTools } from './feature.ts'
 
-/**
- * One file in a pool: its path, as any picture's, the tags it answers to, and
- * how often it is picked against the other files that fit (1 if left out).
- */
-export type PoolFile = { src: string; tags?: string[]; weight?: number }
+/** A file in a pool in `media.pools`, with its path, its tags and its weight against the other files that fit. The weight is 1 if left out. */
+export type PoolFile = {
+  /** The file's path, in the game's `art/` folder or a URL. */
+  src: string
+  /** The file's tags, which a request's tags match. */
+  tags?: string[]
+  /** The file's weight in a draw, against the other files that fit. 1 if left out. */
+  weight?: number
+}
 
-/** The game's media: pools of files, by id. */
+/** The media the game declares in `media`, pools of pictures and videos by id. */
 export type GameMedia = {
-  /** Named lists of files content picks from: `[[img:@door|night]]`, `{ pool: 'door', tags: ['night'] }`. */
+  /** The game's pools, named lists of files content draws from, as in `[[img:@door|night]]` or `{ pool: 'door', tags: ['night'] }`. */
   pools?: Record<string, PoolFile[]>
 }
 
-/** What a save keeps about media, at `state.media`. */
+/** The media a save keeps, in `state.media`. The pools themselves are read from content. */
 export type MediaState = {
-  /** The file each pool request was given, by pick key. See `pickKey`. */
+  /** The file each pool request was given, by the key `pickKey` returns. */
   picks: Record<string, string>
 }
 
-/** One layer of a picture: a file, or a pick from a pool, shown while `when` holds. */
+/** A layer of a picture, a file or a pool's pick, shown while `when` holds. Give `src` or `pool`, not both. */
 export type PictureLayer = {
-  /** What hotspots name to go with this layer. */
+  /** The layer's id, which a hotspot's `layer` names. */
   id?: string
-  /** The file, in the game's `art/` folder or a URL. Give this or `pool`. */
+  /** The layer's file, in the game's `art/` folder or a URL. */
   src?: string
-  /** A pool in `game.media.pools` to pick the file from, kept for the save once picked. */
+  /** The pool in `media.pools` the layer's file is drawn from. The save keeps the pick. */
   pool?: string
   /** The tags the pool's pick should have, most important first. */
   tags?: string[]
-  /** Shown only while this holds. */
+  /** The layer's condition. The layer shows only while it holds. */
   when?: Condition
-  /** Draw it as a video. A `.mp4` or `.webm` file is one anyway. */
+  /** The layer's video mark, true to show it as a video. A `.mp4` or `.webm` file is a video anyway. */
   video?: boolean
 } & VideoFlags
 
 /**
- * A clickable area on a picture, drawn by the UI as a button. It does one of two
- * things: sends `command`, or takes the scene's choice `choice`.
+ * A hotspot on a picture, a clickable area the UI renders as a button. It either sends `command` or chooses the open
+ * scene's choice `choice`.
  */
 export type HotspotDef = {
+  /** The hotspot's id. */
   id: string
-  /** Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. */
+  /** The hotspot's area, in percent of the picture, as `[x, y, width, height]` from the top left. */
   rect: [number, number, number, number]
-  /** What a screen reader reads, and the tooltip. */
+  /** The hotspot's label, which a screen reader reads and the tooltip shows. */
   label: string
-  /** What it sends, as an action's `command`. */
+  /** The command the hotspot sends, written as an action's `command`. */
   command?: CommandRef
-  /** A choice of the open scene, by id. */
+  /** The id of the open scene's choice the hotspot chooses. */
   choice?: string
-  /** Only there while this holds. */
+  /** The hotspot's condition. The hotspot shows only while it holds. */
   when?: Condition
-  /** Only there while the layer with this id is shown. */
+  /** The id of the layer the hotspot goes with. The hotspot shows only while that layer does. */
   layer?: string
 }
 
-/** A layered picture with hotspots, on a scene or a place. */
+/** A picture a scene or a location declares in its `picture`, layers with hotspots on them. */
 export type PictureDef = {
-  /** Bottom first. */
+  /** The picture's layers, bottom first. */
   layers: PictureLayer[]
-  /** The clickable areas on it, each a button the UI draws over the picture. */
+  /** The picture's hotspots, each a button the UI renders over the picture. */
   hotspots?: HotspotDef[]
-  /** Width over height, as CSS writes it: `'16/9'`. The UI's own if left out. */
+  /** The picture's width over height, in CSS form, such as `'16/9'`. The UI's own if left out. */
   aspect?: string
 }
 
-/** A picture layer as the UI draws it. */
+/** A picture layer as the player sees it, in a {@link PictureView}'s `layers`. */
 export type PictureLayerView = {
+  /** The layer's id, or null. */
   id: string | null
-  /** The file to draw, through `artSrc` (a pool's pick resolved). */
+  /** The layer's file, through `artSrc`, with a pool's pick resolved. */
   src: string
-  /** How it plays, when it is a video. */
+  /** The layer's playback settings when it's a video. Left out for a still picture. */
   video?: VideoView
 }
 
-/** A hotspot as the UI draws it: a button over the picture. */
+/** A hotspot as the player sees it, in a {@link PictureView}'s `hotspots`. The UI renders it as a button over the picture. */
 export type HotspotView = {
+  /** The hotspot's id. */
   id: string
-  /** Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. */
+  /** The hotspot's area, in percent of the picture, as `[x, y, width, height]` from the top left. */
   rect: [number, number, number, number]
+  /** The hotspot's label. */
   label: string
-  /** What pressing it sends: its own `command`, or the command that takes its `choice`. */
+  /** The command pressing the hotspot sends, its own `command` or the command that chooses its `choice`. */
   command: Command
-  /** Why it cannot be pressed now, as a button's `disabled`. */
+  /** The reason the hotspot can't be pressed now, as on a button's `disabled`. Left out when it can. */
   disabled?: string
-  /** Pressable, but a plugin warns against it, as a button's `warning`. */
+  /** The warning a plugin gives against pressing the hotspot, as on a button's `warning`. */
   warning?: string
-  /** The layer it goes with, by id; left out for one on the picture as a whole. */
+  /** The id of the layer the hotspot goes with. Left out for a hotspot on the whole picture. */
   layer?: string
 }
 
-/** A picture as the UI draws it: the layers shown now, bottom first, and the hotspots on them. */
+/**
+ * A picture as the player sees it, in `view.scene.picture` or a location's `picture`. It lists the layers shown now,
+ * bottom first, and the hotspots on them.
+ */
 export type PictureView = {
+  /** The picture's width over height, such as `'16/9'`. Null when the picture doesn't set it. */
   aspect: string | null
+  /** The layers whose `when` holds, bottom first. */
   layers: PictureLayerView[]
+  /** The hotspots whose `when` holds and whose layer shows. */
   hotspots: HotspotView[]
 }
 
-/** What the media feature adds, as types. */
+/** The media feature's state, content key and references, as types. */
 export type MediaShape = {
   state: {
     /** The file each pool request was given, so a revisit and a reload show the same one. */
@@ -120,39 +134,42 @@ export type MediaShape = {
     media?: GameMedia
   }
   pack: {
-    /** Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. */
+    /** The pack's pools of pictures and videos. A later pack's pool replaces an earlier one with the same id, files and all. */
     media?: GameMedia
   }
   lists: 'pool'
   references: {
-    /** A pool, with the tags asked of it. */
+    /** A reference to a pool, with the tags asked of it. */
     pool: { pool: string; tags?: readonly string[] }
-    /** A `{ media }` block. */
+    /** A reference to a `{ media }` block. */
     media: { media: SceneMedia }
-    /** A layered picture with hotspots. `choices` are its scene's choice ids, or null for a picture with no scene. */
+    /** A reference to a layered picture. `choices` lists its scene's choice ids, or is null for a picture with no scene. */
     layered: { layered: PictureDef | undefined; choices: readonly string[] | null }
   }
 }
 
-/** A save's media before anything has been picked. */
+/** Returns a save's media before anything has been picked. */
 export function emptyMedia(): MediaState {
   return { picks: {} }
 }
 
-/** A pool request: which pool, which tags, and where it is asked from. */
+/** A request for a file from a pool, with the tags asked for and the place that asks. */
 export type PoolRequest = {
+  /** The pool's id. */
   pool: string
+  /** The tags the file should have, most important first. */
   tags?: readonly string[]
-  /** The scene, place, message or post that asks: its id. */
+  /** The id of the scene, location, message or post that asks. */
   owner: string
-  /** Where in it: a body block's index, `'picture:0'` for a picture layer. */
+  /** The place in the owner that asks, such as a body block's index or `'picture:0'` for a picture layer. */
   slot: string
 }
 
 /**
- * The key a pick is kept under: pool, tags, owner and slot. The same request
- * from the same spot gets the same file every time; the visit is not part of
- * it, so a revisit shows the file it showed before.
+ * Returns the key a pick is kept under, from the pool, tags, owner and slot. The same request from the same place
+ * gets the same file every time.
+ *
+ * The visit isn't part of the key, so a revisit shows the file it showed before.
  */
 export function pickKey(request: PoolRequest): string {
   return [request.pool, (request.tags ?? []).join(','), request.owner, request.slot].join('|')
@@ -164,9 +181,11 @@ function poolOf(game: Game, pool: string): PoolFile[] | undefined {
 }
 
 /**
- * The files that fit a request, best first: the ones with every tag asked for.
- * With none, the last tag is dropped and the rest tried again, down to no tags
- * at all, which is any file in the pool.
+ * Returns the files that best fit a request, those with every tag asked for. Empty when the pool has no files.
+ *
+ * @remarks
+ * When no file has every tag, the last tag is dropped and the rest tried again, down to no tags at all, which matches
+ * any file in the pool.
  */
 export function poolCandidates(game: Game, pool: string, tags: readonly string[] = []): PoolFile[] {
   const files = poolOf(game, pool) ?? []
@@ -179,11 +198,11 @@ export function poolCandidates(game: Game, pool: string, tags: readonly string[]
 }
 
 /**
- * The file a pool request gets, or null when the pool has none. A pick the
- * save already holds wins while the pool still has that file; otherwise it is
- * drawn from the seed and the key. Pass `picks` to have a new pick written
- * into it, under its key: how `screen` collects the picks a state implies,
- * which the reducer then records.
+ * Returns the file a pool request gets, or null when the pool has none. A pick the save holds wins while the pool
+ * still has that file, else the file is drawn from the seed and the key.
+ *
+ * Pass `picks` to have a new pick written into it under its key. That's how `screen` collects the picks a state
+ * implies, which the reducer then records.
  */
 export function poolPick(state: GameState, game: Game, request: PoolRequest, cx: FeatureContext, picks?: Record<string, string>): string | null {
   const key = pickKey(request)
@@ -200,7 +219,7 @@ export function poolPick(state: GameState, game: Game, request: PoolRequest, cx:
   return src
 }
 
-/** Does the game have any pools? Without, nothing is ever picked. */
+/** Returns true when the game has any pools. Without pools, nothing is ever picked. */
 export function hasPools(game: Game): boolean {
   return Object.keys(game.media?.pools ?? {}).length > 0
 }
@@ -208,9 +227,10 @@ export function hasPools(game: Game): boolean {
 const POOL_MARKUP = /\[\[(img|wide|video|widevideo):\s*@([^\]|]+)((?:\|[^\]|]*)*)\]\]/g
 
 /**
- * Prose with every `@pool` in its picture and video markup replaced by the
- * file it gets. Markup whose pool has nothing to give is taken out. The nth
- * request in the text is at slot `<slot>.<n>`.
+ * Returns prose with every `@pool` in its picture and video markup replaced by the file it gets. Markup whose pool has
+ * nothing to give is taken out.
+ *
+ * The nth request in the text has the slot `<slot>.<n>`.
  */
 export function resolvePoolMarkup(
   text: string,
@@ -235,7 +255,7 @@ export function resolvePoolMarkup(
   })
 }
 
-/** A data block's media with its pool resolved to a file, or null when it has none to show. */
+/** Returns a `{ media }` block with its pool resolved to a file. Null when it has no file to show. */
 export function resolveMedia(
   media: SceneMedia,
   state: GameState,
@@ -252,7 +272,7 @@ export function resolveMedia(
   return { ...rest, src }
 }
 
-/** Media written as the markup that draws it, so a data block and markup become the same beat. */
+/** Returns a `{ media }` block written as picture or video markup, so the block and the markup become the same beat. */
 export function mediaMarkup(media: SceneMedia): string {
   const video = Boolean(media.video) || mediaType(media.src ?? '') === 'video'
   const wide = media.size === 'wide'
@@ -271,7 +291,7 @@ export function mediaMarkup(media: SceneMedia): string {
 
 // Checks, used by the content checker (check.ts).
 
-/** What is wrong with asking this pool for these tags. */
+/** Returns the problems with asking this pool for these tags, an unknown pool or a tag no file has. Empty when there are none. */
 export function poolProblems(game: Game, pool: string, tags: readonly string[] = []): string[] {
   const files = poolOf(game, pool)
   if (!files) return [`unknown pool "${pool}"`]
@@ -290,7 +310,7 @@ function videoFlagsSet(flags: VideoFlags): string[] {
   return [...(['controls', 'once', 'sound'] as const).filter((name) => flags[name]), ...(flags.poster ? ['poster'] : [])]
 }
 
-/** What is wrong with the picture and video markup in this prose: pools, tags, flags. */
+/** Returns the problems with the picture and video markup in this prose, in its pools, tags and flags. Empty when there are none. */
 export function mediaMarkupProblems(game: Game, text: string): string[] {
   const out: string[] = []
   for (const match of text.matchAll(new RegExp(MEDIA_MARKUP.source, 'g'))) {
@@ -320,15 +340,14 @@ function sourceProblems(game: Game, media: { src?: string; pool?: string; tags?:
   return out
 }
 
-/** What is wrong with a data scene's `{ media }` block. */
+/** Returns the problems with a data scene's `{ media }` block. Empty when there are none. */
 export function sceneMediaProblems(game: Game, media: SceneMedia): string[] {
   return sourceProblems(game, media).map((what) => `media: ${what}`)
 }
 
 /**
- * What is wrong with a picture, apart from the conditions and commands it names
- * (the loader checks those as it checks any). `choices` are the scene's choice
- * ids; null for a picture with no scene, such as a place's.
+ * Returns the problems with a picture, apart from the conditions and commands it names, which the loader checks as it
+ * checks any. `choices` lists the scene's choice ids, or is null for a picture with no scene, such as a location's.
  */
 export function pictureProblems(game: Game, picture: PictureDef, choices: readonly string[] | null): string[] {
   const out: string[] = []
@@ -370,7 +389,7 @@ function rectProblems(rect: unknown): string[] {
   return []
 }
 
-/** What is wrong with `game.media` itself, each with where: `pool door`. */
+/** Returns the problems with the game's `media` pools themselves, each with the pool it's in, such as `pool door`. */
 export function poolManifestProblems(game: Game): { where: string; what: string }[] {
   const out: { where: string; what: string }[] = []
   for (const [id, files] of Object.entries(game.media?.pools ?? {})) {
@@ -396,6 +415,7 @@ function mediaFiles(where: string, media: { src?: string; video?: boolean; poste
   if (media.poster) tools.file(where, 'picture', artSrc(media.poster))
 }
 
+/** The media feature, which keeps the pool picks and checks pictures, videos and pools. */
 export const media = defineFeature<MediaShape>({
   name: 'media',
   state: {

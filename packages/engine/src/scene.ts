@@ -17,163 +17,152 @@ import { everyBlock, walkFlow, type FlowContent, type FlowStop } from './feature
 import { lineSpeakers } from './speakers.ts'
 
 /**
- * A scene, as data.
+ * One entry of a scene's body, told apart by its key, such as `{ text }`, `{ say }` or `{ decide }`. A block with a
+ * `when` is left out while it fails.
  *
- * The body is *composed* from blocks rather than looked up whole. That is
- * the point: under the old model one key had to cover an entire body, so any
- * branch the key did not carry got frozen onto whichever version was exported.
- * Here each block is its own key, so a key can only ever mean one thing, and
- * adding a conditional line is adding a block rather than multiplying the
- * key space.
+ * The body is composed from blocks rather than read whole from one prose key. So a conditional line is one more
+ * block, and each block's words mean one thing.
  */
 export type Block =
   /**
-   * Words as written, one paragraph or several, read as prose is (spoken
-   * lines, pictures, inline markup, tokens): what `text()` writes. `id`
-   * names it for a translation's `words` table, `scene.<scene>.text.<id>`;
-   * without one, it is named by a short hash of its words.
+   * Words in place, one paragraph or several, written by `text()` and read as prose is. `id` keys it in a translation's
+   * words table as `scene.<scene>.text.<id>`.
+   *
+   * Without an `id`, a short hash of its words keys it.
    */
   (
     | { text: string; id?: string; when?: Condition }
-    /** Words by key, from the game's `prose` table: for a line shared between scenes, or kept apart from the scene. */
+    /** A prose key's line from the game's `prose`, for a line several scenes share or one kept apart from the scene. */
     | { prose: string; when?: Condition }
     | {
+        /** The block's variants list, which draws one member's line. */
         variants: string
+        /** The block's condition, which leaves it out while it fails. */
         when?: Condition
         /**
-         * Conditions on individual members, by key. A line whose gate fails is
-         * left out of the draw — so a variants can hold something she only says once
-         * she has posted a photo, without splitting the variants in two.
+         * The block's conditions on single members, by prose key. A member whose condition fails is left out of the
+         * draw, so a list can hold a line that needs a condition without splitting it in two.
          */
         gate?: Record<string, Condition>
         /**
-         * A picture that belongs with a particular line, by member: the variants
-         * to draw its picture line from, so a rotating line keeps its paired,
-         * rotating still.
+         * The block's picture lists, by member. When that member is drawn, a line from the named variants list is drawn
+         * too and shown before it, so a rotating line keeps its paired picture.
          */
         image?: Record<string, string>
       }
-    /**
-     * A picture or a video. Left without `at`, it sits here in the body, in
-     * order with the prose, exactly as its markup would.
-     */
+    /** A picture or a video. Without `at`, it sits here in the body, in order with the prose, as its markup would. */
     | { media: SceneMedia; when?: Condition }
     /**
-     * A spoken line as written, under who says it, by id as `@id: "…"` in
-     * prose names them: an entity, by reference or bare id as a scene's
-     * `speaker` is, `'you'` for whoever the player is playing, or `'player'`.
-     * What `say()` writes. `voice` is the track of it read aloud. `id` names
-     * it for a translation's `words` table, as a `{ text }` block's does.
+     * A spoken line, written by `say()`, under the id of its `speaker` as `@id: "…"` names one in prose. The speaker is
+     * an entity by reference or bare id, `'you'` for whoever the player is playing, or `'player'`.
+     *
+     * `voice` is the track of the line read aloud, and `id` keys it in a translation's words table as a `{ text }`
+     * block's does.
      */
     | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
     /**
-     * A section: blocks shown together while `when` holds. Its `ui` hints are
-     * carried on every beat it makes, as `section`, so a UI can draw it as one,
-     * as the React UI draws `fold()` as a part that opens and shuts.
+     * A section, blocks shown together while `when` holds. Its `ui` hints go on every beat it makes, as `section`, so a
+     * UI can render it as one, as the React UI renders `fold()` as a part that opens and shuts.
      */
     | { blocks: Block[]; when?: Condition }
     /**
-     * The first that fits: each block in `cases` is tried in order, and only
-     * the first whose own `when` holds (or that has none) is shown. A last
-     * block with no `when` is the otherwise. With `when` of its own, the
-     * whole thing is left out while that fails. What `cases()` writes.
+     * A block, written by `cases()`, that shows only the first entry of `cases` whose own `when` holds or that has none.
+     * A last entry with no `when` is the fallback.
      */
     | { cases: Block[]; when?: Condition }
     /**
-     * A decision: the flow waits here until the player picks one of `choices`.
-     * The pick's `then` comes next, then the blocks after the decision.
+     * A decision, where the flow waits until the player chooses one of `choices`. The choice's `then` comes next, then
+     * the blocks after the decision.
      */
     | { decide: string; choices: FlowChoice[]; when?: Condition }
-    /** A place in the flow that a choice's `{ point }` effect jumps to: anywhere in the body, a section or a choice's `then` included. */
+    /** A point, a place in the flow a choice's `{ point }` effect jumps to, anywhere in the body, a section or a choice's `then`. */
     | { point: string; when?: undefined }
-    /** A minigame played where it stands: the flow waits until it ends. */
+    /** A minigame played at this place in the flow, which waits until it ends. */
     | { minigame: string; when?: Condition }
-    /** A panel opened where it stands, with what it needs: the flow waits until it is closed. */
+    /** A panel opened at this place in the flow with its `with` arguments. The flow waits until it is closed. */
     | { panel: string; with?: PluginArgs; when?: Condition }
   ) & {
     /**
-     * Presentation hints for the UI, carried on the first beat the block makes
-     * (on every beat, for a section) and given no meaning by the engine. See `BlockUi`.
+     * The block's ui hints, carried on the first beat it makes, or on every beat for a section. The engine gives them
+     * no meaning. See `BlockUi`.
      */
     ui?: Ui<BlockUi>
   }
 
 /**
- * A choice in a scene: a `ButtonDef`, sent as `{ type: 'choose', id }`. Its
- * id is unique within the scene, and `state.chosen` counts it as
- * `<scene>#<id>`.
+ * A choice a scene declares in its `choices` or a decision, with the fields of a `ButtonDef`. The player sends it as
+ * `{ type: 'choose', id }`, and `state.chosen` counts it as `<scene>#<id>`.
  *
- * A choice with `once` stays on screen once it is spent, with its
- * `once.reason`, and pays nothing more, which is how the caps read as
- * character rather than vanishing.
+ * A spent `once` choice stays on screen with its `once.reason` and pays nothing more.
  */
 export type Choice = ButtonDef & {
+  /** The choice's limit of once a game or once a turn. See `Once`. */
   once?: Once & {
     /**
-     * The kv key a save from before version 18 kept this cap under, without
-     * its `turn:` prefix, when it wasn't `scene#choice`. Loading such a save
-     * carries a cap it set this turn over to the choice.
+     * The kv key, without its `turn:` prefix, that a save from before version 18 kept this limit under when it wasn't
+     * `scene#choice`. Loading such a save carries a limit it set this turn over to the choice.
      */
     key?: string
   }
 }
 
-/** A choice at a decision: a `Choice`, and what the flow shows once it is picked, before carrying on. */
+/** A choice at a decision, a `Choice` with the blocks the flow shows once the player chooses it. */
 export type FlowChoice = Choice & {
-  /** Shown once it is picked, then the flow carries on after the decision, or from the point its `{ point }` effect names. */
+  /** The blocks shown once the choice is chosen. The flow then carries on after the decision, or from its `{ point }` effect's point. */
   then?: Block[]
 }
 
+/** A scene the game declares in `scenes`, with its body and its choices. Its id is unique across the game. */
 export type DataScene = StoryletFields &
   MinigameSceneFields & {
+    /** The scene's id, unique across the game, such as `'cafe.counter'`. */
     id: string
-    /** Its heading, the view's `scene.title`. The room's title, else the game's, if left out. */
+    /** The scene's title, in `view.scene.title`. The room's title, else the game's, if left out. */
     title?: string
-    /** Who the scene is with, by entity id or reference (`'ava'`, `'character:ava'`): the view's `scene.speaker` and `scene.image`. */
+    /** The scene's speaker, by entity id or reference (`'ava'`, `'character:ava'`), in `view.scene.speaker` and `view.scene.image`. */
     speaker?: string
-    /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
+    /** The tags a UI can style the scene by, such as `['letter']` or `['flashback']`. The engine gives them no meaning. */
     tags?: string[]
     /**
-     * A panel open for as long as the scene is: `{ panel: 'counter', with: { vendor: 'cafe' } }`.
-     * It is `view.panel`, as one the `panel` effect opens is, with the scene's
-     * id in `scene`. A panel needing worked-out data reads it from the view or
-     * a value. See `ScenePanel`.
+     * The panel held open for as long as the scene is, such as `{ panel: 'counter', with: { vendor: 'cafe' } }`. It is
+     * `view.panel`, as one the `panel` effect opens is, with the scene's id in `scene`. See `ScenePanel`.
      */
     panel?: ScenePanel
-    /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
+    /** The tracks that play on background channels while the scene is open, by channel, such as `{ ambience: 'rain' }`. Null silences one. */
     audio?: Record<string, string | null>
-    /** A layered picture with hotspots, drawn over the scene. See `view.scene.picture`. */
+    /** The scene's layered picture with hotspots, in `view.scene.picture`. See `PictureDef`. */
     picture?: PictureDef
-    /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
+    /** The scene's ui hints, carried to `view.scene.ui`. See `SceneUi`. */
     ui?: Ui<SceneUi>
-    /** What the scene shows, top to bottom: prose, text, speech, media, decisions and the rest. See `Block`. */
+    /** The scene's body, its blocks from top to bottom. See `Block`. */
     body: Block[]
-    /** The buttons under the body. A flowing scene's picks are in its decisions instead. */
+    /** The scene's ending choices, offered under the body once the flow ends. A flowing scene's other choices are in its decisions. */
     choices: Choice[]
   }
 
-/** How a scene reaches its words. Supplied by the loader. */
+/** The functions a scene reads its prose keys and variants through. `defaultRuntime` makes it from the game's prose store. */
 export type Prose = {
-  /** The words for a key, filled in for this save, or undefined if unwritten. */
+  /** Returns a prose key's line filled for `state`, or undefined when there is none. */
   line: (key: string, state?: GameState) => string | undefined
-  /** The members of a variants, in declaration order. */
+  /** Returns a variants list's members, in declaration order. */
   variants: (name: string) => string[]
-  /** Which member of a variants this state gets, and what to remember about it. */
+  /** Returns the member of a variants list this state draws, with the effect that records the draw. */
   draw: (state: GameState, name: string, members: string[]) => { id: string; remember: Effect }
 }
 
+/** The prose and game a scene is rendered with. */
 export type SceneRuntime = {
+  /** The runtime's prose functions. */
   prose: Prose
+  /** The loaded game. */
   game: Game
 }
 
 /**
- * The keys of a variants list that are actually draws.
+ * Returns the members of a variants list a scene can draw, leaving out keys with no line and keys the scene uses as
+ * its own `{ prose }` blocks.
  *
- * Variants can be discovered from the prose by key prefix, which means a scene
- * that names a block `cafe.order/late` puts it in the `cafe.order` variants
- * whether it meant to or not — and a narrator's aside ends up dealt as a line
- * of dialogue. Anything the same scene declares as its own block is not a draw.
+ * So a narrator's aside the scene shows itself is never drawn as one of the list's lines.
  */
 export function variantMembers(scene: DataScene, variants: string, runtime: SceneRuntime): string[] {
   const declared = new Set(everyBlock(scene.body).flatMap(({ block }) => ('prose' in block ? [block.prose] : [])))
@@ -221,37 +210,41 @@ function blockText(
   }
 }
 
-/** A data scene as its render gives it: its words, its body as parts, its choices, and where its flow stands, for the screen. Internal. */
+/** A scene after rendering, with its words, its body as parts, its choices and where its flow stands, for the screen. Internal. */
 export type RenderedScene = {
+  /** The scene's title. */
   title?: string
+  /** The scene's speaker id. */
   speaker?: string
-  /** Words the UI can style the scene by. The engine gives them no meaning. */
+  /** The tags a UI can style the scene by. The engine gives them no meaning. */
   tags?: string[]
-  /** The body's prose with its markup, the parts joined. */
+  /** The body's text with its markup, the parts joined. */
   body: string
-  /** Media blocks that open (`lead`) or close (`end`) the scene, rather than sitting in the body. */
+  /** The media blocks that open (`lead`) or close (`end`) the scene, rather than sitting in the body. */
   media?: SceneMedia[]
+  /** The scene's layered picture. */
   picture?: PictureDef
-  /** What plays on background channels while the scene is open, by channel. Null silences one. */
+  /** The tracks that play on background channels while the scene is open, by channel. Null silences one. */
   audio?: Record<string, string | null>
+  /** The choices offered now, a decision's or, once the flow ends, the ending choices. */
   choices: SceneChoice[]
+  /** The body's parts in order, its text and its beats. */
   parts: BodyPart[]
-  /** Where the flow stopped: at a decision (its choices are offered), waiting on a minigame or a panel, or at the end (the ending choices). */
+  /** The flow's stop, at a decision, waiting on a minigame or a panel, or at the end. */
   stop: FlowStop['at']
-  /** The part the flow's last step brought first, from the pick's `chose` on; 0 when the visit has taken none. */
+  /** The index of the first part the flow's last step added, from its `chose` beat on. 0 when the visit has taken none. */
   fresh: number
-  /** The words of every choice picked on the way, for inline markup that names one. */
+  /** The labels of the choices chosen on the way, by id, for inline markup that names one. */
   picked: Record<string, string>
 }
 
 /**
- * Turn a scene and a state into what the player sees: its body walked as a
- * flow along the visit's path (`state.flow`), each block whose `when` holds
- * kept in order as a part of the body, a `chose` beat at each past pick, up
- * to the first decision with no pick for it yet. The choices are that
- * decision's, or the ending choices once the flow is done. New pool picks
- * are written into `picks` when it is given. Internal: plugins draw blocks
- * with `context.beats`.
+ * Returns a scene rendered for this state, its body walked as a flow along the visit's path (`state.flow`). Internal,
+ * since plugins render blocks with `context.beats`.
+ *
+ * Each block whose `when` holds becomes a part, with a `chose` beat at each past choice, up to the first decision the
+ * player hasn't chosen at yet. The choices are that decision's, or the ending choices once the flow ends. New pool
+ * picks go in `picks` when it is given.
  */
 export function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): RenderedScene {
   const parts: BodyPart[] = []
@@ -375,18 +368,16 @@ function partText(part: BodyPart): string {
 }
 
 /**
- * Which member of a variants list this state gets. Give `weightOf` and any
- * member weighs other than 1, and each draw is a weighted pick, seeded by the
- * save, the turn and how many draws the list has had. Otherwise it rotates
- * on every use, so
- * a scene does not repeat itself, and starting somewhere different each turn,
- * so two playthroughs do not deal the same lines.
+ * Returns the member of a variants list this state draws, with the kv effect that counts the draw. It throws for a
+ * list with no members.
  *
- * The two halves stay separate on purpose. The turn picks an **offset** through
- * its own hash, and the count of uses walks from there one step at a time. One
- * sum taken modulo the list's length — seed, turn, uses — beats against a fixed
- * calendar: a list of three drawn every second and fifth turn comes back to the
- * same member week after week.
+ * When `weightOf` gives any member a weight other than 1, each draw is a weighted pick seeded by the save, the turn and
+ * the list's count of draws. Otherwise the list rotates on every use from an offset drawn each turn, so a scene doesn't
+ * repeat itself and two playthroughs draw different lines.
+ *
+ * @remarks The offset and the count of uses stay separate on purpose. One sum of seed, turn and uses taken modulo the
+ * list's length beats against a fixed calendar, so a list of three drawn every second and fifth turn would come back
+ * to the same member week after week.
  */
 export function drawVariant(
   state: GameState,
@@ -407,10 +398,7 @@ export function drawVariant(
   return { id: members[index], remember: { kv: key, to: used + 1 } }
 }
 
-/**
- * How a data scene renders when the game supplies nothing else: the game's
- * prose store and the draw above.
- */
+/** Returns the runtime a scene renders with by default, the game's prose store and `drawVariant`. */
 export function defaultRuntime(game: Game): SceneRuntime {
   return {
     game,

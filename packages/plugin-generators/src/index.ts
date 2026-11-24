@@ -26,49 +26,77 @@ import {
 import { arg, defineCalls, defineData, definePlugin, list, type DefinedPlugin, type EffectsOf, type PluginProblem, type Reference } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
-/** One value in a pool: the value, or the value with a weight (1 if left out). */
+/** An entry of a pool, a value or a value with a weight. A bare value, or a weight left out, weighs 1. */
 export type PoolEntry = KvValue | { value: KvValue; weight?: number }
 
-/** A named list of values to pick from. */
-export type PoolDef = { id: string; values: PoolEntry[] }
+/** A pool the game declares in `data.generators.pools`, a named list of values a template picks from. At least one entry must weigh more than 0. */
+export type PoolDef = {
+  /** The pool's id, which a field's `{ pool }` names. */
+  id: string
+  /** The pool's entries, each picked by its weight. */
+  values: PoolEntry[]
+}
 
 /**
- * Where one field of a new entity comes from:
+ * A field of a template, which gives one value of a new entity. Each form is told apart by its shape.
  *
- * - a fixed value, as written: `'visitor'`, `3`, `true`;
- * - `{ pool: 'first-names' }`, one value picked from a pool by weight;
- * - `{ between: [1, 5] }`, a whole number from the first to the second, both included;
- * - `{ join: [...], with?: ' ' }`, several fields drawn and joined into one string.
+ * The forms are:
+ *
+ * - a fixed value, as written, such as `'visitor'`, `3` or `true`
+ * - `{ pool: 'first-names' }`, one value drawn from a pool by weight
+ * - `{ between: [1, 5] }`, a whole number from the first to the second, both included
+ * - `{ join: [...], with?: ' ' }`, several fields drawn and joined into one string, with a space if `with` is left out
  */
 export type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
 
-/** How to make one entity of a kind, as the engine's `create` effect makes it. */
+/**
+ * A template the game declares in `data.generators.templates`, which makes entities of one kind through the engine's
+ * `create` effect. It needs an `of` or a `like`, and a `name` or a `like`.
+ */
 export type TemplateDef = {
+  /** The template's id, which `generators/generate` names. */
   id: string
-  /** The kind of entity it makes. The `like`'s kind if left out. */
+  /** The kind of entity the template makes. The `like`'s kind if left out. */
   of?: string
-  /** An entity it is made like: what it isn't given (name, picture, traits, stats) is read from that one. */
+  /** The entity the new ones are made like. Fields the template doesn't give, such as the name, picture, traits and stats, are read from it. */
   like?: EntityRef
-  /** Its name. The `like`'s if left out. */
+  /** The new entity's name. The `like`'s name if left out. */
   name?: FieldDef
-  /** A line or two about it, drawn as the name is. */
+  /** The new entity's description, drawn as the name is. */
   description?: FieldDef
-  /** Its picture, through `artSrc`, drawn as the name is: `{ pool: 'faces' }`. */
+  /** The new entity's picture, a path in the game's `art/` folder, drawn as the name is, such as `{ pool: 'faces' }`. */
   image?: FieldDef
-  /** Words it has, after its kind's and its `like`'s. */
+  /** The new entity's tags, added after its kind's and its `like`'s. */
   tags?: string[]
-  /** Trait data, by trait id, over its `like`'s or its kind's: `{ 'cast/person': { home: 'park' } }`. */
+  /** The new entity's trait data by trait id, over its `like`'s or its kind's, such as `{ 'cast/person': { home: 'park' } }`. */
   traits?: Record<string, unknown>
-  /** Who holds it once made: a holder, or how many each holds. Nobody if left out. */
+  /** The holder of the new entity once made, or how many each holder holds. Nobody holds it if left out. */
   at?: Placement
-  /** Its stats, by id: stats the game declares for the kind. Left out, a stat reads its `like`'s, else its `start`. */
+  /**
+   * The new entity's stats by id, each a stat the game declares for the kind. A stat left out reads the `like`'s
+   * value, else its `start`.
+   */
   stats?: Record<string, FieldDef>
-  /** Its kv keys, by name. */
+  /** The new entity's kv keys by name. */
   kv?: Record<string, FieldDef>
 }
 
-/** What a template draws for one entity: the fields of the engine's `create` effect that come from pools and ranges. */
-export type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
+/**
+ * The values a template draws for one entity, as `drawEntity` returns them. They're the fields of the engine's
+ * `create` effect that come from pools and ranges.
+ */
+export type GeneratedEntity = {
+  /** The drawn name, left out when the template gives none. */
+  name?: string
+  /** The drawn description, left out when the template gives none. */
+  description?: string
+  /** The drawn picture's path, left out when the template gives none. */
+  image?: string
+  /** The drawn stats by id. A field that draws no finite number is left out. */
+  stats: Record<string, number>
+  /** The drawn kv values by key. */
+  kv: Record<string, KvValue>
+}
 
 /**
  * What content writes for each of the plugin's calls (from `CALLS`), its
@@ -101,12 +129,12 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's pools: `data.generators.pools`, from its content and packs. */
+/** Returns the game's pools, `data.generators.pools` from its content and packs, in declared order. */
 export function poolsOf(game: Game): PoolDef[] {
   return DATA.pools.all(game)
 }
 
-/** The game's templates: `data.generators.templates`, from its content and packs. */
+/** Returns the game's templates, `data.generators.templates` from its content and packs, in declared order. */
 export function templatesOf(game: Game): TemplateDef[] {
   return DATA.templates.all(game)
 }
@@ -137,9 +165,11 @@ function drawField(field: FieldDef, game: Game, parts: (string | number)[]): KvV
 }
 
 /**
- * What a template draws for the `n`th entity of its kind made in play, in
- * this save. The plugin's effect passes the number the next one will get, so
- * each is different and the same on every replay.
+ * Returns the values a template draws for the `n`th entity of its kind made in play in this save. The same save,
+ * template and `n` always draw the same values.
+ *
+ * The `generators/generate` effect passes the number the engine's `create` gives the next entity, so each new entity
+ * differs and a replay makes the same ones.
  */
 export function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity {
   const parts = (field: string) => [ID, state.seed, template.id, n, field]
@@ -157,7 +187,7 @@ export function drawEntity(state: GameState, game: Game, template: TemplateDef, 
   return { ...text(template.name, 'name'), ...text(template.description, 'description', 'desc'), ...text(template.image, 'image'), stats, kv }
 }
 
-/** The kind a template makes: its `of`, else its `like`'s. */
+/** Returns the kind a template makes, its `of`, else its `like`'s kind. It's undefined when the template has neither. */
 export function templateKind(template: TemplateDef): string | undefined {
   return template.of ?? (template.like !== undefined ? parseRef(template.like)?.kind : undefined)
 }
@@ -282,7 +312,12 @@ function generatorsPlugin(): DefinedPlugin<null> {
 const generate = (template: string, count?: number): EffectRef => CALLS.effects.generate(count === undefined ? { template } : { template, count })
 
 /**
- * The plugin, with its helpers on it: `generators()` makes the plugin for the
- * game's `plugins`, and content is written with `generators.generate('regular')`.
+ * Returns the generators plugin, for the game's `plugins`. Content declares pools and templates in
+ * `data.generators.pools` and `data.generators.templates`.
+ *
+ * Its helper writes its effect, such as `generators.generate('regular')`.
  */
-export const generators = Object.assign(generatorsPlugin, { generate })
+export const generators = Object.assign(generatorsPlugin, {
+  /** Returns the `generators/generate` effect, which makes `count` new entities from the template, 1 if left out. */
+  generate,
+})

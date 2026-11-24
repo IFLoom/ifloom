@@ -5,7 +5,10 @@ import { overridable, usePart } from './overrides.tsx'
 import { Beat } from './scene.tsx'
 import { useWords } from './words.ts'
 
-/** The backlog's entries, oldest first, as the runner's snapshot has them. Empty unless the runner's backlog is on. */
+/**
+ * Returns the backlog's entries from the runner's snapshot, oldest first, and re-renders when they change. It's empty
+ * unless the runner's backlog is on.
+ */
 export function useBacklog(): readonly BacklogEntry[] {
   return useGame().snapshot.backlog
 }
@@ -36,5 +39,8 @@ function BacklogImpl({ className }: { className?: string }) {
   )
 }
 
-/** What was shown, oldest first, each scene followed by the choice made in it. Needs the runner's backlog on. `useBacklog` gives the entries alone. */
+/**
+ * Renders the backlog as the `backlog` part, the scenes the player has seen oldest first, each followed by the choice
+ * made in it. It needs the runner's backlog on.
+ */
 export const Backlog = overridable('Backlog', BacklogImpl)

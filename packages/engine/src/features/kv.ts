@@ -11,48 +11,50 @@ import type { Amount, GameState, KvValue, Range } from '../types.ts'
 import { byKey, defineFeature, mergedByKey, type FeatureContext } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
 
-/** What `of` names for a storyline's keys: `'storyline:baker'`. */
+/** The prefix of an `of` that names a storyline's kv store, as in `'storyline:baker'`. */
 export const STORYLINE_KV = 'storyline:'
 
-/** What `of` names for the running minigame's keys. */
+/** The `of` that names the running minigame's kv store. */
 export const MINIGAME_KV = 'minigame'
 
-/** What the kv feature adds, as types. */
+/** The kv feature's state, calls and content keys, as types. */
 export type KvShape = {
   state: {
+    /** The player's kv store, keys with a true/false, number or text value. */
     kv: Record<string, KvValue>
   }
   conditions: {
     /**
-     * A key in a kv store. Bare, it asks whether it is set to anything
-     * truthy; with `is`, whether it equals that (or one of a list); with a
-     * range, whether its number is in it (a value that is not a number counts
-     * as 0): `{ kv: 'lies', gte: 3 }`. With `of`, someone else's key: an
-     * entity's (`{ kv: 'role', of: '$', is: 'cook' }`), a storyline's
-     * (`of: 'storyline:baker'`) or the running minigame's (`of: 'minigame'`).
+     * A condition on a key in a kv store, such as `{ kv: 'lies', gte: 3 }`. With no `is` and no range, it holds
+     * while the key is set to a truthy value.
+     *
+     * With `is`, it holds while the key equals that value or one of a list. With a range, it holds while the key's
+     * number is in it, and a value that is not a number counts as 0. With `of`, it reads another store: an entity's
+     * (`{ kv: 'role', of: '$', is: 'cook' }`), a storyline's (`of: 'storyline:baker'`) or the running minigame's
+     * (`of: 'minigame'`). It never holds for an owner that isn't there.
      */
     kv: { kv: string; is?: KvValue | readonly KvValue[]; of?: string } & Range
   }
   effects: {
     /**
-     * Set a key `to` a value, change its number `by` an amount (a value that
-     * is not a number counts as 0), or set it to a whole number drawn from
-     * `random: [min, max]`, both included and seeded by the save. `by` and
-     * the ends of `random` are each an `Amount`. With `of`,
-     * the key is an entity's, a storyline's or the running minigame's.
+     * An effect that sets a key `to` a value, changes its number `by` an amount, or sets it to a whole number drawn
+     * from `random: [min, max]`. With `of`, the key is an entity's, a storyline's or the running minigame's.
+     *
+     * A value that is not a number counts as 0 for `by`. `random` includes both ends and is seeded by the save. `by`
+     * and the ends of `random` are each an `Amount`.
      */
     kv: { kv: string; to: KvValue; of?: string } | { kv: string; by: Amount; of?: string } | { kv: string; random: [Amount, Amount]; of?: string }
   }
   game: {
-    /** The kv store a new game starts with, such as the stretch it opens in: `{ phase: 'arrival' }`. */
+    /** The kv store a new game starts with, such as the stretch it opens in, `{ phase: 'arrival' }`. */
     kv?: Record<string, KvValue>
-    /** kv keys put back at the start of each turn, with the value each goes back to: what "once this turn" was counting. */
+    /** The keys the engine puts back at the start of each turn, with the value each goes back to. Use them to count something once a turn. */
     resets?: Record<string, KvValue>
   }
   pack: {
-    /** The kv store a new game starts with, by key: a later pack's value replaces an earlier one's. */
+    /** The pack's starting kv store, by key. A later pack's value replaces an earlier one's. */
     kv?: Record<string, KvValue>
-    /** Keys reset each turn, by key: a later pack's value replaces an earlier one's. */
+    /** The pack's keys reset each turn, by key. A later pack's value replaces an earlier one's. */
     resets?: Record<string, KvValue>
   }
   lists: 'reset' | 'kv'
@@ -99,12 +101,12 @@ function storeOf(state: GameState, game: Game | undefined, of: string | undefine
   }
 }
 
-/** A key's value in the store `of` names, or undefined when it is unset or the owner isn't there. */
+/** Returns a key's value in the kv store `of` names. Undefined when the key is unset or the owner isn't there. */
 export function kvValue(state: GameState, game: Game | undefined, key: string, of: string | undefined): KvValue | undefined {
   return storeOf(state, game, of)?.read[key]
 }
 
-/** What `of` names, for the content checker: a kind, a storyline, or a minigame's key. */
+/** Returns the references an `of` makes, for the content checker. It names a kind, a storyline or a minigame's key. */
 export function ownerReferences(of: string | undefined, key: string): Reference[] {
   if (of === MINIGAME_KV) return [{ minigameKv: key }]
   if (of?.startsWith(STORYLINE_KV)) return [{ storyline: of.slice(STORYLINE_KV.length) }]
@@ -123,6 +125,7 @@ function drawn(state: GameState, of: string | undefined, key: string, ends: [num
 /** Whose key a line about it names: nothing for the player's. */
 const whose = (of: string | undefined) => (of === undefined || of === 'player' ? '' : `${of} `)
 
+/** The kv feature, which keeps the player's kv store and reads and writes every kv store. */
 export const kv = defineFeature<KvShape>({
   name: 'kv',
   state: {

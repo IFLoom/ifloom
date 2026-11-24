@@ -1,16 +1,12 @@
 /**
- * @ifloom/plugin-inventory: using, dropping and giving away the things you
- * hold.
+ * The inventory plugin, which lets the player use, drop and give away the things they hold.
  *
- * Things are entities, held by the engine (`give`, `take`, `move`,
- * `view.held`). This plugin gives them something to do: a thing with the
- * `inventory/usable` trait has a button that runs its effects and, unless it
- * is kept, spends one. `inventory/drop` puts one down and `inventory/give`
- * hands one to someone who can hold things, such as a character.
+ * The engine keeps what each holder holds (`give`, `take`, `move`, `view.held`). A thing with the `inventory/usable`
+ * trait gets a button that runs its effects and spends one unless it is kept. `inventory/drop` puts one down, and
+ * `inventory/give` moves one to another holder, such as a character.
  *
- * It requires no other plugin. With places, a dropped thing goes to where
- * you are once places names somewhere that can hold it (its `places/holder`
- * query); until then a dropped thing is gone.
+ * It requires no other plugin. With places, a dropped thing goes to the holder the `places/holder` query names for
+ * where the player is. Without one, a dropped thing is gone.
  */
 import {
   artSrc,
@@ -53,13 +49,13 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** What the `inventory/usable` trait holds: the button's label, what using one does, and whether it is kept. */
+/** The data of the `inventory/usable` trait, which makes a thing usable. It gives the button's label, the effects of using one and whether one is kept. */
 export type Usable = {
-  /** The button: "Eat the sandwich". */
+  /** The label of the button that uses one, such as "Eat the sandwich". */
   label: string
-  /** What using one does. They read the state as it was before one was spent. */
+  /** The effects of using one. They read the state as it was before one was spent. */
   effects: EffectRef[]
-  /** Using it doesn't spend one: a book read, a torch switched on. One is spent if left out. */
+  /** True when using one doesn't spend it, as for a book read or a torch switched on. One is spent if left out. */
   keep?: boolean
 }
 
@@ -69,38 +65,38 @@ declare module '@ifloom/engine' {
   }
 }
 
-/** The plugin's content, `data.inventory`. */
+/** The inventory plugin's content, which the game declares in `data.inventory`. */
 export type InventoryData = {
   /**
-   * The kinds the inventory shows, in `InventoryView`, each an entry with
-   * the kind's id (`{ id: 'item' }`), so a mod can add one. Every kind, if
-   * left out.
+   * The kinds whose things the inventory shows in {@link InventoryView}, each an entry with the kind's id
+   * (`{ id: 'food' }`), so a mod can add one. Every kind if left out.
    */
   kinds?: { id: string }[]
 }
 
-/** One thing you hold, as the UI draws it. */
+/** A thing the player holds as the player sees it, in `view.plugins.inventory.things`. */
 export type InventoryThing = {
-  /** How content names it: `'food:apple'`. */
+  /** The thing's entity reference, such as `'food:apple'`. */
   ref: EntityRef
+  /** The thing's name. */
   name: string
-  /** Its entity's `description`, tokens filled; null with none. */
+  /** The thing's `description`, with its tokens filled, or null when it has none. */
   description: string | null
-  /** Its picture's path, through `artSrc`; null with none. */
+  /** The path of the thing's picture through `artSrc`, or null when it has none. */
   image: string | null
-  /** How many are held. */
+  /** The number of this thing the holder holds. */
   count: number
-  /** Who holds it: the protagonist being played, or `'player'`. */
+  /** The thing's holder, the protagonist being played or `'player'`. */
   at: Holder
-  /** The button that uses one, labelled by its trait, or null for a thing with no use. Send its `command`. */
+  /** The button that uses one, labelled by its trait, or null for a thing with no use. Its `command` is the one to send. */
   use: RenderedChoice | null
   /** The button that drops one. */
   drop: RenderedChoice
 }
 
-/** What a UI reads at `view.plugins.inventory`. */
+/** The inventory as the player sees it, in `view.plugins.inventory`. */
 export type InventoryView = {
-  /** What you hold that the inventory shows: the protagonist's things while one is played, then the player's. */
+  /** The things the inventory shows, the played protagonist's first and then the player's. */
   things: InventoryThing[]
 }
 
@@ -134,12 +130,12 @@ const CALLS = defineCalls(ID, {
 })
 const USABLE = 'inventory/usable'
 
-/** The kinds the inventory shows, from `data.inventory.kinds` in the game's content and packs; undefined for every kind. */
+/** Returns the kinds the inventory shows, from `data.inventory.kinds` in the game's content and packs. Returns undefined when every kind is shown. */
 export function inventoryKindsOf(game: Game): { id: string }[] | undefined {
   return game.data?.[ID]?.kinds === undefined ? undefined : DATA.kinds.all(game)
 }
 
-/** What makes a thing usable, when it is: its `inventory/usable` trait, read through what it was made `like`. */
+/** Returns a thing's `inventory/usable` trait, read through the entity it was made `like`. Returns undefined for a thing with no use. */
 export function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefined {
   return traitOf(state, game, ref, USABLE)
 }
@@ -246,9 +242,8 @@ function inventoryView(state: GameState, game: Game): InventoryView {
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and give the things that do
- * something the `inventory/usable` trait (`inventory.usable(label, effects)`). It
- * keeps nothing in the save.
+ * Returns the inventory plugin for the game's `plugins`. Give each thing with a use the `inventory/usable` trait
+ * (`inventory.usable(label, effects)`); the plugin keeps nothing in the save.
  */
 function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
   return definePlugin<null, InventoryView, typeof CALLS>({
@@ -310,23 +305,34 @@ function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
 }
 
 /**
- * The `inventory/usable` trait, to spread into an entity's or a kind's
- * `traits`: `traits: { ...usable('Eat the apple', [{ stat: 'energy', by: 5 }]) }`.
- * Using one spends one unless `keep` is true.
+ * Returns the `inventory/usable` trait, to spread into an entity's or a kind's `traits`. Using the thing spends one
+ * unless `keep` is true.
+ *
+ * @example
+ * traits: { ...inventory.usable('Eat the apple', [{ stat: 'energy', by: 5 }]) }
  */
 const usable = (label: string, effects: EffectRef[], options: { keep?: boolean } = {}): { 'inventory/usable': Usable } => ({
   [USABLE]: options.keep ? { label, effects, keep: true } : { label, effects },
 })
 
-/** A command: use one of a thing you hold. */
+/** Returns the `inventory/use` command, which uses one of a thing the player holds. */
 const useThing = (ref: EntityRef): CommandRef => CALLS.commands.use({ id: ref })
-/** A command: drop one of a thing you hold. */
+/** Returns the `inventory/drop` command, which drops one of a thing the player holds. */
 const dropThing = (ref: EntityRef): CommandRef => CALLS.commands.drop({ id: ref })
-/** A command: give one of a thing you hold to someone who can hold things, such as `'character:ava'`. */
+/** Returns the `inventory/give` command, which gives one of a thing the player holds to another holder, such as `'character:ava'`. */
 const giveThing = (ref: EntityRef, to: Holder): CommandRef => CALLS.commands.give({ id: ref, to })
 
 /**
- * The plugin, with its helpers on it: `inventory()` makes the plugin for the
- * game's `plugins`, and content is written with `inventory.usable('Eat', effects)` and `inventory.use('food:apple')`.
+ * The inventory plugin's factory, with its helpers as properties. `inventory()` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `inventory.usable('Eat', effects)` and `inventory.use('food:apple')`.
  */
-export const inventory = Object.assign(inventoryPlugin, { usable, use: useThing, drop: dropThing, give: giveThing })
+export const inventory = Object.assign(inventoryPlugin, {
+  /** Returns the `inventory/usable` trait, to spread into an entity's or a kind's `traits`. Using the thing spends one unless `keep` is true. */
+  usable,
+  /** Returns the `inventory/use` command, which uses one of a thing the player holds. */
+  use: useThing,
+  /** Returns the `inventory/drop` command, which drops one of a thing the player holds. */
+  drop: dropThing,
+  /** Returns the `inventory/give` command, which gives one of a thing the player holds to another holder. */
+  give: giveThing,
+})

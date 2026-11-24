@@ -17,58 +17,65 @@ import type { Command, GameState } from '../types.ts'
 import { defineFeature, type FeatureContext, type PackMerge } from './feature.ts'
 import { formatStat, statOf, statValue, type StatDef } from './stats.ts'
 
-/** One stat a command moved: whose, from what to what, and the change written in the stat's own words. */
+/** A stat the last command moved, with its old and new values and the change in the stat's own format. `state.changes` keeps these. */
 export type Change = {
   /** The stat's id. */
   stat: string
-  /** The entity whose stat it is; left out for the player's. */
+  /** The entity the stat is kept on. Left out for the player's stat. */
   of?: EntityRef
-  /** What it read before the command. */
+  /** The stat's value before the command. */
   from: number
-  /** What it reads now. */
+  /** The stat's value after the command. */
   to: number
-  /** How far it moved: `to - from`, above 0 for up. */
+  /** The amount the stat moved, `to - from`, above 0 when it went up. */
   by: number
   /** The stat's `label`. */
   label: string
-  /** The change written with the stat's `format`, signed: `'+30 coins'`, `'-£5'`. */
+  /** The change in the stat's `format`, signed, such as `'+30 coins'` or `'-£5'`. */
   text: string
 }
 
-/** One stat a command moved, as the view hands it to a UI: the `Change`, and who or what it's about in words. */
+/** A stat change as the player sees it, in `view.changes`. It adds the words that say what moved to a {@link Change}. */
 export type ChangeView = Change & {
   /**
-   * The words to show after `text`, so the change says what moved: the
-   * entity's name for an entity's stat (`+4 Ava`), else the stat's `label`
-   * when `text` doesn't say it in words (`+1 Charm`, `+20% Mood`). Left out
-   * when the stat's format already does (`+30 coins`).
+   * The words to show after `text`, so the change says what moved. Left out when the stat's format already says it
+   * (`+30 coins`).
+   *
+   * It's the entity's name for an entity's stat (`+4 Ava`), else the stat's `label` when `text` has no words in it
+   * (`+1 Charm`, `+20% Mood`).
    */
   name?: string
 }
 
-/** Which stats `view.changes` tracks: their ids. An entity stat's id covers that stat on every entity. */
-export type ChangesDef = { stats: string[] }
+/** The stats the game declares in `changes` for `view.changes` to track, by id. An entity stat's id covers that stat on every entity. */
+export type ChangesDef = {
+  /** The ids of the stats to track. */
+  stats: string[]
+}
 
-/** What the changes feature adds, as types. */
+/** The changes feature's content key, state and view, as types. */
 export type ChangesShape = {
   game: {
-    /** The stats whose changes are tracked, from content and every pack together. Left out, nothing is tracked. */
+    /** The stats the engine tracks changes of, from the content and every pack together. Nothing is tracked if left out. */
     changes?: ChangesDef
   }
   pack: {
     /**
-     * The stats whose changes `view.changes` lists, by id: `{ stats: ['coins', 'trust'] }`.
-     * Every file's and pack's lists are added together. With none, nothing is tracked.
+     * The pack's tracked stats, by id, such as `{ stats: ['coins', 'trust'] }`. The engine adds every file's and
+     * pack's lists together.
      */
     changes?: ChangesDef
   }
   lists: 'changes'
   state: {
-    /** The stats the last command moved, in the order the game declares them, the player's first. A tick that moved nothing keeps the list before it. */
+    /**
+     * The stats the last command moved, in the order the game declares them, the player's first. A `tick` that moved
+     * nothing keeps the list from before it.
+     */
     changes: Change[]
   }
   view: {
-    /** The stats the last command moved that the player can see, the player's first, each with the words that say what moved. See `ChangeView`. */
+    /** The stats the last command moved that the player can see, the player's first, each with the words that say what moved. */
     changes: ChangeView[]
   }
 }
@@ -89,7 +96,7 @@ function keptEntities(before: GameState, after: GameState): Map<EntityRef, Set<s
   return out
 }
 
-/** The stats that moved between two states, as the player can see them. */
+/** Returns the tracked stats that moved between two states, leaving out any the player can't see. Empty when the game tracks no stats. */
 export function statChanges(before: GameState, after: GameState, game: Game, cx: FeatureContext): Change[] {
   const tracked = new Set(game.changes?.stats ?? [])
   if (!tracked.size) return []
@@ -145,6 +152,7 @@ function merge(): PackMerge<ChangesShape['game'], ChangesShape['pack']> {
   }
 }
 
+/** The changes feature, which records the tracked stats each command moved. */
 export const changes = defineFeature<ChangesShape>({
   name: 'changes',
   requires: ['stats', 'entities'],

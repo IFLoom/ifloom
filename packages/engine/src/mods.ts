@@ -4,40 +4,43 @@ import { fail, ok, type Result } from './result.ts'
 import { upgradePack } from './upgrade.ts'
 
 /**
- * A mod as a file: what it is, which game it is for, and the pack it adds.
- * Data only — scenes, prose, locations, patches, plugin content — so it can do
- * nothing a pack can't, and nothing runs that the game didn't ship.
+ * A mod as a JSON file, with the game it is for and the pack it adds. A mod is data only, so no code runs that the game
+ * didn't ship.
  */
 export type ModFile = {
-  /** The format of this file: 1. */
+  /** The file's format, 1. */
   ifloomMod: 1
+  /** The mod's id. Its pack is loaded as `mod:<id>`. */
   id: string
+  /** The mod's name, for a mods page. */
   name: string
-  /** The mod's own version, as its author writes it: `'1.2'`. */
+  /** The mod's own version, as its author writes it, such as `'1.2'`. */
   version?: string
-  /** The game it was made for, by id. */
+  /** The id of the game the mod was made for. */
   game: string
-  /** A line for the mods screen. */
+  /** The mod's description, a line for a mods page. */
   description?: string
-  /** The content it adds: a `Pack`, laid over the game's content. */
+  /** The {@link Pack} the mod adds, laid over the game's content. */
   pack: Pack
 }
 
-/** A mod the player has added, as the store keeps it. */
+/** A mod the player has added, as the mod store keeps it. */
 export type InstalledMod = {
+  /** The mod's id. */
   id: string
+  /** The mod's name, for a mods page. */
   name: string
   /** The mod's own version, as its author writes it. */
   version?: string
-  /** A line for the mods screen. */
+  /** The mod's description, a line for a mods page. */
   description?: string
-  /** Off mods stay installed and are left out of the game. */
+  /** True when the mod is on. A mod that is off stays installed and is left out of the game. */
   enabled: boolean
-  /** The content it adds, as the mod file wrote it. */
+  /** The pack the mod adds, as the file wrote it, with its id set to `mod:<id>`. `loadGame` upgrades it. */
   pack: Pack
 }
 
-/** Read a mod file a player picked: the mod, or why it can't be used with this game. */
+/** Returns the mod in a file's text, or the reason it can't be used with this game. */
 export function readMod(text: string, gameId: string): Result<ModFile> {
   let data: unknown
   try {
@@ -65,26 +68,25 @@ export function readMod(text: string, gameId: string): Result<ModFile> {
 }
 
 /**
- * One game's installed mods, as `mods` gives them. Nothing here rejects: when
- * the driver fails, each answers a failure that says so, with the driver's
- * error as its `cause`.
+ * One game's mod store, returned by `mods`. No call rejects, and a driver's failure answers with a reason and the
+ * driver's error as its `cause`.
  */
 export interface Mods {
-  /** Every installed mod, on or off, in name order. One stored unreadably is left out. */
+  /** Returns the installed mods, on or off, in name order. A mod stored unreadably is left out. */
   list(): Promise<Result<InstalledMod[]>>
-  /** Add a mod from a file's text, on, replacing one with the same id. The mod, or why it can't be added. */
+  /** Adds a mod from a file's text, turned on, replacing one with the same id. It returns the mod, or the reason it can't be added. */
   add(text: string): Promise<Result<InstalledMod>>
-  /** Remove a mod. Nothing happens if it isn't installed. */
+  /** Removes a mod, and does nothing if it isn't installed. */
   remove(id: string): Promise<Result<void>>
-  /** Turn a mod on or off. Nothing happens if it isn't installed. */
+  /** Turns a mod on or off, and does nothing if it isn't installed. */
   setEnabled(id: string, enabled: boolean): Promise<Result<void>>
-  /** The packs of the mods that are on, in name order, to load over the game's content as `packs`. */
+  /** Returns the packs of the mods that are on, in name order, to pass to `loadGame` as `packs`. */
   packs(): Promise<Result<Pack[]>>
 }
 
 /**
- * One game's installed mods, kept wherever its driver keeps them — IndexedDB
- * in a browser, so a mod survives reloads and needs no server.
+ * Returns the {@link Mods} store of a game, kept by a driver. In a browser, an IndexedDB driver keeps mods across reloads
+ * with no server.
  */
 export function mods(gameId: string, driver: SaveDriver): Mods {
   const prefix = `${gameId}.mod.`

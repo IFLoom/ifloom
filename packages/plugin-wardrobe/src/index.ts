@@ -1,17 +1,12 @@
 /**
- * @ifloom/plugin-wardrobe — slots the game declares, the things that go in
- * them, and what you have on.
+ * The wardrobe plugin, which adds the slots the game declares, the things that go in them and what each body has on.
  *
- * Clothes are entities with the `wardrobe/wearable` trait, which names the
- * slot each goes in. You wear only what you hold, and wearing something
- * doesn't change how many you hold: the wardrobe only marks what is on.
- * Putting something on takes off whatever was in its slot. Something you no
- * longer hold comes off by itself. The slots are the game's: a coat and
- * boots, armour and a ring, a uniform with a cap.
+ * Clothes are entities with the `wardrobe/wearable` trait, which names the slot each goes in. The player wears only
+ * things they hold, and wearing one doesn't change the count held. Putting a thing on takes off whatever was in its
+ * slot, and a thing the player no longer holds comes off by itself.
  *
- * What is worn is kept per body: the player's, and each protagonist's the
- * game switches to with the `you` effect, so switching shows that one's
- * clothes and switching back the first's.
+ * The plugin keeps what is worn per body, the player's and each protagonist's the `you` effect switches to. So
+ * switching shows that protagonist's clothes, and switching back shows the first's.
  */
 import {
   declaredTrait,
@@ -50,18 +45,20 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** What the `wardrobe/wearable` trait holds: the slot a thing is worn in. */
+/** The data of the `wardrobe/wearable` trait, which makes a thing wearable in one slot. */
 export type Wearable = {
-  /** The slot it goes in, by id: `'coat'`. */
+  /** The id of the slot the thing goes in, such as `'coat'`. */
   slot: string
 }
 
 /**
- * What the `wardrobe/closet` trait holds: a place where the player can
- * change. The place gets a button that opens the `wardrobe` panel.
+ * The data of the `wardrobe/closet` trait, which makes a location somewhere the player can change clothes. While the
+ * player is there, the room offers a button that opens the `wardrobe` panel.
+ *
+ * The button needs the places plugin, which says where the player is.
  */
 export type Closet = {
-  /** The button's words. The `wardrobe/open` string (`Wardrobe`) if left out. */
+  /** The label of the button that opens the `wardrobe` panel. The `wardrobe/open` string (`Wardrobe`) if left out. */
   label?: string
 }
 
@@ -72,31 +69,40 @@ declare module '@ifloom/engine' {
   }
 }
 
-/** A place on the body something can be worn. */
+/** A slot the game declares in `data.wardrobe.slots`, a part of the body where a thing can be worn. */
 export type WardrobeSlot = {
+  /** The slot's id, which a wearable thing's `slot` names. */
   id: string
+  /** The slot's label. */
   label: string
-  /** What you have on in it at the start: a wearable thing the player starts holding. Nothing if left out. */
+  /** The wearable thing in the slot at the start, one the player starts holding. The slot starts empty if left out. */
   start?: EntityRef
 }
 
-/**
- * What the plugin keeps in a save: what each body has on, by who wears it
- * (`'player'`, or a protagonist such as `'character:sam'`), then by slot.
- */
-export type WardrobeState = { worn: Record<string, Record<string, EntityRef | null>> }
+/** The clothes a save keeps for each body. Slots and wearable things are read from content. */
+export type WardrobeState = {
+  /** The thing worn in each slot, by body (`'player'` or a protagonist such as `'character:sam'`) and then by slot id. */
+  worn: Record<string, Record<string, EntityRef | null>>
+}
 
+/** The wardrobe of whoever the player is playing as the player sees it, in `view.plugins.wardrobe`. */
 export type WardrobeView = {
+  /** The game's slots in order, each with the thing in it. */
+  slots: {
+    /** The slot's id. */
+    id: string
+    /** The slot's label. */
+    label: string
+    /** The thing in the slot, or null while the slot is empty. */
+    entity: EntityRef | null
+    /** The name of the thing in the slot, or null while the slot is empty. */
+    name: string | null
+    /** The button that takes the thing off, labelled with the `wardrobe/takeOff` string, or null while the slot is empty. */
+    takeOff: RenderedChoice | null
+  }[]
   /**
-   * Every slot, in order, with what is in it on whoever the player is
-   * playing now, and the button that takes it off (labelled with the
-   * `wardrobe/takeOff` string, `Take off`), or null while it's empty.
-   */
-  slots: { id: string; label: string; entity: EntityRef | null; name: string | null; takeOff: RenderedChoice | null }[]
-  /**
-   * Wearable things you hold and aren't wearing, in the game's order of its
-   * entities, each with the button that puts it on (labelled with the
-   * `wardrobe/wear` string, `Wear {thing}`).
+   * The wearable things the player holds and isn't wearing, in the order of the game's entities. Each has its slot and
+   * the button that puts it on, labelled with the `wardrobe/wear` string (`Wear {thing}`).
    */
   spare: { entity: EntityRef; name: string; slot: string; wear: RenderedChoice }[]
 }
@@ -135,12 +141,12 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's slots, in the order the UI lists them: `data.wardrobe.slots`, from its content and packs. */
+/** Returns the game's slots in order, from `data.wardrobe.slots` in its content and packs. */
 export function slotsOf(game: Game): WardrobeSlot[] {
   return DATA.slots.all(game)
 }
 
-/** The slot a thing is worn in, if it can be worn: its `wardrobe/wearable` trait, read through what it was made `like`. */
+/** Returns a thing's `wardrobe/wearable` trait, read through the entity it was made `like`. Returns undefined for a thing that can't be worn. */
 export function wearableOf(state: GameState, game: Game, ref: string): Wearable | undefined {
   return traitOf(state, game, ref, WEARABLE)
 }
@@ -193,9 +199,8 @@ function dressed(slice: WardrobeState, holder: string, slots: Record<string, Ent
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, put the slots in the content's
- * `data.wardrobe.slots`, and give each thing that can be worn the
- * `wardrobe/wearable` trait (`wardrobe.wearable('coat')`), so a mod can add either.
+ * Returns the wardrobe plugin for the game's `plugins`. The game declares its slots in `data.wardrobe.slots` and gives
+ * each wearable thing the `wardrobe/wearable` trait (`wardrobe.wearable('coat')`).
  */
 function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
   return definePlugin<WardrobeState, WardrobeView, typeof CALLS>({
@@ -337,28 +342,46 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
 }
 
 /**
- * The `wardrobe/wearable` trait, to spread into an entity's or a kind's
- * `traits`: `traits: { ...wearable('coat') }`.
+ * Returns the `wardrobe/wearable` trait for a slot, to spread into an entity's or a kind's `traits`.
+ *
+ * @example
+ * traits: { ...wardrobe.wearable('coat') }
  */
 const wearable = (slot: string): { 'wardrobe/wearable': Wearable } => ({ [WEARABLE]: { slot } })
 
 /**
- * The `wardrobe/closet` trait, to spread into a place's `traits`: the place
- * gets a button that opens the `wardrobe` panel. `traits: { ...wardrobe.closet() }`.
+ * Returns the `wardrobe/closet` trait, to spread into a location's `traits`. The location then offers a button that
+ * opens the `wardrobe` panel.
+ *
+ * @example
+ * traits: { ...wardrobe.closet() }
  */
 const closet = (options: Closet = {}): { 'wardrobe/closet': Closet } => ({ [CLOSET]: options })
 
-/** A condition: the thing is on whoever the player is playing, or, with a slot, on in that slot. */
+/** Returns the `wardrobe/wearing` condition, which holds while whoever the player is playing wears the thing, in `slot` if given. */
 const wearing = (entity: EntityRef, slot?: string): Condition => CALLS.conditions.wearing(slot === undefined ? { entity } : { entity, slot })
-/** A condition: something is in this slot. */
+/** Returns the `wardrobe/wearing` condition for a slot, which holds while whoever the player is playing has something in it. */
 const slotFilled = (slot: string): Condition => CALLS.conditions.wearing({ slot })
-/** A command: put this on. */
+/** Returns the `wardrobe/wear` command, which puts on a thing the player holds. */
 const wear = (entity: EntityRef): CommandRef => CALLS.commands.wear({ id: entity })
-/** A command: take off whatever is in this slot. */
+/** Returns the `wardrobe/takeOff` command, which takes off whatever is in the slot. */
 const takeOff = (slot: string): CommandRef => CALLS.commands.takeOff({ id: slot })
 
 /**
- * The plugin, with its helpers on it: `wardrobe()` makes the plugin for the
- * game's `plugins`, and content is written with `wardrobe.wearable('coat')` and `wardrobe.wear('clothing:scarf')`.
+ * The wardrobe plugin's factory, with its helpers as properties. `wardrobe()` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `wardrobe.wearable('coat')` and `wardrobe.wear('clothing:scarf')`.
  */
-export const wardrobe = Object.assign(wardrobePlugin, { wearable, closet, wearing, slotFilled, wear, takeOff })
+export const wardrobe = Object.assign(wardrobePlugin, {
+  /** Returns the `wardrobe/wearable` trait for a slot, to spread into an entity's or a kind's `traits`. */
+  wearable,
+  /** Returns the `wardrobe/closet` trait, to spread into a location's `traits`, which offers a button that opens the `wardrobe` panel. */
+  closet,
+  /** Returns the `wardrobe/wearing` condition, which holds while whoever the player is playing wears the thing, in `slot` if given. */
+  wearing,
+  /** Returns the `wardrobe/wearing` condition for a slot, which holds while whoever the player is playing has something in it. */
+  slotFilled,
+  /** Returns the `wardrobe/wear` command, which puts on a thing the player holds. */
+  wear,
+  /** Returns the `wardrobe/takeOff` command, which takes off whatever is in the slot. */
+  takeOff,
+})

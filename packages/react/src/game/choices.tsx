@@ -12,7 +12,10 @@ function PriceTagImpl({ price, className }: { price: Price; className?: string }
   return <span {...attrs}>{price.text}</span>
 }
 
-/** What a button costs, as the engine wrote it: the price's `text`, its stats, then plugins' notes ("until evening"). */
+/**
+ * Renders a choice's or action's price as the `choice-price` part, from the price's `text`, which names its stats and
+ * then plugins' notes such as "until evening".
+ */
 export const PriceTag = overridable('PriceTag', PriceTagImpl)
 
 function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; className?: string }) {
@@ -55,11 +58,11 @@ function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; class
 }
 
 /**
- * A choice or an action as a button: its label, its price, and (when it is
- * greyed out) the reason, on the button itself so the player never has to
- * hover to learn why. A warning (pressable, but the game would refuse it, as
- * running past dawn) is marked and written under it. With `keys` on, a
- * numbered choice shows its number key.
+ * Renders a choice or an action from its `RenderedChoice` as a `choice` button with its label and price. A disabled
+ * button shows its reason on the button itself, not on hover.
+ *
+ * A warning, the reason a plugin's guard will refuse it softly such as running past dawn, is marked and written under
+ * it, and so is an irreversible note. With `keys` on, a numbered choice shows its number key.
  */
 export const ChoiceButton = overridable('ChoiceButton', ChoiceButtonImpl)
 
@@ -75,5 +78,8 @@ function ChoiceListImpl({ choices, className, part = 'choices' }: { choices: Ren
   )
 }
 
-/** A list of choices or actions, one per row. `part` names it for styling: `'choices'`, or `'actions'` for the room's buttons. */
+/**
+ * Renders a list of choices or actions as `ChoiceButton`s, one per row, and nothing for an empty list. `part` names it
+ * `'choices'`, or `'actions'` for the room's actions.
+ */
 export const ChoiceList = overridable('ChoiceList', ChoiceListImpl)

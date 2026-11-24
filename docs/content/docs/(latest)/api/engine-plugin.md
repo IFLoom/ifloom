@@ -12,9 +12,10 @@ Generated from the source of `@ifloom/engine/plugin` and its TSDoc by `npm run a
 
 Function. Explained in [Actions and buttons](/docs/reference/actions#actionreferences).
 
-What an action names, for the content checker: its conditions, effects,
-command and hints, and its words. For a plugin whose content holds actions
-(a place's, an app's) to hand to its `references`.
+Returns the references an action makes, for the content checker. They cover its words, conditions, effects, command
+and hints.
+
+A plugin whose content holds actions (a location's, an app's) passes these to its `references`.
 
 ```ts shape
 import { actionReferences } from '@ifloom/engine/plugin'
@@ -27,7 +28,7 @@ Uses: [`ActionDef`](/docs/api/engine#actiondef), [`Reference`](#reference).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincalls-and-anycalls).
 
-What a plugin's calls' declaration says, by table, for any plugin.
+Any plugin's `PluginCalls`, with each call's full name and arguments, by table.
 
 ```ts shape
 import type { AnyCalls } from '@ifloom/engine/plugin'
@@ -39,11 +40,18 @@ type AnyCalls = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The plugin's id. |
+| `conditions` | `Readonly<Record<string, { readonly call: string; readonly args:` [`ArgShape`](#argshape) `}>>` |  |  | The plugin's conditions, by name. |
+| `effects` | `Readonly<Record<string, { readonly call: string; readonly args:` [`ArgShape`](#argshape) `}>>` |  |  | The plugin's effects, by name. |
+| `commands` | `Readonly<Record<string, { readonly call: string; readonly args:` [`ArgShape`](#argshape) `}>>` |  |  | The plugin's commands, by name. |
+
 ## anyOf
 
 Function. Explained in [Entities](/docs/reference/entities#anyof).
 
-Any one of a kind, for checking content written with `'$'` before it runs.
+Returns a stand-in reference for any entity of a kind, for checking content written with `'$'` before it runs.
 
 ```ts shape
 import { anyOf } from '@ifloom/engine/plugin'
@@ -56,10 +64,10 @@ Uses: [`EntityRef`](/docs/api/engine#entityref).
 
 Type.
 
-One argument of a call: what content writes for it (`In`), what the
-implementation is handed (`Out`, read from whatever content wrote), whether
-it may be left out, what the checker says of a value of the wrong shape, and
-what a value names. Made with `arg`.
+One argument of a plugin's call, made with `arg`. `In` is the type content writes, and `Out` the type the
+implementation gets, read from whatever content wrote.
+
+It also says whether content may leave it out, how the checker describes the right shape, and what a value names.
 
 ```ts shape
 import type { Arg } from '@ifloom/engine/plugin'
@@ -79,27 +87,27 @@ type Arg<In = unknown, Out = In, Optional extends boolean = boolean> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `kind` | `string` |  |  | What a value must be, for the checker's problem: `'text'`, `'a number'`. |
-| `isOptional` | `Optional` |  |  | May content leave it out? |
-| `words` | [`WordPart`](/docs/api/engine#wordpart) | yes |  | Content's value is words a player reads, which a translation can replace. |
-| `read` | `(value: unknown) => Out` |  |  | What the implementation is handed for content's value, whatever content wrote. |
-| `fits` | `(value: unknown) => boolean` |  |  | Is content's value of the right shape? Asked only of a value content wrote. |
-| `refs` | `(value: Out, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference) |  |  | What a value names, for the checker: a place, an entry, a `{ problem }`. |
-| `optional` | `{ ():` [`Arg`](#arg)`<In, Out \| undefined, true>; <F extends Out>(fallback: F):` [`Arg`](#arg)`<In, Out, true>; }` |  |  | The same argument, which content may leave out: the implementation is handed `undefined` then, or `fallback` when one is given. |
-| `naming` | `(refs: (value: Exclude<Out, undefined>, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference)`) =>` [`Arg`](#arg)`<In,…` |  |  | The same argument, naming these references too: `arg.string().naming(placeRefs)`. Inside `defineCalls`, give an inline function its return type, `(id): Reference[] => [...]`, or the registries built from the calls refer to themselves. |
-| `rule` | `(problem: (value: Exclude<Out, undefined>) => string \| undefined) =>` [`Arg`](#arg)`<In, Out,…` |  |  | The same argument, with a rule of the plugin's own about its value: what is wrong with it, in the checker's words, or undefined when nothing is. `arg.number().rule((n) => (n >= 1 ? undefined : 'count must be 1 or more'))`. |
-| `_in` | `In` | yes |  | Phantom: what content writes. Never set. |
+| `kind` | `string` |  |  | The shape a value must have, in the checker's words, such as `'text'` or `'a number'`. |
+| `isOptional` | `Optional` |  |  | True when content may leave the argument out. |
+| `words` | [`WordPart`](/docs/api/engine#wordpart) | yes |  | The argument's word shape, set when its value is words a player reads that a translation can replace. |
+| `read` | `(value: unknown) => Out` |  |  | Returns the value the implementation gets for content's value, whatever content wrote. |
+| `fits` | `(value: unknown) => boolean` |  |  | Returns true when content's value has the right shape. The checker asks it only of a value content wrote. |
+| `refs` | `(value: Out, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference) |  |  | Returns the references a value makes for the checker, such as a location, an entry or a `{ problem }`. |
+| `optional` | `{ ():` [`Arg`](#arg)`<In, Out \| undefined, true>; <F extends Out>(fallback: F):` [`Arg`](#arg)`<In, Out, true>; }` |  |  | Returns the same argument, which content may leave out. The implementation then gets `undefined`, or `fallback` when one is given. |
+| `naming` | `(refs: (value: Exclude<Out, undefined>, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference)`) =>` [`Arg`](#arg)`<In,…` |  |  | Returns the same argument, making these references too, as in `arg.string().naming(placeRefs)`. Inside `defineCalls`, give an inline function its return type, `(id): Reference[] => [...]`, or the registries built from the calls refer to themselves. |
+| `rule` | `(problem: (value: Exclude<Out, undefined>) => string \| undefined) =>` [`Arg`](#arg)`<In, Out,…` |  |  | Returns the same argument with a rule of the plugin's own about its value. The rule returns the problem in the checker's words, or undefined when there is none. `arg.number().rule((n) => (n >= 1 ? undefined : 'count must be 1 or more'))`. |
+| `_in` | `In` | yes |  | The type content writes, for type inference only. It is never set. |
 
 ## arg
 
 Const. Explained in [Writing a plugin](/docs/reference/plugins#arg).
 
-The arguments a call can take, for `defineCalls`. Each reads what content
-wrote into what the implementation is handed, whatever it was (a missing
-text is `''`, a list of one is a list); the checker reports a value of the
-wrong shape. `.optional()` lets content leave one out, `.optional(1)` with
-what the implementation is handed then; `.naming(fn)` adds what a value
-names, for the checker: `arg.string().naming((id) => [{ scene: id }])`.
+The makers of the `Arg`s a call can take, for `defineCalls`. Each reads content's value into the value the
+implementation gets, whatever content wrote, and the checker reports a value of the wrong shape.
+
+A missing text reads as `''`, and a single value as a list of one. `.optional()` lets content leave an argument out,
+`.optional(1)` with the value the implementation then gets. `.naming(fn)` adds the references a value makes, as in
+`arg.string().naming((id) => [{ scene: id }])`.
 
 ```ts shape
 import { arg } from '@ifloom/engine/plugin'
@@ -123,26 +131,26 @@ const arg: {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `string` | `() =>` [`Arg`](#arg)`<string, string, false>` |  |  | Text: `'cafe'`. Read as text; `''` when missing. |
-| `words` | `() =>` [`Arg`](#arg)`<string, string, false>` |  |  | Words a player reads, which a translation can replace: a post's text. |
-| `number` | `() =>` [`Arg`](#arg)`<number, number, false>` |  |  | A number: `2`. Read as a number; `0` when missing or not one. |
-| `boolean` | `() =>` [`Arg`](#arg)`<boolean, boolean, false>` |  |  | True or false. |
-| `strings` | `() =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | One text or a list of them, `'cafe'` or `['cafe', 'park']`, handed as a list. |
-| `numbers` | `() =>` [`Arg`](#arg)`<number \| readonly number[], number[], false>` |  |  | One number or a list of them, handed as a list. |
-| `entity` | `(trait?: string \| undefined) =>` [`Arg`](#arg)`<'${string}:${string}', '${string}:${string}', false>` |  |  | An entity, by reference: `'food:bun'`. Named to the checker, which must find it, carrying `trait` when one is given. |
-| `holder` | `() =>` [`Arg`](#arg)`<`[`Holder`](/docs/api/engine#holder)`,` [`Holder`](/docs/api/engine#holder)`, false>` |  |  | Who has things: `'player'`, `'you'` or a unique entity. Named to the checker. |
-| `kv` | `() =>` [`Arg`](#arg)`<`[`KvValue`](/docs/api/engine#kvvalue)`,` [`KvValue`](/docs/api/engine#kvvalue)`, false>` |  |  | A kv value: true or false, a number or text. |
-| `amount` | `() =>` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount)`, false>` |  |  | An `Amount`, worked out when it's read: read it with `amountOf`. Named to the checker. |
-| `range` | `() =>` [`Arg`](#arg)`<`[`Range`](/docs/api/engine#range)`,` [`Range`](/docs/api/engine#range)`, false>` |  |  | A range, `{ gte: 2 }`, as an argument of its own: `stacks: { gte: 2 }`. Its bounds are amounts, named to the checker. |
-| `entry` | `(list:` [`DataList`](#datalist)`<any>) =>` [`Arg`](#arg)`<string, string, false>` |  |  | An entry of one of the plugin's data lists, by id: `arg.entry(DATA.jobs)`. Named to the checker, which reports one the list doesn't have. |
-| `entries` | `(list:` [`DataList`](#datalist)`<any>) =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | One entry of a data list or several, handed as a list. As `entry`. |
-| `bounds` | `{ gte:` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount) `\| undefined, true>; gt:` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount) `\| undefined, true>;…` |  |  | A range's bounds as the call's own arguments, `{ job: 'cafe', gte: 3 }`: spread them into a shape, `{ job: arg.entry(DATA.jobs), ...arg.bounds }`. The core checks a call's bounds itself. |
+| `string` | `() =>` [`Arg`](#arg)`<string, string, false>` |  |  | Returns a text argument, such as `'cafe'`. It reads as `''` when missing. |
+| `words` | `() =>` [`Arg`](#arg)`<string, string, false>` |  |  | Returns a text argument of words a player reads, such as a post's text, which a translation can replace. |
+| `number` | `() =>` [`Arg`](#arg)`<number, number, false>` |  |  | Returns a number argument, such as `2`. It reads as `0` when missing or not a number. |
+| `boolean` | `() =>` [`Arg`](#arg)`<boolean, boolean, false>` |  |  | Returns a true or false argument. It reads as false unless content wrote `true`. |
+| `strings` | `() =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | Returns an argument of one text or a list, `'cafe'` or `['cafe', 'park']`, which the implementation gets as a list. |
+| `numbers` | `() =>` [`Arg`](#arg)`<number \| readonly number[], number[], false>` |  |  | Returns an argument of one number or a list, which the implementation gets as a list. |
+| `entity` | `(trait?: string \| undefined) =>` [`Arg`](#arg)`<'${string}:${string}', '${string}:${string}', false>` |  |  | Returns an entity reference argument, such as `'food:bun'`. The checker must find the entity, carrying `trait` when one is given. |
+| `holder` | `() =>` [`Arg`](#arg)`<`[`Holder`](/docs/api/engine#holder)`,` [`Holder`](/docs/api/engine#holder)`, false>` |  |  | Returns a holder argument, `'player'`, `'you'` or a unique entity. The checker must find the holder. |
+| `kv` | `() =>` [`Arg`](#arg)`<`[`KvValue`](/docs/api/engine#kvvalue)`,` [`KvValue`](/docs/api/engine#kvvalue)`, false>` |  |  | Returns a kv value argument, true or false, a number or text. |
+| `amount` | `() =>` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount)`, false>` |  |  | Returns an `Amount` argument, worked out when the implementation reads it with `amountOf`. The checker resolves the references it makes. |
+| `range` | `() =>` [`Arg`](#arg)`<`[`Range`](/docs/api/engine#range)`,` [`Range`](/docs/api/engine#range)`, false>` |  |  | Returns a range argument, such as `stacks: { gte: 2 }`. Its bounds are amounts, and the checker resolves the references they make. |
+| `entry` | `(list:` [`DataList`](#datalist)`<any>) =>` [`Arg`](#arg)`<string, string, false>` |  |  | Returns an argument naming an entry of one of the plugin's data lists by id, as in `arg.entry(DATA.jobs)`. The checker reports an id the list doesn't have. |
+| `entries` | `(list:` [`DataList`](#datalist)`<any>) =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | Returns an argument naming one entry of a data list or several, which the implementation gets as a list. The checker reports each as `entry` does. |
+| `bounds` | `{ gte:` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount) `\| undefined, true>; gt:` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount) `\| undefined, true>;…` |  |  | The optional `gte`, `gt`, `lte` and `lt` arguments of a range, as the call's own arguments (`{ job: 'cafe', gte: 3 }`). Spread them into a shape, as in `{ job: arg.entry(DATA.jobs), ...arg.bounds }`. The core checks a call's bounds itself. |
 
 ## ArgIn
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
 
-What content writes for an argument.
+The type content writes for an `Arg`.
 
 ```ts shape
 import type { ArgIn } from '@ifloom/engine/plugin'
@@ -155,7 +163,7 @@ Uses: [`Arg`](#arg).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
 
-What the implementation is handed for an argument.
+The type the implementation gets for an `Arg`.
 
 ```ts shape
 import type { ArgOut } from '@ifloom/engine/plugin'
@@ -168,7 +176,7 @@ Uses: [`Arg`](#arg).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#argshape-and-callshapes).
 
-What one call takes: its arguments by name. `{}` for a call with none, written `true`.
+The arguments one call takes, by name. It is `{}` for a call with none, which content writes as `true`.
 
 ```ts shape
 import type { ArgShape } from '@ifloom/engine/plugin'
@@ -181,7 +189,7 @@ type ArgShape = {
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
 
-The arguments content writes for a call of this shape, as an object.
+The arguments content writes for a call of an `ArgShape`, as an object.
 
 ```ts fragment
 type ArgsIn<S extends ArgShape> = { [K in keyof ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })]: ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })[K]; }
@@ -193,7 +201,7 @@ Uses: [`ArgIn`](#argin).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
 
-What the implementation of a call of this shape is handed: every argument, read.
+The arguments the implementation of a call of an `ArgShape` gets, every one read.
 
 ```ts shape
 import type { ArgsOut } from '@ifloom/engine/plugin'
@@ -206,7 +214,7 @@ type ArgsOut<S extends ArgShape> = {
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#asked-and-refusal).
 
-What a guard is asked about: the command, and the effects it would apply.
+The question a plugin's `guard` gets, a command with the effects it would apply.
 
 ```ts shape
 import type { Asked } from '@ifloom/engine/plugin'
@@ -216,16 +224,21 @@ type Asked = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `command` | [`Command`](/docs/api/engine#command) |  |  | The command the guard is asked about. |
+| `effects` | `readonly` [`Effect[]`](/docs/api/engine#effect) |  |  | The effects the command would apply. |
+
 ## bindCurrent
 
 Function. Explained in [Entities](/docs/reference/entities#bindcurrent).
 
-Put a real reference where content wrote `'$'`: in every `of`, `entity`,
-`at` and `like` of a condition or an effect list, a `remove`, `move` or
-`you` effect's target, a `move`'s `from` and `to`, and anywhere in a
-plugin's or the game's call's arguments or what a `create` is made `with`
-(`{ 'cast/met': { character: '$' } }`). A nested `each`'s effects and a
-nested `count`'s `where` are left alone: their `'$'` is their own.
+Returns a condition or effects with `ref` in place of each `'$'`. A nested `each`'s effects and a nested `count`'s
+`where` keep their own `'$'`.
+
+It replaces `'$'` in every `of`, `entity`, `at` and `like`, in a `remove`, `move` or `you` effect's target, in a
+`move`'s `from` and `to`, and anywhere in a call's arguments or a `create`'s `with`
+(`{ 'cast/met': { character: '$' } }`).
 
 ```ts shape
 import { bindCurrent } from '@ifloom/engine/plugin'
@@ -238,7 +251,7 @@ Uses: [`Condition`](/docs/api/engine#condition), [`EffectRef`](/docs/api/engine#
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#callargs).
 
-What the implementation of each call in a table is handed, by name.
+The arguments the implementation of each call in a table gets, by name.
 
 ```ts fragment
 type CallArgs<C, T extends keyof CallShapes> = { [K in keyof ShapesOf<C, T>]: ShapesOf<C, T>[K] extends ArgShape ? { [K in keyof { [K in keyof ShapesOf<C, T>[K]]: ArgOut<ShapesOf<C, T>[K][K]>; }]: { [K in keyof ShapesOf<C, T>[K]]: ArgOut<ShapesOf<C, T>[K][K]>; }[K]; } : never; }
@@ -250,7 +263,7 @@ Uses: [`ArgShape`](#argshape), [`ArgOut`](#argout).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#callform).
 
-How a plugin call is written in content: `short`, `long` or as a `command`. See `ContentTools.calls`.
+The form a plugin call is written in, `short`, `long` or `command`. See `ContentTools.calls`.
 
 ```ts shape
 import type { CallForm } from '@ifloom/engine/plugin'
@@ -261,7 +274,7 @@ type CallForm = 'short' | 'long' | 'command'
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#callin).
 
-A call in short, checked against a registry when its name is declared there, and loose otherwise.
+A call in the short form, type-checked against registry `R` when its name is declared there and loose otherwise.
 
 ```ts shape
 import type { CallIn } from '@ifloom/engine/plugin'
@@ -276,7 +289,7 @@ Uses: [`PluginCall`](/docs/api/engine#plugincall).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#argshape-and-callshapes).
 
-What a plugin's calls take, by table and name.
+The arguments a plugin's calls take, by table and name, as `defineCalls` is given them.
 
 ```ts shape
 import type { CallShapes } from '@ifloom/engine/plugin'
@@ -287,11 +300,17 @@ type CallShapes = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `conditions` | `Readonly<Record<string,` [`ArgShape`](#argshape)`>>` | yes |  | The arguments of each of the plugin's conditions, by name. |
+| `effects` | `Readonly<Record<string,` [`ArgShape`](#argshape)`>>` | yes |  | The arguments of each of the plugin's effects, by name. |
+| `commands` | `Readonly<Record<string,` [`ArgShape`](#argshape)`>>` | yes |  | The arguments of each of the plugin's commands, by name. |
+
 ## CallTable
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
 
-Which of a plugin's tables a call is to: its `conditions`, its `effects` or its `commands`.
+The name of a plugin's table of calls, `conditions`, `effects` or `commands`.
 
 ```ts shape
 import type { CallTable } from '@ifloom/engine/plugin'
@@ -302,7 +321,7 @@ type CallTable = 'conditions' | 'effects' | 'commands'
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#callwriter).
 
-A call's writer: its arguments in, the call in short out, `{ 'places/at': { location } }`.
+A function that writes one call in the short form from its arguments, such as `{ 'places/at': { location } }`.
 
 ```ts fragment
 type CallWriter<Name extends string, S extends ArgShape> = ([RequiredKeys<S>] extends [never] ? (args?: { [K in keyof ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })]: ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })[K]; } | undefined) => { [N in Name]: WrittenAs<S>; } : (args: { [K in keyof ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })]: ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })[K]; }) => { [N in Name]: WrittenAs<S>; }) & { readonly call: Name; readonly args: S; read(args: unknown): { [K in keyof { [K in keyof S]: ArgOut<S[K]>; }]: { [K in keyof S]: ArgOut<S[K]>; }[K]; }; }
@@ -314,7 +333,7 @@ Uses: [`ArgIn`](#argin), [`WrittenAs`](#writtenas), [`ArgOut`](#argout).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#castcontact-and-senderview).
 
-Someone the player can call, as the cast's `cast/contacts` answers.
+A character the player can call, as the cast's `cast/contacts` query answers.
 
 ```ts shape
 import type { CastContact } from '@ifloom/engine/plugin'
@@ -331,19 +350,19 @@ type CastContact = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | Their id, as the cast names them: `'ava'`. |
-| `name` | `string` |  |  |  |
-| `description` | `string \| null` |  |  | A line about them, or null. |
-| `image` | `string \| null` |  |  | Their picture, through `artSrc`, or null. |
-| `portrait` | `string \| null` |  |  | Their face, for a small avatar, or null. |
-| `command` | [`CommandRef`](/docs/api/engine#commandref) |  |  | The cast's `cast/call` command for them, in short. |
-| `disabled` | `string \| undefined` |  |  | Why the call can't go through now; undefined when it can. |
+| `id` | `string` |  |  | The character's id, as the cast names them, such as `'ava'`. |
+| `name` | `string` |  |  | The character's name. |
+| `description` | `string \| null` |  |  | The character's description, a line about them, or null. |
+| `image` | `string \| null` |  |  | The character's picture, through `artSrc`, or null. |
+| `portrait` | `string \| null` |  |  | The character's face for a small avatar, or null. |
+| `command` | [`CommandRef`](/docs/api/engine#commandref) |  |  | The cast's `cast/call` command for the character, in the short form. |
+| `disabled` | `string \| undefined` |  |  | The reason the call can't go through now, or undefined when it can. |
 
 ## CheckTools
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#checktools).
 
-What the content checker lends a plugin's `check`.
+The tools the content checker gives a plugin's `check`.
 
 ```ts shape
 import type { CheckTools } from '@ifloom/engine/plugin'
@@ -354,13 +373,13 @@ type CheckTools = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `problems` | `(refs: readonly` [`Reference[]`](#reference)`) => string[]` |  |  | What these references name that the game doesn't have, in the checker's words. |
+| `problems` | `(refs: readonly` [`Reference[]`](#reference)`) => string[]` |  |  | Returns the checker's words for each reference in a list that names something the game doesn't have. |
 
 ## CommandsOf
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionsof-effectsof-and-commandsof).
 
-What a plugin's commands take, by full name, for its `CommandRegistry`. As `ConditionsOf`.
+The arguments a plugin's commands take, by full name, for its `CommandRegistry`. Use it as `ConditionsOf` is used.
 
 ```ts fragment
 type CommandsOf<C> = C extends PluginCalls<infer Id extends string, infer D extends CallShapes> ? { [K in keyof Table<D, 'commands'> & string as `${Id}/${K}`]: Table<D, 'commands'>[K] extends ArgShape ? WrittenAs<Table<D, 'commands'>[K]> : never; } : never
@@ -372,10 +391,8 @@ Uses: [`PluginCalls`](#plugincalls), [`CallShapes`](#callshapes), [`ArgShape`](#
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#commandstep).
 
-One step of a plugin's `commandMigrations`: a command from a log, as the
-version it upgrades from wrote it, as the next version takes it. It is
-given every command, the engine's and other plugins' too, so it checks the
-type and name and gives back the ones that aren't its own as they came.
+A step of a plugin's `commandMigrations`, which returns a log's command reshaped from one command version to the
+next. It gets every command, so it returns the ones that aren't its own unchanged.
 
 ```ts shape
 import type { CommandStep } from '@ifloom/engine/plugin'
@@ -388,7 +405,7 @@ Uses: [`RawCommand`](#rawcommand).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionsof-effectsof-and-commandsof).
 
-What a plugin's conditions take, by full name, for its `ConditionRegistry`:
+The arguments a plugin's conditions take, by full name, for its `ConditionRegistry`. Extend the registry from it.
 
 ```ts fragment
 declare module '@ifloom/engine' {
@@ -406,7 +423,7 @@ Uses: [`PluginCalls`](#plugincalls), [`CallShapes`](#callshapes), [`ArgShape`](#
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
 
-What one entry of a plugin's content names. `list` and `id` say where, as a `PluginProblem` does.
+The references one entry of a plugin's content makes.
 
 ```ts shape
 import type { ContentReferences } from '@ifloom/engine/plugin'
@@ -417,14 +434,20 @@ type ContentReferences = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `list` | `string` |  |  | The name of the plugin's list the entry is in. |
+| `id` | `string` |  |  | The entry's id. |
+| `refs` | `readonly` [`Reference[]`](#reference) |  |  | The references the entry makes. |
+
 ## ContentStep
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#contentstep).
 
-One step of a plugin's `contentMigrations`: the whole pack as the version
-it upgrades from wrote it, as the next version writes it. It usually
-changes only the plugin's own `data`, calls, strings and traits. It returns
-a new pack and never changes the one it was given.
+A step of a plugin's `contentMigrations`, which returns the whole pack reshaped from one content version to the
+next. It returns a new pack and never changes the one it was given.
+
+A step changes only the plugin's own `data`, calls, strings and traits as a rule.
 
 ```ts shape
 import type { ContentStep } from '@ifloom/engine/plugin'
@@ -437,10 +460,11 @@ Uses: [`RawPack`](/docs/api/engine#rawpack), [`ContentTools`](#contenttools).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#contenttools).
 
-What a plugin's content step is given besides the pack: ways to rewrite
-what a pack holds without walking it by hand. Each returns a new pack.
-`objects` and `calls` leave words and code (`prose`, `strings`,
-`variants`, `custom`) as they are, and `words` rewrites only those words.
+The tools a plugin's content step gets beside the pack, which rewrite a pack without walking it by hand. Each returns
+a new pack.
+
+`objects` and `calls` leave words and code (`prose`, `strings`, `variants`, `custom`) unchanged, and `words` rewrites
+only those words.
 
 ```ts shape
 import type { ContentTools } from '@ifloom/engine/plugin'
@@ -457,20 +481,20 @@ type ContentTools = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `objects` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rewrite: (value: Record<string, unknown>) => Record<string, unknown>) =>…` |  |  | Every object the pack's content holds, rewritten from the innermost out. |
-| `calls` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rewrite: (call:` [`RawCall`](#rawcall)`) => { name: string; with: unknown }) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Every call to a condition, effect or command by name, however it is written: `short`, `{ 'places/at': { location } }` (any key with a `/`, so check the name); `long`, `{ custom: 'places/at', with }` or `{ kind: 'custom', name, with }`; or a `command`, `{ type: 'custom', name, with }`. Return its name and arguments: a call given back as it came stays as it was. A value (`{ value, with }`) is not a call; reach it with `objects`. |
-| `words` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rewrite: (text: string, key: string) => string) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Every line of the pack's `prose` and `strings`, given with its key. |
-| `wordKeys` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rename: (key: string) => string) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Every key of the pack's `words` table, the translation's other words for a field (`quests/quests.settle.title`), renamed: for a step that renames a field the table names. The words are kept. |
-| `entries` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, list: string, rewrite: (entry: Record<string, unknown>) => Record<string,…` |  |  | Each entry of one list of a plugin's `data`, named `<plugin>/<list>` (`'quests/quests'` is `data.quests.quests`), rewritten. A pack without the list comes back as it is. |
-| `prose` | `(key: string) => string \| undefined` |  |  | A line of prose by key, as written: the pack's own, else the game's under it (its content's and the packs' before it). Undefined if neither has it. For a step that writes words in place that were a prose key. |
-| `effects` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Every effect the pack holds, in plugin `data` and traits too, in the form this engine reads: one written while effects were told apart by `kind` (`{ kind: 'stat', stat, by }`, before schema 21) in the keyed form (`{ stat, by }`). One already keyed is left as it is. For a plugin whose content holds effects somewhere the engine's own step can't see. |
+| `objects` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rewrite: (value: Record<string, unknown>) => Record<string, unknown>) =>…` |  |  | Returns the pack with every object in its content rewritten by `rewrite`, from the innermost out. |
+| `calls` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rewrite: (call:` [`RawCall`](#rawcall)`) => { name: string; with: unknown }) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Returns the pack with every call to a condition, effect or command by name rewritten by `rewrite`. A call returned with the same name and arguments stays as it was. The forms are `short` (`{ 'places/at': { location } }`, any key with a `/`, so check the name), `long` (`{ custom: 'places/at', with }` or `{ kind: 'custom', name, with }`) and `command` (`{ type: 'custom', name, with }`). A value (`{ value, with }`) is not a call, so reach it with `objects`. |
+| `words` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rewrite: (text: string, key: string) => string) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Returns the pack with every line of its `prose` and `strings` rewritten by `rewrite`, which gets each line's key. |
+| `wordKeys` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rename: (key: string) => string) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Returns the pack with every key of its words table (`quests/quests.settle.title`) renamed by `rename`, keeping the words. A step that renames a field uses it. |
+| `entries` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, list: string, rewrite: (entry: Record<string, unknown>) => Record<string,…` |  |  | Returns the pack with each entry of one plugin `data` list rewritten by `rewrite`. The list is named `<plugin>/<list>` (`'quests/quests'` is `data.quests.quests`), and a pack without it comes back unchanged. |
+| `prose` | `(key: string) => string \| undefined` |  |  | Returns a prose key's line, the pack's own or else the game's under it, or undefined when neither has it. A step that turns a prose key into words in place uses it. |
+| `effects` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Returns the pack with every effect written with a `kind` field (before schema 21) in the keyed form, in plugin `data` and traits too. `{ kind: 'stat', stat, by }` becomes `{ stat, by }`. A plugin whose content holds effects the engine's own step can't reach uses it. |
 
 ## DataList
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#datalist).
 
-One of a plugin's data lists, as `defineData` declares it: where it is
-(`data.<plugin>.<list>`), its noun and words, and its lookups.
+One of a plugin's data lists as `defineData` declares it, kept at `data.<plugin>.<list>`, with its noun, its words and
+its lookups.
 
 ```ts shape
 import type { DataList } from '@ifloom/engine/plugin'
@@ -489,22 +513,24 @@ type DataList<T extends { id: string } = PluginEntry> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `plugin` | `string` |  |  | The plugin it is the data of. |
-| `list` | `string` |  |  | Its name in the plugin's data: `'jobs'` for `data.jobs.jobs`. |
-| `noun` | `string` |  |  | What one entry is called in a problem. |
-| `words` | [`WordShape`](/docs/api/engine#wordshape) | yes |  | Which fields of an entry are words. |
-| `all` | `(game:` [`Game`](/docs/api/engine#game)`) => T[]` |  |  | Every entry the game has, in order: each an object with an id; anything else in the list is left out. |
-| `get` | `(game:` [`Game`](/docs/api/engine#game)`, id: unknown) => T \| undefined` |  |  | One entry by id, which may be anything content wrote; undefined when the game has none. |
-| `ref` | `(id: string) =>` [`Reference`](#reference) |  |  | The reference to one entry by id, for the checker: `unknown job "cafe"` when the game has none. |
-| `content` | `(game:` [`Game`](/docs/api/engine#game)`, refs: (entry: T) => readonly` [`Reference[]`](#reference)`) =>` [`ContentReferences[]`](#contentreferences) |  |  | What each entry names, for `references.content`, each at `<list> <id>`. |
-| `problem` | `(id: string, what: string) =>` [`PluginProblem`](#pluginproblem) |  |  | A problem with one entry, for `check`, at `<list> <id>`. |
+| `plugin` | `string` |  |  | The id of the plugin whose data the list is. |
+| `list` | `string` |  |  | The list's name in the plugin's data, such as `'jobs'` for `data.jobs.jobs`. |
+| `noun` | `string` |  |  | The noun a problem calls one entry by. |
+| `words` | [`WordShape`](/docs/api/engine#wordshape) | yes |  | The fields of an entry that are words a player reads. |
+| `all` | `(game:` [`Game`](/docs/api/engine#game)`) => T[]` |  |  | Returns the game's entries in order. An entry that isn't an object with an id is left out. |
+| `get` | `(game:` [`Game`](/docs/api/engine#game)`, id: unknown) => T \| undefined` |  |  | Returns one entry by id, or undefined when the game has none. The id may be anything content wrote. |
+| `ref` | `(id: string) =>` [`Reference`](#reference) |  |  | Returns the reference to one entry by id, which the checker reports as `unknown job "cafe"` when the game has none. |
+| `content` | `(game:` [`Game`](/docs/api/engine#game)`, refs: (entry: T) => readonly` [`Reference[]`](#reference)`) =>` [`ContentReferences[]`](#contentreferences) |  |  | Returns the references each entry makes, for `references.content`, each reported at `<list> <id>`. |
+| `problem` | `(id: string, what: string) =>` [`PluginProblem`](#pluginproblem) |  |  | Returns a problem with one entry, for `check`, reported at `<list> <id>`. |
 
 ## defineCalls
 
 Function. Explained in [Writing a plugin](/docs/reference/plugins#definecalls).
 
-Declare a plugin's calls once: each condition, effect and command by name,
-with what it takes, built from `arg`.
+Returns the `PluginCalls` declaration of a plugin's conditions, effects and commands, each by name with its
+arguments built from `arg`.
+
+A plugin calls it once, and its helpers, the content checker and its registries read that one declaration.
 
 ```ts fragment
 const CALLS = defineCalls('places', {
@@ -513,13 +539,12 @@ const CALLS = defineCalls('places', {
 })
 ```
 
-Give it to `definePlugin` as `calls`, so each implementation is handed its
-arguments typed and read; build the helpers from its writers
-(`CALLS.conditions.at({ location })`); and extend the registries from it
-(`ConditionsOf<typeof CALLS>`), so content is checked against the same
-declaration. The content checker reports an argument content left out, one
-of the wrong shape and one the call doesn't take, and resolves what each
-names.
+Give it to `definePlugin` as `calls`, so each implementation gets its arguments typed and read. Build the helpers
+from its writers (`CALLS.conditions.at({ location })`), and extend the registries from it
+(`ConditionsOf<typeof CALLS>`), so content is checked against the same declaration.
+
+The content checker reports an argument content left out, one of the wrong shape and one the call doesn't take, and
+resolves the references each makes.
 
 ```ts shape
 import { defineCalls } from '@ifloom/engine/plugin'
@@ -532,9 +557,10 @@ Uses: [`CallShapes`](#callshapes), [`PluginCalls`](#plugincalls).
 
 Function. Explained in [Writing a plugin](/docs/reference/plugins#definedata).
 
-Declare a plugin's data lists once: each list of its pack `data` by name,
-with its entry's type, the noun a problem names an entry by, and which
-fields are words.
+Returns the `PluginData` declaration of a plugin's data lists, each by name with its entry's type, its noun and
+its word fields.
+
+A plugin calls it once, and its lookups, the content checker and the words table read that one declaration.
 
 ```ts fragment
 const DATA = defineData('jobs', { jobs: list<JobDef>({ noun: 'job', words: { name: true } }) })
@@ -543,8 +569,7 @@ DATA.jobs.get(game, 'cafe') // JobDef | undefined
 arg.entry(DATA.jobs)        // an argument naming a job, checked
 ```
 
-Give it to `definePlugin` as `data`, and the loader reaches each list's
-words for a translation.
+Give it to `definePlugin` as `data`, so the loader reaches each list's words for a translation.
 
 ```ts shape
 import { defineData } from '@ifloom/engine/plugin'
@@ -557,7 +582,7 @@ Uses: [`ListSpec`](#listspec), [`PluginData`](#plugindata).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#definedplugin).
 
-A plugin, plus typed access to its own state.
+A plugin returned by `definePlugin`, with typed `read` and `write` for its own state.
 
 ```ts shape
 import type { DefinedPlugin } from '@ifloom/engine/plugin'
@@ -606,58 +631,55 @@ type DefinedPlugin<S, V = unknown> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | Its name, and the prefix on everything it adds. Letters, digits and `-`. |
-| `version` | `number` |  |  | The version of its state's shape. Bump it when the shape changes, and add the step that carries the previous version forward to `migrations`. |
-| `start` | `((game:` [`Game`](/docs/api/engine#game)`) => S)` | yes |  | Its state in a new game. A plugin with no state leaves this out. |
-| `migrations` | `Record<number, (state: unknown, tools:` [`MigrationTools`](/docs/api/engine#migrationtools)`) => unknown>` | yes |  | One step per version, keyed by the version it upgrades *from*, as the engine's own saves are. A save whose state has no route forward is refused. Each step gets the plugin's old state and the same `MigrationTools` a game's migration gets, and returns the plugin's new state. |
-| `contentVersion` | `number` | yes |  | The version of the shape of what content and packs write for it: its `data`, its calls' arguments, its strings and its traits. 1 if left out. Bump it when that shape changes, and add the step that carries a pack of the previous version forward to `contentMigrations`. Packs record the version they were written for in `plugins`. |
-| `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | One step per content version, keyed by the version it upgrades *from*. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. A version with no step changed nothing a pack holds. See `ContentStep` and `ContentTools`. |
-| `commandVersion` | `number` | yes |  | The version of its commands' arguments, as command logs record them. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
-| `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | One step per command version, keyed by the version it upgrades *from*: what `replay` plays an older log's commands through. See `CommandStep`. |
-| `calls` | [`AnyCalls`](#anycalls) | yes |  | Its conditions, effects and commands, each declared once with what it takes (`defineCalls`): the implementations below are handed their arguments read by it, the content checker reports what a call leaves out, gets wrong or names that the game lacks, and a translation reaches the words in a call's arguments. Every declared call has an implementation, and every implementation a declaration. |
-| `data` | [`PluginData`](#plugindata) | yes |  | The lists of its pack `data`, each declared once with its entry's noun and which of its fields are words a player reads (`defineData`), so a translation's `words` table reaches them, keyed `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.name`. |
-| `conditions` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => boolean>` | yes |  | Conditions content can test, by name, without the prefix. |
-| `effects` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Effects content can apply, by name. Each takes the state as the effects before it left it and returns the next one, so two in one list compose. What one does is hidden from prices and guards until it runs; an effect that only stands for other effects is a `macro` instead. |
-| `macros` | `Record<string,` [`Macro`](#macro)`<S,` [`PluginArgs`](#pluginargs)`>>` | yes |  | Effects that stand for other effects, by name, called by content as any effect is: each returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. A name is an effect's or a macro's, never both. See `Macro`. |
-| `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S,` [`PluginArgs`](#pluginargs)`>>` | yes |  | Commands a button can send, by name. |
-| `strings` | `Record<string, string>` | yes |  | The plugin's player-facing lines, by name without the prefix, in English. A game overrides one as `strings['<id>/<name>']`; the plugin reads them with `stringOf(game, '<id>/<name>')`. |
-| `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | Answers other plugins can ask for by name, without importing this one: `context.query('calendar/whenNext', { when })`. For what a condition's yes or no cannot say — a place, a time, a list. |
-| `cooperates` | `string[]` | yes |  | The plugins this one works with when the game has them, by id. Content may then name their conditions and effects even in a game without them: the loader lets it pass, and the condition is false and the effect does nothing. |
-| `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Changes to what the player's stats read right now, worked out from the plugin's state: a timed boost, say. Nothing is written into the state; every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. Must not read stats itself, or it reads itself. |
-| `values` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => string…` | yes |  | Words and numbers content can read by name, asked with arguments as a condition is: in prose as `{{id/name channel=texts}}`, and as `{ value: 'id/name', with }` for a badge or a stat's ceiling. |
-| `onTurn` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | A hook: the end of a turn, once the counter has moved on and `resets` are back, in the order the hooks run (the game's first). Returns the next state. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
-| `onTurnDone` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | A hook: the end of a turn, once every `onTurn` has run, so it sees what they did: the calendar's new day, a status worn off. In the same order and with the same context as `onTurn`. Returns the next state. |
-| `onStat` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, stat: string, by: number, context:` [`PluginContext`](#plugincontext)`<…` | yes |  | A hook: one of the player's stats just changed, by a `stat` effect. `before` is the state before it, `after` the state with it, `by` how far it moved. Return `before` to say it did not take, `after` to let it, or `after` with more besides. Runs in the order the hooks run (the game's first), each seeing what the one before returned. |
-| `onCommand` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | A hook: after every command that took, with the state it started from and the state after. The context is the state after. Returns the next state. |
-| `guard` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, asked:` [`Asked`](#asked)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Refusal`](#refusal) `\| undefined)` | yes |  | Whether a command may go ahead, given what it would do (`effectsOf`). Asked of every command but the ones that ignore locks, after the locks. |
-| `price` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, effects: readonly` [`Effect[]`](/docs/api/engine#effect)`, context:` [`PluginContext`](#plugincontext)`<S>) => string[] \|…` | yes |  | What a button costs that the engine cannot say, in the plugin's words: `['until evening']`. Asked with the effects the button would apply. |
-| `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Where the game is, in a few words for a header or a save: "Day 3 · Wednesday morning". |
-| `saveName` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | The name a save is listed under, such as the name the player typed, kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it (the game's first); with none, saves have no name. |
-| `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | What the screen shows while no scene is open: a room's description, a shop front, a dashboard's heading. The first plugin that answers fills it; with none, the screen is the game's title and its buttons. |
-| `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Actions offered while no scene is open, drawn as buttons before the game's own `actions` and exactly like them: a room's things to do, say. |
-| `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | One of this plugin's actions that isn't among its `actions` now, by id without the prefix: an app's, say. `{ type: 'action', id: '<plugin>/<id>' }` does it, as for a button with a cost or effects, which is looked up among the `actions` when this has none. Undefined when there is none. |
-| `content` | [`Content`](/docs/api/engine#content) | yes |  | Content the plugin brings, merged first, under the game's content and packs, which can replace anything in it by id: its kinds of entity (the people of a cast, unlisted in the view unless the kind sets `listed`; a game that redeclares one keeps what it leaves out), and any scenes, prose, actions or `data` it ships with. |
-| `traits` | `readonly` [`TraitDef`](#traitdef)`<any, any>[]` | yes |  | Traits this plugin gives meaning to: named data entities carry, written on a kind, an entity or content's `traits` table, which the plugin reads with `declaredTrait`. Each id is the plugin's id, `/` and a name. Data only: what a trait does is the plugin's code. |
-| `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | What plays on background channels, by channel: a place's ambience. Below an open scene's choice and an `audio` effect's, above the game's default. Null silences a channel; a channel left out is the next plugin's, then the default's. The first plugin that names a channel wins it. |
-| `view` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => V)` | yes |  | What the UI needs from this plugin, at `view.plugins[id]`. `V` is its type; declare it in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
-| `profile` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | What the plugin keeps in the player's profile, which outlives saves and new games: earned achievements, a gallery of endings. The runner asks it after every command that took, with the state after, the state before and what the plugin's profile namespace (its id) holds now. Return a new value to store, or undefined to leave it. Only a runner with a `profile` asks; `apply` never does. |
-| `references` | [`PluginReferences`](#pluginreferences) | yes |  | What this plugin's calls and content name, for the content checker to resolve as it resolves the engine's own. See `PluginReferences`. |
-| `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Rules of this plugin's own that a reference can't say: two entries with one id, an exit to nowhere. Run by the content checker after the references; `tools` words anything else the plugin names as the checker does. |
-| `read` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`) => S` |  |  | This plugin's state, or its starting state if the save has none yet. |
-| `write` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, next: S) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | The game state with this plugin's state replaced. |
+| `id` | `string` |  |  | The plugin's id, the prefix on everything it adds. It holds letters, digits and `-`. |
+| `version` | `number` |  |  | The version of the plugin's state's shape. Bump it when the shape changes, and add the step that carries the previous version forward to `migrations`. |
+| `start` | `((game:` [`Game`](/docs/api/engine#game)`) => S)` | yes |  | Returns the plugin's state in a new game. A plugin with no state leaves it out. |
+| `migrations` | `Record<number, (state: unknown, tools:` [`MigrationTools`](/docs/api/engine#migrationtools)`) => unknown>` | yes |  | The plugin's state migrations, one step per version, keyed by the version each upgrades from. A save whose state has no route forward is refused. Each step gets the plugin's old state and the same `MigrationTools` a game's migration gets, and returns the plugin's new state. |
+| `contentVersion` | `number` | yes |  | The version of the shape of the content and packs written for the plugin, its `data`, calls' arguments, strings and traits. 1 if left out. Bump it when that shape changes, and add the step that carries a pack of the previous version forward to `contentMigrations`. Packs record the version they were written for in `plugins`. |
+| `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | The plugin's content migrations, one step per content version, keyed by the version each upgrades from. A version with no step changed nothing a pack holds. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. See `ContentStep` and `ContentTools`. |
+| `commandVersion` | `number` | yes |  | The version of the plugin's commands' arguments, which command logs record. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
+| `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | The plugin's command migrations, one step per command version, keyed by the version each upgrades from. `replay` runs an older log's commands through them. See `CommandStep`. |
+| `calls` | [`AnyCalls`](#anycalls) | yes |  | The declaration of the plugin's conditions, effects and commands, each with the arguments it takes, from `defineCalls`. Every declared call needs an implementation, and every implementation a declaration. The implementations get their arguments read by it. The content checker reports a call that leaves an argument out, gets one wrong or names something the game lacks, and a translation reaches the words in a call's arguments. |
+| `data` | [`PluginData`](#plugindata) | yes |  | The declaration of the lists in the plugin's `data`, each with its entry's noun and its fields a player reads, from `defineData`. A translation's `words` table reaches those fields by `<plugin>/<list>.<id>.<field>`, such as `quests/quests.coffee.name`. |
+| `conditions` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => boolean>` | yes |  | The plugin's conditions content can test, by name without the prefix. |
+| `effects` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | The plugin's effects content can apply, by name without the prefix. Each takes the state the effects before it left and returns the next one, so two in one list compose. Prices and guards can't see what an effect does until it runs. An effect that only stands for other effects belongs in `macros` instead. |
+| `macros` | `Record<string,` [`Macro`](#macro)`<S,` [`PluginArgs`](#pluginargs)`>>` | yes |  | The plugin's macros, effects that stand for other effects, by name without the prefix. A name is an effect's or a macro's, never both. Content calls one as any effect. It returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. See `Macro`. |
+| `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S,` [`PluginArgs`](#pluginargs)`>>` | yes |  | The plugin's commands a choice or action can send, by name without the prefix. |
+| `strings` | `Record<string, string>` | yes |  | The plugin's strings, the lines a player reads, by name without the prefix, in English. A game overrides one as `strings['<id>/<name>']`, and the plugin reads them with `stringOf(game, '<id>/<name>')`. |
+| `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | The plugin's queries, answers other plugins ask for by name without importing it, such as `context.query('calendar/whenNext', { when })`. A query answers what a condition's yes or no can't, such as a location, a time or a list. |
+| `cooperates` | `string[]` | yes |  | The ids of the plugins this one works with when the game has them. Content may name their calls in a game without them, where the condition is false and the effect does nothing. The content checker lets those calls pass. |
+| `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Returns the changes to what the player's stats read now, worked out from the plugin's state, such as a timed boost. It must not read stats itself, or it reads itself. Nothing is written into the state. Every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. |
+| `values` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => string…` | yes |  | The plugin's values, words and numbers content reads by name with arguments, as a condition is asked. Prose prints one as `{{id/name channel=texts}}`, and an `Amount` reads one as `{ value: 'id/name', with }`. |
+| `onTurn` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run at the end of a turn, once the counter has moved on and `resets` are back. It returns the next state, and the hooks run in order, the game's first. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
+| `onTurnDone` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run once every `onTurn` has run, so it sees their changes, such as the calendar's new day. It returns the next state and runs in the same order and context as `onTurn`. |
+| `onStat` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, stat: string, by: number, context:` [`PluginContext`](#plugincontext)`<…` | yes |  | The hook run when a `stat` effect changes one of the player's stats. `before` is the state before it, `after` the state with it, and `by` how far it moved. Return `before` to undo the change, `after` to keep it, or `after` with more changes. The hooks run in order, the game's first, each seeing what the one before returned. |
+| `onCommand` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run after every command that took, with the state before and the state after. It returns the next state, and its context is the state after. |
+| `guard` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, asked:` [`Asked`](#asked)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Refusal`](#refusal) `\| undefined)` | yes |  | Returns a `Refusal` for a command, given the effects it would apply, or undefined to let it through. The engine asks it after the locks, of every command but the ones that ignore locks. |
+| `price` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, effects: readonly` [`Effect[]`](/docs/api/engine#effect)`, context:` [`PluginContext`](#plugincontext)`<S>) => string[] \|…` | yes |  | Returns the plugin's words for what a button costs that the engine can't say, such as `['until evening']`. The engine asks it with the effects the button would apply. |
+| `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns a few words on the time or place in the game for a header or a save, such as "Day 3 · Wednesday morning". |
+| `saveName` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns the name a save is listed under, such as the name the player typed. It is kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it, the game's first. With none, saves have no player name. |
+| `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | Returns the `RoomScene` the screen shows while no scene is open, such as a location's description or a dashboard's heading. The first plugin that answers fills it. With none, the room shows the game's title and its actions. |
+| `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns the actions offered while no scene is open, such as a location's things to do. The view lists them before the game's own `actions`, rendered the same way. |
+| `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns one of the plugin's actions that isn't among its `actions` now, by id without the prefix, such as an app's. Undefined when there is none. `{ type: 'action', id: '<plugin>/<id>' }` runs it, as for an action with a cost or effects. Without this provider, the engine looks the id up among the plugin's `actions`. |
+| `content` | [`Content`](/docs/api/engine#content) | yes |  | The content the plugin brings, merged first, under the game's content and packs, which can replace anything in it by id. It holds the plugin's kinds of entity, such as the cast's `character`, unlisted in the view unless the kind sets `listed`. A game that redeclares a kind keeps the fields it leaves out. It can also hold scenes, prose, actions or `data`. |
+| `traits` | `readonly` [`TraitDef`](#traitdef)`<any, any>[]` | yes |  | The traits the plugin gives meaning to, each id the plugin's id, `/` and a name. A trait is data only, and the plugin's code decides what it does. Content writes them on a kind, an entity or content's `traits` table, and the plugin reads them with `traitOf` or `declaredTrait`. |
+| `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | Returns the tracks the plugin plays on background channels, by channel, such as a location's ambience. Null silences a channel, and the first plugin that names a channel wins it. A plugin's track is below an open scene's and an `audio` effect's, and above the game's default. A channel left out is the next plugin's, then the default's. |
+| `view` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => V)` | yes |  | Returns the plugin's view, which a UI reads at `view.plugins[id]`. Declare its type `V` in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
+| `profile` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Returns the value the plugin keeps in the player's profile, which outlives saves and new games, such as earned achievements. Return undefined to leave the stored value. The runner asks it after every command that took, with the state after, the state before and the value the plugin's profile namespace (its id) holds now. Only a runner with a `profile` asks, and `apply` never does. |
+| `references` | [`PluginReferences`](#pluginreferences) | yes |  | The references the plugin's calls and content make, which the content checker resolves as it resolves the engine's own. See `PluginReferences`. |
+| `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Returns the problems the plugin's own rules find that a reference can't express, such as two entries with one id or an exit to nowhere. The content checker runs it after the references. `tools` words problems with anything else the plugin names as the checker does. |
+| `read` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`) => S` |  |  | Returns the plugin's state in a game state, or its starting state if the save has none yet. |
+| `write` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, next: S) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the game state with the plugin's state replaced. |
 
 ## definePlugin
 
 Function. Explained in [Writing a plugin](/docs/reference/plugins#defineplugin).
 
-Declare a plugin. Returns it with `read` and `write` for its own state, for
-code outside the plugin (tests, a UI) that needs it typed. Its slice of a
-view is typed by its `ViewRegistry` entry. Name the types, `definePlugin<State, View, typeof
-CALLS>`, so the view's type is kept and each call's implementation is
-handed its arguments as `CALLS` (`defineCalls`) declares them.
+Returns a plugin with `read` and `write` for its own state, for code outside it such as tests. It throws when a
+declared call has no implementation or an implemented one has no declaration.
 
-Throws when a declared call has no implementation, or an implemented one no
-declaration: a mistake in the plugin's code, never in content.
+Name the types, `definePlugin<State, View, typeof CALLS>`, so the view's type is kept and each call's implementation
+gets its arguments as `CALLS` (`defineCalls`) declares them. The plugin's view is typed by its `ViewRegistry` entry.
 
 ```ts shape
 import { definePlugin } from '@ifloom/engine/plugin'
@@ -670,7 +692,7 @@ Uses: [`AnyCalls`](#anycalls), [`PluginDef`](#plugindef), [`DefinedPlugin`](#def
 
 Function.
 
-Declare a kind of entity a plugin's trait makes, once.
+Returns the `TraitKind` of a kind of entity a plugin's trait makes. Declare each such kind once, with this.
 
 ```ts fragment
 const PLACES = defineTraitKind({ kind: 'location', trait: 'places/location', fields: { exits: true, body: true, … } })
@@ -680,8 +702,7 @@ PLACES.define({ id: 'park', name: 'Riverside Park', exits: [], body: [] })
 const CALLS = defineCalls('places', { effects: { move: { location: PLACES.arg() } } })
 ```
 
-The kind itself is still the plugin's to declare in its `content.kinds`,
-with its label and whether it's listed.
+The plugin still declares the kind itself in its `content.kinds`, with its label and whether it's listed.
 
 ```ts shape
 import { defineTraitKind } from '@ifloom/engine/plugin'
@@ -694,7 +715,7 @@ Uses: [`TraitKindSpec`](#traitkindspec), [`TraitKind`](#traitkind).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionsof-effectsof-and-commandsof).
 
-What a plugin's effects take, by full name, for its `EffectRegistry`. As `ConditionsOf`.
+The arguments a plugin's effects take, by full name, for its `EffectRegistry`. Use it as `ConditionsOf` is used.
 
 ```ts fragment
 type EffectsOf<C> = C extends PluginCalls<infer Id extends string, infer D extends CallShapes> ? { [K in keyof Table<D, 'effects'> & string as `${Id}/${K}`]: Table<D, 'effects'>[K] extends ArgShape ? WrittenAs<Table<D, 'effects'>[K]> : never; } : never
@@ -706,9 +727,8 @@ Uses: [`PluginCalls`](#plugincalls), [`CallShapes`](#callshapes), [`ArgShape`](#
 
 Function. Explained in [Presentation hints](/docs/reference/ui-hints#entityui).
 
-An entity's presentation hints: its kind's, with those of the one it was
-created `like` over them, then its own declaration's, field by field.
-Undefined when none has any. The engine carries them to the view as written.
+Returns an entity's ui hints, its kind's with its `like`'s and then its definition's laid over them field by field.
+Returns undefined when none has any.
 
 ```ts shape
 import { entityUi } from '@ifloom/engine/plugin'
@@ -721,7 +741,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Function.
 
-Declare one of a plugin's data lists, for `defineData`: the entry's type, its noun and its words.
+Returns the `ListSpec` of one of a plugin's data lists, for `defineData`, with the entry's type, its noun and its words.
 
 ```ts shape
 import { list } from '@ifloom/engine/plugin'
@@ -734,8 +754,8 @@ Uses: [`WordShape`](/docs/api/engine#wordshape), [`ListSpec`](#listspec).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#listspec).
 
-One list of a plugin's data, declared: `list<JobDef>({ noun: 'job', words:
-{ name: true } })`. The type of an entry is the type argument.
+One list of a plugin's data as `list` declares it, such as `list<JobDef>({ noun: 'job', words: { name: true } })`. The
+type argument is an entry's type.
 
 ```ts shape
 import type { ListSpec } from '@ifloom/engine/plugin'
@@ -748,21 +768,19 @@ type ListSpec<T extends { id: string } = PluginEntry> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `noun` | `string` |  |  | What one entry is called in a problem: `unknown job "cafe"`. |
-| `words` | [`WordShape`](/docs/api/engine#wordshape) | yes |  | Which fields of an entry are words a player reads, for a translation's `words` table. See `WordShape`. |
-| `_entry` | `T` | yes |  | Phantom: an entry's type. Never set. |
+| `noun` | `string` |  |  | The noun a problem calls one entry by, as in `unknown job "cafe"`. |
+| `words` | [`WordShape`](/docs/api/engine#wordshape) | yes |  | The fields of an entry that are words a player reads, for a translation's `words` table. See `WordShape`. |
+| `_entry` | `T` | yes |  | An entry's type, for type inference only. It is never set. |
 
 ## Lock
 
 Type. Explained in [Locks](/docs/reference/locks#lock).
 
-Something the player cannot do for now, and why.
+A lock the game declares in `locks`, which stops some commands while its `when` holds. The engine refuses the
+command with `reason`, and the view greys out its button with the same line.
 
-A game's stretches — an intro that holds you in one room, a first morning
-that only lets you get to work — are locks: data that says what is stopped,
-while what holds, and the line the player reads. The reducer refuses on the
-first lock that matches and the view greys the button out with the same
-line, so the two cannot disagree.
+A game's stretches are locks, such as an intro that keeps you at one location or a first morning that only lets you
+get to work. The reducer and the view read the same first lock that matches, so they can't disagree.
 
 ```ts shape
 import type { Lock } from '@ifloom/engine/plugin'
@@ -779,21 +797,20 @@ type Lock = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` | yes |  | A name for it, so a later pack can replace it: a pack's lock with the same id takes its place. Left out, a lock is simply added. |
-| `when` | [`Condition`](/docs/api/engine#condition) |  |  | While this holds, the lock is on. |
-| `deny` | `readonly` [`LockTarget[]`](#locktarget) |  |  | Commands it stops, by type. `'*'` stops everything not in `except`. A plugin's commands can be named one by one (`'quests/track'`) or all at once (`'quests/*'`); `'custom'` stops every plugin command. |
-| `except` | `readonly` [`LockTarget[]`](#locktarget) | yes |  | Commands it lets through all the same, by the same names as `deny`. |
-| `effect` | `string` | yes |  | Only commands that would apply this effect: the engine's by its key (`'turn'`) or a plugin's by name (`'calendar/pass'`). See `effectsOf`. |
-| `hide` | `boolean` | yes |  | Leave a button this lock stops off the screen instead of greying it out: an exit, a room's action, a game or plugin button. Not one that ignores locks. |
-| `reason` | `string` |  |  | Why. The refusal and the disabled text are this same line. |
+| `id` | `string` | yes |  | The lock's id, so a later pack can replace it. A lock with no id is always added. |
+| `when` | [`Condition`](/docs/api/engine#condition) |  |  | The lock's condition. The lock is on while it holds. |
+| `deny` | `readonly` [`LockTarget[]`](#locktarget) |  |  | The commands the lock stops, by type. `'*'` stops every command not in `except`. A plugin's commands can be named one by one (`'quests/track'`) or all at once (`'quests/*'`), and `'custom'` stops every plugin command. |
+| `except` | `readonly` [`LockTarget[]`](#locktarget) | yes |  | The commands the lock lets through all the same, named as in `deny`. |
+| `effect` | `string` | yes |  | The effect a command must apply for the lock to stop it, named by its key. That's the engine's key (`'turn'`) or a plugin's name (`'calendar/pass'`), checked against `effectsOf`. |
+| `hide` | `boolean` | yes |  | The lock's hide mark, true to leave the buttons it stops off the screen rather than greyed out. It covers the room's buttons, the places plugin's exits included, and never a command that ignores locks. |
+| `reason` | `string` |  |  | The lock's reason, the line both the refusal and the greyed-out button show. |
 
 ## lockedOut
 
 Function. Explained in [Locks](/docs/reference/locks#lockedout).
 
-Is a lock on that stops everything? While one is, the player is in a
-stretch that only moves through its scenes: there are no exits, no people
-to approach, nothing to do in the room.
+Returns true while a lock that stops everything is on. Until it lifts, the player moves only through its scenes,
+with no exits, characters or actions in the room.
 
 ```ts shape
 import { lockedOut } from '@ifloom/engine/plugin'
@@ -806,7 +823,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Function. Explained in [Locks](/docs/reference/locks#lockon).
 
-The first lock that stops this command right now, if any.
+Returns the first lock that stops this command now, or undefined when none does.
 
 ```ts shape
 import { lockOn } from '@ifloom/engine/plugin'
@@ -819,7 +836,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Locks](/docs/reference/locks#locktarget).
 
-What a lock's `deny` and `except` can name: a command type, `'*'`, or a plugin command or plugin.
+A name a lock's `deny` and `except` take. It's a command type, `'*'`, a plugin command (`'quests/track'`) or a whole plugin (`'quests/*'`).
 
 ```ts shape
 import type { LockTarget } from '@ifloom/engine/plugin'
@@ -832,12 +849,11 @@ Uses: [`Command`](/docs/api/engine#command).
 
 Type. Explained in [Calls by name](/docs/reference/custom#macro).
 
-An effect that stands for other effects, in a plugin's or the game's
-`macros`: it works out from the state the effects it stands for and returns
-them, anything content can write, another macro included. Content calls it
-as any effect, `{ 'game/payRent': {} }`, and because what it returns is
-effects, a button's price, the locks and the guards see what it would do
-before it runs.
+An effect that stands for other effects, in a plugin's or the game's `macros`. It returns those effects from the
+state, so prices, locks and guards see them before it runs.
+
+Content calls it as any effect, `{ 'game/payRent': {} }`. It can return any effect content can write, another macro
+included.
 
 ```ts shape
 import type { Macro } from '@ifloom/engine/plugin'
@@ -850,11 +866,8 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`PluginContext`](#plugincontex
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#packcontext).
 
-What a step may need of the game a pack is laid over, besides the pack:
-the entities content and the plugins declare, the game's word for the
-player (its string `you`), and the prose under the pack (the content's
-and the packs' before it). The loader gives it; a step that has none
-reads only the pack.
+The parts of the game under a pack that an upgrade step may read beside the pack. `loadGame` passes it, and a step
+without it reads only the pack.
 
 ```ts shape
 import type { PackContext } from '@ifloom/engine/plugin'
@@ -865,14 +878,21 @@ type PackContext = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `entities` | `readonly unknown[]` | yes |  | The entities the content, the plugins and earlier packs declare. |
+| `you` | `readonly string[]` | yes |  | The game's words for the player, from its string `you`. |
+| `prose` | `Readonly<Record<string, string>>` | yes |  | The prose keys' lines under the pack, from the content and earlier packs. |
+
 ## panelOf
 
 Function. Explained in [Panels](/docs/reference/panels#panelof).
 
-The panel open over the story, as `view.panel` shows it: one the `panel`
-effect opened, else the open scene's own, else null. For a plugin's view
-that shows what its own panel holds, filtered by what it was opened with,
-as the jobs plugin's `panel` is the jobs on the open board.
+Returns the panel open over the story, as in `view.panel`. It is the one the `panel` effect opened, else the open
+scene's own, else null.
+
+A plugin's view uses it to show what its own panel holds, filtered by the panel's `with`, as the jobs plugin lists the
+jobs on the open board.
 
 ```ts shape
 import { panelOf } from '@ifloom/engine/plugin'
@@ -885,8 +905,8 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Function. Explained in [Prose and markup](/docs/reference/prose#parsebeats).
 
-A body's beats, in order. `find` says who a line under `@id` is; left out,
-`@you` and `@player` are the player's.
+Returns a body's beats, in order. `find` names the speaker of a line under `@id`, and without it `@you` and `@player`
+are the player's.
 
 ```ts shape
 import { parseBeats } from '@ifloom/engine/plugin'
@@ -899,9 +919,10 @@ Uses: [`SpeakerFinder`](#speakerfinder), [`SceneBeat`](/docs/api/engine#scenebea
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#partnerqueries).
 
-The queries first-party plugins answer that other plugins ask, by full
-name. Part of `QueryRegistry`, so they are typed wherever a query is
-asked; a plugin's own block declares the rest of its queries.
+The queries first-party plugins answer for other plugins, by full name. `QueryRegistry` includes them, so they are
+typed wherever a query is asked.
+
+A plugin's own registry block declares the rest of its queries.
 
 ```ts shape
 import type { PartnerQueries } from '@ifloom/engine/plugin'
@@ -920,28 +941,27 @@ type PartnerQueries = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `calendar/now` | `() => { day: number; period: string }` |  |  | The calendar's day, from 0, and period. |
-| `calendar/periods` | `() => string[]` |  |  | The calendar's periods, in order. |
-| `calendar/bedtime` | `() => boolean` |  |  | Whether it's a time the player could go to bed. |
-| `places/here` | `() => string \| null` |  |  | The id of the place the player is in, or null for nowhere. |
-| `places/holder` | `() =>` [`EntityRef`](/docs/api/engine#entityref) `\| null` |  |  | The entity of the place the player is in, which holds what is put down there; null when nowhere. |
-| `places/known` | `(args: { location: string }) => boolean` |  |  | Whether the game has this place. |
-| `cast/portrait` | `(args: { character: string }) => string \| undefined` |  |  | A character's face, their person's `portrait`; undefined for none. |
-| `cast/contacts` | `() =>` [`CastContact[]`](#castcontact) |  |  | Everyone met who can be called. |
-| `cast/sender` | `(args: { from: string }) =>` [`SenderView`](#senderview) |  |  | Who a message or a post is from: the entity's name and picture, a person's `portrait` as the face. |
+| `calendar/now` | `() => { day: number; period: string }` |  |  | Returns the calendar's day, from 0, and its period. |
+| `calendar/periods` | `() => string[]` |  |  | Returns the calendar's periods, in order. |
+| `calendar/bedtime` | `() => boolean` |  |  | Returns true at a time the player could go to bed. |
+| `places/here` | `() => string \| null` |  |  | Returns the id of the location the player is at, or null when they are at none. |
+| `places/holder` | `() =>` [`EntityRef`](/docs/api/engine#entityref) `\| null` |  |  | Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. |
+| `places/known` | `(args: { location: string }) => boolean` |  |  | Returns true when the game has the location. |
+| `cast/portrait` | `(args: { character: string }) => string \| undefined` |  |  | Returns a character's face, their person's `portrait`, or undefined for none. |
+| `cast/contacts` | `() =>` [`CastContact[]`](#castcontact) |  |  | Returns the characters the player has met who can be called. |
+| `cast/sender` | `(args: { from: string }) =>` [`SenderView`](#senderview) |  |  | Returns the `SenderView` of the entity a message or a post is from, with a person's `portrait` as the face. |
 
 ## pictureView
 
 Function. Explained in [The view](/docs/reference/view#pictureview).
 
-A picture as the UI draws it: the layers whose `when` holds, each with its
-file (a pool's pick, kept per owner and layer as `picture:<index>`), and the
-hotspots on them. A hotspot tied to a layer that isn't shown is left out. A
-`choice` hotspot takes that choice's command and availability from
-`choices`, the scene's rendered choices, and is left out when the choice is
-not on offer; a `command` hotspot is worked out as any action's button is.
-Exported for plugins that draw a picture of their own: a place's. A plugin's
-`view` passes its context's `picks`, so the reducer records the layers' picks.
+Returns the `PictureView` of a picture, with its layers whose `when` holds and their hotspots, or null without
+a picture. A plugin calls it to render a picture of its own.
+
+Each layer's file can be a pool's pick, kept per owner and layer as `picture:<index>`. A hotspot tied to a layer that
+isn't shown is left out. A `choice` hotspot takes that choice's command and availability from `choices`, the scene's
+rendered choices, and is left out when the choice is not on offer. A `command` hotspot is rendered as any action is.
+A plugin's `view` passes its context's `picks`, so the reducer records the layers' picks.
 
 ```ts shape
 import { pictureView } from '@ifloom/engine/plugin'
@@ -954,25 +974,17 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugin).
 
-A system added to the engine: its own state, and the conditions, effects,
-commands, hooks and view that work on it.
+A system added to the engine, with its own state and the conditions, effects, commands, hooks and view that work on
+it. A game lists its plugins in `plugins` and never loads one later.
 
-Its members follow one naming rule (ADR 0009). A hook runs at an event and
-returns the next state, and is named `on` and the event: `onTurn`,
-`onCommand`. A provider answers a question and never changes the state, and
-is named by the noun it gives: `guard`, `price`, `label`, `scene`,
-`actions`, `audio`, `statModifiers`, `view`, `profile`. Tables of
-named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
-are plural nouns. Nothing is nested: there is no `hooks: {}`.
+Its members follow one naming rule. A hook runs at an event, returns the next state and is named `on` and the event
+(`onTurn`, `onCommand`). A provider answers a question, never changes the state and is named by the noun it gives
+(`guard`, `price`, `label`, `scene`, `actions`, `audio`, `statModifiers`, `view`, `profile`). Tables of named
+functions (`conditions`, `effects`, `commands`, `queries`, `values`) are plural nouns, and nothing is nested.
 
-Content calls a plugin by name with its id in front, `{ 'quests/done':
-{ quest: 'bakery' } }`, as a condition, an effect or a command, the same way
-it calls the game's own code (`{ 'game/tired': true }`), so games and mods
-learn one form. A plugin
-usually exports typed helpers that write those for authors working in code.
-
-Plugins are chosen when the game is built (`game.plugins`), never loaded while
-it runs.
+Content calls a plugin by name with its id in front, as in `{ 'quests/done': { quest: 'bakery' } }`, the same way it
+calls the game's own code (`{ 'game/tired': true }`). A plugin's helpers write those calls for authors working in
+code.
 
 ```ts shape
 import type { Plugin } from '@ifloom/engine/plugin'
@@ -1019,49 +1031,49 @@ type Plugin<S = any, V = unknown> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | Its name, and the prefix on everything it adds. Letters, digits and `-`. |
-| `version` | `number` |  |  | The version of its state's shape. Bump it when the shape changes, and add the step that carries the previous version forward to `migrations`. |
-| `start` | `(game:` [`Game`](/docs/api/engine#game)`) => S` | yes |  | Its state in a new game. A plugin with no state leaves this out. |
-| `migrations` | `Record<number, (state: unknown, tools:` [`MigrationTools`](/docs/api/engine#migrationtools)`) => unknown>` | yes |  | One step per version, keyed by the version it upgrades *from*, as the engine's own saves are. A save whose state has no route forward is refused. Each step gets the plugin's old state and the same `MigrationTools` a game's migration gets, and returns the plugin's new state. |
-| `contentVersion` | `number` | yes |  | The version of the shape of what content and packs write for it: its `data`, its calls' arguments, its strings and its traits. 1 if left out. Bump it when that shape changes, and add the step that carries a pack of the previous version forward to `contentMigrations`. Packs record the version they were written for in `plugins`. |
-| `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | One step per content version, keyed by the version it upgrades *from*. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. A version with no step changed nothing a pack holds. See `ContentStep` and `ContentTools`. |
-| `commandVersion` | `number` | yes |  | The version of its commands' arguments, as command logs record them. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
-| `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | One step per command version, keyed by the version it upgrades *from*: what `replay` plays an older log's commands through. See `CommandStep`. |
-| `calls` | [`AnyCalls`](#anycalls) | yes |  | Its conditions, effects and commands, each declared once with what it takes (`defineCalls`): the implementations below are handed their arguments read by it, the content checker reports what a call leaves out, gets wrong or names that the game lacks, and a translation reaches the words in a call's arguments. Every declared call has an implementation, and every implementation a declaration. |
-| `data` | [`PluginData`](#plugindata) | yes |  | The lists of its pack `data`, each declared once with its entry's noun and which of its fields are words a player reads (`defineData`), so a translation's `words` table reaches them, keyed `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.name`. |
-| `conditions` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => boolean>` | yes |  | Conditions content can test, by name, without the prefix. |
-| `effects` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Effects content can apply, by name. Each takes the state as the effects before it left it and returns the next one, so two in one list compose. What one does is hidden from prices and guards until it runs; an effect that only stands for other effects is a `macro` instead. |
-| `macros` | `Record<string,` [`Macro`](#macro)`<S>>` | yes |  | Effects that stand for other effects, by name, called by content as any effect is: each returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. A name is an effect's or a macro's, never both. See `Macro`. |
-| `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S>>` | yes |  | Commands a button can send, by name. |
-| `strings` | `Record<string, string>` | yes |  | The plugin's player-facing lines, by name without the prefix, in English. A game overrides one as `strings['<id>/<name>']`; the plugin reads them with `stringOf(game, '<id>/<name>')`. |
-| `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | Answers other plugins can ask for by name, without importing this one: `context.query('calendar/whenNext', { when })`. For what a condition's yes or no cannot say — a place, a time, a list. |
-| `cooperates` | `string[]` | yes |  | The plugins this one works with when the game has them, by id. Content may then name their conditions and effects even in a game without them: the loader lets it pass, and the condition is false and the effect does nothing. |
-| `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Changes to what the player's stats read right now, worked out from the plugin's state: a timed boost, say. Nothing is written into the state; every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. Must not read stats itself, or it reads itself. |
-| `values` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => string…` | yes |  | Words and numbers content can read by name, asked with arguments as a condition is: in prose as `{{id/name channel=texts}}`, and as `{ value: 'id/name', with }` for a badge or a stat's ceiling. |
-| `onTurn` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | A hook: the end of a turn, once the counter has moved on and `resets` are back, in the order the hooks run (the game's first). Returns the next state. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
-| `onTurnDone` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | A hook: the end of a turn, once every `onTurn` has run, so it sees what they did: the calendar's new day, a status worn off. In the same order and with the same context as `onTurn`. Returns the next state. |
-| `onStat` | `(before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, stat: string, by: number, context:` [`PluginContext`](#plugincontext)`<S>…` | yes |  | A hook: one of the player's stats just changed, by a `stat` effect. `before` is the state before it, `after` the state with it, `by` how far it moved. Return `before` to say it did not take, `after` to let it, or `after` with more besides. Runs in the order the hooks run (the game's first), each seeing what the one before returned. |
-| `onCommand` | `(before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | A hook: after every command that took, with the state it started from and the state after. The context is the state after. Returns the next state. |
-| `guard` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, asked:` [`Asked`](#asked)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Refusal`](#refusal) `\| undefined)` | yes |  | Whether a command may go ahead, given what it would do (`effectsOf`). Asked of every command but the ones that ignore locks, after the locks. |
-| `price` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, effects: readonly` [`Effect[]`](/docs/api/engine#effect)`, context:` [`PluginContext`](#plugincontext)`<S>) => string[] \|…` | yes |  | What a button costs that the engine cannot say, in the plugin's words: `['until evening']`. Asked with the effects the button would apply. |
-| `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Where the game is, in a few words for a header or a save: "Day 3 · Wednesday morning". |
-| `saveName` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | The name a save is listed under, such as the name the player typed, kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it (the game's first); with none, saves have no name. |
-| `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | What the screen shows while no scene is open: a room's description, a shop front, a dashboard's heading. The first plugin that answers fills it; with none, the screen is the game's title and its buttons. |
-| `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Actions offered while no scene is open, drawn as buttons before the game's own `actions` and exactly like them: a room's things to do, say. |
-| `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | One of this plugin's actions that isn't among its `actions` now, by id without the prefix: an app's, say. `{ type: 'action', id: '<plugin>/<id>' }` does it, as for a button with a cost or effects, which is looked up among the `actions` when this has none. Undefined when there is none. |
-| `content` | [`Content`](/docs/api/engine#content) | yes |  | Content the plugin brings, merged first, under the game's content and packs, which can replace anything in it by id: its kinds of entity (the people of a cast, unlisted in the view unless the kind sets `listed`; a game that redeclares one keeps what it leaves out), and any scenes, prose, actions or `data` it ships with. |
-| `traits` | `readonly` [`TraitDef`](#traitdef)`<any, any>[]` | yes |  | Traits this plugin gives meaning to: named data entities carry, written on a kind, an entity or content's `traits` table, which the plugin reads with `declaredTrait`. Each id is the plugin's id, `/` and a name. Data only: what a trait does is the plugin's code. |
-| `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | What plays on background channels, by channel: a place's ambience. Below an open scene's choice and an `audio` effect's, above the game's default. Null silences a channel; a channel left out is the next plugin's, then the default's. The first plugin that names a channel wins it. |
-| `view` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => V` | yes |  | What the UI needs from this plugin, at `view.plugins[id]`. `V` is its type; declare it in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
-| `profile` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | What the plugin keeps in the player's profile, which outlives saves and new games: earned achievements, a gallery of endings. The runner asks it after every command that took, with the state after, the state before and what the plugin's profile namespace (its id) holds now. Return a new value to store, or undefined to leave it. Only a runner with a `profile` asks; `apply` never does. |
-| `references` | [`PluginReferences`](#pluginreferences) | yes |  | What this plugin's calls and content name, for the content checker to resolve as it resolves the engine's own. See `PluginReferences`. |
-| `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Rules of this plugin's own that a reference can't say: two entries with one id, an exit to nowhere. Run by the content checker after the references; `tools` words anything else the plugin names as the checker does. |
+| `id` | `string` |  |  | The plugin's id, the prefix on everything it adds. It holds letters, digits and `-`. |
+| `version` | `number` |  |  | The version of the plugin's state's shape. Bump it when the shape changes, and add the step that carries the previous version forward to `migrations`. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) => S` | yes |  | Returns the plugin's state in a new game. A plugin with no state leaves it out. |
+| `migrations` | `Record<number, (state: unknown, tools:` [`MigrationTools`](/docs/api/engine#migrationtools)`) => unknown>` | yes |  | The plugin's state migrations, one step per version, keyed by the version each upgrades from. A save whose state has no route forward is refused. Each step gets the plugin's old state and the same `MigrationTools` a game's migration gets, and returns the plugin's new state. |
+| `contentVersion` | `number` | yes |  | The version of the shape of the content and packs written for the plugin, its `data`, calls' arguments, strings and traits. 1 if left out. Bump it when that shape changes, and add the step that carries a pack of the previous version forward to `contentMigrations`. Packs record the version they were written for in `plugins`. |
+| `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | The plugin's content migrations, one step per content version, keyed by the version each upgrades from. A version with no step changed nothing a pack holds. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. See `ContentStep` and `ContentTools`. |
+| `commandVersion` | `number` | yes |  | The version of the plugin's commands' arguments, which command logs record. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
+| `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | The plugin's command migrations, one step per command version, keyed by the version each upgrades from. `replay` runs an older log's commands through them. See `CommandStep`. |
+| `calls` | [`AnyCalls`](#anycalls) | yes |  | The declaration of the plugin's conditions, effects and commands, each with the arguments it takes, from `defineCalls`. Every declared call needs an implementation, and every implementation a declaration. The implementations get their arguments read by it. The content checker reports a call that leaves an argument out, gets one wrong or names something the game lacks, and a translation reaches the words in a call's arguments. |
+| `data` | [`PluginData`](#plugindata) | yes |  | The declaration of the lists in the plugin's `data`, each with its entry's noun and its fields a player reads, from `defineData`. A translation's `words` table reaches those fields by `<plugin>/<list>.<id>.<field>`, such as `quests/quests.coffee.name`. |
+| `conditions` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => boolean>` | yes |  | The plugin's conditions content can test, by name without the prefix. |
+| `effects` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | The plugin's effects content can apply, by name without the prefix. Each takes the state the effects before it left and returns the next one, so two in one list compose. Prices and guards can't see what an effect does until it runs. An effect that only stands for other effects belongs in `macros` instead. |
+| `macros` | `Record<string,` [`Macro`](#macro)`<S>>` | yes |  | The plugin's macros, effects that stand for other effects, by name without the prefix. A name is an effect's or a macro's, never both. Content calls one as any effect. It returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. See `Macro`. |
+| `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S>>` | yes |  | The plugin's commands a choice or action can send, by name without the prefix. |
+| `strings` | `Record<string, string>` | yes |  | The plugin's strings, the lines a player reads, by name without the prefix, in English. A game overrides one as `strings['<id>/<name>']`, and the plugin reads them with `stringOf(game, '<id>/<name>')`. |
+| `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | The plugin's queries, answers other plugins ask for by name without importing it, such as `context.query('calendar/whenNext', { when })`. A query answers what a condition's yes or no can't, such as a location, a time or a list. |
+| `cooperates` | `string[]` | yes |  | The ids of the plugins this one works with when the game has them. Content may name their calls in a game without them, where the condition is false and the effect does nothing. The content checker lets those calls pass. |
+| `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Returns the changes to what the player's stats read now, worked out from the plugin's state, such as a timed boost. It must not read stats itself, or it reads itself. Nothing is written into the state. Every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. |
+| `values` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => string…` | yes |  | The plugin's values, words and numbers content reads by name with arguments, as a condition is asked. Prose prints one as `{{id/name channel=texts}}`, and an `Amount` reads one as `{ value: 'id/name', with }`. |
+| `onTurn` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | The hook run at the end of a turn, once the counter has moved on and `resets` are back. It returns the next state, and the hooks run in order, the game's first. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
+| `onTurnDone` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | The hook run once every `onTurn` has run, so it sees their changes, such as the calendar's new day. It returns the next state and runs in the same order and context as `onTurn`. |
+| `onStat` | `(before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, stat: string, by: number, context:` [`PluginContext`](#plugincontext)`<S>…` | yes |  | The hook run when a `stat` effect changes one of the player's stats. `before` is the state before it, `after` the state with it, and `by` how far it moved. Return `before` to undo the change, `after` to keep it, or `after` with more changes. The hooks run in order, the game's first, each seeing what the one before returned. |
+| `onCommand` | `(before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | The hook run after every command that took, with the state before and the state after. It returns the next state, and its context is the state after. |
+| `guard` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, asked:` [`Asked`](#asked)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Refusal`](#refusal) `\| undefined)` | yes |  | Returns a `Refusal` for a command, given the effects it would apply, or undefined to let it through. The engine asks it after the locks, of every command but the ones that ignore locks. |
+| `price` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, effects: readonly` [`Effect[]`](/docs/api/engine#effect)`, context:` [`PluginContext`](#plugincontext)`<S>) => string[] \|…` | yes |  | Returns the plugin's words for what a button costs that the engine can't say, such as `['until evening']`. The engine asks it with the effects the button would apply. |
+| `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns a few words on the time or place in the game for a header or a save, such as "Day 3 · Wednesday morning". |
+| `saveName` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns the name a save is listed under, such as the name the player typed. It is kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it, the game's first. With none, saves have no player name. |
+| `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | Returns the `RoomScene` the screen shows while no scene is open, such as a location's description or a dashboard's heading. The first plugin that answers fills it. With none, the room shows the game's title and its actions. |
+| `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns the actions offered while no scene is open, such as a location's things to do. The view lists them before the game's own `actions`, rendered the same way. |
+| `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns one of the plugin's actions that isn't among its `actions` now, by id without the prefix, such as an app's. Undefined when there is none. `{ type: 'action', id: '<plugin>/<id>' }` runs it, as for an action with a cost or effects. Without this provider, the engine looks the id up among the plugin's `actions`. |
+| `content` | [`Content`](/docs/api/engine#content) | yes |  | The content the plugin brings, merged first, under the game's content and packs, which can replace anything in it by id. It holds the plugin's kinds of entity, such as the cast's `character`, unlisted in the view unless the kind sets `listed`. A game that redeclares a kind keeps the fields it leaves out. It can also hold scenes, prose, actions or `data`. |
+| `traits` | `readonly` [`TraitDef`](#traitdef)`<any, any>[]` | yes |  | The traits the plugin gives meaning to, each id the plugin's id, `/` and a name. A trait is data only, and the plugin's code decides what it does. Content writes them on a kind, an entity or content's `traits` table, and the plugin reads them with `traitOf` or `declaredTrait`. |
+| `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | Returns the tracks the plugin plays on background channels, by channel, such as a location's ambience. Null silences a channel, and the first plugin that names a channel wins it. A plugin's track is below an open scene's and an `audio` effect's, and above the game's default. A channel left out is the next plugin's, then the default's. |
+| `view` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => V` | yes |  | Returns the plugin's view, which a UI reads at `view.plugins[id]`. Declare its type `V` in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
+| `profile` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Returns the value the plugin keeps in the player's profile, which outlives saves and new games, such as earned achievements. Return undefined to leave the stored value. The runner asks it after every command that took, with the state after, the state before and the value the plugin's profile namespace (its id) holds now. Only a runner with a `profile` asks, and `apply` never does. |
+| `references` | [`PluginReferences`](#pluginreferences) | yes |  | The references the plugin's calls and content make, which the content checker resolves as it resolves the engine's own. See `PluginReferences`. |
+| `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Returns the problems the plugin's own rules find that a reference can't express, such as two entries with one id or an exit to nowhere. The content checker runs it after the references. `tools` words problems with anything else the plugin names as the checker does. |
 
 ## PluginArgs
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginargs).
 
-What content passes to a plugin's condition, effect or command: `with`.
+The arguments content passes to a plugin's condition, effect or command, as an object.
 
 ```ts shape
 import type { PluginArgs } from '@ifloom/engine/plugin'
@@ -1074,9 +1086,8 @@ type PluginArgs = {
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincalls-and-anycalls).
 
-A plugin's calls, as `defineCalls` declares them: its id, what each call
-takes, and a writer for each, by table: `calls.conditions.at({ location })`.
-Give it to `definePlugin` as `calls`, and derive the registries from it.
+A plugin's calls as `defineCalls` declares them, with a `CallWriter` for each, by table, such as
+`calls.conditions.at({ location })`. Give it to `definePlugin` as `calls`, and derive the registries from it.
 
 ```ts fragment
 type PluginCalls<Id extends string = string, D extends CallShapes = CallShapes> = {
@@ -1087,9 +1098,18 @@ type PluginCalls<Id extends string = string, D extends CallShapes = CallShapes> 
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `Id` |  |  | The plugin's id. |
+| `conditions` | `Writers<Id, Table<D, 'conditions'>>` |  |  | The writers of the plugin's conditions, by name. |
+| `effects` | `Writers<Id, Table<D, 'effects'>>` |  |  | The writers of the plugin's effects, by name. |
+| `commands` | `Writers<Id, Table<D, 'commands'>>` |  |  | The writers of the plugin's commands, by name. |
+
 ## PluginCommand
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincommand).
+
+A command a plugin declares in its `commands`, with its refusal, its run and what it would apply.
 
 ```ts shape
 import type { PluginCommand } from '@ifloom/engine/plugin'
@@ -1104,20 +1124,20 @@ type PluginCommand<S = any, A = PluginArgs> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ignoresLocks` | `boolean` | yes |  | Run even while a lock would stop it. For tools that stand outside the story — a debugger — never for something the player does in it. |
-| `whyNot` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Why it cannot be done now, as the player reads it; undefined if it can. |
-| `run` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Run it: the state after the command. Called only when `whyNot` gave no reason. |
-| `effectsOf` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Effect[]`](/docs/api/engine#effect) | yes |  | The effects running it would apply, for guards, prices and locks to see. None if left out. |
-| `spends` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, number> \|…` | yes |  | The stats it spends, by id, for its button's price, as an action's `cost.stats` gives them: `{ coins: 4 }`. Only the price shows it; `run` does the spending, and `whyNot` says when there isn't enough. None if left out. |
+| `ignoresLocks` | `boolean` | yes |  | The setting that runs the command even while a lock would stop it. Use it for tools outside the story, such as a debugger, never for something the player does in it. |
+| `whyNot` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns the reason the command can't run now, in the player's words, or undefined if it can. |
+| `run` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the state after the command. The engine calls it only when `whyNot` gave no reason. |
+| `effectsOf` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Effect[]`](/docs/api/engine#effect) | yes |  | Returns the effects running the command would apply, for guards, prices and locks to see. None if left out. |
+| `spends` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, args: A, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, number> \|…` | yes |  | Returns the stats the command spends, by id, for its button's price, as an action's `cost.stats` gives them, such as `{ coins: 4 }`. None if left out. Only the price shows it. `run` does the spending, and `whyNot` refuses when there isn't enough. |
 
 ## PluginContext
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincontext).
 
-What every plugin function is handed besides the game state: what a game's
-own functions get (the game, `query`, `value` and `roll`; see
-`CustomContext`), the plugin's own state, typed, `get` to read it from a
-later game state and `set` to return the game state with it replaced.
+The context every plugin function gets besides the game state. It adds the plugin's own state, typed, to the
+`CustomContext` a game's own functions get.
+
+`get` reads the plugin's state from a later game state, and `set` returns the game state with it replaced.
 
 ```ts shape
 import type { PluginContext } from '@ifloom/engine/plugin'
@@ -1138,23 +1158,23 @@ type PluginContext<S> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | [`Game`](/docs/api/engine#game) |  |  | The loaded game. |
-| `query` | [`Query`](/docs/api/engine#query) |  |  | Ask a plugin something by its full name: `query('places/here')`. Undefined when the game does not have that plugin. |
-| `value` | `(name: string, args?:` [`PluginArgs`](#pluginargs)`) => string \| number \| undefined` |  |  | A value by name, a plugin's (`messages/unread`) or the game's own, asked with `args`. Undefined when nobody has it. |
-| `roll` | `(max: number, name: string) => number` |  |  | A whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`: the same save and turn always draw the same. |
-| `slice` | `S` |  |  | The plugin's state in the game state the function was handed: `get()`. |
-| `get` | `(on?:` [`GameState`](/docs/api/engine#gamestate)`) => S` |  |  | The plugin's state in the state the function was handed, or in `on`, for a function that has already changed the game state (applied effects, say) and wants the plugin's state as it is now. Its starting state (`start`) when the save has none yet. The read that matches `set`. |
-| `set` | `(next: S, on?:` [`GameState`](/docs/api/engine#gamestate)`) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | The game state with the plugin's state replaced: on the state the function was handed, or on `on`, for a function that has already changed other parts of the game state and wants the plugin's state written onto that. |
-| `apply` | `(effects: readonly` [`EffectRef[]`](/docs/api/engine#effectref)`, on?:` [`GameState`](/docs/api/engine#gamestate)`) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Apply effects as content would — any effect, a custom one or another plugin's included — to the state the function was handed, or to `on`. How a plugin effect ends a turn: `apply([{ turn: true }])`. |
-| `picks` | `Record<string, string>` | yes |  | Only in `view`: where the pool picks the view makes are written, for the reducer to record. Pass it to `pictureView` so a picture's pick stays the same on every visit (`beats` records its own). Undefined elsewhere. |
-| `beats` | `(blocks: readonly` [`Block[]`](/docs/api/engine#block)`, id: string) =>` [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | Blocks drawn as beats, as a scene's body is drawn: a message's words, a post's, an app's. The blocks whose `when` holds, their words filled in for this save, variants drawn and pools picked under `id` (so a block's pick stays the same on every visit), spoken lines with their speakers, and bold, italics and UI pieces as spans. Inline actions and tooltips stay in the words as written, since only a scene offers choices. In `view`, the pool picks it makes are recorded. |
-| `profile` | `unknown` | yes |  | Only in `view`, and only when a runner with a profile builds it: what the plugin's own profile namespace (its id) held when the runner last read or wrote it. Frozen, so read it and never change it. Undefined elsewhere, in a view built by `view(state, game)` alone, and while nothing is stored. Conditions, effects, commands and hooks never see it, so a replay always plays the same. |
+| `game` | [`Game`](/docs/api/engine#game) |  |  | The context's loaded game. |
+| `query` | [`Query`](/docs/api/engine#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('places/here')`). |
+| `value` | `(name: string, args?:` [`PluginArgs`](#pluginargs)`) => string \| number \| undefined` |  |  | The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's, asked with `args`. It returns undefined when no plugin or game has that value. |
+| `roll` | `(max: number, name: string) => number` |  |  | The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`. The same save and turn always draw the same number. |
+| `slice` | `S` |  |  | The plugin's state in the game state the function was given, the same as `get()`. |
+| `get` | `(on?:` [`GameState`](/docs/api/engine#gamestate)`) => S` |  |  | Returns the plugin's state in the game state the function was given, or in `on`. Its starting state (`start`) when the save has none yet. Pass `on` from a function that has already changed the game state, such as by applying effects, to read the plugin's state as it is now. It is the read that matches `set`. |
+| `set` | `(next: S, on?:` [`GameState`](/docs/api/engine#gamestate)`) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the game state with the plugin's state replaced, on the state the function was given or on `on`. Pass `on` from a function that has already changed other parts of the game state. |
+| `apply` | `(effects: readonly` [`EffectRef[]`](/docs/api/engine#effectref)`, on?:` [`GameState`](/docs/api/engine#gamestate)`) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the state after a list of effects, applied to the state the function was given or to `on`. Any effect works, a custom one or another plugin's included. A plugin's effect ends a turn with `apply([{ turn: true }])`. |
+| `picks` | `Record<string, string>` | yes |  | The record of the pool picks a `view` makes, for the reducer to keep. It is set only in `view`. Pass it to `pictureView` so a picture's pick stays the same on every visit. `beats` records its own. |
+| `beats` | `(blocks: readonly` [`Block[]`](/docs/api/engine#block)`, id: string) =>` [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | Returns blocks rendered as beats, the way a scene's body is, for a message's words, a post's or an app's. Only the blocks whose `when` holds are rendered. Words are filled in for this save, variants and pools drawn under `id` so a block's pick stays the same on every visit, spoken lines given their speakers, and bold, italics and UI pieces made spans. Inline actions and tooltips stay as plain words, since only a scene offers choices. In `view`, the reducer records the pool picks it makes. |
+| `profile` | `unknown` | yes |  | The value the plugin's own profile namespace (its id) held when the runner last read or wrote it. It is set only in `view`, when a runner with a profile builds the view. It is frozen, so read it and never change it. It is undefined in a view built by `view(state, game)` alone and while nothing is stored. Conditions, effects, commands and hooks never see it, so a replay always plays the same. |
 
 ## PluginData
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugindata).
 
-A plugin's data lists, as `defineData` declares them, by name. Give them to `definePlugin` as `data`.
+A plugin's `DataList`s as `defineData` declares them, by name. Give them to `definePlugin` as `data`.
 
 ```ts fragment
 type PluginData<L extends Readonly<Record<string, ListSpec<any>>> = Readonly<Record<string, ListSpec<any>>>> = { readonly [K in keyof L & string]: DataList<EntryOf<L[K]>>; }
@@ -1166,9 +1186,10 @@ Uses: [`DataList`](#datalist).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugindef).
 
-What `definePlugin` takes: a plugin, whose conditions, effects, macros and
-commands, when it declares its `calls`, are exactly the declared ones, each
-handed its arguments typed. An effect is in `effects` or `macros`.
+The plugin `definePlugin` takes. When it declares its `calls`, its conditions, effects, macros and commands must be
+exactly the declared ones, each given its arguments typed.
+
+A declared effect is implemented in `effects` or `macros`.
 
 ```ts fragment
 type PluginDef<S, V, C extends AnyCalls> = {
@@ -1213,48 +1234,48 @@ type PluginDef<S, V, C extends AnyCalls> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `view` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => V)` | yes |  | What the UI needs from this plugin, at `view.plugins[id]`. `V` is its type; declare it in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
-| `references` | [`PluginReferences`](#pluginreferences) | yes |  | What this plugin's calls and content name, for the content checker to resolve as it resolves the engine's own. See `PluginReferences`. |
-| `traits` | `readonly` [`TraitDef`](#traitdef)`<any, any>[]` | yes |  | Traits this plugin gives meaning to: named data entities carry, written on a kind, an entity or content's `traits` table, which the plugin reads with `declaredTrait`. Each id is the plugin's id, `/` and a name. Data only: what a trait does is the plugin's code. |
-| `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Actions offered while no scene is open, drawn as buttons before the game's own `actions` and exactly like them: a room's things to do, say. |
-| `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | What plays on background channels, by channel: a place's ambience. Below an open scene's choice and an `audio` effect's, above the game's default. Null silences a channel; a channel left out is the next plugin's, then the default's. The first plugin that names a channel wins it. |
-| `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | What the screen shows while no scene is open: a room's description, a shop front, a dashboard's heading. The first plugin that answers fills it; with none, the screen is the game's title and its buttons. |
-| `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | One of this plugin's actions that isn't among its `actions` now, by id without the prefix: an app's, say. `{ type: 'action', id: '<plugin>/<id>' }` does it, as for a button with a cost or effects, which is looked up among the `actions` when this has none. Undefined when there is none. |
-| `id` | `string` |  |  | Its name, and the prefix on everything it adds. Letters, digits and `-`. |
-| `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Where the game is, in a few words for a header or a save: "Day 3 · Wednesday morning". |
-| `start` | `((game:` [`Game`](/docs/api/engine#game)`) => S)` | yes |  | Its state in a new game. A plugin with no state leaves this out. |
-| `version` | `number` |  |  | The version of its state's shape. Bump it when the shape changes, and add the step that carries the previous version forward to `migrations`. |
-| `data` | [`PluginData`](#plugindata) | yes |  | The lists of its pack `data`, each declared once with its entry's noun and which of its fields are words a player reads (`defineData`), so a translation's `words` table reaches them, keyed `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.name`. |
-| `content` | [`Content`](/docs/api/engine#content) | yes |  | Content the plugin brings, merged first, under the game's content and packs, which can replace anything in it by id: its kinds of entity (the people of a cast, unlisted in the view unless the kind sets `listed`; a game that redeclares one keeps what it leaves out), and any scenes, prose, actions or `data` it ships with. |
-| `values` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => string…` | yes |  | Words and numbers content can read by name, asked with arguments as a condition is: in prose as `{{id/name channel=texts}}`, and as `{ value: 'id/name', with }` for a badge or a stat's ceiling. |
-| `strings` | `Record<string, string>` | yes |  | The plugin's player-facing lines, by name without the prefix, in English. A game overrides one as `strings['<id>/<name>']`; the plugin reads them with `stringOf(game, '<id>/<name>')`. |
-| `migrations` | `Record<number, (state: unknown, tools:` [`MigrationTools`](/docs/api/engine#migrationtools)`) => unknown>` | yes |  | One step per version, keyed by the version it upgrades *from*, as the engine's own saves are. A save whose state has no route forward is refused. Each step gets the plugin's old state and the same `MigrationTools` a game's migration gets, and returns the plugin's new state. |
-| `cooperates` | `string[]` | yes |  | The plugins this one works with when the game has them, by id. Content may then name their conditions and effects even in a game without them: the loader lets it pass, and the condition is false and the effect does nothing. |
-| `contentVersion` | `number` | yes |  | The version of the shape of what content and packs write for it: its `data`, its calls' arguments, its strings and its traits. 1 if left out. Bump it when that shape changes, and add the step that carries a pack of the previous version forward to `contentMigrations`. Packs record the version they were written for in `plugins`. |
-| `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | One step per content version, keyed by the version it upgrades *from*. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. A version with no step changed nothing a pack holds. See `ContentStep` and `ContentTools`. |
-| `commandVersion` | `number` | yes |  | The version of its commands' arguments, as command logs record them. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
-| `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | One step per command version, keyed by the version it upgrades *from*: what `replay` plays an older log's commands through. See `CommandStep`. |
-| `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | Answers other plugins can ask for by name, without importing this one: `context.query('calendar/whenNext', { when })`. For what a condition's yes or no cannot say — a place, a time, a list. |
-| `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Changes to what the player's stats read right now, worked out from the plugin's state: a timed boost, say. Nothing is written into the state; every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. Must not read stats itself, or it reads itself. |
-| `onTurn` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | A hook: the end of a turn, once the counter has moved on and `resets` are back, in the order the hooks run (the game's first). Returns the next state. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
-| `onTurnDone` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | A hook: the end of a turn, once every `onTurn` has run, so it sees what they did: the calendar's new day, a status worn off. In the same order and with the same context as `onTurn`. Returns the next state. |
-| `onStat` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, stat: string, by: number, context:` [`PluginContext`](#plugincontext)`<…` | yes |  | A hook: one of the player's stats just changed, by a `stat` effect. `before` is the state before it, `after` the state with it, `by` how far it moved. Return `before` to say it did not take, `after` to let it, or `after` with more besides. Runs in the order the hooks run (the game's first), each seeing what the one before returned. |
-| `onCommand` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | A hook: after every command that took, with the state it started from and the state after. The context is the state after. Returns the next state. |
-| `guard` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, asked:` [`Asked`](#asked)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Refusal`](#refusal) `\| undefined)` | yes |  | Whether a command may go ahead, given what it would do (`effectsOf`). Asked of every command but the ones that ignore locks, after the locks. |
-| `price` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, effects: readonly` [`Effect[]`](/docs/api/engine#effect)`, context:` [`PluginContext`](#plugincontext)`<S>) => string[] \|…` | yes |  | What a button costs that the engine cannot say, in the plugin's words: `['until evening']`. Asked with the effects the button would apply. |
-| `saveName` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | The name a save is listed under, such as the name the player typed, kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it (the game's first); with none, saves have no name. |
-| `profile` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | What the plugin keeps in the player's profile, which outlives saves and new games: earned achievements, a gallery of endings. The runner asks it after every command that took, with the state after, the state before and what the plugin's profile namespace (its id) holds now. Return a new value to store, or undefined to leave it. Only a runner with a `profile` asks; `apply` never does. |
-| `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Rules of this plugin's own that a reference can't say: two entries with one id, an exit to nowhere. Run by the content checker after the references; `tools` words anything else the plugin names as the checker does. |
-| `conditions` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Conditions content can test, by name, without the prefix. |
-| `effects` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Effects content can apply, by name. Each takes the state as the effects before it left it and returns the next one, so two in one list compose. What one does is hidden from prices and guards until it runs; an effect that only stands for other effects is a `macro` instead. |
-| `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S,` [`PluginArgs`](#pluginargs)`>> \| { [K in keyof` [`CallArgs`](#callargs)`<C, 'commands'>]:…` | yes |  | Commands a button can send, by name. |
-| `macros` | `Record<string,` [`Macro`](#macro)`<S,` [`PluginArgs`](#pluginargs)`>> \| { [K in keyof` [`CallArgs`](#callargs)`<C, 'effects'>]?:` [`Macro`](#macro)`<S,…` | yes |  | Effects that stand for other effects, by name, called by content as any effect is: each returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. A name is an effect's or a macro's, never both. See `Macro`. |
+| `view` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => V)` | yes |  | Returns the plugin's view, which a UI reads at `view.plugins[id]`. Declare its type `V` in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
+| `references` | [`PluginReferences`](#pluginreferences) | yes |  | The references the plugin's calls and content make, which the content checker resolves as it resolves the engine's own. See `PluginReferences`. |
+| `traits` | `readonly` [`TraitDef`](#traitdef)`<any, any>[]` | yes |  | The traits the plugin gives meaning to, each id the plugin's id, `/` and a name. A trait is data only, and the plugin's code decides what it does. Content writes them on a kind, an entity or content's `traits` table, and the plugin reads them with `traitOf` or `declaredTrait`. |
+| `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns the actions offered while no scene is open, such as a location's things to do. The view lists them before the game's own `actions`, rendered the same way. |
+| `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | Returns the tracks the plugin plays on background channels, by channel, such as a location's ambience. Null silences a channel, and the first plugin that names a channel wins it. A plugin's track is below an open scene's and an `audio` effect's, and above the game's default. A channel left out is the next plugin's, then the default's. |
+| `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | Returns the `RoomScene` the screen shows while no scene is open, such as a location's description or a dashboard's heading. The first plugin that answers fills it. With none, the room shows the game's title and its actions. |
+| `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns one of the plugin's actions that isn't among its `actions` now, by id without the prefix, such as an app's. Undefined when there is none. `{ type: 'action', id: '<plugin>/<id>' }` runs it, as for an action with a cost or effects. Without this provider, the engine looks the id up among the plugin's `actions`. |
+| `id` | `string` |  |  | The plugin's id, the prefix on everything it adds. It holds letters, digits and `-`. |
+| `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns a few words on the time or place in the game for a header or a save, such as "Day 3 · Wednesday morning". |
+| `start` | `((game:` [`Game`](/docs/api/engine#game)`) => S)` | yes |  | Returns the plugin's state in a new game. A plugin with no state leaves it out. |
+| `version` | `number` |  |  | The version of the plugin's state's shape. Bump it when the shape changes, and add the step that carries the previous version forward to `migrations`. |
+| `data` | [`PluginData`](#plugindata) | yes |  | The declaration of the lists in the plugin's `data`, each with its entry's noun and its fields a player reads, from `defineData`. A translation's `words` table reaches those fields by `<plugin>/<list>.<id>.<field>`, such as `quests/quests.coffee.name`. |
+| `content` | [`Content`](/docs/api/engine#content) | yes |  | The content the plugin brings, merged first, under the game's content and packs, which can replace anything in it by id. It holds the plugin's kinds of entity, such as the cast's `character`, unlisted in the view unless the kind sets `listed`. A game that redeclares a kind keeps the fields it leaves out. It can also hold scenes, prose, actions or `data`. |
+| `values` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => string…` | yes |  | The plugin's values, words and numbers content reads by name with arguments, as a condition is asked. Prose prints one as `{{id/name channel=texts}}`, and an `Amount` reads one as `{ value: 'id/name', with }`. |
+| `strings` | `Record<string, string>` | yes |  | The plugin's strings, the lines a player reads, by name without the prefix, in English. A game overrides one as `strings['<id>/<name>']`, and the plugin reads them with `stringOf(game, '<id>/<name>')`. |
+| `migrations` | `Record<number, (state: unknown, tools:` [`MigrationTools`](/docs/api/engine#migrationtools)`) => unknown>` | yes |  | The plugin's state migrations, one step per version, keyed by the version each upgrades from. A save whose state has no route forward is refused. Each step gets the plugin's old state and the same `MigrationTools` a game's migration gets, and returns the plugin's new state. |
+| `cooperates` | `string[]` | yes |  | The ids of the plugins this one works with when the game has them. Content may name their calls in a game without them, where the condition is false and the effect does nothing. The content checker lets those calls pass. |
+| `contentVersion` | `number` | yes |  | The version of the shape of the content and packs written for the plugin, its `data`, calls' arguments, strings and traits. 1 if left out. Bump it when that shape changes, and add the step that carries a pack of the previous version forward to `contentMigrations`. Packs record the version they were written for in `plugins`. |
+| `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | The plugin's content migrations, one step per content version, keyed by the version each upgrades from. A version with no step changed nothing a pack holds. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. See `ContentStep` and `ContentTools`. |
+| `commandVersion` | `number` | yes |  | The version of the plugin's commands' arguments, which command logs record. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
+| `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | The plugin's command migrations, one step per command version, keyed by the version each upgrades from. `replay` runs an older log's commands through them. See `CommandStep`. |
+| `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | The plugin's queries, answers other plugins ask for by name without importing it, such as `context.query('calendar/whenNext', { when })`. A query answers what a condition's yes or no can't, such as a location, a time or a list. |
+| `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Returns the changes to what the player's stats read now, worked out from the plugin's state, such as a timed boost. It must not read stats itself, or it reads itself. Nothing is written into the state. Every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. |
+| `onTurn` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run at the end of a turn, once the counter has moved on and `resets` are back. It returns the next state, and the hooks run in order, the game's first. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
+| `onTurnDone` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run once every `onTurn` has run, so it sees their changes, such as the calendar's new day. It returns the next state and runs in the same order and context as `onTurn`. |
+| `onStat` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, stat: string, by: number, context:` [`PluginContext`](#plugincontext)`<…` | yes |  | The hook run when a `stat` effect changes one of the player's stats. `before` is the state before it, `after` the state with it, and `by` how far it moved. Return `before` to undo the change, `after` to keep it, or `after` with more changes. The hooks run in order, the game's first, each seeing what the one before returned. |
+| `onCommand` | `((before:` [`GameState`](/docs/api/engine#gamestate)`, after:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run after every command that took, with the state before and the state after. It returns the next state, and its context is the state after. |
+| `guard` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, asked:` [`Asked`](#asked)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`Refusal`](#refusal) `\| undefined)` | yes |  | Returns a `Refusal` for a command, given the effects it would apply, or undefined to let it through. The engine asks it after the locks, of every command but the ones that ignore locks. |
+| `price` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, effects: readonly` [`Effect[]`](/docs/api/engine#effect)`, context:` [`PluginContext`](#plugincontext)`<S>) => string[] \|…` | yes |  | Returns the plugin's words for what a button costs that the engine can't say, such as `['until evening']`. The engine asks it with the effects the button would apply. |
+| `saveName` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns the name a save is listed under, such as the name the player typed. It is kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it, the game's first. With none, saves have no player name. |
+| `profile` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Returns the value the plugin keeps in the player's profile, which outlives saves and new games, such as earned achievements. Return undefined to leave the stored value. The runner asks it after every command that took, with the state after, the state before and the value the plugin's profile namespace (its id) holds now. Only a runner with a `profile` asks, and `apply` never does. |
+| `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Returns the problems the plugin's own rules find that a reference can't express, such as two entries with one id or an exit to nowhere. The content checker runs it after the references. `tools` words problems with anything else the plugin names as the checker does. |
+| `conditions` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | The plugin's conditions content can test, by name without the prefix. |
+| `effects` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | The plugin's effects content can apply, by name without the prefix. Each takes the state the effects before it left and returns the next one, so two in one list compose. Prices and guards can't see what an effect does until it runs. An effect that only stands for other effects belongs in `macros` instead. |
+| `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S,` [`PluginArgs`](#pluginargs)`>> \| { [K in keyof` [`CallArgs`](#callargs)`<C, 'commands'>]:…` | yes |  | The plugin's commands a choice or action can send, by name without the prefix. |
+| `macros` | `Record<string,` [`Macro`](#macro)`<S,` [`PluginArgs`](#pluginargs)`>> \| { [K in keyof` [`CallArgs`](#callargs)`<C, 'effects'>]?:` [`Macro`](#macro)`<S,…` | yes |  | The plugin's macros, effects that stand for other effects, by name without the prefix. A name is an effect's or a macro's, never both. Content calls one as any effect. It returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. See `Macro`. |
 
 ## PluginEntry
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginentry).
 
-One entry of a plugin's content in a pack: an id, and whatever fields the plugin reads.
+One entry of a plugin's content in a pack, with an id and the fields the plugin reads.
 
 ```ts shape
 import type { PluginEntry } from '@ifloom/engine/plugin'
@@ -1265,11 +1286,15 @@ type PluginEntry = {
 
 It also takes any other key: `[key: string]: unknown`.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The entry's id. |
+
 ## PluginProblem
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginproblem).
 
-Something wrong in a plugin's content: which list, which entry, what.
+A fault a plugin's `check` finds in its content, with the list and entry it is in.
 
 ```ts shape
 import type { PluginProblem } from '@ifloom/engine/plugin'
@@ -1280,13 +1305,18 @@ type PluginProblem = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `list` | `string` |  |  | The name of the plugin's list the entry is in. |
+| `id` | `string` |  |  | The entry's id. |
+| `what` | `string` |  |  | The fault, in the words the report shows. |
+
 ## PluginReferences
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
 
-What a plugin's calls and content name. The content checker resolves every
-reference against the game and reports what is missing, worded and placed
-as its own problems are.
+The references a plugin's calls and content make. The content checker resolves each against the game and reports
+what is missing, worded and placed as its own problems are.
 
 ```ts shape
 import type { PluginReferences } from '@ifloom/engine/plugin'
@@ -1299,15 +1329,15 @@ type PluginReferences = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `calls` | `(table:` [`CallTable`](#calltable)`, name: string, args:` [`PluginArgs`](#pluginargs)`, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference) | yes |  | What a call to one of its conditions, effects or commands names, by name without the prefix, from what content passes in `with`: a location, a character, a prose key. Asked of every call the checker finds. A rule of the plugin's own about the arguments is a `{ problem }`: `{ problem: 'count must be a whole number' }`. |
-| `panels` | `(panel: string, args:` [`PluginArgs`](#pluginargs)`, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference) | yes |  | What content opening one of the panels this plugin's UI draws names, from what it is opened with (`{ panel, with }`): `[{ entity: 'vendor:fish', carrying: 'shop/vendor' }]` for `panel: 'shop'`. Answer nothing for a panel that isn't this plugin's; a panel no plugin knows is the UI's business. Asked of every panel the checker finds. |
-| `content` | `(game:` [`Game`](/docs/api/engine#game)`) => readonly` [`ContentReferences[]`](#contentreferences) | yes |  | What its content names, entry by entry: `{ list: 'locations', id: 'cafe', refs: [...] }`. A problem is reported against `<list> <id>`, and pinned on the pack that entry came from. |
+| `calls` | `(table:` [`CallTable`](#calltable)`, name: string, args:` [`PluginArgs`](#pluginargs)`, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference) | yes |  | Returns the references a call to one of the plugin's conditions, effects or commands makes, by name without the prefix, from the call's arguments. The checker asks it of every call it finds. A reference can be a location, a character or a prose key. A rule of the plugin's own about the arguments is a `{ problem }`, such as `{ problem: 'count must be a whole number' }`. |
+| `panels` | `(panel: string, args:` [`PluginArgs`](#pluginargs)`, game:` [`Game`](/docs/api/engine#game)`) => readonly` [`Reference[]`](#reference) | yes |  | Returns the references opening one of the plugin's panels makes, from its `with`, such as `[{ entity: 'vendor:fish', carrying: 'shop/vendor' }]` for `panel: 'shop'`. The checker asks it of every panel it finds. Return nothing for a panel that isn't the plugin's. A UI checks a panel no plugin claims. |
+| `content` | `(game:` [`Game`](/docs/api/engine#game)`) => readonly` [`ContentReferences[]`](#contentreferences) | yes |  | Returns the references the plugin's content makes, entry by entry, such as `{ list: 'locations', id: 'cafe', refs: [...] }`. The checker reports a problem against `<list> <id>`, on the pack the entry came from. |
 
 ## PluginSlice
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginslice).
 
-A plugin's state as a save keeps it: the shape's version, and the state.
+The state a save keeps for one plugin, with the version of its shape.
 
 ```ts shape
 import type { PluginSlice } from '@ifloom/engine/plugin'
@@ -1317,15 +1347,20 @@ type PluginSlice = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `version` | `number` |  |  | The plugin's `version` the state was written in. |
+| `state` | `unknown` |  |  | The plugin's state. |
+
 ## priceView
 
 Function. Explained in [The view](/docs/reference/view#priceview).
 
-A price as the view shows one: the stats spent above 0, each worded as a
-stat's value is, in the order given, then `notes`, plugins' words for
-what else it costs, with the whole as one line in `text`. Null when it
-costs nothing. What a plugin's view uses for a price of its own, such as
-what a shift pays or a vendor's full price.
+Returns the `Price` of some stats and notes, or null when it costs nothing. A plugin's view calls it for a
+price of its own, such as a vendor's full price.
+
+It lists each stat spent above 0 in the order given, worded as the stat's value is, then the `notes`, and joins them
+into one line in `text`.
 
 ```ts shape
 import { priceView } from '@ifloom/engine/plugin'
@@ -1338,6 +1373,8 @@ Uses: [`Game`](/docs/api/engine#game), [`Price`](/docs/api/engine#price).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#queryargs-and-queryanswer).
 
+The answer a query gives, as `QueryRegistry` declares it, or `unknown` for an undeclared name.
+
 ```ts shape
 import type { QueryAnswer } from '@ifloom/engine/plugin'
 type QueryAnswer<K extends PropertyKey> = K extends keyof QueryRegistry ? QueryRegistry[K] extends (...args: never[]) => infer R ? R : unknown : unknown
@@ -1349,7 +1386,7 @@ Uses: [`QueryRegistry`](/docs/api/engine#queryregistry).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#queryargs-and-queryanswer).
 
-What a query takes and answers: its declared arguments and answer, or anything for a name nobody declares.
+The arguments a query takes, as `QueryRegistry` declares them, or an optional object for an undeclared name.
 
 ```ts shape
 import type { QueryArgs } from '@ifloom/engine/plugin'
@@ -1362,7 +1399,7 @@ Uses: [`QueryRegistry`](/docs/api/engine#queryregistry), [`PluginArgs`](#plugina
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#rawcall).
 
-A plugin call as `ContentTools.calls` hands it over: its full name, its arguments as written, and how it was written.
+A plugin call passed to a `ContentTools.calls` rewrite.
 
 ```ts shape
 import type { RawCall } from '@ifloom/engine/plugin'
@@ -1373,11 +1410,17 @@ type RawCall = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `name` | `string` |  |  | The call's full name, such as `'places/at'`. |
+| `with` | `unknown` |  |  | The call's arguments, unchanged from the pack. |
+| `form` | [`CallForm`](#callform) |  |  | The call's form in the pack. |
+
 ## RawCommand
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#rawcommand).
 
-A command as a log from an older engine or plugin kept it: some version's shape, with its `type`.
+A command from a command log, in the shape of the engine or plugin version that wrote it.
 
 ```ts shape
 import type { RawCommand } from '@ifloom/engine/plugin'
@@ -1388,15 +1431,19 @@ type RawCommand = {
 
 It also takes any other key: `[key: string]: unknown`.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `type` | `string` |  |  | The command's type, such as `choose` or a plugin's `quests/track`. |
+
 ## Reference
 
 Type. Explained in [Checking content](/docs/reference/checks#reference).
 
-One thing a piece of content names, for the content checker to resolve.
-Ids by what they are, files by kind, and content that names more (a
-condition, effects, a command, blocks, a picture) to be looked inside.
-Built from the core's kinds and each feature's (`references` in its
-shape), as `Condition` is.
+One name a piece of content uses, such as an id, a file or a nested condition, for the content checker to resolve.
+
+The checker looks inside content that names more, such as a condition, effects, a command, blocks or a picture.
+
+The type is built from the core's kinds and each feature's (`references` in its shape), as `Condition` is.
 
 ```ts shape
 import type { Reference } from '@ifloom/engine/plugin'
@@ -1456,11 +1503,11 @@ Uses: [`Effect`](/docs/api/engine#effect), [`SceneMedia`](/docs/api/engine#scene
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#asked-and-refusal).
 
-Why a plugin will not let a command through. A string is a refusal, as a
-lock's is: the button is greyed out with it. `soft` is a warning instead: the
-button stays pressable and shows the warning, and the reducer refuses the
-command all the same — running the clock past dawn, say, where a UI offers
-bed in its place.
+A plugin guard's reason for refusing a command. A string refuses it as a lock does, and the button is disabled with
+that reason.
+
+`{ reason, soft: true }` is a warning instead. The button stays pressable and shows the warning, but the reducer
+still refuses the command, such as running the clock past dawn, where a UI offers bed in its place.
 
 ```ts shape
 import type { Refusal } from '@ifloom/engine/plugin'
@@ -1471,12 +1518,12 @@ type Refusal = string | { reason: string; soft: true }
 
 Function. Explained in [The view](/docs/reference/view#renderaction).
 
-An action as a button: its label, its price, and why it is greyed out, if it
-is. Availability comes from `whyNot`, so the button and the reducer always
-agree. What a room's buttons are made with, for plugins that show actions
-somewhere else, such as an app on a device. `owner` is the plugin whose
-action it is, so one with a cost or effects is done as `'<owner>/<id>'`
-(see `Plugin.action`); left out, it is one of the game's.
+Returns an action as a `RenderedChoice`, with its label, its price and the reason it's refused now, if any. A
+plugin calls it to offer actions outside the room, such as in a device's app.
+
+Availability comes from `whyNot`, so the button and the reducer always agree. `owner` is the id of the plugin whose
+action it is, so one with a cost or effects runs as `'<owner>/<id>'` (see `Plugin.action`). Left out, the action is the
+game's.
 
 ```ts shape
 import { renderAction } from '@ifloom/engine/plugin'
@@ -1489,7 +1536,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#roomscene).
 
-What the screen shows while no scene is open, from a plugin's `scene`.
+The screen shown while no scene is open, from a plugin's `scene` provider.
 
 ```ts shape
 import type { RoomScene } from '@ifloom/engine/plugin'
@@ -1503,16 +1550,16 @@ type RoomScene = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `title` | `string` |  |  | The heading: a room's name. |
-| `body` | `readonly` [`Block[]`](/docs/api/engine#block) | yes |  | What is written there, as a scene's blocks: prose keys, variants, conditions. |
-| `id` | `string` | yes |  | The id its blocks are drawn under. Variants drawn here rotate per id, so a place gives its own id to keep its lines its own. The plugin's id if left out. |
-| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | Presentation hints for the room, carried to `view.scene.ui` as a scene's are. See `SceneUi`. |
+| `title` | `string` |  |  | The room's title, such as a location's name. |
+| `body` | `readonly` [`Block[]`](/docs/api/engine#block) | yes |  | The room's body, as a scene's blocks, such as prose keys, variants and conditions. |
+| `id` | `string` | yes |  | The id the room's blocks are rendered under. The plugin's id if left out. Variants drawn here rotate per id, so a location gives its own id to keep its lines its own. |
+| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | The room's `ui` hints, carried to `view.scene.ui` as a scene's are. See `SceneUi`. |
 
 ## SenderView
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#castcontact-and-senderview).
 
-Who sent something, as the cast's `cast/sender` answers: a name, their picture and their face.
+The sender of a message or a post, as the cast's `cast/sender` query answers.
 
 ```ts shape
 import type { SenderView } from '@ifloom/engine/plugin'
@@ -1523,11 +1570,17 @@ type SenderView = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `name` | `string` |  |  | The sender's name. |
+| `image` | `string \| null` |  |  | The sender's picture, or null. |
+| `portrait` | `string \| null` |  |  | The sender's face for a small avatar, a person's `portrait`, or null. |
+
 ## setTraitState
 
 Function. Explained in [Entities](/docs/reference/entities#settraitstate).
 
-The state with one entity's state for one trait replaced. An entity not in the game is left alone.
+Returns the state with one entity's state for one trait replaced. The state is unchanged for an entity not in the game.
 
 ```ts shape
 import { setTraitState } from '@ifloom/engine/plugin'
@@ -1540,9 +1593,10 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Prose and markup](/docs/reference/prose#speakerfinder).
 
-Who a spoken line under `@id` is: the player's own or someone else's, the
-entity it is when the id names one, and the name to show. Given the id as
-written. See `lineSpeakers` for the engine's.
+A function that returns the speaker of a line written under `@id`, given the id. It returns whether the line is the
+player's, the entity the id names, and the name to show.
+
+`lineSpeakers` returns the engine's.
 
 ```ts shape
 import type { SpeakerFinder } from '@ifloom/engine/plugin'
@@ -1555,10 +1609,10 @@ Uses: [`EntityRef`](/docs/api/engine#entityref).
 
 Function. Explained in [Writing a plugin](/docs/reference/plugins#speakerof).
 
-Who a speaker id is: their entity's name (its tokens filled), picture and
-hints. Null when the id names no entity in the game. What a scene's
-`speaker` becomes on screen, and what a plugin asks for the sender of a
-message or a post.
+Returns the speaker a speaker id names, with their entity's name, picture and hints. Returns null when the id names
+no entity in the game.
+
+The view renders a scene's `speaker` with it, and a plugin calls it for the sender of a message or a post.
 
 ```ts shape
 import { speakerOf } from '@ifloom/engine/plugin'
@@ -1571,9 +1625,8 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#statmodifier).
 
-A change to what one of the player's stats reads, from a plugin's
-`statModifiers`. A stat's adds are summed and its multipliers multiplied
-together, and it reads `(value + adds) × multipliers`, held to its range.
+A change to what one of the player's stats reads, from a plugin's `statModifiers`. The stat reads
+`(value + adds) × multipliers`, held to its range, with its adds summed and its multipliers multiplied together.
 
 ```ts shape
 import type { StatModifier } from '@ifloom/engine/plugin'
@@ -1586,20 +1639,19 @@ type StatModifier = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stat` | `string` |  |  | The stat it changes, by id. |
-| `add` | `number` | yes |  | Added to the value. 0 if left out. |
-| `multiply` | `number` | yes |  | What the value, with the adds, is multiplied by. 1 if left out. |
+| `stat` | `string` |  |  | The id of the stat the modifier changes. |
+| `add` | `number` | yes |  | The amount added to the stat's value. 0 if left out. |
+| `multiply` | `number` | yes |  | The factor the stat's value, with the adds, is multiplied by. 1 if left out. |
 
 ## styledBeats
 
 Function. Explained in [Prose and markup](/docs/reference/prose#styledbeats).
 
-Text and spoken beats with their bold, italics and UI pieces drawn: `spans`
-with `bold`, `italic` and `ui` pieces, and `text` with the words alone. For
-beats that don't go through a scene's view, such as a message's or a
-post's. Inline actions and tooltips stay in the words as written, because
-only the view knows the choices and the prose. A beat with none of these is
-left as it is.
+Returns text and spoken beats with their bold, italics and UI pieces read into `spans`, and `text` with the words
+alone. A beat with none of these is returned unchanged.
+
+Use it for beats rendered outside a scene's view, such as a message's or a post's. Inline actions and tooltips stay
+in the words as written, since only the view has the choices and the prose.
 
 ```ts shape
 import { styledBeats } from '@ifloom/engine/plugin'
@@ -1612,10 +1664,10 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#traitdef).
 
-A trait a plugin declares, in its `traits`: a named piece of data entities
-carry, which the plugin gives meaning. Its id is the plugin's own id, `/`
-and a name. The game declares its own in `rules.traits`, with ids that
-have no `/`. Name `K` to have the data typed, as `TraitRegistry` says for it:
+A trait a plugin declares in its `traits`, a named piece of data entities carry that the plugin gives meaning. The
+game declares its own in `rules.traits`, with ids that have no `/`.
+
+Name `K` to type the data as `TraitRegistry` declares it, as in
 `const washable: TraitDef<'laundry/washable'> = { id: 'laundry/washable', ... }`.
 
 ```ts shape
@@ -1631,19 +1683,18 @@ type TraitDef<K extends string = string, S = unknown> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `K` |  |  |  |
-| `check` | `((data:` [`TraitData`](/docs/api/engine#traitdata)`<K>, tools:` [`TraitTools`](#traittools)`) => readonly string[])` | yes |  | What is wrong with the data on one entity, by a rule of the plugin's own: `['a slot needs a name']`. Asked by the content checker. |
-| `references` | `((data:` [`TraitData`](/docs/api/engine#traitdata)`<K>, tools:` [`TraitTools`](#traittools)`) => readonly` [`Reference[]`](#reference)`)` | yes |  | What the data names, for the content checker to resolve: a slot, a scene, a prose key. `tools.ref` is the entity it is on, for a condition in the data that names it as `'$'`. |
-| `words` | [`WordShape`](/docs/api/engine#wordshape) | yes |  | Which fields of the data are words a player reads, for a translation's `words` table: `{ closed: true, body: 'blocks' }`. Each is keyed `entity.<ref>.traits.<id>.<field>`, or under the kind for a kind's default. See `WordShape`. |
-| `state` | `{ start(data:` [`TraitData`](/docs/api/engine#traitdata)`<K>): S }` | yes |  | For the rare trait that keeps state of its own on each entity, such as the uses left in a torch: where it starts, from the entity's data. Read with `traitState` and written with `setTraitState`; the save keeps it only once it is written. |
+| `id` | `K` |  |  | The trait's id, the plugin's id, `/` and a name, such as `'laundry/washable'`. |
+| `check` | `((data:` [`TraitData`](/docs/api/engine#traitdata)`<K>, tools:` [`TraitTools`](#traittools)`) => readonly string[])` | yes |  | Returns the problems with the data on one entity by the plugin's own rules, such as `['a slot needs a name']`. The content checker calls it. |
+| `references` | `((data:` [`TraitData`](/docs/api/engine#traitdata)`<K>, tools:` [`TraitTools`](#traittools)`) => readonly` [`Reference[]`](#reference)`)` | yes |  | Returns the references the trait's data makes, such as a slot, a scene or a prose key, for the content checker to resolve. `tools.ref` is the entity the data is on, for a condition that names it as `'$'`. |
+| `words` | [`WordShape`](/docs/api/engine#wordshape) | yes |  | The fields of the data a player reads, for a translation's words table, such as `{ closed: true, body: 'blocks' }`. Each is keyed `entity.<ref>.traits.<id>.<field>`, or under the kind for a kind's default. See `WordShape`. |
+| `state` | `{ start(data:` [`TraitData`](/docs/api/engine#traitdata)`<K>): S }` | yes |  | The trait's own state on each entity, such as the uses left in a torch, with `start` giving its value from the data. The save keeps it only once play writes it. Read it with `traitState` and write it with `setTraitState`. |
 
 ## TraitEntityDef
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#traitentitydef).
 
-What a trait kind's definer takes: an entity's fields (its `of` is the
-kind's if left out) and the trait's, side by side. A field both have, such
-as a place's `ui`, is the trait's.
+The definition a `TraitKind`'s `define` takes, with an entity's fields and the trait's side by side. A field
+both have, such as a location's `ui`, goes to the trait.
 
 ```ts shape
 import type { TraitEntityDef } from '@ifloom/engine/plugin'
@@ -1652,11 +1703,17 @@ type TraitEntityDef<K extends string> = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `of` | `string` | yes |  | The entity's kind, the trait kind's `kind` if left out. |
+
 ## TraitKind
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#traitkind).
 
-A kind of entity a plugin's trait makes, as `defineTraitKind` declares it.
+A kind of entity a plugin's trait makes, as `defineTraitKind` declares it, such as the places plugin's locations.
+
+It reads a bare id as an entity of its kind and gives the lookups, the definer and the checked arguments.
 
 ```ts shape
 import type { TraitKind } from '@ifloom/engine/plugin'
@@ -1679,23 +1736,23 @@ type TraitKind<K extends string> = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `kind` | `string` |  |  | The kind a bare id names. |
-| `trait` | `K` |  |  | The trait that makes an entity one. |
-| `ref` | `(id: string) => '${string}:${string}'` |  |  | The entity an id names: a bare id is one of the kind (`'park'` is `'location:park'`), a reference is as written. |
-| `id` | `(ref: string) => string` |  |  | How the plugin names one back: its bare id for one of the kind, else its whole reference. |
-| `all` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`) => '${string}:${string}'[]` |  |  | Every entity in the game now with the trait, as references: those content declares, in its order, then those made in play. |
-| `get` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`, id: string \| null \| undefined) =>` [`TraitData`](/docs/api/engine#traitdata)`<K> \| undefined` |  |  | The trait of the entity an id or reference names, read through what it was made `like`; undefined for one that isn't in the game or has no trait. |
-| `declaredAll` | `(game:` [`Game`](/docs/api/engine#game)`) => '${string}:${string}'[]` |  |  | Every entity content declares with the trait, in its order: for a check, which has no state. |
-| `declaredGet` | `(game:` [`Game`](/docs/api/engine#game)`, id: string \| null \| undefined) =>` [`TraitData`](/docs/api/engine#traitdata)`<K> \| undefined` |  |  | The trait of an entity content declares, by id or reference: for a check, which has no state. |
-| `define` | `(def:` [`TraitEntityDef`](#traitentitydef)`<K>) =>` [`EntityDef`](/docs/api/engine#entitydef) |  |  | An entity for content's `entities`, of the kind (or its `of`), with the trait's fields put in `traits[trait]` and the rest left on the entity. |
-| `entry` | `(id: string) =>` [`Reference`](#reference) |  |  | The reference to one, by id or reference, for the checker: an entity the game has, which must carry the trait. |
-| `arg` | `() =>` [`Arg`](#arg)`<string, string, false>` |  |  | A call's argument naming one by id or reference, `'park'` or `'location:park'`, checked as `entry`. |
-| `args` | `() =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | A call's argument naming one or several, `'park'` or `['cafe', 'park']`, handed as a list. |
+| `trait` | `K` |  |  | The id of the trait that makes an entity one of these. |
+| `ref` | `(id: string) => '${string}:${string}'` |  |  | Returns the entity reference an id names. A bare id is one of the kind (`'park'` is `'location:park'`), and a reference stays as written. |
+| `id` | `(ref: string) => string` |  |  | Returns the id the plugin names an entity by, its bare id for one of the kind, else its whole reference. |
+| `all` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`) => '${string}:${string}'[]` |  |  | Returns every entity in the game now with the trait, those content declares in its order, then those made in play. |
+| `get` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`, id: string \| null \| undefined) =>` [`TraitData`](/docs/api/engine#traitdata)`<K> \| undefined` |  |  | Returns the trait of the entity an id or reference names, read through the entity it was made `like`. Undefined for an entity that isn't in the game or has no trait. |
+| `declaredAll` | `(game:` [`Game`](/docs/api/engine#game)`) => '${string}:${string}'[]` |  |  | Returns every entity content declares with the trait, in its order, for a check, which has no state. |
+| `declaredGet` | `(game:` [`Game`](/docs/api/engine#game)`, id: string \| null \| undefined) =>` [`TraitData`](/docs/api/engine#traitdata)`<K> \| undefined` |  |  | Returns the trait of an entity content declares, by id or reference, for a check, which has no state. |
+| `define` | `(def:` [`TraitEntityDef`](#traitentitydef)`<K>) =>` [`EntityDef`](/docs/api/engine#entitydef) |  |  | Returns an entity for content's `entities`, of the kind unless `of` says otherwise. The trait's fields go in `traits[trait]` and the rest stay on the entity. |
+| `entry` | `(id: string) =>` [`Reference`](#reference) |  |  | Returns the reference to an entity by id or reference, which the checker resolves to one the game has that carries the trait. |
+| `arg` | `() =>` [`Arg`](#arg)`<string, string, false>` |  |  | Returns a call's argument naming one entity by id or reference, `'park'` or `'location:park'`, checked as `entry` is. |
+| `args` | `() =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | Returns a call's argument naming one entity or several, `'park'` or `['cafe', 'park']`, which the implementation gets as a list. |
 
 ## TraitKindSpec
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#traitkindspec).
 
-What `defineTraitKind` takes.
+Settings for `defineTraitKind`.
 
 ```ts shape
 import type { TraitKindSpec } from '@ifloom/engine/plugin'
@@ -1708,17 +1765,18 @@ type TraitKindSpec<K extends string> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `kind` | `string` |  |  | The kind a bare id names: `'location'`, so `'park'` is `'location:park'`. |
-| `trait` | `K` |  |  | The trait that makes an entity one: `'places/location'`. |
-| `fields` | `{ readonly [F in keyof Required<`[`TraitData`](/docs/api/engine#traitdata)`<K>>]: true }` |  |  | Every field of the trait, as `{ exits: true, body: true, … }`: what the definer puts in the trait rather than on the entity. Typed complete, so a field added to the trait can't be left out. |
+| `kind` | `string` |  |  | The kind a bare id names, such as `'location'`, so `'park'` is `'location:park'`. |
+| `trait` | `K` |  |  | The id of the trait that makes an entity one of these, such as `'places/location'`. |
+| `fields` | `{ readonly [F in keyof Required<`[`TraitData`](/docs/api/engine#traitdata)`<K>>]: true }` |  |  | The trait's fields, as `{ exits: true, body: true, … }`, which `define` puts in the trait rather than on the entity. The type requires every field, so a field added to the trait can't be left out. |
 
 ## traitState
 
 Function. Explained in [Entities](/docs/reference/entities#traitstate).
 
-The state one entity keeps for one of its traits: what play last wrote,
-or else where the trait's `state.start` says it starts. Undefined when the
-entity isn't in the game, lacks the trait, or the trait keeps no state.
+Returns the state one entity keeps for one of its traits, the value play last wrote or else the trait's
+`state.start`.
+
+It returns undefined when the entity isn't in the game, lacks the trait, or the trait keeps no state.
 
 ```ts shape
 import { traitState } from '@ifloom/engine/plugin'
@@ -1731,7 +1789,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#traittools).
 
-What a trait's `check` is handed beside the data: the game, and the entity the data is on.
+The tools a trait's `check` and `references` get beside the data.
 
 ```ts shape
 import type { TraitTools } from '@ifloom/engine/plugin'
@@ -1741,14 +1799,17 @@ type TraitTools = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `game` | [`Game`](/docs/api/engine#game) |  |  | The loaded game. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The entity the data is on. |
+
 ## TurnContext
 
 Type. Explained in [Rules and hooks](/docs/reference/rules#turncontext).
 
-What `onTurn` and `onTurnDone` are handed, the game's and every plugin's:
-the context, with `before`, the state as the turn ended, before the
-counter moved on and `resets` were put back. Its `apply` ends no turn: a
-`turn` effect applied here does nothing.
+The context `onTurn` and `onTurnDone` get, the game's and every plugin's, with `before` added. Its `apply` ends no
+turn, so a `turn` effect applied through it does nothing.
 
 ```ts shape
 import type { TurnContext } from '@ifloom/engine/plugin'
@@ -1770,25 +1831,25 @@ type TurnContext<S = any> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | [`Game`](/docs/api/engine#game) |  |  | The loaded game. |
-| `query` | [`Query`](/docs/api/engine#query) |  |  | Ask a plugin something by its full name: `query('places/here')`. Undefined when the game does not have that plugin. |
-| `value` | `(name: string, args?:` [`PluginArgs`](#pluginargs)`) => string \| number \| undefined` |  |  | A value by name, a plugin's (`messages/unread`) or the game's own, asked with `args`. Undefined when nobody has it. |
-| `roll` | `(max: number, name: string) => number` |  |  | A whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`: the same save and turn always draw the same. |
-| `slice` | `S` |  |  | The plugin's state in the game state the function was handed: `get()`. |
-| `get` | `(on?:` [`GameState`](/docs/api/engine#gamestate) `\| undefined) => S` |  |  | The plugin's state in the state the function was handed, or in `on`, for a function that has already changed the game state (applied effects, say) and wants the plugin's state as it is now. Its starting state (`start`) when the save has none yet. The read that matches `set`. |
-| `set` | `(next: S, on?:` [`GameState`](/docs/api/engine#gamestate) `\| undefined) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | The game state with the plugin's state replaced: on the state the function was handed, or on `on`, for a function that has already changed other parts of the game state and wants the plugin's state written onto that. |
-| `apply` | `(effects: readonly` [`EffectRef[]`](/docs/api/engine#effectref)`, on?:` [`GameState`](/docs/api/engine#gamestate)`) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Apply effects as content would — any effect, a custom one or another plugin's included — to the state the function was handed, or to `on`. How a plugin effect ends a turn: `apply([{ turn: true }])`. |
-| `picks` | `Record<string, string>` | yes |  | Only in `view`: where the pool picks the view makes are written, for the reducer to record. Pass it to `pictureView` so a picture's pick stays the same on every visit (`beats` records its own). Undefined elsewhere. |
-| `beats` | `(blocks: readonly` [`Block[]`](/docs/api/engine#block)`, id: string) =>` [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | Blocks drawn as beats, as a scene's body is drawn: a message's words, a post's, an app's. The blocks whose `when` holds, their words filled in for this save, variants drawn and pools picked under `id` (so a block's pick stays the same on every visit), spoken lines with their speakers, and bold, italics and UI pieces as spans. Inline actions and tooltips stay in the words as written, since only a scene offers choices. In `view`, the pool picks it makes are recorded. |
-| `profile` | `unknown` | yes |  | Only in `view`, and only when a runner with a profile builds it: what the plugin's own profile namespace (its id) held when the runner last read or wrote it. Frozen, so read it and never change it. Undefined elsewhere, in a view built by `view(state, game)` alone, and while nothing is stored. Conditions, effects, commands and hooks never see it, so a replay always plays the same. |
+| `game` | [`Game`](/docs/api/engine#game) |  |  | The context's loaded game. |
+| `query` | [`Query`](/docs/api/engine#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('places/here')`). |
+| `value` | `(name: string, args?:` [`PluginArgs`](#pluginargs)`) => string \| number \| undefined` |  |  | The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's, asked with `args`. It returns undefined when no plugin or game has that value. |
+| `roll` | `(max: number, name: string) => number` |  |  | The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`. The same save and turn always draw the same number. |
+| `slice` | `S` |  |  | The plugin's state in the game state the function was given, the same as `get()`. |
+| `get` | `(on?:` [`GameState`](/docs/api/engine#gamestate) `\| undefined) => S` |  |  | Returns the plugin's state in the game state the function was given, or in `on`. Its starting state (`start`) when the save has none yet. Pass `on` from a function that has already changed the game state, such as by applying effects, to read the plugin's state as it is now. It is the read that matches `set`. |
+| `set` | `(next: S, on?:` [`GameState`](/docs/api/engine#gamestate) `\| undefined) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the game state with the plugin's state replaced, on the state the function was given or on `on`. Pass `on` from a function that has already changed other parts of the game state. |
+| `apply` | `(effects: readonly` [`EffectRef[]`](/docs/api/engine#effectref)`, on?:` [`GameState`](/docs/api/engine#gamestate)`) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the state after a list of effects, applied to the state the function was given or to `on`. Any effect works, a custom one or another plugin's included. A plugin's effect ends a turn with `apply([{ turn: true }])`. |
+| `picks` | `Record<string, string>` | yes |  | The record of the pool picks a `view` makes, for the reducer to keep. It is set only in `view`. Pass it to `pictureView` so a picture's pick stays the same on every visit. `beats` records its own. |
+| `beats` | `(blocks: readonly` [`Block[]`](/docs/api/engine#block)`, id: string) =>` [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | Returns blocks rendered as beats, the way a scene's body is, for a message's words, a post's or an app's. Only the blocks whose `when` holds are rendered. Words are filled in for this save, variants and pools drawn under `id` so a block's pick stays the same on every visit, spoken lines given their speakers, and bold, italics and UI pieces made spans. Inline actions and tooltips stay as plain words, since only a scene offers choices. In `view`, the reducer records the pool picks it makes. |
+| `profile` | `unknown` | yes |  | The value the plugin's own profile namespace (its id) held when the runner last read or wrote it. It is set only in `view`, when a runner with a profile builds the view. It is frozen, so read it and never change it. It is undefined in a view built by `view(state, game)` alone and while nothing is stored. Conditions, effects, commands and hooks never see it, so a replay always plays the same. |
 | `before` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state as the turn ended, before the counter moved on and `resets` were put back. |
 
 ## WrittenAs
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#writtenas).
 
-What content writes as a call's value: its arguments; `true` for a call
-with none (or `{}`); and either for a call whose arguments may all be left out.
+The value content writes for a call of an `ArgShape`. It is the arguments, `true` or `{}` for a call with none,
+and either for a call whose arguments may all be left out.
 
 ```ts fragment
 type WrittenAs<S extends ArgShape> = [keyof S] extends [never] ? true | Record<string, never> : [RequiredKeys<S>] extends [never] ? true | { [K in keyof ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })]: ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })[K]; } : { [K in keyof ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })]: ({ [K in RequiredKeys<S>]: ArgIn<S[K]>; } & { [K in OptionalKeys<S>]?: ArgIn<S[K]>; })[K]; }

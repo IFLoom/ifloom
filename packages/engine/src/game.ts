@@ -15,185 +15,181 @@ export type { StoryletFields } from './features/scenes.ts'
 export type { MinigameSceneFields } from './features/minigames.ts'
 
 /**
- * Words a player reads when something is refused: written in place
- * (`'Closed.'`), or a line of the strings table by its key (`{ string:
- * 'shop/closed' }`), so a game rewords it once for every place it is used.
- * Read it with `reasonOf`.
+ * The words a player reads when something is refused, written in place (`'Closed.'`) or as a strings key
+ * (`{ string: 'shop/closed' }`). Read one with `reasonOf`.
+ *
+ * A key lets a game reword a reason once for every place that uses it.
  */
 export type Reason = string | { string: string }
 
 /**
- * How often something can happen: once in the whole game, or once a turn.
- * `reason` is what the player reads on a button once it is spent; the
- * engine's `done` string ("Already done.") if left out.
+ * A limit of once a game or once a turn on a choice, an action or a plugin's entry, such as a cheat. The engine counts
+ * a choice's or an action's uses in `state.chosen`.
  */
 export type Once = {
-  /** Once in the whole game, or at most once a turn. */
+  /** The limit's span, `'game'` for once in the whole game or `'turn'` for once a turn. */
   per: 'game' | 'turn'
-  /** What the player reads on it once it's spent. The `done` string if left out. */
+  /** The reason the player reads once the limit is spent. For a choice or an action, the engine's `done` string ("Already done.") if left out. */
   reason?: Reason
 }
 
 /**
- * Why something the player could do is refused for now: a choice, an action,
- * a place, an app. Each entry is checked in order, and the first
- * whose `when` holds refuses it with its `reason`, which the button shows
- * greyed out. With `hide`, the button is left off the screen instead.
+ * A rule that refuses a choice, an action, a location or an app while its `when` holds. The first entry of a `blocked`
+ * list whose `when` holds gives the `reason` the button shows.
  */
 export type Blocked = {
-  /** Refused while this holds. */
+  /** The rule's condition, which refuses the choice or action while it holds. */
   when: Condition
-  /** What the player reads on the greyed-out button, and the refusal. */
+  /** The rule's reason, which the player reads on the greyed-out button and as the refusal. */
   reason: Reason
-  /** Leave it off the screen while `when` holds, rather than greyed out. */
+  /** The rule's hide mark. When true, the button is left off the screen while `when` holds, rather than greyed out. */
   hide?: boolean
 }
 
 /**
- * Something the player can press: a scene's choice (`Choice`) or an action
- * (`ActionDef`). Both have these fields, read the same way: its words, when
- * it is offered and why it is refused, what it costs, what it does and a
- * command it sends, once a turn, and words and hints for the UI.
- *
- * Pressing one runs, in order: its command, its cost, then its effects.
+ * The fields a scene's choice (`Choice`) and an action (`ActionDef`) share, read the same way for both. Taking one
+ * runs its command, then pays its cost, then applies its effects.
  */
 export type ButtonDef = {
+  /** The choice's or action's id, unique among its scene's choices or among the actions. */
   id: string
   /**
-   * Its words, as written, with tokens filled: `'Order a tea'`. A scene's
-   * choice with none shows its id; an action with none is never drawn as a
-   * button.
+   * The button's words, with tokens filled, such as `'Order a tea'`. A choice with no label shows its id, and an action
+   * with none is never rendered as a button.
    */
   label?: string
   /**
-   * Words that depend on state, "Not today" before you have bought it,
-   * "Right." after. The first whose `when` holds wins; `label` is the
-   * fallback.
+   * The button's words that depend on the state, such as "Not today" before you have bought it and "Right." after. The
+   * first entry whose `when` holds wins, and `label` is the fallback.
    */
   labels?: { when?: Condition; label: string }[]
-  /** Only offered, and only done, while this holds. */
+  /** The condition under which the choice or action is offered and can be taken. Always, if left out. */
   when?: Condition
   /**
-   * Shown but greyed out while one of these holds, with its reason (or left
-   * off with `hide`), and refused with it. The first that holds wins.
+   * The rules that refuse it for now. The first entry whose `when` holds greys the button out with its reason, or
+   * leaves it off with `hide`.
    */
   blocked?: Blocked[]
-  /** Stats it spends: checked before it runs, listed on its button, and paid after its command. */
+  /** The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. */
   cost?: ActionCost
-  /** Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. */
+  /** The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. */
   effects?: EffectRef[]
   /**
-   * A command it sends as well, run first: a plugin's in short
-   * (`{ 'devices/open': { id: 'messages' } }`) or the engine's. It is greyed
-   * out with that command's reason while it would be refused, and its price
-   * includes what the command spends. Any command but `choose`.
+   * The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never
+   * `choose`. The button is refused with that command's reason while the command would be.
+   *
+   * An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends.
    */
   command?: CommandRef
   /**
-   * Once in the game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`):
-   * spent once it has been pressed, as `state.chosen` counts it. `reason` is
-   * what the player reads on it afterwards: a choice stays on screen and pays
-   * nothing more, an action is refused.
+   * The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once
+   * spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`.
    */
   once?: Once
-  /** Words the UI can style or filter it by. The engine gives them no meaning. */
+  /** The tags a UI can style or filter it by. The engine gives them no meaning. */
   tags?: string[]
-  /** A warning that it can't be undone, which the UI shows on it. */
+  /** The warning that it can't be undone, which a UI shows on the button. */
   irreversible?: string
-  /** Presentation hints for the UI, carried to its button as written. See `ChoiceUi`. */
+  /** The ui hints carried to its button in the view. See `ChoiceUi`. */
   ui?: Ui<ChoiceUi>
 }
 
 /**
- * Something the player can do, as a button: the game's own in content's
- * `actions`, a plugin's (a place's, an app's). It is a `ButtonDef`, the
- * fields a choice has.
+ * An action the game declares in `actions`, or one a plugin offers (a location's, an app's). It has the fields of a
+ * `ButtonDef`, the same as a choice.
  *
- * Pressing one with only a `command` sends that command. One with a cost,
- * effects or `once` sends `{ type: 'action', id }`, which runs its command
- * first, then pays its cost and applies its effects: the game's by its id,
- * a plugin's as `'<plugin>/<id>'`. One with no `label` is never drawn as a
- * button: a choice's command, another button or a hotspot runs it.
+ * Taking one with only a `command` sends that command. One with a cost, effects or `once` sends
+ * `{ type: 'action', id }`, which runs its command, pays its cost and applies its effects. The id is the game's own,
+ * or `'<plugin>/<id>'` for a plugin's. An action with no `label` is never rendered as a button, so only a choice's
+ * command, another action or a hotspot runs it.
  */
 export type ActionDef = ButtonDef
 
+/** A scene's choice after rendering, with its label worked out and its effects ready. Internal to the screen. */
 export type SceneChoice = {
+  /** The choice's id. */
   id: string
+  /** The choice's label, worked out for this state. */
   label: string
+  /** The choice's visible mark, false when its `when` fails or a `blocked` entry with `hide` holds. */
   visible?: boolean
+  /** The choice's refusal from `blocked` or a spent `once`, or undefined while it can be taken. */
   disabled?: string
-  /** Words the UI can style or filter the choice by. The engine gives them no meaning. */
+  /** The tags a UI can style or filter the choice by. The engine gives them no meaning. */
   tags?: string[]
+  /** The choice's warning that it can't be undone. */
   irreversible?: string
+  /** The choice's effects, ready to apply. A spent choice keeps only its `scene` effects. */
   effects: Effect[]
-  /** Stats it spends, as the choice's `cost` says. */
+  /** The stats the choice spends, from its `cost`. */
   cost?: ActionCost
-  /** A command it sends as well, run before its effects. See `Choice.command`. */
+  /** The command the choice sends before its effects. See `Choice.command`. */
   command?: CommandRef
-  /** Presentation hints for the UI, carried to the view's choice as written. See `ChoiceUi`. */
+  /** The ui hints carried to the view's choice. See `ChoiceUi`. */
   ui?: Ui<ChoiceUi>
 }
 
 /**
- * A picture or a video in a scene's body, as a `{ media }` block. Give a file
- * as `src`, or ask a pool for one with `pool` and `tags`.
+ * A picture or a video in a scene's body, written as a `{ media }` block. Give a file as `src`, or have a pool draw
+ * one with `pool` and `tags`.
  */
 export type SceneMedia = {
+  /** The media's file, a path in the game's `art/` folder or a URL. */
   src?: string
-  /** A pool in `game.media.pools` to pick the file from. */
+  /** The pool in `game.media.pools` that draws the file. */
   pool?: string
-  /** The tags the pick should have, most important first. See `poolCandidates`. */
+  /** The tags the pool's pick should have, most important first. See `poolCandidates`. */
   tags?: string[]
+  /** The media's alternative text, for a screen reader. */
   alt?: string
-  /** `'inline'` if left out. */
+  /** The media's size, `'inline'` or `'wide'`. `'inline'` if left out. */
   size?: 'inline' | 'wide'
   /**
-   * Where it sits. Left out, a `{ media }` block sits where it is in the body,
-   * in order with the prose. `lead` opens the scene, which is where an
-   * establishing still belongs; `end` follows the body.
+   * The media's position. `lead` opens the scene, as an establishing picture does, and `end` follows the body. A block
+   * with none sits where it is in the body, in order with the prose.
    */
   at?: 'lead' | 'end'
-  /** Draw it as a video. A `.mp4` or `.webm` file is one anyway. */
+  /** The video mark, which renders the file as a video. A `.mp4` or `.webm` file is a video without it. */
   video?: boolean
 } & VideoFlags
 
-/** Prose and variants members the declarative scenes draw on. */
+/** The store of prose keys and variants lists that scenes read. `loadGame` makes it from the content's `prose`. */
 export type ProseStore = {
-  /** The words for a key, with `{{playerName}}` and friends filled in. */
+  /** The store's function that returns a prose key's line, with its tokens filled for `state`. */
   line: (key: string, state?: GameState) => string | undefined
-  /** The members of a variants list, by its name, in declaration order. */
+  /** The store's function that returns a variants list's members by its name, in declaration order. */
   variants: (name: string) => string[]
-  /** A member's weight in a variants list, 1 if it has none. Left out, every member weighs 1. */
+  /** The store's function that returns a member's weight in a variants list. Every member weighs 1 if left out. */
   weight?: (name: string, key: string) => number
   /**
-   * Every key the store has words for, so the content checker can read all
-   * the prose's markup. Left out, it reads only the keys content names.
+   * The store's function that lists every prose key, so the content checker can read all the prose's markup. The
+   * checker reads only the keys content names if left out.
    */
   keys?: () => string[]
 }
 
-/** A thread of the story, followed by its kv, and closed for a while if need be. */
+/**
+ * A storyline the game declares in `storylines`, a thread of the story with its own kv keys. A storyline can close
+ * until a later turn.
+ */
 export type StorylineDef = {
+  /** The storyline's id, read as `storyline:<id>` in a kv effect's `of`. */
   id: string
+  /** The storyline's name, as the player reads it. */
   name: string
 }
 
 /**
- * The game's own code: a plain object with what a plugin can have, for the
- * game itself, with no plugin to write. Content calls what it declares as it
- * calls a plugin's, with `game` as the plugin's id: `{ 'game/tired': true }`
- * as a condition, `{ 'game/payRent': {} }` as an effect, `{{catName}}` in
- * prose, `{ 'game/rest': true }` as a command.
+ * The game's own code, a plain object with the members a plugin has. Content calls its members with `game` as the
+ * plugin id, such as the condition `{ 'game/tired': true }`.
  *
- * The engine runs it as the plugin `game`, the first of the game's plugins:
- * every hook and provider runs before every plugin's, with the same context a
- * plugin's gets (`PluginContext`, and `TurnContext` for the turn hooks), whose
- * `slice`, `get` and `set` read and write the game's own state when it has a
- * `start`. Every member is optional and means what a plugin's does (see
- * `Plugin`), but `migrations`, which carry the whole save from one version of
- * the game to the next. A plugin's identity, versions, content, words and declared calls and data are
- * the game's own content, so they aren't here. What is locked and what resets
- * each turn are content: `locks` and `resets`.
+ * The engine runs it as the plugin `game`, before every other plugin, with the same context (`PluginContext`, and
+ * `TurnContext` for the turn hooks). Its `slice`, `get` and `set` read and write the game's own state when it has a
+ * `start`. Every member is optional and means what a plugin's does (see `Plugin`), except `migrations`, which carry
+ * the whole save from one version of the game to the next.
+ *
+ * A plugin's id, versions, content, strings, calls and data are the game's own content, so `GameRules` leaves them
+ * out. Locks and per-turn resets are content too, in `locks` and `resets`.
  */
 export type GameRules<S = any> = Omit<
   Plugin<S>,
@@ -211,68 +207,65 @@ export type GameRules<S = any> = Omit<
   | 'data'
 > & {
   /**
-   * Steps that carry a save from one version of the game to the next, keyed by
-   * the version they upgrade from: step 1 takes a version-1 save to version 2.
-   * They run when an older save loads, after the engine's and plugins' own
-   * migrations, on the whole state. A version with no step is carried forward
-   * unchanged. The version is the base's `version`.
+   * The game's save migrations, keyed by the game `version` each upgrades from, so step 1 takes a version-1 save to
+   * version 2. A version with no step is carried forward unchanged.
+   *
+   * They run on the whole state when an older save loads, after the engine's and plugins' own migrations.
    */
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
 }
 
-/** What a New Game+ takes from the game before: player stats, kv keys and what the player holds. */
+/** The stats, kv keys and things a New Game+ carries over from the game before, declared in `carryOver`. */
 export type CarryOver = {
   /** The player's stats to carry, by id. */
   stats?: string[]
-  /** kv keys, by name. */
+  /** The player's kv keys to carry, by key. */
   kv?: string[]
   /**
-   * Things the player holds, by reference (`'food:apple'`), or `'all'` for
-   * everything the player holds. A thing made in play comes with them.
+   * The things the player holds to carry, by reference (`'food:apple'`), or `'all'` for every thing the player holds.
+   * A thing made in play is carried too.
    */
   held?: string[] | 'all'
 }
 
-/** The fields of a game the core reads itself. The features' (settings, stats, audio, media, the ending) are in `features/`. */
+/** The fields of a game the core reads itself. The features declare the rest, such as settings, stats and audio. */
 type CoreGame = {
+  /** The game's id. Saves and packs record it, so a save from another game is refused. */
   id: string
-  /** The game's name, as a title screen shows it. */
+  /** The game's title, which a title page shows. */
   title: string
   /**
-   * The game's own version, a whole number from 1. Saves record it, and
-   * `migrations` carry an older save forward. Declaring it also stops the
-   * engine filling new stats, settings and entities into old saves by itself:
-   * your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out.
+   * The game's own version, a whole number from 1. Saves record it, and `rules.migrations` carry an older save forward.
+   * 1 if left out.
+   *
+   * Declaring it also stops the engine filling new stats, settings and entities into old saves by itself, so your
+   * migration steps fill them with `tools.fill()`.
    */
   version?: number
-  /** The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. */
+  /** The ids of the packs the game was loaded with, in order. Saves record them, and the game's own content has no id. */
   packs?: string[]
-  /**
-   * The words read by key: `prose`, `variants` and their weights, filled in for a save. `loadGame` makes it from the
-   * content's `prose`.
-   */
+  /** The game's prose keys and variants lists, with their weights. `loadGame` makes it from the content's `prose`. */
   prose?: ProseStore
-  /** The game's own code: its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. */
+  /** The game's own code, its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. */
   rules?: GameRules
   /**
-   * The game's words for anything the engine or a plugin says to the player,
-   * by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`.
-   * Packs can add theirs; a later pack's line wins.
+   * The game's lines in place of the engine's and plugins' strings, by key, such as
+   * `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Packs can add theirs, and a later pack's line wins.
    */
   strings?: Record<string, string>
   /** The plugins the game is built with, in the order their hooks run. */
   plugins?: readonly Plugin<any>[]
   /**
-   * Content for plugins, by plugin id and then list: `data.quests.quests`.
-   * Merged from packs by id, as scenes are.
+   * The plugins' content, by plugin id and then list, such as `data.quests.quests`. `loadGame` merges packs' entries by
+   * id, as it does scenes.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
 }
 
-/** A game: what the core reads, and what each feature does. */
+/** A loaded game, the core's fields and each feature's. `loadGame` makes it from the base, the content and the packs. */
 export type Game = Flat<CoreGame & FeatureGame>
 
-/** The scene with this id, as content declares it, or undefined. */
+/** Returns the scene with this id from the game's content, or undefined when there is none. */
 export function sceneOf(game: Game, id: string): DataScene | undefined {
   return game.scenes.find((scene) => scene.id === id)
 }

@@ -10,14 +10,16 @@ import { StartOver, commandContext, commandEntry, effectContext, effectEntry, fe
 import { draw } from './random.ts'
 import { afterSteps, screenSteps } from './features/registry.ts'
 
+/** Returns `n` held between `min` and `max`, 0 and 100 if left out. */
 export function clamp(n: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, n))
 }
 
 /**
- * What `apply` says about a command: the shape of a `Result`, with the state
- * on both sides. When `ok` is false the command was refused, `state` is the
- * one it was sent to, untouched, and `reason` says why.
+ * The answer `apply` gives for a command, a `Result` with the state on both sides. When `ok` is false, the command was
+ * refused, `state` is unchanged and `reason` says why.
+ *
+ * `newGame` is true when the command was a `newGame` and `state` is the new game's first state.
  */
 export type Applied = { ok: true; state: GameState; reason?: never; newGame?: true } | { ok: false; state: GameState; reason: string }
 
@@ -66,8 +68,9 @@ function after(before: GameState, ran: GameState, game: Game, command: Command):
 }
 
 /**
- * Run a command and say whether it took: the next state, and why it was
- * refused when it was. A refusal leaves the state as it was.
+ * Runs a command and returns the next state. A refused command returns the state unchanged, with the reason.
+ *
+ * A null state, or a `start` command, returns the game's starting state.
  */
 export function apply(state: GameState | null, game: Game, ref: CommandRef): Applied {
   const command = commandOf(ref)
@@ -113,7 +116,8 @@ function run(current: GameState, game: Game, command: Command): GameState {
 }
 
 /**
- * Run a command already allowed, by its entry. Also how a choice runs the command it sends. Internal.
+ * Returns the state after a command already allowed, run by its entry. A choice runs the command it sends this way.
+ * Internal.
  */
 export function runIn(rendered: Rendering, current: GameState, game: Game, command: Command): GameState {
   const entry = commandEntry(command)
@@ -122,17 +126,18 @@ export function runIn(rendered: Rendering, current: GameState, game: Game, comma
 }
 
 /**
- * Apply effects as content writes them, the engine's and short plugin calls
- * (`{ 'quests/start': { quest: 'bread' } }`) alike, as a plugin's
- * `context.apply` does: a call to an effect nobody has is left out.
+ * Returns the state after a list of effects, the engine's and plugins' short calls alike
+ * (`{ 'quests/start': { quest: 'bread' } }`). A call to an effect no plugin declares is skipped.
+ *
+ * A plugin's `context.apply` runs effects the same way.
  */
 export function applyEffects(state: GameState, game: Game, effects: readonly EffectRef[]): GameState {
   return runEffects(state, game, buildEffects(game, effects), false)
 }
 
 /**
- * `applyEffects`, told whether a turn is ending: while one is, a `turn` effect
- * does nothing. How a plugin's context applies effects, passing on what it was told.
+ * Returns the state after a list of effects, as `applyEffects` does, told whether a turn is ending. While one is, a
+ * `turn` effect does nothing, and a plugin's context passes the flag on.
  */
 export function runEffects(state: GameState, game: Game, effects: readonly Effect[], ending: boolean): GameState {
   let next = state

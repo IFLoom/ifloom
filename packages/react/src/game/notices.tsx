@@ -29,7 +29,7 @@ function NoticeImpl({ notice }: { notice: NoticeView }) {
   )
 }
 
-/** One notice: its picture, title and text, and a button to dismiss it. */
+/** Renders one notice from `view.notices` as the `notice` part, with its picture, title, text and a button that dismisses it. */
 export const Notice = overridable('Notice', NoticeImpl)
 
 function NoticesImpl({ className, limit = 3 }: { className?: string; limit?: number }) {
@@ -57,8 +57,9 @@ function NoticesImpl({ className, limit = 3 }: { className?: string; limit?: num
 }
 
 /**
- * Unseen notices, newest first, up to `limit`. The `'notices'` part, in the
- * layout's overlay by default. On a narrow screen only the newest shows, with
- * a `notices-more` button ("+2 more") that shows the rest.
+ * Renders the unseen notices from `view.notices.unseen`, up to `limit`, as the `notices` part. The default layout puts
+ * it in the overlay.
+ *
+ * On a narrow screen only the first shows, with a `notices-more` button ("+2 more") that shows the rest.
  */
 export const Notices = overridable('Notices', NoticesImpl)

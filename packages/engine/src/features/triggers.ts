@@ -10,41 +10,46 @@ import type { Condition, Effect, GameState } from '../types.ts'
 import { byId, defineFeature, listWords, mergedById, type FeatureContext } from './feature.ts'
 
 /**
- * Effects that happen by themselves: the first time `when` holds after a
- * command, they apply. A text that arrives the turn after a meeting, a notice
- * when a debt comes due, a scene that interrupts.
+ * A trigger the game declares in `triggers`, effects that run by themselves. They run the first time `when` holds
+ * after a command.
+ *
+ * Use one for a text that arrives the turn after a meeting, a notice when a debt comes due, or a scene that
+ * interrupts.
  */
 export type TriggerDef = {
+  /** The trigger's id, which `state.fired` records. */
   id: string
-  /** The trigger fires the first time this holds after a command. */
+  /** The trigger's condition. The trigger fires the first time it holds after a command. */
   when: Condition
-  /** What it applies when it fires. */
+  /** The trigger's effects, which run when it fires. */
   effects: EffectRef[]
-  /** Fire once in the whole game (`{ per: 'game' }`, the default), or at most once a turn (`{ per: 'turn' }`). */
+  /** The trigger's limit, once in the whole game (`{ per: 'game' }`) or at most once a turn (`{ per: 'turn' }`). `{ per: 'game' }` if left out. */
   once?: { per: 'game' | 'turn' }
 }
 
-/** What the triggers feature adds, as types. */
+/** The triggers feature's state and content key, as types. */
 export type TriggersShape = {
   state: {
-    /** The turn each trigger last fired, by trigger id. */
+    /** The turn each trigger last fired on, by trigger id. */
     fired: Record<string, number>
   }
   game: {
-    /** Effects that happen by themselves the first time a condition holds. */
+    /** The game's triggers, effects that run by themselves the first time a condition holds. They fire in this order. */
     triggers?: TriggerDef[]
   }
   pack: {
+    /** The pack's triggers, merged by id over the content's. */
     triggers?: TriggerDef[]
   }
   lists: 'trigger'
 }
 
 /**
- * Fire every trigger whose time has come, in the order the game lists them,
- * each on the state the one before left. A trigger that a firing makes true is
- * tested in the same pass only if it comes later in the list; otherwise it
- * waits for the next command.
+ * Fires every trigger that is due and returns the state after them. They fire in the order the game lists them,
+ * each on the state the one before left.
+ *
+ * A firing that makes a trigger's `when` hold fires that trigger in the same pass only if it comes later in the
+ * list. Otherwise it waits for the next command.
  */
 export function fireTriggers(state: GameState, game: Game, apply: (state: GameState, effects: Effect[]) => GameState, cx: FeatureContext): GameState {
   let next = state
@@ -58,6 +63,7 @@ export function fireTriggers(state: GameState, game: Game, apply: (state: GameSt
   return next
 }
 
+/** The triggers feature, which fires triggers first after every command that took. */
 export const triggers = defineFeature<TriggersShape>({
   name: 'triggers',
   state: {

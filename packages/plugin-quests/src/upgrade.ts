@@ -27,9 +27,10 @@ const wordKey = (key: string, list: string, names: Record<string, string>): stri
   return names[field] ? `${key.slice(0, at)}.${names[field]}` : key
 }
 
-/** The version of what content writes for this plugin. */
+/** The schema of the content this plugin reads, numbered by the engine's schema. */
 export const CONTENT_VERSION = 26
 
+/** The steps that carry this plugin's content forward, each keyed by the schema it upgrades from. */
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (pack, tools) =>
@@ -46,9 +47,10 @@ export const contentMigrations: Record<number, ContentStep> = {
   },
 }
 
-/** The version of this plugin's commands. */
+/** The version of this plugin's commands, which command logs record. */
 export const COMMAND_VERSION = 6
 
+/** The steps that carry this plugin's logged commands forward, each keyed by the version it upgrades from. */
 export const commandMigrations: Record<number, CommandStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (command) =>

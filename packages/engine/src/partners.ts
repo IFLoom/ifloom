@@ -1,7 +1,7 @@
 /**
  * What first-party plugins ask each other by name.
  *
- * A plugin imports only the engine and requires no other plugin (ADR 0003),
+ * A plugin imports only the engine and requires no other plugin,
  * so a partner's own registry block is never in its program. The answers
  * partners ask for are declared here instead, as types only, and
  * `QueryRegistry` takes them in: every caller, `context.query` and
@@ -12,48 +12,57 @@
 import type { CommandRef } from './calls.ts'
 import type { EntityRef } from './entities.ts'
 
-/** Who sent something, as the cast's `cast/sender` answers: a name, their picture and their face. */
-export type SenderView = { name: string; image: string | null; portrait: string | null }
-
-/** Someone the player can call, as the cast's `cast/contacts` answers. */
-export type CastContact = {
-  /** Their id, as the cast names them: `'ava'`. */
-  id: string
+/** The sender of a message or a post, as the cast's `cast/sender` query answers. */
+export type SenderView = {
+  /** The sender's name. */
   name: string
-  /** A line about them, or null. */
-  description: string | null
-  /** Their picture, through `artSrc`, or null. */
+  /** The sender's picture, or null. */
   image: string | null
-  /** Their face, for a small avatar, or null. */
+  /** The sender's face for a small avatar, a person's `portrait`, or null. */
   portrait: string | null
-  /** The cast's `cast/call` command for them, in short. */
+}
+
+/** A character the player can call, as the cast's `cast/contacts` query answers. */
+export type CastContact = {
+  /** The character's id, as the cast names them, such as `'ava'`. */
+  id: string
+  /** The character's name. */
+  name: string
+  /** The character's description, a line about them, or null. */
+  description: string | null
+  /** The character's picture, through `artSrc`, or null. */
+  image: string | null
+  /** The character's face for a small avatar, or null. */
+  portrait: string | null
+  /** The cast's `cast/call` command for the character, in the short form. */
   command: CommandRef
-  /** Why the call can't go through now; undefined when it can. */
+  /** The reason the call can't go through now, or undefined when it can. */
   disabled: string | undefined
 }
 
 /**
- * The queries first-party plugins answer that other plugins ask, by full
- * name. Part of `QueryRegistry`, so they are typed wherever a query is
- * asked; a plugin's own block declares the rest of its queries.
+ * The queries first-party plugins answer for other plugins, by full name. `QueryRegistry` includes them, so they are
+ * typed wherever a query is asked.
+ *
+ * A plugin's own registry block declares the rest of its queries.
  */
 export interface PartnerQueries {
-  /** The calendar's day, from 0, and period. */
+  /** Returns the calendar's day, from 0, and its period. */
   'calendar/now': () => { day: number; period: string }
-  /** The calendar's periods, in order. */
+  /** Returns the calendar's periods, in order. */
   'calendar/periods': () => string[]
-  /** Whether it's a time the player could go to bed. */
+  /** Returns true at a time the player could go to bed. */
   'calendar/bedtime': () => boolean
-  /** The id of the place the player is in, or null for nowhere. */
+  /** Returns the id of the location the player is at, or null when they are at none. */
   'places/here': () => string | null
-  /** The entity of the place the player is in, which holds what is put down there; null when nowhere. */
+  /** Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. */
   'places/holder': () => EntityRef | null
-  /** Whether the game has this place. */
+  /** Returns true when the game has the location. */
   'places/known': (args: { location: string }) => boolean
-  /** A character's face, their person's `portrait`; undefined for none. */
+  /** Returns a character's face, their person's `portrait`, or undefined for none. */
   'cast/portrait': (args: { character: string }) => string | undefined
-  /** Everyone met who can be called. */
+  /** Returns the characters the player has met who can be called. */
   'cast/contacts': () => CastContact[]
-  /** Who a message or a post is from: the entity's name and picture, a person's `portrait` as the face. */
+  /** Returns the {@link SenderView} of the entity a message or a post is from, with a person's `portrait` as the face. */
   'cast/sender': (args: { from: string }) => SenderView
 }

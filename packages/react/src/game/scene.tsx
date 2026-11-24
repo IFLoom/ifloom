@@ -160,7 +160,10 @@ function grouped(beats: readonly Indexed[]): (Grouped | Indexed)[] {
   return out
 }
 
-/** A section's hints that are a string, a number or true/false, as `data-<hint>` attributes: `{ card: 'result' }` is `data-card="result"`. */
+/**
+ * A section's hints that are a string, a number or true/false, as `data-<hint>` attributes: `{ card: 'result' }` is
+ * `data-card="result"`.
+ */
 function hintAttributes(section: NonNullable<SceneBeat['section']>): Record<string, string> {
   const out: Record<string, string> = {}
   for (const [name, value] of Object.entries(section)) {
@@ -195,41 +198,41 @@ function FoldImpl({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /**
- * A section of the scene's body with ui hints: its beats (`children`) in one
- * `group` part, with each hint that's a string, a number or true/false as a
- * `data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a
- * game styles the section as one box. `section` is the section's hints.
- * Replace it in `components` to draw a section your own way; the beats in
- * it still come in on time.
+ * Renders the beats of a body section with ui hints in one `group` part, so a game styles the section as one box.
+ * `section` is the section's hints, and `children` its beats.
+ *
+ * Each hint that's a string, a number or true/false becomes a `data-*` attribute, so `{ card: 'result' }` is
+ * `data-card="result"`. Replace it in `components` to render a section your own way, and the beats in it still come in
+ * on time.
  */
 export const BeatGroup = overridable('BeatGroup', BeatGroupImpl)
 
 /**
- * A section with a `ui.fold` hint (what `fold()` writes), inside its
- * `BeatGroup`: its beats (`children`) in a `fold` part the player opens and
- * shuts, a `<details>`, under `label` (the hint's words) in a `fold-summary`
- * part, with the beats in `fold-beats`. Shut to begin with. Replace it in
- * `components` to draw a fold your own way.
+ * Renders a fold, a body section with a `ui.fold` hint that `fold()` writes, as a `<details>` the player opens and
+ * shuts. It starts shut, inside its `BeatGroup`.
+ *
+ * The `fold` part holds `label`, the hint's words, in a `fold-summary` part and the beats (`children`) in `fold-beats`.
+ * Replace it in `components` to render a fold your own way.
  */
 export const Fold = overridable('Fold', FoldImpl)
 
 /**
- * One beat of a scene's body: narration, a spoken line, a picture, a video,
- * or a pick the player made earlier in a flowing scene (`chose`, its label,
- * small and set in).
- * Letters, notes and signs are inline pieces in a line (`InlineMail`,
- * `InlineProp`, `InlineMono`). A picture whose block has `ui.tilt` sits at a
- * slight angle. A sound beat draws nothing, and a spoken line with a voice
- * gets a button to hear it again while the game's sound is playing. A picture
- * or a clip opens in the `MediaViewer` when clicked, unless the viewer is off.
- * Each carries `data-beat` with its kind, and `data-part="beat"`, except a
- * video, which is a `"video"` part. A line with inline actions or tooltips
- * draws them as `InlineAction` and `Tip` buttons in the line. Replace it in `components` to draw some
- * kinds your own way and hand the rest to `Default`.
+ * Renders one beat of a scene's body, such as a paragraph, a spoken line or a picture. It's a `beat` part with
+ * `data-beat` naming its type, or a `video` part for a video.
+ *
+ * A past choice (`chose`) shows its label, small and set in. A picture whose block has `ui.tilt` sits at a slight
+ * angle, and a picture or a clip opens in the `MediaViewer` when clicked, unless the viewer is off. A sound beat
+ * renders nothing, and a spoken line with a voice gets a button to hear it again while the game's sound plays. Inline
+ * actions and tooltips render as `InlineAction` and `Tip` buttons in the line, and letters, notes and signs are UI
+ * pieces (`InlineMail`, `InlineProp`, `InlineMono`). Replace it in `components` to render some beats your own way and
+ * pass the rest to `Default`.
  */
 export const Beat = overridable('Beat', BeatImpl)
 
-/** The minigame being played: the panel of its id if anything draws one (the game's, a plugin UI's), else `MinigameCard`. Its clock runs while it's here. */
+/**
+ * The minigame being played: the panel of its id if anything renders one (the game's, a plugin UI's), else
+ * `MinigameCard`. Its clock runs while it's here.
+ */
 function MinigameSlot() {
   const { minigame } = useMinigame()
   const Panel = usePanel(minigame?.id)?.component
@@ -311,10 +314,10 @@ function SceneHeaderImpl({ scene }: { scene: View['scene'] }) {
 }
 
 /**
- * The scene's heading: the speaker's portrait, when the scene has a speaker
- * with a picture (`scene-portrait`), and its title (`scene-title`), in a
- * `scene-header` part. Gets `scene`, as `view.scene`. Replace it in
- * `components` to draw the heading your own way; it comes in with the scene.
+ * Renders the scene's heading from `view.scene`, passed as `scene`, in a `scene-header` part. It holds the speaker's
+ * portrait (`scene-portrait`) when the speaker has a picture, and the title (`scene-title`).
+ *
+ * Replace it in `components` to render the heading your own way, and it still comes in with the scene.
  */
 export const SceneHeader = overridable('SceneHeader', SceneHeaderImpl)
 
@@ -386,36 +389,25 @@ function SceneImpl({ className }: { className?: string }) {
 }
 
 /**
- * The main column: the scene on screen, or the room when none is. Its picture (the
- * `LayeredPicture` when the scene has one, else its `image`), its body, then
- * either the game's own panel for it or its choices. While a minigame runs, it
- * draws that instead: the game's panel named by the minigame's id, else
- * `MinigameCard`.
+ * Renders `view.scene`, the open scene or the room, with its picture, body and choices. While a minigame runs it
+ * renders the panel named by the minigame's id, else `MinigameCard`.
  *
- * It plays the content's `ui.transition` hints when the screen (`view.scene.key`)
- * changes, in a `scene-transition` part that keeps a copy of the scene before
- * for its `out`, and reveals each block with a `ui.reveal` hint in a `reveal`
- * part, with the choices after the last. A click on the scene or a key press
- * shows the rest at once. The `motion` option, or the player's reduced-motion
- * setting, turns all of it off. A speaker with a `ui.hue` gets their lines in
- * that colour. The timing is `useScene`'s; the heading is `SceneHeader`.
+ * A panel the open scene holds renders in place of its choices.
+ * The picture is the scene's `LayeredPicture` when it has one, else its `image`. When `view.scene.key` changes it plays
+ * the `ui.transition` hints in a `scene-transition` part, which keeps a copy of the scene before for its `out`. It
+ * reveals each block with a `ui.reveal` hint in a `reveal` part, with the choices after the last, and a click or key
+ * press shows the rest at once. The `motion` option or the player's reduced-motion setting turns this off. A speaker
+ * with a `ui.hue` gets their lines in that colour. `useScene` sets the timing, and `SceneHeader` renders the heading.
  *
- * Dice: a block with a `ui.dice` hint gets the `DiceRoll` of the roll the last
- * command made under that key, drawn before it, and a new roll's block waits
- * for its dice to settle. New rolls no block names show for a moment in a
- * `DiceOverlay`.
+ * A block with a `ui.dice` hint gets the `DiceRoll` of the last command's roll under that key, rendered before it, and
+ * a new roll's block waits for its dice to settle. New rolls that no block names show for a moment in a `DiceOverlay`.
+ * A block with a `ui.timer` hint gets a `Countdown` of that timer after it, while the timer runs.
  *
- * Timers: a block with a `ui.timer` hint gets a `Countdown` of that timer
- * after it, while it runs.
+ * The beats of a body section with any ui hint render together in a `BeatGroup`, and a section with a `ui.fold` hint
+ * has its beats in a `Fold` inside its group. Replace either, or `SceneHeader`, in `components` to restyle that part
+ * and keep the motion.
  *
- * Groups: the beats of a section with any ui hint are drawn together in a
- * `BeatGroup`, and a section with a `ui.fold` hint (what `fold()` writes) has
- * its beats in a `Fold` inside its group. Replace either, or `SceneHeader`,
- * in `components` to restyle that part and keep the motion.
- *
- * Inputs: the inputs on offer while the scene is open (`view.inputs`) are
- * drawn after its words and before its choices, as `InputField`s in an
- * `inputs` part. The layout's `InputFields` draws only those on offer while
- * no scene is open.
+ * The inputs on offer while the scene is open (`view.inputs`) render after its body and before its choices, as
+ * `InputField`s in an `inputs` part. The layout's `InputFields` renders only those on offer while no scene is open.
  */
 export const Scene = overridable('Scene', SceneImpl)

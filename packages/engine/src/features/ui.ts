@@ -21,23 +21,33 @@
 import { INLINE_MARKUP, UI_NAME, uiParts } from '../sceneBody.ts'
 import { byKey, defineFeature, mergedByKey } from './feature.ts'
 
-/** Hints on a scene, and on a room scene (a place's), for the UI that draws it. Empty here; a UI package augments it. */
+/**
+ * The ui hints a scene or a room scene takes in its `ui`, for the UI that renders it. The engine declares none, and
+ * a UI package augments this interface with its own.
+ */
 export interface SceneUi {}
-/** Hints on a choice or a room's button. Empty here; a UI package augments it. */
+/** The ui hints a choice or an action takes in its `ui`. The engine declares none, and a UI package augments this interface with its own. */
 export interface ChoiceUi {}
-/** Hints on a block of a scene's body, carried on the first beat the block makes. Empty here; a UI package augments it. */
+/**
+ * The ui hints a block of a scene's body takes in its `ui`, carried on the first beat the block makes. The engine
+ * declares none, and a UI package augments this interface with its own.
+ */
 export interface BlockUi {}
-/** Hints on a kind (for each of its entities) and on an entity, laid over its kind's. Empty here; a UI package augments it. */
+/**
+ * The ui hints a kind takes for each of its entities, and an entity takes over its kind's. The engine declares none,
+ * and a UI package augments this interface with its own.
+ */
 export interface EntityUi {}
-/** Hints on a stat. Empty here; a UI package augments it. */
+/** The ui hints a stat takes in its `ui`. The engine declares none, and a UI package augments this interface with its own. */
 export interface StatUi {}
-/** Hints for the whole game. Empty here; a UI package augments it. */
+/** The ui hints the whole game takes in its `ui`. The engine declares none, and a UI package augments this interface with its own. */
 export interface GameUi {}
 
 /**
- * The pieces a UI draws inside a line of prose, from `[[ui:name|words|arg|…]]`,
- * by name, each with the arguments it takes after the words as a tuple of
- * text. Empty here; a UI package augments it:
+ * The UI pieces a UI renders inside a line of prose from `[[ui:name|words|arg|…]]`, by name. Each name maps to the
+ * arguments it takes after the words, as a tuple of text.
+ *
+ * The engine declares none, and a UI package augments this interface with its own:
  *
  * ```ts
  * declare module '@ifloom/engine' {
@@ -45,42 +55,41 @@ export interface GameUi {}
  * }
  * ```
  *
- * The engine never reads it: the span it gives the view (`{ type: 'ui' }`)
- * has `name: string` and `args: string[]`, so a name no UI declared still
- * comes through. It's there for a UI's components to type their arguments.
+ * The engine never reads it. The view's `{ type: 'ui' }` span has `name: string` and `args: string[]`, so a name no
+ * UI declared still comes through, and this interface only types a UI's components.
  */
 export interface InlineUi {}
 
 /**
- * What a `ui` field is written on, as a UI package's checker reads it: a
- * scene or a place's room (`scene`), a choice, an action or a room's button
- * (`choice`), a block or a section (`block`), a stat, a kind or an entity
- * (`entity`), or the game.
+ * The target a `ui` field is written on, which a UI package's checker reads.
+ *
+ * It's a scene or room scene (`scene`), a choice or action (`choice`), a block or section (`block`), a stat, a kind or
+ * entity (`entity`), or the game.
  */
 export type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
 
-/** The arguments of a UI piece named `N`: what a UI package declared in `InlineUi`, else any text. */
+/** The arguments of the UI piece named `N`, as a UI package declared them in {@link InlineUi}. Any text when no package declared `N`. */
 export type InlineUiArgs<N extends string> = N extends keyof InlineUi ? InlineUi[N] : readonly string[]
 
 /**
- * A `ui` field as content writes it: the hints a UI package declared for that
- * place, typed, and any others, which the engine carries all the same.
+ * A `ui` field of ui hints, typed by the hints a UI package declared for that target. It also takes undeclared hints,
+ * which the engine carries all the same.
  */
 export type Ui<T> = T & { readonly [hint: string]: unknown }
 
-/** What the ui feature adds, as types. */
+/** The ui feature's content key and reference, as types. */
 export type UiShape = {
   game: {
-    /** Hints for the whole game, such as how every screen comes in. Carried as written; the engine gives them no meaning. */
+    /** The game's ui hints, such as how every screen comes in. The engine carries them to the view as written and gives them no meaning. */
     ui?: Ui<GameUi>
   }
   pack: {
-    /** Hints for the whole game, hint by hint: a later pack's hint replaces an earlier one's, and the rest are kept. */
+    /** The pack's ui hints for the whole game, merged hint by hint. A later pack's hint replaces an earlier one's, and the rest stay. */
     ui?: Ui<GameUi>
   }
   lists: 'ui'
   references: {
-    /** A `ui` field of presentation hints, which must be data, with what it's written on and that thing's id where it has one. */
+    /** A reference to a `ui` field, which must be data, with the target it's written on and that target's id when it has one. */
     ui: { ui: unknown; on: UiTarget; id?: string }
   }
 }
@@ -104,14 +113,14 @@ function notData(value: unknown, path: string): string[] {
   return []
 }
 
-/** What is wrong with a `ui` field: it isn't an object, or something in it isn't data. Nothing for one left out. */
+/** Returns the problems with a `ui` field, when it isn't an object or holds something that isn't data. Empty for a field left out. */
 export function uiProblems(ui: unknown): string[] {
   if (ui === undefined) return []
   if (!isPlainObject(ui)) return ['ui must be an object of hints']
   return notData(ui, 'ui')
 }
 
-/** A view's `ui` field: there when there are hints, left out when there are none. */
+/** Returns a view's `ui` field to spread into it, `{ ui }` when there are hints and an empty object when there are none. */
 export function withUi<T>(ui: T | undefined): { ui: T } | Record<never, never> {
   return ui === undefined ? {} : { ui }
 }
@@ -144,6 +153,7 @@ function inlineUiProblems(text: string): string[] {
   return out
 }
 
+/** The ui feature, which merges the game's ui hints and checks that every `ui` field is data. */
 export const ui = defineFeature<UiShape>({
   name: 'ui',
   pack: mergedByKey<UiShape['game'], UiShape['pack'], unknown>(

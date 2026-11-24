@@ -6,19 +6,25 @@ import type { SaveDriver } from '@ifloom/engine'
  * and keeps the in-memory one, `memoryDriver`, for tests.
  */
 
-/** The parts of the Web Storage API a driver needs. `localStorage` is one. */
+/** The part of the Web Storage API that `localStorageDriver` uses. `localStorage` and `sessionStorage` both fit it. */
 export type StorageLike = {
+  /** Returns the string stored under a key, or `null` when there's none. */
   getItem: (key: string) => string | null
+  /** Stores a string under a key, replacing any already there. */
   setItem: (key: string, value: string) => void
+  /** Removes the string stored under a key. */
   removeItem: (key: string) => void
+  /** Returns the key at an index, or `null` past the end. The driver lists keys with it. */
   key: (index: number) => string | null
+  /** The number of keys in the storage. */
   readonly length: number
 }
 
 /**
- * Saves in `localStorage` (or any Web Storage). Simple and everywhere, but
- * small: around 5MB per origin, and in Chromium every page opened from disk
- * shares one origin. Pass a storage to use another, as tests do.
+ * Returns a save driver that keeps its strings in `localStorage`, or in the storage you pass. Every browser has it, but
+ * it holds about 5MB per origin.
+ *
+ * In Chromium every page opened from disk shares one origin, and so one 5MB store. Tests pass a storage of their own.
  */
 export function localStorageDriver(storage?: StorageLike): SaveDriver {
   const store = () => {
@@ -63,8 +69,11 @@ type Database = {
   transaction: (store: string, mode: 'readonly' | 'readwrite') => { objectStore: (name: string) => ObjectStore }
 }
 type OpenRequest = Request<Database> & { onupgradeneeded: (() => void) | null }
-/** The parts of `indexedDB` a driver needs. */
-export type IndexedDbLike = { open: (name: string, version?: number) => OpenRequest }
+/** The part of the `indexedDB` API that `indexedDbDriver` uses. The browser's `indexedDB` fits it. */
+export type IndexedDbLike = {
+  /** Opens a database by name at a version, and returns the request that settles with it. */
+  open: (name: string, version?: number) => OpenRequest
+}
 
 function settle<T>(request: Request<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -74,9 +83,11 @@ function settle<T>(request: Request<T>): Promise<T> {
 }
 
 /**
- * Saves in IndexedDB: asynchronous and roomy, the right home for long games,
- * big backlogs and mod data. Opens (and if needed creates) one database with
- * one store of strings by key.
+ * Returns a save driver that keeps its strings in IndexedDB, which holds far more than `localStorage`. Use it for long
+ * games, long backlogs and mods.
+ *
+ * It opens one database, `ifloom` unless `database` names another, with one store of strings by key, `saves` unless
+ * `store` names another. It creates both on first use. Tests pass their own `indexedDB`.
  */
 export function indexedDbDriver(options: { database?: string; store?: string; indexedDB?: IndexedDbLike } = {}): SaveDriver {
   const databaseName = options.database ?? 'ifloom'

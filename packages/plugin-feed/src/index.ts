@@ -42,99 +42,131 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-export type FeedDef = { id: string; name: string }
-
-/** Someone else's post. */
-export type PostDef = {
+/** A feed the game declares in `data.feed.feeds`, such as a social app, a notice board or a paper. Posts name it in their `feed`. */
+export type FeedDef = {
+  /** The feed's id, unique among the game's feeds. */
   id: string
-  /** The feed it appears in, by id. */
+  /** The feed's name. */
+  name: string
+}
+
+/** Someone else's post, which the game declares in `data.feed.posts`. It appears the first time its `when` holds after a command. */
+export type PostDef = {
+  /** The post's id, unique among the game's posts. */
+  id: string
+  /** The id of the feed the post appears in. */
   feed: string
-  /** A character id, or any name the game's prose uses. */
+  /** The poster, a character's id or any name the game's prose uses. */
   from: string
-  /** It appears the first time this holds after a command. */
+  /** The post's condition. The post appears the first time it holds after a command, and stays. */
   when: Condition
-  /** Its words, as prose blocks. */
+  /** The post's words, as blocks. */
   body: Block[]
-  /** A picture on the post: a path in the game's `art/` folder (`'photo/park.jpg'`), as an entity's `image` is, or a URL. */
+  /** The post's picture, a path in the game's `art/` folder (`'photo/park.jpg'`) or a URL. */
   image?: string
-  /** A video clip on the post, a path like `image`'s (a bare name is an `.mp4`). Drawn like a GIF: playing, looping, muted. */
+  /**
+   * The post's video clip, a path like `image`'s, where a bare name is an `.mp4`. The React UI plays it like a GIF,
+   * looping and muted.
+   */
   video?: string
-  /** Likes it shows when it appears. */
+  /** The number of likes the post has when it appears. 0 if left out. */
   likes?: number
 }
 
-/** A comment on a post. `text` is its words, as written. */
-export type Comment = { from: string; text: string }
+/** A comment on a post, one entry of a post's comments in {@link FeedState}. */
+export type Comment = {
+  /** The commenter, a character's id or a name. */
+  from: string
+  /** The comment's words, as written. The view fills in their prose tokens. */
+  text: string
+}
 
-/** A post the player made, as the state keeps it. */
+/** A post the player made with the `feed/post` effect, as {@link FeedState} keeps it. */
 export type OwnPost = {
+  /** The post's id, which `feed/react` and `feed/likes` name. */
   id: string
-  /** The feed it was posted to. */
+  /** The id of the feed the post went to. */
   feed: string
-  /** The turn it was posted. */
+  /** The turn the post was made on. */
   turn: number
-  /** Its words, as written; tokens are filled as it is shown. */
+  /** The post's words, as written. The view fills in their prose tokens. */
   text?: string
-  /** Its picture, as written. */
+  /** The post's picture, as written. */
   image?: string
-  /** Its video clip, as written. */
+  /** The post's video clip, as written. */
   video?: string
-  /** How many likes it has. */
+  /** The number of likes the post has. */
   likes: number
-  /** The comments on it, in order. */
+  /** The comments on the post, oldest first. */
   comments: Comment[]
 }
 
-/** What the plugin keeps in a save. */
+/** The feeds a save keeps for the player. Feeds and other people's posts are read from content, so only what play changed is kept. */
 export type FeedState = {
-  /** The turn each post appeared, by post id. */
+  /** The posts that have appeared, each id mapped to the turn it appeared on. */
   appeared: Record<string, number>
   /** The player's own posts, oldest first. */
   own: OwnPost[]
-  /** Likes and comments added to other people's posts since they appeared. */
+  /** The likes and comments added to other people's posts since they appeared, by post id. */
   reactions: Record<string, { likes: number; comments: Comment[] }>
-  /** How many posts each feed had when the player last looked. */
+  /** The number of other people's posts each feed had when the player last looked, by feed id. */
   seen: Record<string, number>
 }
 
+/** A post as the player sees it, in a {@link FeedView}'s `posts`. */
 export type PostView = {
+  /** The post's id. */
   id: string
-  /** Who posted it, as written: a character id or a name; `''` for the player's own. */
+  /** The poster as written, a character's id or a name. It's `''` for the player's own post. */
   from: string
+  /** The poster's name, or for the player's own post the `playerName` kv key, else the `feed/you` string ("You"). */
   name: string
-  /** The poster's face, for an avatar: a person's `portrait` with the cast, else their entity's picture, through `artSrc`; null for the player's own and for a name as written. */
+  /**
+   * The poster's face for an avatar, through `artSrc`. It's a person's `portrait` with the cast, else their entity's
+   * picture.
+   *
+   * It's null for the player's own post and for a poster named only as written.
+   */
   portrait: string | null
-  /** The words, filled in, with any picture and video markup in them. */
+  /** The post's words, tokens filled in, with any picture and video markup in them. */
   text: string
-  /** The words as beats, as a scene's are, with pictures and videos in the order written. */
+  /** The post's words rendered as beats, as a scene's are, with pictures and videos in the order written. */
   beats: SceneBeat[]
-  /** The post's picture's path, through `artSrc`, or null. */
+  /** The post's picture's path, through `artSrc`, or null when it has none. */
   image: string | null
-  /** The post's video clip's path, through `artSrc`, or null. Drawn like a GIF: playing, looping, muted. */
+  /** The post's video clip's path, through `artSrc`, or null when it has none. */
   video: string | null
-  /** The turn it appeared, or was posted. */
+  /** The turn the post appeared on, or was posted on. */
   turn: number
-  /** How many likes it has. */
+  /** The number of likes the post has, its starting likes plus any reactions. */
   likes: number
-  /** The comments on it, in order, each with who wrote it and their name. */
+  /** The comments on the post, oldest first, each with its commenter as written, their name and its words. */
   comments: { from: string; name: string; text: string }[]
-  /** The player's own. */
+  /** True for the player's own post. */
   mine: boolean
 }
 
-/** One feed, newest post first, with how many posts the player hasn't seen: `unread`, as messages count theirs. */
+/** A feed as the player sees it, in `view.plugins.feed.feeds`. Its `unread` counts other people's posts the player hasn't seen. */
 export type FeedView = {
+  /** The feed's id. */
   id: string
+  /** The feed's name. */
   name: string
-  /** Its posts, newest first, the player's own among them. */
+  /** The feed's posts, newest first, the player's own among them. */
   posts: PostView[]
-  /** How many of its posts the player hasn't seen. */
+  /** The number of other people's posts in the feed the player hasn't seen. The player's own posts never count. */
   unread: number
-  /** The button that marks the feed seen (the `feed/allSeen` string, `Mark all seen`), or null while nothing in it is new. */
+  /** The button that marks the feed seen, labelled with the `feed/allSeen` string. Null while nothing in it is new. */
   seen: RenderedChoice | null
 }
 
-export type FeedsView = { feeds: FeedView[]; unread: number }
+/** The feeds as the player sees them, in `view.plugins.feed`. */
+export type FeedsView = {
+  /** The game's feeds, in declared order. */
+  feeds: FeedView[]
+  /** The number of unseen posts across every feed. */
+  unread: number
+}
 
 /**
  * What content writes for each of the plugin's calls (from `CALLS`), its
@@ -195,7 +227,7 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's posts: `data.feed.posts`, from its content and packs. */
+/** Returns the game's posts, `data.feed.posts` from its content and packs, in declared order. */
 export function postsOf(game: Game): PostDef[] {
   return DATA.posts.all(game)
 }
@@ -214,7 +246,7 @@ const drawn = (beats: SceneBeat[]) => ({ text: wordsOf(beats), beats })
 /** Beats' words, as a line of text. */
 const wordsOf = (beats: readonly SceneBeat[]) => beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n')
 
-/** The game's feeds, in order: `data.feed.feeds`, from its content and packs. */
+/** Returns the game's feeds, `data.feed.feeds` from its content and packs, in declared order. */
 export function feedsOf(game: Game): FeedDef[] {
   return DATA.feeds.all(game)
 }
@@ -402,7 +434,7 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
   })
 }
 
-/** An effect: the player posts to a feed. `text` is a prose key. */
+/** An effect: the player posts to a feed. `text` is the post's words in place. */
 const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef =>
   CALLS.effects.post({ feed: feedId, post: id, ...post })
 /** An effect: likes, a comment, or both, on a post. */
@@ -413,7 +445,22 @@ const seeFeed = (feedId?: string): CommandRef => CALLS.commands.seen(feedId === 
 const hasPosted = (gte = 1, feedId?: string): Condition => CALLS.conditions.posted(feedId === undefined ? { gte } : { gte, feed: feedId })
 
 /**
- * The plugin, with its helpers on it: `feed()` makes the plugin for the
- * game's `plugins`, and content is written with `feed.react('post-1', { likes: 2 })`.
+ * Returns the feed plugin, for the game's `plugins`. It cooperates with the cast, which gives posters their names and
+ * faces.
+ *
+ * Content declares feeds and posts in `data.feed.feeds` and `data.feed.posts`, and the helpers write its calls, such as
+ * `feed.react('post-1', { likes: 2 })`.
  */
-export const feed = Object.assign(feedPlugin, { post: postTo, react, seen: seeFeed, posted: hasPosted })
+export const feed = Object.assign(feedPlugin, {
+  /**
+   * Returns the `feed/post` effect, which posts the player's post `id` to the feed, with its words in place, picture,
+   * video and likes. A post id already used is left as it is.
+   */
+  post: postTo,
+  /** Returns the `feed/react` effect, which adds likes, a comment from `from`, or both, to a post that has appeared. */
+  react,
+  /** Returns the `feed/seen` command, which marks the feed seen, or every feed when none is named. */
+  seen: seeFeed,
+  /** Returns the `feed/posted` condition, which holds once the player has made at least `gte` posts, to the feed or to any. */
+  posted: hasPosted,
+})

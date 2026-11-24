@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/engine` and its TSDoc by `npm run api-docs
 
 Type. Explained in [Actions and buttons](/docs/reference/actions#actioncost).
 
-What an action costs.
+A cost a choice or an action declares in its `cost`, the stats it spends. The engine refuses it while the player has too little of one.
 
 ```ts shape
 import type { ActionCost } from '@ifloom/engine'
@@ -24,22 +24,20 @@ type ActionCost = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stats` | `Record<string, number>` | yes |  | Stats it spends, by id, in the order the button should list them. |
-| `reasons` | `Record<string, string>` | yes |  | Refusal lines by stat id, when this action's voice beats the stat's own. |
+| `stats` | `Record<string, number>` | yes |  | The stats the cost spends, by id, in the order the button lists them. |
+| `reasons` | `Record<string, string>` | yes |  | The refusal lines by stat id, used in place of the stat's own line when the player has too little. |
 
 ## ActionDef
 
 Type. Explained in [Actions and buttons](/docs/reference/actions#actiondef).
 
-Something the player can do, as a button: the game's own in content's
-`actions`, a plugin's (a place's, an app's). It is a `ButtonDef`, the
-fields a choice has.
+An action the game declares in `actions`, or one a plugin offers (a location's, an app's). It has the fields of a
+`ButtonDef`, the same as a choice.
 
-Pressing one with only a `command` sends that command. One with a cost,
-effects or `once` sends `{ type: 'action', id }`, which runs its command
-first, then pays its cost and applies its effects: the game's by its id,
-a plugin's as `'<plugin>/<id>'`. One with no `label` is never drawn as a
-button: a choice's command, another button or a hotspot runs it.
+Taking one with only a `command` sends that command. One with a cost, effects or `once` sends
+`{ type: 'action', id }`, which runs its command, pays its cost and applies its effects. The id is the game's own,
+or `'<plugin>/<id>'` for a plugin's. An action with no `label` is never rendered as a button, so only a choice's
+command, another action or a hotspot runs it.
 
 ```ts shape
 import type { ActionDef } from '@ifloom/engine'
@@ -61,26 +59,27 @@ type ActionDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` | yes |  | Its words, as written, with tokens filled: `'Order a tea'`. A scene's choice with none shows its id; an action with none is never drawn as a button. |
-| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | Words that depend on state, "Not today" before you have bought it, "Right." after. The first whose `when` holds wins; `label` is the fallback. |
-| `when` | [`Condition`](#condition) | yes |  | Only offered, and only done, while this holds. |
-| `blocked` | [`Blocked[]`](#blocked) | yes |  | Shown but greyed out while one of these holds, with its reason (or left off with `hide`), and refused with it. The first that holds wins. |
-| `cost` | [`ActionCost`](#actioncost) | yes |  | Stats it spends: checked before it runs, listed on its button, and paid after its command. |
-| `effects` | [`EffectRef[]`](#effectref) | yes |  | Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. |
-| `command` | [`CommandRef`](#commandref) | yes |  | A command it sends as well, run first: a plugin's in short (`{ 'devices/open': { id: 'messages' } }`) or the engine's. It is greyed out with that command's reason while it would be refused, and its price includes what the command spends. Any command but `choose`. |
-| `once` | [`Once`](#once) | yes |  | Once in the game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`): spent once it has been pressed, as `state.chosen` counts it. `reason` is what the player reads on it afterwards: a choice stays on screen and pays nothing more, an action is refused. |
-| `tags` | `string[]` | yes |  | Words the UI can style or filter it by. The engine gives them no meaning. |
-| `irreversible` | `string` | yes |  | A warning that it can't be undone, which the UI shows on it. |
-| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | Presentation hints for the UI, carried to its button as written. See `ChoiceUi`. |
+| `id` | `string` |  |  | The choice's or action's id, unique among its scene's choices or among the actions. |
+| `label` | `string` | yes |  | The button's words, with tokens filled, such as `'Order a tea'`. A choice with no label shows its id, and an action with none is never rendered as a button. |
+| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | The button's words that depend on the state, such as "Not today" before you have bought it and "Right." after. The first entry whose `when` holds wins, and `label` is the fallback. |
+| `when` | [`Condition`](#condition) | yes |  | The condition under which the choice or action is offered and can be taken. Always, if left out. |
+| `blocked` | [`Blocked[]`](#blocked) | yes |  | The rules that refuse it for now. The first entry whose `when` holds greys the button out with its reason, or leaves it off with `hide`. |
+| `cost` | [`ActionCost`](#actioncost) | yes |  | The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. |
+| `command` | [`CommandRef`](#commandref) | yes |  | The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never `choose`. The button is refused with that command's reason while the command would be. An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends. |
+| `once` | [`Once`](#once) | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. |
+| `tags` | `string[]` | yes |  | The tags a UI can style or filter it by. The engine gives them no meaning. |
+| `irreversible` | `string` | yes |  | The warning that it can't be undone, which a UI shows on the button. |
+| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The ui hints carried to its button in the view. See `ChoiceUi`. |
 
 ## actionOf
 
 Function. Explained in [Actions and buttons](/docs/reference/actions#actionof).
 
-The action `{ type: 'action', id }` does, in this state: one of the game's
-content `actions` by its id, or a plugin's by `'<plugin>/<id>'`, as its
-`action` answers, else among its buttons now. Undefined when there is none.
+Returns the action that `{ type: 'action', id }` runs in this state. Returns undefined when there is none.
+
+A plain id names one of the game's `actions`. An id of the form `'<plugin>/<id>'` names a plugin's action, from its
+`action` provider, else from the actions it offers now.
 
 ```ts shape
 import { actionOf, type Game } from '@ifloom/engine'
@@ -93,17 +92,16 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`ActionDef`](#actiondef).
 
 Type. Explained in [Amounts](/docs/reference/amounts#amount).
 
-A number content names, worked out when it is read: a number as written, a
-stat of the player's by id, a stat with `{ stat, of? }`, a
-kv key's number with `{ kv, of? }` (a value that is not a number counts as
-0), a value by name with `{ value, with? }`, or how many entities there are
-with `{ count, where?, units? }`, counted as the `count` condition counts.
-They combine as a `Formula` does (`sum`, `product`, `min`, `max`, `scale`,
-`clamp`), with any amount as a part. `of` names whose, as it does in conditions. Read one with `amountOf`.
-Effects take one in `by` and `to`, ranges in their bounds, stats in `min`
-and `max`, and rolls in `plus` and `against`:
-`{ stat: 'coins', gte: { stat: 'rent' } }` holds while the player has at
-least the rent.
+A number content names that the engine works out when it reads it. Read one with `amountOf`.
+
+An amount is a number, a stat of the player's by id, a stat with `{ stat, of? }`, a kv key's number with
+`{ kv, of? }` (a value that is not a number counts as 0), a value by name with `{ value, with? }`, or a count of
+entities with `{ count, where?, units? }`, counted as the `count` condition counts. Amounts combine as a `Formula`
+does (`sum`, `product`, `min`, `max`, `scale`, `clamp`), with any amount as a part, and `of` names the owner as it
+does in conditions.
+
+Effects take one in `by` and `to`, ranges in their bounds, stats in `min` and `max`, and rolls in `plus` and
+`against`. So `{ stat: 'coins', gte: { stat: 'rent' } }` holds while the player has at least the rent.
 
 ```ts shape
 import type { Amount } from '@ifloom/engine'
@@ -116,11 +114,11 @@ Uses: [`StatKey`](#statkey), [`ValueRef`](#valueref), [`Select`](#select), [`Con
 
 Function. Explained in [Amounts](/docs/reference/amounts#amountof).
 
-An amount worked out in this state: a number as written, a stat (the
-player's by id, or `{ stat, of }`), a kv key's number (`{ kv, of }`), a
-value by name (`{ value, with }`), a count of entities (`{ count }`) or a
-formula of them. Anything that doesn't read as a finite number is 0, as an
-owner that isn't there is.
+Returns an amount worked out in this state. An amount that doesn't read as a finite number gives 0, and so does an
+owner that isn't there.
+
+An amount is a number, a stat (the player's by id, or `{ stat, of }`), a kv key's number (`{ kv, of }`), a value by
+name (`{ value, with }`), a count of entities (`{ count }`) or a formula of these.
 
 ```ts shape
 import { amountOf, type Game } from '@ifloom/engine'
@@ -133,9 +131,10 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`Amount`](#amount).
 
 Type. Explained in [Commands](/docs/reference/commands#applied).
 
-What `apply` says about a command: the shape of a `Result`, with the state
-on both sides. When `ok` is false the command was refused, `state` is the
-one it was sent to, untouched, and `reason` says why.
+The answer `apply` gives for a command, a `Result` with the state on both sides. When `ok` is false, the command was
+refused, `state` is unchanged and `reason` says why.
+
+`newGame` is true when the command was a `newGame` and `state` is the new game's first state.
 
 ```ts shape
 import type { Applied } from '@ifloom/engine'
@@ -148,8 +147,9 @@ Uses: [`GameState`](#gamestate).
 
 Function. Explained in [Commands](/docs/reference/commands#apply).
 
-Run a command and say whether it took: the next state, and why it was
-refused when it was. A refusal leaves the state as it was.
+Runs a command and returns the next state. A refused command returns the state unchanged, with the reason.
+
+A null state, or a `start` command, returns the game's starting state.
 
 ```ts shape
 import { apply, type Game } from '@ifloom/engine'
@@ -162,9 +162,10 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`CommandRef`](#commandref), [
 
 Function. Explained in [Effects](/docs/reference/effects#applyeffects).
 
-Apply effects as content writes them, the engine's and short plugin calls
-(`{ 'quests/start': { quest: 'bread' } }`) alike, as a plugin's
-`context.apply` does: a call to an effect nobody has is left out.
+Returns the state after a list of effects, the engine's and plugins' short calls alike
+(`{ 'quests/start': { quest: 'bread' } }`). A call to an effect no plugin declares is skipped.
+
+A plugin's `context.apply` runs effects the same way.
 
 ```ts shape
 import { applyEffects, type Game } from '@ifloom/engine'
@@ -177,10 +178,11 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`EffectRef`](#effectref).
 
 Function. Explained in [Prose and markup](/docs/reference/prose#artsrc).
 
-The one place a picture's or a video's path is resolved, from the game's
-`art/` folder: `'photo/ava.svg'` and `'art/photo/ava.svg'` are both
-`'art/photo/ava.svg'`. A bare name is a `.jpg`, or an `.mp4` when `type` is
-`'video'`. A URL (`https:`, `data:`, `//host/…`) is left as it is.
+Returns a picture's or video's path in the game's `art/` folder, relative to the page. A URL (`https:`, `data:`,
+`//host/…`) is returned unchanged.
+
+`'photo/ava.svg'` and `'art/photo/ava.svg'` both give `'art/photo/ava.svg'`. A name with no extension gets `.jpg`, or
+`.mp4` when `type` is `'video'`.
 
 ```ts shape
 import { artSrc } from '@ifloom/engine'
@@ -191,7 +193,7 @@ function artSrc(path: string, type?: 'image' | 'video'): string
 
 Type. Explained in [Audio](/docs/reference/audio#audiochannelview).
 
-One channel as a player needs it.
+An audio channel as the audio player needs it, in `view.audio.channels`.
 
 ```ts shape
 import type { AudioChannelView } from '@ifloom/engine'
@@ -210,21 +212,21 @@ type AudioChannelView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `mode` | `'background' \| 'cue'` |  |  | `background` plays a track or playlist until told otherwise; `cue` plays one-shot sounds, listed in `cues`. |
-| `track` | `string \| null` |  |  | The track or playlist playing; null for silence, and always null on a cue channel. |
-| `src` | `string \| null` |  |  | The file to play, through `audioSrc`; a playlist's first. Null for silence. |
-| `loop` | `boolean` |  |  | Whether it repeats. A playlist repeats as a whole unless its order is `'inOrder'`. |
-| `volume` | `number` |  |  | The track's own volume, 0 to 1; a playlist's first track's. Multiply by the setting's value. |
-| `volumeSetting` | `string \| null` |  |  | The ui setting that sets this channel's volume, or null for none. |
-| `crossfade` | `number` |  |  | Milliseconds to fade between tracks. 0 on a cue channel. |
-| `duck` | `{ under: string[]; to: number } \| null` |  |  | Quieten this channel to `to` (0 to 1) while any channel in `under` plays; null when it doesn't duck. |
-| `playlist` | `{ tracks: string[]; srcs: string[]; volumes: number[]; order: 'inOrder' \| 'loop' \| '…` | yes |  | A playlist's files, volumes and order, already shuffled when it shuffles. |
+| `mode` | `'background' \| 'cue'` |  |  | The channel's mode. `background` plays a track or playlist until it changes, and `cue` plays one-shot sounds, listed in `cues`. |
+| `track` | `string \| null` |  |  | The id of the track or playlist playing. Null for silence, and always null on a cue channel. |
+| `src` | `string \| null` |  |  | The file to play, through `audioSrc`, a playlist's first. Null for silence. |
+| `loop` | `boolean` |  |  | The channel's loop mark, true when the track repeats. A playlist repeats as a whole unless its order is `'inOrder'`. |
+| `volume` | `number` |  |  | The track's own volume, from 0 to 1, or a playlist's first track's. The player multiplies it by the volume setting's value. |
+| `volumeSetting` | `string \| null` |  |  | The id of the ui setting that sets the channel's volume. Null when there's none. |
+| `crossfade` | `number` |  |  | The milliseconds to fade between tracks. 0 on a cue channel. |
+| `duck` | `{ under: string[]; to: number } \| null` |  |  | The channel's ducking, quietening it to `to` (0 to 1) while any channel in `under` plays. Null when it doesn't duck. |
+| `playlist` | `{ tracks: string[]; srcs: string[]; volumes: number[]; order: 'inOrder' \| 'loop' \| '…` | yes |  | The playlist's tracks, files, volumes and order, already shuffled when it shuffles. Left out for a single track. |
 
 ## AudioCue
 
 Type. Explained in [Audio](/docs/reference/audio#audiocue).
 
-A one-shot sound that is due. Play each key once.
+A one-shot sound that is due, in `view.audio.cues`. The audio player plays each key once.
 
 ```ts shape
 import type { AudioCue } from '@ifloom/engine'
@@ -239,18 +241,19 @@ type AudioCue = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `key` | `string` |  |  | The same for the same sound in the same showing, across view calls and reloads. |
-| `channel` | `string` |  |  | The cue channel it plays on: `sfx` or `voice` unless the game declares others. |
-| `track` | `string` |  |  | The track's id in `game.audio.tracks`. |
+| `key` | `string` |  |  | The cue's key, the same for the same sound in the same visit across view calls and reloads. |
+| `channel` | `string` |  |  | The cue channel the sound plays on, `sfx` or `voice` unless the game declares others. |
+| `track` | `string` |  |  | The track's id in `audio.tracks`. |
 | `src` | `string` |  |  | The file to play, through `audioSrc`. |
-| `volume` | `number` |  |  | The track's own volume, 0 to 1. Multiply by the channel's volume setting. |
+| `volume` | `number` |  |  | The track's own volume, from 0 to 1. The player multiplies it by the channel's volume setting. |
 
 ## audioSrc
 
 Function. Explained in [Audio](/docs/reference/audio#audiosrc).
 
-Where a sound file is, relative to the page. Like `artSrc`: relative, never
-rooted at `/`, under `audio/`, and a bare name is an `.ogg`.
+Returns a sound file's path relative to the page, under `audio/`. A bare name gets `.ogg`.
+
+Like `artSrc`, the path is relative and never starts with `/`.
 
 ```ts shape
 import { audioSrc } from '@ifloom/engine'
@@ -261,7 +264,7 @@ function audioSrc(path: string): string
 
 Type. Explained in [Audio](/docs/reference/audio#audiostate).
 
-What a save keeps about audio, at `state.audio`.
+The audio a save keeps, in `state.audio`. The tracks and channels themselves are read from content.
 
 ```ts shape
 import type { AudioState } from '@ifloom/engine'
@@ -276,17 +279,17 @@ type AudioState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `channels` | `Record<string, string \| null>` |  |  | What effects have put on background channels. Null is silence; a channel not here is the effects' to leave alone. |
-| `cues` | `{ seq: number; track: string }[]` |  |  | The last few `sound` effects, oldest first, each with its place in the running count. |
-| `seq` | `number` |  |  | How many `sound` effects there have been. |
-| `shown` | `number` |  |  | How many times a scene has been entered, all scenes together. Each showing's sounds get keys of their own. |
-| `started` | `Record<string, { track: string; turn: number }>` |  |  | What each background channel is playing and the turn it started, for a shuffled playlist's draw. |
+| `channels` | `Record<string, string \| null>` |  |  | The tracks `audio` effects have put on background channels, by channel. Null is silence, and a channel missing here is left to the scene, the plugins and the defaults. |
+| `cues` | `{ seq: number; track: string }[]` |  |  | The last 20 `sound` effects, oldest first, each with its number in the running count. |
+| `seq` | `number` |  |  | The number of `sound` effects there have been. |
+| `shown` | `number` |  |  | The number of times a scene has been entered, all scenes together. Each visit's sounds get keys of their own from it. |
+| `started` | `Record<string, { track: string; turn: number }>` |  |  | The track each background channel is playing and the turn it started, for a shuffled playlist's draw. |
 
 ## AudioView
 
 Type. Explained in [Audio](/docs/reference/audio#audioview).
 
-What `view.audio` holds.
+The audio as the audio player needs it, in `view.audio`. It's empty when the game has no audio.
 
 ```ts shape
 import type { AudioView } from '@ifloom/engine'
@@ -300,16 +303,16 @@ type AudioView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `channels` | `Record<string,` [`AudioChannelView`](#audiochannelview)`>` |  |  | Every channel, resolved: the open scene's choice, then an effect's, then a plugin's, then the game's default. |
-| `cues` | [`AudioCue[]`](#audiocue) |  |  | Sounds from `sound` effects and the open scene's sound and voice beats, in order. |
-| `muteSetting` | `string \| null` |  |  | The ui setting that mutes everything while on, or null for none. |
-| `soundSetting` | `string \| null` |  |  | The ui setting that mutes everything while off, or null for none. |
+| `channels` | `Record<string,` [`AudioChannelView`](#audiochannelview)`>` |  |  | Every channel with its track resolved, from the open scene, then an effect, then a plugin, then the game's default. |
+| `cues` | [`AudioCue[]`](#audiocue) |  |  | The sounds that are due, from `sound` effects and the open scene's sound and voice beats, in order. |
+| `muteSetting` | `string \| null` |  |  | The id of the ui setting that mutes everything while it's on. Null when there's none. |
+| `soundSetting` | `string \| null` |  |  | The id of the ui setting that mutes everything while it's off. Null when there's none. |
 
 ## AutosaveOptions
 
 Type. Explained in [The runner](/docs/reference/runner#autosaveoptions).
 
-When the runner saves on its own. Off unless the game sets it.
+Settings for autosave, when the runner saves on its own. Autosave is off unless `createRunner` is given these.
 
 ```ts shape
 import type { AutosaveOptions } from '@ifloom/engine'
@@ -321,14 +324,14 @@ type AutosaveOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `slot` | `string` | yes |  | The slot it writes to. `'auto'` if left out. |
-| `every` | `'command' \| 'scene' \| 'turn'` |  |  | After every command, or only when the scene or the turn changes. Skipped while the game's `saveable` refuses saving. |
+| `slot` | `string` | yes |  | The slot autosave writes to. `'auto'` if left out. |
+| `every` | `'command' \| 'scene' \| 'turn'` |  |  | The moment autosave writes, after every command or only when the scene or the turn changes. It skips a save while the game's `saveable` refuses saving. |
 
 ## BacklogEntry
 
 Type. Explained in [The runner](/docs/reference/runner#backlogentry).
 
-One scene as the player saw it.
+One scene of the backlog, as the player saw it. The backlog keeps scenes only, never the room or a minigame.
 
 ```ts shape
 import type { BacklogEntry } from '@ifloom/engine'
@@ -344,18 +347,19 @@ type BacklogEntry = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `turn` | `number` |  |  | The turn it was shown in. |
-| `when` | `string \| null` |  |  | Where the game was in time, in plugins' words (`view.when`), or null if none says. |
-| `sceneId` | `string` |  |  | The scene's id. The backlog keeps scenes only, not the room. |
-| `title` | `string` |  |  | The scene's heading as it was shown. |
-| `beats` | [`SceneBeat[]`](#scenebeat) |  |  | What the player read, as the view's beats. |
-| `chose` | `string` | yes |  | The label of the choice the player made in this scene, once they made one. |
+| `turn` | `number` |  |  | The turn the scene was shown in. |
+| `when` | `string \| null` |  |  | The time in the game when the scene was shown, from `view.when`, or null when no plugin gives one. |
+| `sceneId` | `string` |  |  | The scene's id. |
+| `title` | `string` |  |  | The scene's title as it was shown. |
+| `beats` | [`SceneBeat[]`](#scenebeat) |  |  | The scene's beats as the player read them. |
+| `chose` | `string` | yes |  | The label of the choice the player made in the scene, once they made one. A choice at a decision of a flow shows in `beats` instead. |
 
 ## BacklogOptions
 
 Type. Explained in [The runner](/docs/reference/runner#backlogoptions).
 
-What was shown, turn by turn, for a "what did she just say" screen. Off unless asked for.
+Settings for the backlog, the list of scenes the player has seen with the choice made in each. The backlog is off
+unless `createRunner` is given these or `true`.
 
 ```ts shape
 import type { BacklogOptions } from '@ifloom/engine'
@@ -366,13 +370,13 @@ type BacklogOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `limit` | `number` | yes |  | How many entries to keep. 200 if left out. |
+| `limit` | `number` | yes |  | The number of entries the backlog keeps, dropping the oldest. 200 if left out. |
 
 ## BeatSize
 
 Type. Explained in [Prose and markup](/docs/reference/prose#beatsize).
 
-How wide an `image` or `video` beat is drawn: `inline` in the column with the words, `wide` across it.
+The width of an `image` or `video` beat, `inline` in the column with the words or `wide` across it.
 
 ```ts shape
 import type { BeatSize } from '@ifloom/engine'
@@ -383,14 +387,11 @@ type BeatSize = 'inline' | 'wide'
 
 Type. Explained in [Scenes](/docs/reference/scenes#block).
 
-A scene, as data.
+One entry of a scene's body, told apart by its key, such as `{ text }`, `{ say }` or `{ decide }`. A block with a
+`when` is left out while it fails.
 
-The body is *composed* from blocks rather than looked up whole. That is
-the point: under the old model one key had to cover an entire body, so any
-branch the key did not carry got frozen onto whichever version was exported.
-Here each block is its own key, so a key can only ever mean one thing, and
-adding a conditional line is adding a block rather than multiplying the
-key space.
+The body is composed from blocks rather than read whole from one prose key. So a conditional line is one more
+block, and each block's words mean one thing.
 
 ```ts shape
 import type { Block } from '@ifloom/engine'
@@ -403,10 +404,8 @@ Uses: [`Condition`](#condition), [`SceneMedia`](#scenemedia), [`FlowChoice`](#fl
 
 Type. Explained in [Actions and buttons](/docs/reference/actions#blocked).
 
-Why something the player could do is refused for now: a choice, an action,
-a place, an app. Each entry is checked in order, and the first
-whose `when` holds refuses it with its `reason`, which the button shows
-greyed out. With `hide`, the button is left off the screen instead.
+A rule that refuses a choice, an action, a location or an app while its `when` holds. The first entry of a `blocked`
+list whose `when` holds gives the `reason` the button shows.
 
 ```ts shape
 import type { Blocked } from '@ifloom/engine'
@@ -419,15 +418,15 @@ type Blocked = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `when` | [`Condition`](#condition) |  |  | Refused while this holds. |
-| `reason` | [`Reason`](#reason) |  |  | What the player reads on the greyed-out button, and the refusal. |
-| `hide` | `boolean` | yes |  | Leave it off the screen while `when` holds, rather than greyed out. |
+| `when` | [`Condition`](#condition) |  |  | The rule's condition, which refuses the choice or action while it holds. |
+| `reason` | [`Reason`](#reason) |  |  | The rule's reason, which the player reads on the greyed-out button and as the refusal. |
+| `hide` | `boolean` | yes |  | The rule's hide mark. When true, the button is left off the screen while `when` holds, rather than greyed out. |
 
 ## BlockExtras
 
 Type. Explained in [Flowing scenes](/docs/reference/flows#blockextras).
 
-What any block can have besides its own: a condition it shows under, and presentation hints.
+The fields any block can have beside its own, a condition and ui hints.
 
 ```ts shape
 import type { BlockExtras } from '@ifloom/engine'
@@ -437,11 +436,17 @@ type BlockExtras = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `when` | [`Condition`](#condition) | yes |  | The block's condition, which leaves it out while it fails. |
+| `ui` | [`Ui`](#ui)`<`[`BlockUi`](#blockui)`>` | yes |  | The block's ui hints. See `BlockUi`. |
+
 ## BlockUi
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
 
-Hints on a block of a scene's body, carried on the first beat the block makes. Empty here; a UI package augments it.
+The ui hints a block of a scene's body takes in its `ui`, carried on the first beat the block makes. The engine
+declares none, and a UI package augments this interface with its own.
 
 ```ts shape
 import type { BlockUi } from '@ifloom/engine'
@@ -457,8 +462,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [Saves](/docs/reference/saves#brokensave).
 
-A save that is there but can't be read, as `list()` gives it: its slot, and
-why, in the words `read` would give. Listed so the player can delete it.
+A save in a slot that can't be read, as `list()` gives it. The listing keeps it so the player can delete it.
 
 ```ts shape
 import type { BrokenSave } from '@ifloom/engine'
@@ -468,15 +472,19 @@ type BrokenSave = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `slot` | `string` |  |  | The broken save's slot. |
+| `broken` | `string` |  |  | The reason the save can't be read, in the words `read` would give. |
+
 ## buildEffects
 
 Function. Explained in [Calls by name](/docs/reference/custom#buildeffects).
 
-Effects as the reducer takes them: a call to an effect nobody has (a
-plugin the game doesn't have, a name the game never declared) is left
-out, as it would do nothing; the content checker (`checkGame`) reports it
-by name. Every other effect is kept as written, and a call runs in its
-turn, on the state the effects before it left.
+Returns the effects ready for the reducer, without the calls no plugin or game has. The content checker
+(`checkGame`) reports each call it leaves out.
+
+Every other effect stays as written. A call runs in its turn, on the state the effects before it left.
 
 ```ts shape
 import { buildEffects, type Game } from '@ifloom/engine'
@@ -489,12 +497,8 @@ Uses: [`Game`](#game), [`EffectRef`](#effectref), [`Effect`](#effect).
 
 Type. Explained in [Actions and buttons](/docs/reference/actions#buttondef).
 
-Something the player can press: a scene's choice (`Choice`) or an action
-(`ActionDef`). Both have these fields, read the same way: its words, when
-it is offered and why it is refused, what it costs, what it does and a
-command it sends, once a turn, and words and hints for the UI.
-
-Pressing one runs, in order: its command, its cost, then its effects.
+The fields a scene's choice (`Choice`) and an action (`ActionDef`) share, read the same way for both. Taking one
+runs its command, then pays its cost, then applies its effects.
 
 ```ts shape
 import type { ButtonDef } from '@ifloom/engine'
@@ -516,27 +520,27 @@ type ButtonDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` | yes |  | Its words, as written, with tokens filled: `'Order a tea'`. A scene's choice with none shows its id; an action with none is never drawn as a button. |
-| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | Words that depend on state, "Not today" before you have bought it, "Right." after. The first whose `when` holds wins; `label` is the fallback. |
-| `when` | [`Condition`](#condition) | yes |  | Only offered, and only done, while this holds. |
-| `blocked` | [`Blocked[]`](#blocked) | yes |  | Shown but greyed out while one of these holds, with its reason (or left off with `hide`), and refused with it. The first that holds wins. |
-| `cost` | [`ActionCost`](#actioncost) | yes |  | Stats it spends: checked before it runs, listed on its button, and paid after its command. |
-| `effects` | [`EffectRef[]`](#effectref) | yes |  | Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. |
-| `command` | [`CommandRef`](#commandref) | yes |  | A command it sends as well, run first: a plugin's in short (`{ 'devices/open': { id: 'messages' } }`) or the engine's. It is greyed out with that command's reason while it would be refused, and its price includes what the command spends. Any command but `choose`. |
-| `once` | [`Once`](#once) | yes |  | Once in the game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`): spent once it has been pressed, as `state.chosen` counts it. `reason` is what the player reads on it afterwards: a choice stays on screen and pays nothing more, an action is refused. |
-| `tags` | `string[]` | yes |  | Words the UI can style or filter it by. The engine gives them no meaning. |
-| `irreversible` | `string` | yes |  | A warning that it can't be undone, which the UI shows on it. |
-| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | Presentation hints for the UI, carried to its button as written. See `ChoiceUi`. |
+| `id` | `string` |  |  | The choice's or action's id, unique among its scene's choices or among the actions. |
+| `label` | `string` | yes |  | The button's words, with tokens filled, such as `'Order a tea'`. A choice with no label shows its id, and an action with none is never rendered as a button. |
+| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | The button's words that depend on the state, such as "Not today" before you have bought it and "Right." after. The first entry whose `when` holds wins, and `label` is the fallback. |
+| `when` | [`Condition`](#condition) | yes |  | The condition under which the choice or action is offered and can be taken. Always, if left out. |
+| `blocked` | [`Blocked[]`](#blocked) | yes |  | The rules that refuse it for now. The first entry whose `when` holds greys the button out with its reason, or leaves it off with `hide`. |
+| `cost` | [`ActionCost`](#actioncost) | yes |  | The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. |
+| `command` | [`CommandRef`](#commandref) | yes |  | The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never `choose`. The button is refused with that command's reason while the command would be. An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends. |
+| `once` | [`Once`](#once) | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. |
+| `tags` | `string[]` | yes |  | The tags a UI can style or filter it by. The engine gives them no meaning. |
+| `irreversible` | `string` | yes |  | The warning that it can't be undone, which a UI shows on the button. |
+| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The ui hints carried to its button in the view. See `ChoiceUi`. |
 
 ## callOf
 
 Function. Explained in [Calls by name](/docs/reference/custom#callof).
 
-The name and arguments of a call in short, `{ 'calendar/pass': { by: 2 } }`
-as `{ name: 'calendar/pass', with: { by: 2 } }`, or undefined for anything
-else: one of the engine's own effects or conditions. For code that looks at
-a list of effects, such as a plugin's guard or price.
+Returns the name and arguments of a call in the short form, or undefined for the engine's own conditions and effects.
+A plugin's guard or price uses it to read effects.
+
+`{ 'calendar/pass': { by: 2 } }` gives `{ name: 'calendar/pass', with: { by: 2 } }`.
 
 ```ts shape
 import { callOf } from '@ifloom/engine'
@@ -547,7 +551,7 @@ function callOf(entry: object): { name: string; with: Record<string, unknown> } 
 
 Function. Explained in [Entities](/docs/reference/entities#canhold).
 
-Whether a holder is there to hold: the player always, a unique entity while it is in the game.
+Returns true when `holder` can hold things now. The player always can, and a unique entity can while it is in the game.
 
 ```ts shape
 import { canHold, type Game } from '@ifloom/engine'
@@ -560,7 +564,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [Game state](/docs/reference/state#carryover).
 
-What a New Game+ takes from the game before: player stats, kv keys and what the player holds.
+The stats, kv keys and things a New Game+ carries over from the game before, declared in `carryOver`.
 
 ```ts shape
 import type { CarryOver } from '@ifloom/engine'
@@ -574,17 +578,17 @@ type CarryOver = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `stats` | `string[]` | yes |  | The player's stats to carry, by id. |
-| `kv` | `string[]` | yes |  | kv keys, by name. |
-| `held` | `string[] \| 'all'` | yes |  | Things the player holds, by reference (`'food:apple'`), or `'all'` for everything the player holds. A thing made in play comes with them. |
+| `kv` | `string[]` | yes |  | The player's kv keys to carry, by key. |
+| `held` | `string[] \| 'all'` | yes |  | The things the player holds to carry, by reference (`'food:apple'`), or `'all'` for every thing the player holds. A thing made in play is carried too. |
 
 ## cases
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-The first block that fits: each of `blocks` is tried in order, and only the
-first whose own `when` holds, or that has none, is shown. Leave the last
-without a `when` for the otherwise. A `when` in `extras` leaves the whole
-thing out while it fails.
+Returns a `{ cases }` block that shows only the first of `blocks` whose own `when` holds, or that has none. Leave the
+last without a `when` as the fallback.
+
+A `when` in `extras` leaves the whole block out while it fails.
 
 ```ts fragment
 cases([
@@ -605,7 +609,7 @@ Uses: [`Block`](#block), [`BlockExtras`](#blockextras).
 
 Function. Explained in [Randomness](/docs/reference/random#chance).
 
-True `numerator` times in `outOf`, drawn from these parts.
+Returns true `numerator` times in `outOf`, drawn from `parts`.
 
 ```ts shape
 import { chance } from '@ifloom/engine'
@@ -616,7 +620,7 @@ function chance(numerator: number, outOf: number, ...parts: (string | number)[])
 
 Type. Explained in [Changes](/docs/reference/changes#change).
 
-One stat a command moved: whose, from what to what, and the change written in the stat's own words.
+A stat the last command moved, with its old and new values and the change in the stat's own format. `state.changes` keeps these.
 
 ```ts shape
 import type { Change } from '@ifloom/engine'
@@ -634,18 +638,18 @@ type Change = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `stat` | `string` |  |  | The stat's id. |
-| `of` | [`EntityRef`](#entityref) | yes |  | The entity whose stat it is; left out for the player's. |
-| `from` | `number` |  |  | What it read before the command. |
-| `to` | `number` |  |  | What it reads now. |
-| `by` | `number` |  |  | How far it moved: `to - from`, above 0 for up. |
+| `of` | [`EntityRef`](#entityref) | yes |  | The entity the stat is kept on. Left out for the player's stat. |
+| `from` | `number` |  |  | The stat's value before the command. |
+| `to` | `number` |  |  | The stat's value after the command. |
+| `by` | `number` |  |  | The amount the stat moved, `to - from`, above 0 when it went up. |
 | `label` | `string` |  |  | The stat's `label`. |
-| `text` | `string` |  |  | The change written with the stat's `format`, signed: `'+30 coins'`, `'-£5'`. |
+| `text` | `string` |  |  | The change in the stat's `format`, signed, such as `'+30 coins'` or `'-£5'`. |
 
 ## ChangesDef
 
 Type. Explained in [Changes](/docs/reference/changes#changesdef).
 
-Which stats `view.changes` tracks: their ids. An entity stat's id covers that stat on every entity.
+The stats the game declares in `changes` for `view.changes` to track, by id. An entity stat's id covers that stat on every entity.
 
 ```ts shape
 import type { ChangesDef } from '@ifloom/engine'
@@ -654,11 +658,15 @@ type ChangesDef = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `stats` | `string[]` |  |  | The ids of the stats to track. |
+
 ## ChangeView
 
 Type. Explained in [Changes](/docs/reference/changes#changeview).
 
-One stat a command moved, as the view hands it to a UI: the `Change`, and who or what it's about in words.
+A stat change as the player sees it, in `view.changes`. It adds the words that say what moved to a `Change`.
 
 ```ts shape
 import type { ChangeView } from '@ifloom/engine'
@@ -677,19 +685,20 @@ type ChangeView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `stat` | `string` |  |  | The stat's id. |
-| `of` | [`EntityRef`](#entityref) | yes |  | The entity whose stat it is; left out for the player's. |
-| `from` | `number` |  |  | What it read before the command. |
-| `to` | `number` |  |  | What it reads now. |
-| `by` | `number` |  |  | How far it moved: `to - from`, above 0 for up. |
+| `of` | [`EntityRef`](#entityref) | yes |  | The entity the stat is kept on. Left out for the player's stat. |
+| `from` | `number` |  |  | The stat's value before the command. |
+| `to` | `number` |  |  | The stat's value after the command. |
+| `by` | `number` |  |  | The amount the stat moved, `to - from`, above 0 when it went up. |
 | `label` | `string` |  |  | The stat's `label`. |
-| `text` | `string` |  |  | The change written with the stat's `format`, signed: `'+30 coins'`, `'-£5'`. |
-| `name` | `string` | yes |  | The words to show after `text`, so the change says what moved: the entity's name for an entity's stat (`+4 Ava`), else the stat's `label` when `text` doesn't say it in words (`+1 Charm`, `+20% Mood`). Left out when the stat's format already does (`+30 coins`). |
+| `text` | `string` |  |  | The change in the stat's `format`, signed, such as `'+30 coins'` or `'-£5'`. |
+| `name` | `string` | yes |  | The words to show after `text`, so the change says what moved. Left out when the stat's format already says it (`+30 coins`). It's the entity's name for an entity's stat (`+4 Ava`), else the stat's `label` when `text` has no words in it (`+1 Charm`, `+20% Mood`). |
 
 ## ChannelDef
 
 Type. Explained in [Audio](/docs/reference/audio#channeldef).
 
-How a channel behaves.
+An audio channel the game declares in `audio.channels`, merged over the default channels. It sets whether its
+sounds replace each other or overlap, and how they fade.
 
 ```ts shape
 import type { ChannelDef } from '@ifloom/engine'
@@ -703,16 +712,16 @@ type ChannelDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `mode` | `'background' \| 'cue'` |  |  | Background channels play one thing until it changes; cue channels play each sound once, overlapping. |
-| `crossfade` | `number` | yes |  | Milliseconds to fade from one track to the next. Background only; 1000 for music, 600 for ambience. |
-| `volume` | `string` | yes |  | A ui setting (a range) that sets this channel's volume. |
-| `duck` | `{ under: string[]; to: number }` | yes |  | Off unless declared: quieten this channel to `to` (0 to 1) while any of `under` is playing. |
+| `mode` | `'background' \| 'cue'` |  |  | The channel's mode. A `background` channel plays one thing until it changes, and a `cue` channel plays each sound once, overlapping. |
+| `crossfade` | `number` | yes |  | The milliseconds a background channel takes to fade from one track to the next. 1000 for `music`, 600 for `ambience` and 1000 for others. |
+| `volume` | `string` | yes |  | The id of the ui setting, a range, that sets the channel's volume. |
+| `duck` | `{ under: string[]; to: number }` | yes |  | The channel's ducking, quietening it to `to` (0 to 1) while any channel in `under` plays. No ducking if left out. |
 
 ## Checked
 
 Type. Explained in [Checking content](/docs/reference/checks#checked).
 
-What `checkGame` finds.
+The report `checkGame` returns, with the content's problems, warnings and files.
 
 ```ts shape
 import type { Checked } from '@ifloom/engine'
@@ -725,19 +734,19 @@ type Checked = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `problems` | [`Problem[]`](#problem) |  |  | What's wrong with the content: a broken reference, a key declared twice, a call with the wrong arguments. Any problem fails `ifloom check`. |
-| `warnings` | [`Problem[]`](#problem) |  |  | What may go wrong in play but isn't a problem, such as a token that may be unset with no fallback. A warning fails no check. |
-| `files` | [`FileRef[]`](#fileref) |  |  | Every file the content names (pictures, videos, sounds) and where, for a build to check they exist. |
+| `problems` | [`Problem[]`](#problem) |  |  | The content's faults, such as a broken reference, a key declared twice, or a call with the wrong arguments. Any problem fails `ifloom check`. |
+| `warnings` | [`Problem[]`](#problem) |  |  | The faults that may show in play but aren't problems, such as a token that may be unset with no fallback. A warning fails no check. |
+| `files` | [`FileRef[]`](#fileref) |  |  | The files the content names (pictures, videos, sounds) and where, for a build to check they exist. |
 
 ## checkGame
 
 Function. Explained in [Checking content](/docs/reference/checks#checkgame).
 
-Everything wrong with a game's content, and every file it names. Runs on
-any `Game`, hand-built or loaded. Give `probes` to also render every scene
-against each state, so a scene that throws for one (through the game's own
-conditions or values) is reported. A hand-built game's problems name the
-pack `game`.
+Returns the `Checked` report of a game's content, its problems, warnings and the files it names. It runs on any
+`Game`, hand-built or loaded.
+
+Give `probes` to also render every scene against each state, so the report includes a scene that throws for one
+through the game's own conditions or values. A hand-built game's problems name the pack `game`.
 
 ```ts shape
 import { checkGame, type Game } from '@ifloom/engine'
@@ -750,13 +759,10 @@ Uses: [`Game`](#game), [`Probe`](#probe), [`Checked`](#checked).
 
 Type. Explained in [Scenes](/docs/reference/scenes#choice).
 
-A choice in a scene: a `ButtonDef`, sent as `{ type: 'choose', id }`. Its
-id is unique within the scene, and `state.chosen` counts it as
-`<scene>#<id>`.
+A choice a scene declares in its `choices` or a decision, with the fields of a `ButtonDef`. The player sends it as
+`{ type: 'choose', id }`, and `state.chosen` counts it as `<scene>#<id>`.
 
-A choice with `once` stays on screen once it is spent, with its
-`once.reason`, and pays nothing more, which is how the caps read as
-character rather than vanishing.
+A spent `once` choice stays on screen with its `once.reason` and pays nothing more.
 
 ```ts shape
 import type { Choice } from '@ifloom/engine'
@@ -778,27 +784,28 @@ type Choice = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` | yes |  | Its words, as written, with tokens filled: `'Order a tea'`. A scene's choice with none shows its id; an action with none is never drawn as a button. |
-| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | Words that depend on state, "Not today" before you have bought it, "Right." after. The first whose `when` holds wins; `label` is the fallback. |
-| `when` | [`Condition`](#condition) | yes |  | Only offered, and only done, while this holds. |
-| `blocked` | [`Blocked[]`](#blocked) | yes |  | Shown but greyed out while one of these holds, with its reason (or left off with `hide`), and refused with it. The first that holds wins. |
-| `cost` | [`ActionCost`](#actioncost) | yes |  | Stats it spends: checked before it runs, listed on its button, and paid after its command. |
-| `effects` | [`EffectRef[]`](#effectref) | yes |  | Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. |
-| `command` | [`CommandRef`](#commandref) | yes |  | A command it sends as well, run first: a plugin's in short (`{ 'devices/open': { id: 'messages' } }`) or the engine's. It is greyed out with that command's reason while it would be refused, and its price includes what the command spends. Any command but `choose`. |
-| `once` | `(`[`Once`](#once) `& { key?: string; })` | yes |  | Once in the game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`): spent once it has been pressed, as `state.chosen` counts it. `reason` is what the player reads on it afterwards: a choice stays on screen and pays nothing more, an action is refused. |
-| `tags` | `string[]` | yes |  | Words the UI can style or filter it by. The engine gives them no meaning. |
-| `irreversible` | `string` | yes |  | A warning that it can't be undone, which the UI shows on it. |
-| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | Presentation hints for the UI, carried to its button as written. See `ChoiceUi`. |
+| `id` | `string` |  |  | The choice's or action's id, unique among its scene's choices or among the actions. |
+| `label` | `string` | yes |  | The button's words, with tokens filled, such as `'Order a tea'`. A choice with no label shows its id, and an action with none is never rendered as a button. |
+| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | The button's words that depend on the state, such as "Not today" before you have bought it and "Right." after. The first entry whose `when` holds wins, and `label` is the fallback. |
+| `when` | [`Condition`](#condition) | yes |  | The condition under which the choice or action is offered and can be taken. Always, if left out. |
+| `blocked` | [`Blocked[]`](#blocked) | yes |  | The rules that refuse it for now. The first entry whose `when` holds greys the button out with its reason, or leaves it off with `hide`. |
+| `cost` | [`ActionCost`](#actioncost) | yes |  | The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. |
+| `command` | [`CommandRef`](#commandref) | yes |  | The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never `choose`. The button is refused with that command's reason while the command would be. An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends. |
+| `once` | `(`[`Once`](#once) `& { key?: string; })` | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. The choice's limit of once a game or once a turn. See `Once`. |
+| `tags` | `string[]` | yes |  | The tags a UI can style or filter it by. The engine gives them no meaning. |
+| `irreversible` | `string` | yes |  | The warning that it can't be undone, which a UI shows on the button. |
+| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The ui hints carried to its button in the view. See `ChoiceUi`. |
 
 ## choice
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-A choice at a decision, or among a scene's ending choices. `label` is its
-words. Everything a `Choice` has goes in `fields`: its `effects`, `cost`,
-`blocked`, `once` or `command`, and `then`, what the flow shows once it is
-picked. Its id is unique within the scene.
+Returns a choice for a decision or a scene's ending choices, with `label` as its words. Its id is unique within the
+scene.
+
+Every other field of a `Choice` goes in `fields`, such as `effects`, `cost`, `blocked`, `once` or `command`, and
+`then`, the blocks the flow shows once the player chooses it.
 
 ```ts shape
 import { choice } from '@ifloom/engine'
@@ -811,7 +818,7 @@ Uses: [`FlowChoice`](#flowchoice).
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
 
-Hints on a choice or a room's button. Empty here; a UI package augments it.
+The ui hints a choice or an action takes in its `ui`. The engine declares none, and a UI package augments this interface with its own.
 
 ```ts shape
 import type { ChoiceUi } from '@ifloom/engine'
@@ -827,7 +834,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [Stats](/docs/reference/stats#clampstat).
 
-A value held to the stat's declared range (0–100 unless it says).
+Returns `value` held to the stat's declared range. The range is 0 to 100 unless the stat declares one.
 
 ```ts shape
 import { clampStat, type Game } from '@ifloom/engine'
@@ -840,7 +847,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [Commands](/docs/reference/commands#command).
 
-A command: one of the types in `CommandMap`.
+A request to change the game, told apart by its `type`, such as `{ type: 'choose', id }`. The reducer applies it or refuses it.
 
 ```ts shape
 import type { Command } from '@ifloom/engine'
@@ -866,7 +873,7 @@ Uses: [`KvValue`](#kvvalue).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditioncall-effectcall-and-commandcall).
 
-A command by name, a plugin's or the game's own, in short: checked against `CommandRegistry`.
+A plugin's or the game's command in the short form, type-checked against `CommandRegistry`.
 
 ```ts shape
 import type { CommandCall } from '@ifloom/engine'
@@ -879,10 +886,10 @@ Uses: [`CallIn`](/docs/api/engine-plugin#callin), [`CommandRegistry`](#commandre
 
 Type. Explained in [The runner](/docs/reference/runner#commandlog).
 
-Everything needed to play a game back exactly: the state it started from and
-every command since. The engine is deterministic, so `replay` gives the same
-state every time — a bug report a developer can step through, or two
-versions of a game played the same way and compared.
+A record of play, the state it started from and every command since. The engine is deterministic, so `replay` gives
+the same state from it every time.
+
+A log makes a bug report a developer can step through, or plays two versions of a game the same way to compare them.
 
 ```ts shape
 import type { CommandLog } from '@ifloom/engine'
@@ -897,17 +904,17 @@ type CommandLog = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `string` |  |  | The game's id, so a log isn't played against another game. |
-| `start` | [`GameState`](#gamestate) |  |  | The state the commands were applied to, in order. |
-| `commands` | [`Command[]`](#command) |  |  | Every command applied, in order, refused ones included. |
-| `schema` | `number` | yes |  | The engine's `SCHEMA` the commands were written in. A log from before logs kept it has none, and is read as the oldest. |
-| `plugins` | `Record<string, number>` | yes |  | Each plugin's `commandVersion` the commands were written in, by plugin id. |
+| `game` | `string` |  |  | The id of the game the log was played in, so it isn't played against another game. |
+| `start` | [`GameState`](#gamestate) |  |  | The state the log's first command was applied to. |
+| `commands` | [`Command[]`](#command) |  |  | The log's commands, oldest first, refused ones included. |
+| `schema` | `number` | yes |  | The engine's `SCHEMA` the log's commands were written in. A log without one is read as the oldest schema. |
+| `plugins` | `Record<string, number>` | yes |  | The `commandVersion` of each plugin the log's commands were written in, by plugin id. |
 
 ## commandOf
 
 Function. Explained in [Calls by name](/docs/reference/custom#commandof).
 
-A command as the engine runs it: a plugin's short form read as `{ type: 'custom', name, with }`.
+Returns the command the engine runs for `ref`. A short-form call becomes `{ type: 'custom', name, with }`.
 
 ```ts shape
 import { commandOf } from '@ifloom/engine'
@@ -920,7 +927,7 @@ Uses: [`CommandRef`](#commandref), [`Command`](#command).
 
 Type. Explained in [Calls by name](/docs/reference/custom#commandref).
 
-A command as content writes it: a plain command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`), checked against `CommandRegistry`.
+A command in content, a plain command or a plugin's in the short form (`{ 'places/go': { id: 'cafe' } }`), checked against `CommandRegistry`.
 
 ```ts shape
 import type { CommandRef } from '@ifloom/engine'
@@ -933,7 +940,7 @@ Uses: [`Command`](#command), [`CommandCall`](#commandcall).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
-The commands plugins and the game add, by full name, with what content writes as each one's value. As `ConditionRegistry`.
+The registry of commands plugins and the game add, by full name, with each one's arguments. It works as `ConditionRegistry` does.
 
 ```ts shape
 import type { CommandRegistry } from '@ifloom/engine'
@@ -949,9 +956,12 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [Conditions](/docs/reference/conditions#condition).
 
-A condition: one of the kinds in `ConditionMap`, told apart by its one kind
-key, or a plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`,
-checked against `ConditionRegistry` when the plugin declares its calls. See `PluginCall`.
+A test of the state that holds or doesn't, written as plain data on a block, a choice or a variants member. Each
+kind is told apart by its one key, such as `{ stat: 'coins', gte: 3 }`.
+
+A plugin's condition, or the game's own from its `rules`, is a `PluginCall` in the short form
+(`{ 'quests/done': { quest: 'bakery' } }`), checked against `ConditionRegistry` when its name is declared there.
+Being data, a condition stays serialisable and the content checker can check it.
 
 ```ts shape
 import type { Condition } from '@ifloom/engine'
@@ -982,7 +992,7 @@ Uses: [`KvValue`](#kvvalue), [`Range`](#range), [`Select`](#select), [`Condition
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditioncall-effectcall-and-commandcall).
 
-A condition by name, a plugin's or the game's own, in short: checked against `ConditionRegistry`.
+A plugin's or the game's condition in the short form, type-checked against `ConditionRegistry`.
 
 ```ts shape
 import type { ConditionCall } from '@ifloom/engine'
@@ -995,8 +1005,8 @@ Uses: [`CallIn`](/docs/api/engine-plugin#callin), [`ConditionRegistry`](#conditi
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
-The conditions plugins and the game add, by full name, with what content
-writes as each one's value: its arguments, or `true` for none.
+The registry of conditions plugins and the game add, by full name, with each one's arguments, or `true` for none.
+A plugin augments it, and a call to a declared name is type-checked against it.
 
 ```ts fragment
 declare module '@ifloom/engine' {
@@ -1021,10 +1031,10 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#content-and-packs).
 
-The game's own content: one file of it, such as `story/cafe.ts`. It has no
-id or schema, since it is compiled with the engine it runs on, and each
-thing it declares (a scene, a stat, a prose key) may be declared only once
+One file of the game's own content, such as `story/cafe.ts`. Each scene, stat or prose key may be declared only once
 across the game's content.
+
+Content has no id or schema, since it is compiled with the engine it runs on.
 
 ```ts shape
 import type { Content } from '@ifloom/engine'
@@ -1064,42 +1074,43 @@ type Content = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` | yes |  | What problems call this content, such as `story.cafe`. Without one, they say `content`. |
-| `strings` | `Record<string, string>` | yes |  | Player-facing words by key, over the engine's and plugins' own. |
-| `prose` | `Record<string, string>` | yes |  | Prose by key. |
-| `words` | `Record<string, string>` | yes |  | Other words for fields of the content, by key: a translation, which is one pack with this table (and its own `prose` for the lines read by key). Each key names one field the player reads, as `translatableFields` lists them: `action.wait.label`, `entity.character:ava.name`, `scene.cafe.counter.text.intro`. It is laid over the content once everything is merged, a later pack's over an earlier one's, and a key that names no field is reported. |
-| `variants` | `Record<string,` [`VariantMember[]`](#variantmember)`>` | yes |  | Variants membership by variants name, in draw order. Content and packs append to a name. A member is a prose key, or `{ prose: key, weight }` to be drawn more or less often than the rest. |
-| `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | Content for the game's plugins, by plugin id and then list: `{ quests: { quests: [...] } }`. A pack's entry replaces one with the same id, as its scenes do. |
-| `kinds` | [`KindDef[]`](#kinddef) | yes |  | Kinds of thing the game keeps several of. A later pack can redeclare one by id. |
-| `entities` | [`EntityDef[]`](#entitydef) | yes |  | Things of those kinds there at the start. A later pack can redeclare one by kind and id. |
-| `traits` | [`TraitTable`](#traittable) | yes |  | Traits given to entities, by trait id and then entity, over what each entity declares itself: `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv store a new game starts with, by key: a later pack's value replaces an earlier one's. |
-| `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | Keys reset each turn, by key: a later pack's value replaces an earlier one's. |
-| `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  |  |
-| `actions` | [`ActionDef[]`](#actiondef) | yes |  | Actions, by id: a later pack's replaces an earlier one's. |
-| `triggers` | [`TriggerDef[]`](#triggerdef) | yes |  |  |
-| `inputs` | [`InputDef[]`](#inputdef) | yes |  |  |
-| `settings` | [`SettingDef[]`](#settingdef) | yes |  | What the player can change from a settings screen. A later pack can redeclare one by id. |
-| `stats` | [`StatDef[]`](#statdef) | yes |  | Stats the game keeps. A later pack can redeclare one by id. |
-| `introScene` | `string` | yes |  | The scene on screen on the first frame: a later pack's replaces an earlier one's. |
-| `scenes` | [`DataScene[]`](#datascene) | yes |  |  |
-| `minigames` | [`MinigameDef[]`](#minigamedef) | yes |  | Minigames. A later pack's replaces an earlier one's by id. |
-| `timers` | [`TimerDef[]`](#timerdef) | yes |  | Timers. A later pack's replaces an earlier one's by id. |
-| `audio` | `Partial<`[`GameAudio`](#gameaudio)`>` | yes |  | Sounds, channels and defaults over the game's own. A later pack's track or channel replaces an earlier one's by id; its `mute` and `default` entries win too. |
-| `media` | [`GameMedia`](#gamemedia) | yes |  | Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. |
-| `ui` | [`Ui`](#ui)`<`[`GameUi`](#gameui)`>` | yes |  | Hints for the whole game, hint by hint: a later pack's hint replaces an earlier one's, and the rest are kept. |
-| `saveable` | [`Blocked[]`](#blocked) | yes |  | When saving is refused, after the entries before; one with the `id` of an earlier one takes its place. |
-| `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | Locks after the ones before; one with the `id` of an earlier one takes its place. |
-| `phrases` | [`Phrases`](#phrases) | yes |  | Words for mid-sentence that change with the state, printed as `{{name}}`: each phrase a list of `{ when?, text }` rows tried in order (or a plain string), and a nested object a group, named with a `.`. A later pack's phrase replaces an earlier one's by its full name, and a pack can add phrases to a group. |
-| `changes` | [`ChangesDef`](#changesdef) | yes |  | The stats whose changes `view.changes` lists, by id: `{ stats: ['coins', 'trust'] }`. Every file's and pack's lists are added together. With none, nothing is tracked. |
-| `finished` | [`Condition`](#condition) | yes |  | When the game counts as finished. The runner records the first time it holds in the profile's `core:finished`, so a title screen can offer New Game+. A pack's replaces the content's. |
-| `carryOver` | [`CarryOver`](#carryover) | yes |  | What a New Game+ carries over from the game before. A pack's replaces the content's, whole. |
+| `name` | `string` | yes |  | The content's name in problems, such as `story.cafe`. `content` if left out. |
+| `strings` | `Record<string, string>` | yes |  | The lines that replace the engine's and plugins' strings, by key. |
+| `prose` | `Record<string, string>` | yes |  | The prose keys' lines, by key. |
+| `words` | `Record<string, string>` | yes |  | The words table, other words for the fields a player reads, by key. A translation is one pack with this table and its own `prose`. Each key names one field, as `translatableFields` lists them (`action.wait.label`, `entity.character:ava.name`, `scene.cafe.counter.text.intro`). `loadGame` lays it over the merged content, a later pack's over an earlier one's, and reports a key that names no field. |
+| `variants` | `Record<string,` [`VariantMember[]`](#variantmember)`>` | yes |  | The variants lists' members by list name, in order. Content and packs append to a list. A member is a prose key, or `{ prose: key, weight }` to be drawn more or less often than the rest. |
+| `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | The plugins' content, by plugin id and then list, such as `{ quests: { quests: [...] } }`. A pack's entry replaces the one with the same id, as its scenes do. |
+| `kinds` | [`KindDef[]`](#kinddef) | yes |  | The pack's kinds. A later pack's kind replaces an earlier one with the same id. |
+| `entities` | [`EntityDef[]`](#entitydef) | yes |  | The pack's entities at the start. A later pack's entity replaces an earlier one with the same kind and id. |
+| `traits` | [`TraitTable`](#traittable) | yes |  | The pack's traits, by trait id and then entity, over what each entity declares itself, such as `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's starting kv store, by key. A later pack's value replaces an earlier one's. |
+| `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's keys reset each turn, by key. A later pack's value replaces an earlier one's. |
+| `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | The pack's storylines, merged by id over the content's. |
+| `actions` | [`ActionDef[]`](#actiondef) | yes |  | The pack's actions, by id. A later pack's action replaces an earlier one with the same id. |
+| `triggers` | [`TriggerDef[]`](#triggerdef) | yes |  | The pack's triggers, merged by id over the content's. |
+| `inputs` | [`InputDef[]`](#inputdef) | yes |  | The pack's inputs, merged by id over the content's. |
+| `settings` | [`SettingDef[]`](#settingdef) | yes |  | The pack's settings. A later pack's setting replaces an earlier one with the same id. |
+| `stats` | [`StatDef[]`](#statdef) | yes |  | The pack's stats. A later pack's stat replaces an earlier one with the same id. |
+| `introScene` | `string` | yes |  | The scene open on the first frame. A later pack's replaces an earlier one's. |
+| `scenes` | [`DataScene[]`](#datascene) | yes |  | The pack's scenes. A later pack's scene replaces an earlier one with the same id. |
+| `minigames` | [`MinigameDef[]`](#minigamedef) | yes |  | The pack's minigames. A later pack's minigame replaces an earlier one with the same id. |
+| `timers` | [`TimerDef[]`](#timerdef) | yes |  | The pack's timers. A later pack's timer replaces an earlier one with the same id. |
+| `audio` | `Partial<`[`GameAudio`](#gameaudio)`>` | yes |  | The pack's tracks, channels and defaults, over the content's. A later pack's track or channel replaces an earlier one with the same id, and its `mute`, `sound` and `default` entries win too. |
+| `media` | [`GameMedia`](#gamemedia) | yes |  | The pack's pools of pictures and videos. A later pack's pool replaces an earlier one with the same id, files and all. |
+| `ui` | [`Ui`](#ui)`<`[`GameUi`](#gameui)`>` | yes |  | The pack's ui hints for the whole game, merged hint by hint. A later pack's hint replaces an earlier one's, and the rest stay. |
+| `saveable` | [`Blocked[]`](#blocked) | yes |  | The pack's reasons to refuse saving, added after the content's. An entry with the `id` of an earlier one replaces it. |
+| `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | The pack's locks, added after the content's. A lock with the `id` of an earlier one replaces it. |
+| `phrases` | [`Phrases`](#phrases) | yes |  | The pack's phrases, words that change with the state, printed in a line as `{{name}}`. Each is a plain string or a list of `{ when?, text }` rows tried in order, and an object is a group. A later pack's phrase replaces an earlier one with the same full name, and a pack can add phrases to a group. |
+| `changes` | [`ChangesDef`](#changesdef) | yes |  | The pack's tracked stats, by id, such as `{ stats: ['coins', 'trust'] }`. The engine adds every file's and pack's lists together. |
+| `finished` | [`Condition`](#condition) | yes |  | The pack's condition for the game being finished. It replaces the content's, and the runner records the first time it holds in the profile's `core:finished`. |
+| `carryOver` | [`CarryOver`](#carryover) | yes |  | The pack's rules for a New Game+. They replace the content's `carryOver` whole. |
 
 ## CreatedEntity
 
 Type. Explained in [Effects](/docs/reference/effects#createdentity).
 
-What a created entity is given in `create`: a name (or a `like` to read it from), a description, a picture, tags, traits, stats and kv.
+The fields a `create` effect gives a new entity in its `with`. Each one left out is read from the entity it's made
+`like`, else from its kind.
 
 ```ts shape
 import type { CreatedEntity } from '@ifloom/engine'
@@ -1117,20 +1128,20 @@ type CreatedEntity = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` | yes |  | Its id within its kind: the next free number (`#1`, `#2`) if left out. |
-| `name` | `string` | yes |  | What the player reads. The `like`'s, if it is made like one and left out. |
-| `description` | `string` | yes |  | A line or two about it, tokens filled in when it is read. The `like`'s, if left out. |
-| `image` | `string` | yes |  | Its picture, through `artSrc`. The `like`'s, if left out. |
-| `tags` | `string[]` | yes |  | Its tags, after its kind's and its `like`'s. |
-| `traits` | `Record<string, unknown>` | yes |  | Its trait data, by trait id, over its `like`'s or its kind's. |
-| `stats` | `Record<string, number>` | yes |  | Where its stats start, over its `like`'s. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | Its kv keys at the start, over its `like`'s. |
+| `id` | `string` | yes |  | The entity's id within its kind. The next free number (`#1`, `#2`) if left out. |
+| `name` | `string` | yes |  | The entity's name. The `like` entity's if left out. |
+| `description` | `string` | yes |  | The entity's description, with tokens filled when it's read. The `like` entity's if left out. |
+| `image` | `string` | yes |  | The entity's picture, through `artSrc`. The `like` entity's if left out. |
+| `tags` | `string[]` | yes |  | The entity's own tags, after its kind's and its `like` entity's. |
+| `traits` | `Record<string, unknown>` | yes |  | The entity's trait data, by trait id, over its `like` entity's or its kind's. |
+| `stats` | `Record<string, number>` | yes |  | The entity's starting stats, over its `like` entity's. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The entity's starting kv keys, over its `like` entity's. |
 
 ## CreateFields
 
 Type. Explained in [Effects](/docs/reference/effects#createfields).
 
-The fields `create` takes besides its kind.
+The fields a `create` effect takes besides its kind.
 
 ```ts shape
 import type { CreateFields } from '@ifloom/engine'
@@ -1143,18 +1154,19 @@ type CreateFields = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `like` | `string` | yes |  | Another entity of the same kind it reads what it isn't given from. |
-| `with` | [`CreatedEntity`](#createdentity) | yes |  | What it is made with: its id, name, description, picture, tags, traits, stats and kv. |
-| `at` | [`Placement`](#placement) | yes |  | Who holds it once made: a holder for one, or how many each holds. Nobody if left out. |
+| `like` | `string` | yes |  | The entity of the same kind the new one reads what it isn't given from. |
+| `with` | [`CreatedEntity`](#createdentity) | yes |  | The new entity's fields, its id, name, description, picture, tags, traits, stats and kv. |
+| `at` | [`Placement`](#placement) | yes |  | The new entity's holder, or how many each holder holds. Nobody holds it if left out. |
 
 ## createRunner
 
 Function. Explained in [The runner](/docs/reference/runner#createrunner).
 
-The one object a UI drives. It wraps `apply` with what every game's UI
-would otherwise build for itself — undo and redo, a backlog, a command log,
-saving, loading and autosave — and tells listeners when the state changes.
-Everything but the command log is off unless the game turns it on.
+Returns a `Runner` that plays a game from a start state. Undo, the backlog, saving, autosave and the profile are
+off unless `RunnerOptions` turns them on.
+
+The runner wraps `apply` with undo and redo, a backlog, a command log, saving, loading and autosave, and tells
+listeners when the state changes.
 
 ```ts shape
 import { createRunner, type Game } from '@ifloom/engine'
@@ -1167,9 +1179,8 @@ Uses: [`Game`](#game), [`GameState`](#gamestate), [`RunnerOptions`](#runneroptio
 
 Type. Explained in [Calls by name](/docs/reference/custom#customcontext).
 
-What every function of a plugin's or the game's is handed besides the state,
-whatever it is: the game, the plugins' answers and values, and seeded
-draws. `PluginContext` is this and the rest.
+The context every plugin or game function gets beside the state, with the game, queries, values and seeded draws.
+`PluginContext` extends it.
 
 ```ts shape
 import type { CustomContext, Game } from '@ifloom/engine'
@@ -1183,14 +1194,16 @@ type CustomContext = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | [`Game`](#game) |  |  | The loaded game. |
-| `query` | [`Query`](#query) |  |  | Ask a plugin something by its full name: `query('places/here')`. Undefined when the game does not have that plugin. |
-| `value` | `(name: string, args?:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`) => string \| number \| undefined` |  |  | A value by name, a plugin's (`messages/unread`) or the game's own, asked with `args`. Undefined when nobody has it. |
-| `roll` | `(max: number, name: string) => number` |  |  | A whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`: the same save and turn always draw the same. |
+| `game` | [`Game`](#game) |  |  | The context's loaded game. |
+| `query` | [`Query`](#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('places/here')`). |
+| `value` | `(name: string, args?:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`) => string \| number \| undefined` |  |  | The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's, asked with `args`. It returns undefined when no plugin or game has that value. |
+| `roll` | `(max: number, name: string) => number` |  |  | The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`. The same save and turn always draw the same number. |
 
 ## DataScene
 
 Type. Explained in [Scenes](/docs/reference/scenes#datascene).
+
+A scene the game declares in `scenes`, with its body and its choices. Its id is unique across the game.
 
 ```ts shape
 import type { DataScene } from '@ifloom/engine'
@@ -1214,28 +1227,29 @@ type DataScene = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `drawnFrom` | `string[]` | yes |  | The draws this scene can come up in, by name: `['cafe']`. A `{ scene: { from: 'cafe' } }` effect draws one of the scenes that name `'cafe'` here. Separate from `tags`, which only style the scene. |
-| `weight` | `number` | yes |  | How likely a draw is to pick it, against the others it could pick. 1 if left out. Needs `drawnFrom`. |
-| `when` | [`Condition`](#condition) | yes |  | Only drawn while this holds. It gates draws only: a `scene` command or effect naming the scene opens it regardless. |
-| `minigame` | `string` | yes |  | A minigame that starts when the scene is entered. The scene shows again once it ends. |
-| `id` | `string` |  |  |  |
-| `title` | `string` | yes |  | Its heading, the view's `scene.title`. The room's title, else the game's, if left out. |
-| `speaker` | `string` | yes |  | Who the scene is with, by entity id or reference (`'ava'`, `'character:ava'`): the view's `scene.speaker` and `scene.image`. |
-| `tags` | `string[]` | yes |  | Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. |
-| `panel` | [`ScenePanel`](#scenepanel) | yes |  | A panel open for as long as the scene is: `{ panel: 'counter', with: { vendor: 'cafe' } }`. It is `view.panel`, as one the `panel` effect opens is, with the scene's id in `scene`. A panel needing worked-out data reads it from the view or a value. See `ScenePanel`. |
-| `audio` | `Record<string, string \| null>` | yes |  | What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. |
-| `picture` | [`PictureDef`](#picturedef) | yes |  | A layered picture with hotspots, drawn over the scene. See `view.scene.picture`. |
-| `ui` | [`Ui`](#ui)`<`[`SceneUi`](#sceneui)`>` | yes |  | Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. |
-| `body` | [`Block[]`](#block) |  |  | What the scene shows, top to bottom: prose, text, speech, media, decisions and the rest. See `Block`. |
-| `choices` | [`Choice[]`](#choice) |  |  | The buttons under the body. A flowing scene's picks are in its decisions instead. |
+| `drawnFrom` | `string[]` | yes |  | The sets the scene can be drawn from, by name, such as `['cafe']`. A `{ scene: { from: 'cafe' } }` effect draws one of the scenes that name `'cafe'` here. It's separate from `tags`, which only style the scene. |
+| `weight` | `number` | yes |  | The scene's weight in a draw, against the other scenes it could be drawn with. 1 if left out, and it needs `drawnFrom`. |
+| `when` | [`Condition`](#condition) | yes |  | The storylet's condition. The scene can be drawn only while it holds, but a `scene` command or effect that names the scene opens it regardless. |
+| `minigame` | `string` | yes |  | The id of the minigame that starts when the scene is entered. The scene shows again once it ends. |
+| `id` | `string` |  |  | The scene's id, unique across the game, such as `'cafe.counter'`. |
+| `title` | `string` | yes |  | The scene's title, in `view.scene.title`. The room's title, else the game's, if left out. |
+| `speaker` | `string` | yes |  | The scene's speaker, by entity id or reference (`'ava'`, `'character:ava'`), in `view.scene.speaker` and `view.scene.image`. |
+| `tags` | `string[]` | yes |  | The tags a UI can style the scene by, such as `['letter']` or `['flashback']`. The engine gives them no meaning. |
+| `panel` | [`ScenePanel`](#scenepanel) | yes |  | The panel held open for as long as the scene is, such as `{ panel: 'counter', with: { vendor: 'cafe' } }`. It is `view.panel`, as one the `panel` effect opens is, with the scene's id in `scene`. See `ScenePanel`. |
+| `audio` | `Record<string, string \| null>` | yes |  | The tracks that play on background channels while the scene is open, by channel, such as `{ ambience: 'rain' }`. Null silences one. |
+| `picture` | [`PictureDef`](#picturedef) | yes |  | The scene's layered picture with hotspots, in `view.scene.picture`. See `PictureDef`. |
+| `ui` | [`Ui`](#ui)`<`[`SceneUi`](#sceneui)`>` | yes |  | The scene's ui hints, carried to `view.scene.ui`. See `SceneUi`. |
+| `body` | [`Block[]`](#block) |  |  | The scene's body, its blocks from top to bottom. See `Block`. |
+| `choices` | [`Choice[]`](#choice) |  |  | The scene's ending choices, offered under the body once the flow ends. A flowing scene's other choices are in its decisions. |
 
 ## decide
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-A decision: the flow waits here until the player picks one of `choices`.
-The pick's `then` comes next, then the blocks after the decision. Its id
-is unique within the scene.
+Returns a decision, where the flow waits until the player chooses one of `choices`. Its id is unique within the
+scene.
+
+The chosen choice's `then` comes next, then the blocks after the decision.
 
 ```ts shape
 import { decide } from '@ifloom/engine'
@@ -1248,12 +1262,11 @@ Uses: [`FlowChoice`](#flowchoice), [`BlockExtras`](#blockextras), [`Block`](#blo
 
 Function. Explained in [Entities](/docs/reference/entities#declaredtrait).
 
-The data of one trait on one entity, as content declares it, typed as
-`TraitRegistry` says for the id; undefined when it doesn't have it. A row in
-content's `traits` table wins, then the entity's own `traits`, each laid
-over its kind's default. It reads content only, for a check or anything
-else with no state: an entity created in play has its kind's here, and
-`traitOf` adds what it was created with. It doesn't ask whether the
+Returns the data of one trait on one entity from content alone, typed by `TraitRegistry`, or undefined when it lacks
+the trait. Use it for a check, or anywhere with no state.
+
+A row in a content `traits` table wins, then the entity's own `traits`, each laid over its kind's default. An entity
+made in play gets its kind's default here, and `traitOf` adds the data it was made with. It doesn't ask whether the
 entity is still in the game.
 
 ```ts shape
@@ -1267,7 +1280,7 @@ Uses: [`TraitSource`](#traitsource), [`TraitData`](#traitdata).
 
 Function. Explained in [Entities](/docs/reference/entities#declaredwithtrait).
 
-Every declared entity that has a trait, as references, in content order: content only, as `declaredTrait` reads.
+Returns every declared entity that has a trait, as references in content order. It reads content alone, as `declaredTrait` does.
 
 ```ts shape
 import { declaredWithTrait } from '@ifloom/engine'
@@ -1280,7 +1293,7 @@ Uses: [`TraitSource`](#traitsource), [`EntityRef`](#entityref).
 
 Function. Explained in [Checking content](/docs/reference/checks#problem-and-describeproblem).
 
-A problem as a line: `pack · where · what`.
+Returns a `Problem` as one line, `pack · where · what`.
 
 ```ts shape
 import { describeProblem } from '@ifloom/engine'
@@ -1293,7 +1306,7 @@ Uses: [`Problem`](#problem).
 
 Type. Explained in [Dice rolls](/docs/reference/rolls#dice).
 
-Dice as content writes them: notation (`'2d6+1'`, `'1d20'`, `'d100'`) or a count of dice and their sides.
+Dice a `roll` effect throws, in notation (`'2d6+1'`, `'1d20'`, `'d100'`) or as a count of dice and their sides. A count of 1 if left out.
 
 ```ts shape
 import type { Dice } from '@ifloom/engine'
@@ -1304,7 +1317,7 @@ type Dice = string | { count?: number; sides: number }
 
 Function. Explained in [Notices](/docs/reference/notices#dismiss).
 
-The state with one notice, or every notice, marked seen.
+Returns the state with the notice `id` marked seen, or every notice when `id` is left out.
 
 ```ts shape
 import { dismiss } from '@ifloom/engine'
@@ -1317,7 +1330,7 @@ Uses: [`GameState`](#gamestate).
 
 Function. Explained in [Randomness](/docs/reference/random#draw).
 
-A whole number in [0, max), drawn from these parts.
+Returns a whole number from 0 up to but not including `max`, drawn from `parts`. Returns 0 when `max` is 0 or less.
 
 ```ts shape
 import { draw } from '@ifloom/engine'
@@ -1328,7 +1341,7 @@ function draw(max: number, ...parts: (string | number)[]): number
 
 Function. Explained in [Randomness](/docs/reference/random#drawone).
 
-One of these, drawn from these parts.
+Returns one entry of `items`, drawn from `parts`. Every entry is equally likely.
 
 ```ts shape
 import { drawOne } from '@ifloom/engine'
@@ -1339,11 +1352,11 @@ function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T
 
 Type. Explained in [Effects](/docs/reference/effects#effect).
 
-An effect: one of the effects in `EffectMap`, told apart by its one key, as
-a condition is (`{ stat: 'coins', by: -2 }`, `{ scene: null }`), or a
-plugin's effect or the game's own in short: `{ 'quests/start': { quest: 'bakery' } }`,
-`{ 'game/payRent': {} }`. It runs in its turn, on the state the effects
-before it left. See `PluginCall`.
+A change to the state, told apart by its one key as a condition is (`{ stat: 'coins', by: -2 }`, `{ scene: null }`).
+It runs in its turn, on the state the effects before it left.
+
+A plugin's effect, or the game's own, is a `PluginCall` in the short form, such as
+`{ 'quests/start': { quest: 'bakery' } }` or `{ 'game/payRent': {} }`.
 
 ```ts shape
 import type { Effect } from '@ifloom/engine'
@@ -1381,7 +1394,7 @@ Uses: [`KvValue`](#kvvalue), [`Amount`](#amount), [`Dice`](#dice), [`CreateField
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditioncall-effectcall-and-commandcall).
 
-An effect by name, a plugin's or the game's own, in short: checked against `EffectRegistry`.
+A plugin's or the game's effect in the short form, type-checked against `EffectRegistry`.
 
 ```ts shape
 import type { EffectCall } from '@ifloom/engine'
@@ -1394,7 +1407,7 @@ Uses: [`CallIn`](/docs/api/engine-plugin#callin), [`EffectRegistry`](#effectregi
 
 Type. Explained in [Calls by name](/docs/reference/custom#effectref).
 
-An effect as content writes it: one of the engine's, or a plugin's or the game's own in short. The same as `Effect`.
+An effect in content, one of the engine's or a plugin's or the game's in the short form. It is the same type as `Effect`.
 
 ```ts shape
 import type { EffectRef } from '@ifloom/engine'
@@ -1407,7 +1420,7 @@ Uses: [`Effect`](#effect).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
-The effects plugins and the game add, by full name, with what content writes as each one's value. As `ConditionRegistry`.
+The registry of effects plugins and the game add, by full name, with each one's arguments. It works as `ConditionRegistry` does.
 
 ```ts shape
 import type { EffectRegistry } from '@ifloom/engine'
@@ -1423,10 +1436,11 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [Actions and buttons](/docs/reference/actions#effectsof).
 
-What a command would apply, worked out before it runs, for plugins' guards
-and prices and locks by effect to look at: an action's cost (as stat
-effects) then its effects, a choice's effects, a plugin
-command's `effectsOf`. Anything else applies nothing that can be known ahead.
+Returns the effects a command would apply, worked out before it runs. Plugins' guards and prices, and locks on an
+effect, read them.
+
+An action gives its cost as stat effects, then its effects. A choice gives its effects, and a plugin command gives
+its `effectsOf`. Any other command gives none.
 
 ```ts shape
 import { effectsOf, type Game } from '@ifloom/engine'
@@ -1439,9 +1453,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`CommandRef`](#commandref), [
 
 Function. Explained in [Entities](/docs/reference/entities#entitiesof).
 
-Every entity of a kind in the game, as references: the declared ones in
-the order content gives them, then the ones created in play, in the order
-they came.
+Returns every entity of a kind in the game, as references. Declared ones come first in content order, then those
+made in play in the order they were made.
 
 ```ts shape
 import { entitiesOf, type Game } from '@ifloom/engine'
@@ -1453,6 +1466,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
 ## EntitiesView
 
 Type. Explained in [The view](/docs/reference/view#entitiesview-and-entityview).
+
+A listed kind as the player sees it, in `view.entities`, with its listed entities.
 
 ```ts shape
 import type { EntitiesView } from '@ifloom/engine'
@@ -1467,17 +1482,17 @@ type EntitiesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | The kind's id: `'character'`. |
-| `label` | `string` |  |  | The kind's name for one: `'Character'`. |
-| `plural` | `string` |  |  | The kind's name for several, for a heading: `'Characters'`. Its `label` if the kind gives none. |
-| `unique` | `boolean` |  |  | The kind's `unique`: each one is one particular thing. |
-| `entries` | [`EntityView[]`](#entityview) |  |  | Its entities that are listed and visible, declared ones first, then the ones created in play. |
+| `id` | `string` |  |  | The kind's id, such as `'character'`. |
+| `label` | `string` |  |  | The kind's label for one entity, such as `'Character'`. |
+| `plural` | `string` |  |  | The kind's label for several, for a heading, such as `'Characters'`. Its `label` when the kind gives none. |
+| `unique` | `boolean` |  |  | The kind's `unique` mark, true when each entity is one particular thing that can hold others. |
+| `entries` | [`EntityView[]`](#entityview) |  |  | The kind's listed, visible entities, declared ones first, then those created in play. |
 
 ## EntityDef
 
 Type. Explained in [Entities](/docs/reference/entities#entitydef).
 
-One thing of a kind, as content declares it: there from the start of the game.
+An entity the game declares in `entities`, there from the start of the game. Its id is unique within its kind.
 
 ```ts shape
 import type { EntityDef } from '@ifloom/engine'
@@ -1499,24 +1514,24 @@ type EntityDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | Unique within its kind. |
-| `of` | `string` |  |  | Its kind's id. |
-| `name` | `string` |  |  | What the player reads: "Ana". Prose tokens are filled in when it is read. |
-| `description` | `string` | yes |  | A line or two about it, tokens filled in as for the name. |
-| `image` | `string` | yes |  | Its picture, through `artSrc`. |
-| `tags` | `string[]` | yes |  | Words a UI or a plugin can sort or pick it by, after its kind's. |
-| `visible` | [`Condition`](#condition) | yes |  | Whether the view lists it, asked with `'$'` as it. Always, if left out. |
-| `stats` | `Record<string, number>` | yes |  | Where its stats start, where they differ from each stat's `start`. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | Its kv keys at the start. |
-| `at` | [`Placement`](#placement) | yes |  | Who holds it at the start: a holder (`'player'`, or a unique entity such as `'character:ava'`) for one, or how many each holds: `{ player: 2, 'place:larder': 6 }`. Held by nobody if left out. |
-| `traits` | `{ [K in keyof` [`TraitRegistry`](#traitregistry)`]?: Partial<`[`TraitRegistry`](#traitregistry)`[K]> } & Record<string, unknown>` | yes |  | Its traits, by trait id: `{ 'laundry/washable': { temp: 30 } }`. Over its kind's, and under a row for it in content's `traits` table. An object is laid over its kind's field by field, so it gives only the fields that differ. |
-| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | Presentation hints for the UI, laid over its kind's field by field, carried to the view as written. See `EntityUi`. |
+| `id` | `string` |  |  | The entity's id, unique within its kind. |
+| `of` | `string` |  |  | The id of the entity's kind. |
+| `name` | `string` |  |  | The entity's name, as the player reads it, such as "Ana". The engine fills its tokens when it reads it. |
+| `description` | `string` | yes |  | The entity's description, a line or two the player reads, with its tokens filled as the name's are. |
+| `image` | `string` | yes |  | The entity's picture, a path in the game's `art/` folder or a URL, read through `artSrc`. |
+| `tags` | `string[]` | yes |  | The entity's tags, after its kind's, which a UI or a plugin can sort or filter it by. |
+| `visible` | [`Condition`](#condition) | yes |  | The entity's visibility condition, asked with `'$'` as it, which narrows its kind's `listed`. Always visible if left out. |
+| `stats` | `Record<string, number>` | yes |  | The entity's starting stats, where they differ from each stat's `start`. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The entity's starting kv keys. |
+| `at` | [`Placement`](#placement) | yes |  | The entity's starting holder, such as `'player'` or a unique entity like `'character:ava'`, or a count for each holder (`{ player: 2, 'place:larder': 6 }`). Held by no one if left out. |
+| `traits` | `{ [K in keyof` [`TraitRegistry`](#traitregistry)`]?: Partial<`[`TraitRegistry`](#traitregistry)`[K]> } & Record<string, unknown>` | yes |  | The entity's traits, by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. They go over its kind's and under a content `traits` row for the entity, and an object merges with its kind's field by field. |
+| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The entity's ui hints, laid over its kind's field by field and carried to the view. See `EntityUi`. |
 
 ## entityDescription
 
 Function. Explained in [Entities](/docs/reference/entities#entitydescription).
 
-An entity's description, filled like its name; undefined when it has none.
+Returns an entity's description with its tokens filled, or undefined when it has none.
 
 ```ts shape
 import { entityDescription, type Game } from '@ifloom/engine'
@@ -1529,7 +1544,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Function. Explained in [Entities](/docs/reference/entities#entityimage).
 
-An entity's picture as written (before `artSrc`): the one it was created with, its declaration's, else that of the one it was created `like`.
+Returns an entity's picture before `artSrc`, the one it was made with, else its definition's, else its `like`'s.
 
 ```ts shape
 import { entityImage, type Game } from '@ifloom/engine'
@@ -1542,8 +1557,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Function. Explained in [Entities](/docs/reference/entities#entitykv).
 
-An entity's kv store as it reads: the keys of the one it was created
-`like`, then its declaration's, with what play set laid over them.
+Returns an entity's kv store, the keys of its `like` and then its definition's, with the keys play set laid over
+them.
 
 ```ts shape
 import { entityKv, type Game } from '@ifloom/engine'
@@ -1556,8 +1571,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`KvValue`](#kvvalue).
 
 Function. Explained in [Entities](/docs/reference/entities#entityname).
 
-An entity's name as the player reads it: the name it was created with, or
-its declaration's, with prose tokens filled. Its id when it has neither.
+Returns an entity's name with its tokens filled, the name it was created with or else its definition's. Returns the
+entity's id when it has neither.
 
 ```ts shape
 import { entityName, type Game } from '@ifloom/engine'
@@ -1570,8 +1585,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Function. Explained in [Entities](/docs/reference/entities#entityof).
 
-What play has changed about an entity: the save's record of it, `{}` for
-a declared one nothing has changed. Undefined when it isn't in the game.
+Returns the save's record of an entity, or `{}` for a declared one play hasn't changed. Returns undefined when the
+entity isn't in the game.
 
 ```ts shape
 import { entityOf, type Game } from '@ifloom/engine'
@@ -1584,10 +1599,11 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityState`](#entitystate).
 
 Type. Explained in [Entities](/docs/reference/entities#entityref).
 
-Which entity, as content names it: `'staff:ana'`, its kind and its id, so
-a bare id or a typo with no `:` fails to compile where a reference is
-wanted. Inside an `each` or a `count`'s `where`, content writes `'$'` for
-the one being looked at, in fields typed as plain strings.
+A reference to an entity, its kind and its id joined by `:`, such as `'staff:ana'`. A bare id or a typo with no `:`
+fails to compile where a reference is wanted.
+
+Inside an `each` or a `count`'s `where`, content writes `'$'` for the entity being looked at, in fields typed as
+plain strings.
 
 ```ts shape
 import type { EntityRef } from '@ifloom/engine'
@@ -1598,9 +1614,8 @@ type EntityRef = `${string}:${string}`
 
 Type. Explained in [Entities](/docs/reference/entities#entitystate).
 
-What play has changed about one entity, as the save keeps it. A declared
-entity has no record until something changes it, and reads the rest from
-its declaration; one created in play keeps the name it was given.
+The state a save keeps for one entity, only the fields play changed. A declared entity has no record until play
+changes it, and reads every other field from content.
 
 ```ts shape
 import type { EntityState } from '@ifloom/engine'
@@ -1619,21 +1634,21 @@ type EntityState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` | yes |  | The name it was created with. A declared entity's name is read from content. |
-| `description` | `string` | yes |  | The description it was created with, as written. |
-| `image` | `string` | yes |  | The picture it was created with, as written. |
-| `like` | [`EntityRef`](#entityref) | yes |  | The entity it was created like: what it doesn't have itself (its name, description, picture, tags, stats, kv and traits) is read from that one. |
-| `tags` | `string[]` | yes |  | Tags it was created with, after its kind's and its `like`'s. |
-| `traitData` | `Record<string, unknown>` | yes |  | Trait data it was created with, by trait id, over its `like`'s or its kind's. Its traits' state is in `traits`. |
-| `stats` | [`Stats`](#stats) | yes |  | Stats changed in play, by id. Others read from the declaration, then the stat's `start`. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | kv keys set in play. Others read from the declaration. |
-| `traits` | `Record<string, unknown>` | yes |  | The state of its traits that keep one, by trait id, once play changed it. See `traitState`. |
+| `name` | `string` | yes |  | The name the entity was made with in play. A declared entity's name is read from content. |
+| `description` | `string` | yes |  | The description the entity was made with in play. |
+| `image` | `string` | yes |  | The picture the entity was made with in play. |
+| `like` | [`EntityRef`](#entityref) | yes |  | The entity the entity was made like. The fields it doesn't have itself (name, description, picture, tags, stats, kv and traits) are read from that one. |
+| `tags` | `string[]` | yes |  | The tags the entity was made with, after its kind's and its `like`'s. |
+| `traitData` | `Record<string, unknown>` | yes |  | The trait data the entity was made with, by trait id, over its `like`'s or its kind's. Its traits' state is in `traits`. |
+| `stats` | [`Stats`](#stats) | yes |  | The entity's stats changed in play, by id. Others are read from its definition, then from the stat's `start`. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The entity's kv keys set in play. Others are read from its definition. |
+| `traits` | `Record<string, unknown>` | yes |  | The state of the entity's traits that keep one, by trait id, once play changed it. See `traitState`. |
 
 ## entityTags
 
 Function. Explained in [Entities](/docs/reference/entities#entitytags).
 
-An entity's tags: its kind's, then those of the one it was created `like`, then its own, each once.
+Returns an entity's tags, its kind's, then its `like`'s, then its own, each once.
 
 ```ts shape
 import { entityTags, type Game } from '@ifloom/engine'
@@ -1646,7 +1661,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
 
-Hints on a kind (for each of its entities) and on an entity, laid over its kind's. Empty here; a UI package augments it.
+The ui hints a kind takes for each of its entities, and an entity takes over its kind's. The engine declares none,
+and a UI package augments this interface with its own.
 
 ```ts shape
 import type { EntityUi } from '@ifloom/engine'
@@ -1662,7 +1678,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [The view](/docs/reference/view#entitiesview-and-entityview).
 
-One entity as the UI draws it.
+An entity as the player sees it, in an `EntitiesView`'s `entries`.
 
 ```ts shape
 import type { EntityView } from '@ifloom/engine'
@@ -1682,22 +1698,22 @@ type EntityView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `ref` | `string` |  |  | How content names it: `'staff:ana'`. |
-| `name` | `string` |  |  | Its name, with prose tokens filled in. |
-| `description` | `string \| null` |  |  | Its description, filled in the same way; null with none. |
-| `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
-| `tags` | `string[]` |  |  | Its kind's tags, then its own. |
-| `flags` | `Record<string, boolean>` |  |  | Each of its kind's `flags`, by name: whether it holds for this one. Empty when the kind declares none. |
-| `stats` | [`StatView[]`](#statview) |  |  | Its kind's listed stats that the player can see on it, in declared order. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | Its kv store as it reads: what it was declared with, and what play set. |
-| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | Its presentation hints, its own over its kind's, as written; left out with none. See `EntityUi`. |
+| `id` | `string` |  |  | The entity's id within its kind. |
+| `ref` | `string` |  |  | The entity's reference, such as `'staff:ana'`. |
+| `name` | `string` |  |  | The entity's name, with its prose tokens filled in. |
+| `description` | `string \| null` |  |  | The entity's description, with its tokens filled in. Null if it has none. |
+| `image` | `string \| null` |  |  | The entity's picture, as a path through `artSrc`. Null if it has none. |
+| `tags` | `string[]` |  |  | The entity's tags, its kind's first and then its own. |
+| `flags` | `Record<string, boolean>` |  |  | The answer to each of the kind's `flags` for this entity, by name. Empty when the kind declares none. |
+| `stats` | [`StatView[]`](#statview) |  |  | The kind's listed stats the player can see on this entity, in the order the game declares them. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The entity's kv store as it reads now, its declared keys with play's changes over them. |
+| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The entity's ui hints (a `EntityUi`), its own over its kind's, kept as written. Left out if it has none. |
 
 ## explain
 
 Function. Explained in [Conditions](/docs/reference/conditions#explain).
 
-Explain a condition against a state, part by part. No condition always holds.
+Returns the `Explanation` of a condition against a state, part by part. An undefined condition always holds.
 
 ```ts shape
 import { explain, type Game } from '@ifloom/engine'
@@ -1710,7 +1726,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`Condition`](#condition), [`E
 
 Function. Explained in [Conditions](/docs/reference/conditions#explaintext).
 
-An explanation as indented lines, ✓ or ✗ on each: for a log or a debug panel.
+Returns an `Explanation` as indented lines with ✓ or ✗ on each, for a log or a debug panel.
 
 ```ts shape
 import { explainText } from '@ifloom/engine'
@@ -1723,11 +1739,10 @@ Uses: [`Explanation`](#explanation).
 
 Type. Explained in [Conditions](/docs/reference/conditions#explanation).
 
-Why a condition holds or not, part by part.
+A condition's tree with each part marked as holding or not, returned by `explain`. Each leaf says what it read and
+what it wanted.
 
-The question authors ask most is "why is this greyed out?" or "why is this
-missing?". `explain` answers it: the whole condition tree, each part marked
-true or false, each leaf saying what it read and what it wanted.
+It answers the question authors ask most, why a choice is refused or missing.
 
 ```ts shape
 import type { Explanation } from '@ifloom/engine'
@@ -1740,15 +1755,15 @@ type Explanation = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `holds` | `boolean` |  |  | Whether this part holds. |
-| `why` | `string` |  |  | One line: what this part checked, what it found. |
-| `parts` | [`Explanation[]`](#explanation) | yes |  | The parts of an `all`, `any` or `not`. |
+| `holds` | `boolean` |  |  | True when this part of the condition holds. |
+| `why` | `string` |  |  | The part's one line, saying what it checked and what it found. |
+| `parts` | [`Explanation[]`](#explanation) | yes |  | The parts of an `all`, `any` or `not`, each explained. |
 
 ## FileRef
 
 Type. Explained in [Checking content](/docs/reference/checks#fileref).
 
-A file the game names, as the page asks for it (after `artSrc` or `audioSrc`), with where it is named.
+A file the game names, with the place that names it. Its `path` is the one the page asks for, after `artSrc` or `audioSrc`.
 
 ```ts shape
 import type { FileRef } from '@ifloom/engine'
@@ -1761,17 +1776,18 @@ type FileRef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `path` | `string` |  |  | The file, as the page asks for it. |
-| `type` | `'picture' \| 'video' \| 'audio'` |  |  | What sort of file it is. |
-| `where` | `string` |  |  | Where the content names it, as a `Problem`'s `where` is written. |
+| `path` | `string` |  |  | The file's path, as the page asks for it. |
+| `type` | `'picture' \| 'video' \| 'audio'` |  |  | The file's type. |
+| `where` | `string` |  |  | The place the content names the file, written as a `Problem`'s `where` is. |
 
 ## FillPart
 
 Type. Explained in [Saves](/docs/reference/saves#fillpart).
 
-What `MigrationTools.fill` can fill, each named by the feature that fills
-it: the player's stats (start values), kv keys (the content's starting kv
-and the keys it resets each turn) and play settings (defaults).
+A part of the state `MigrationTools.fill` can fill, named by the feature that fills it.
+
+The parts are the player's stats (start values), kv keys (the content's starting kv and per-turn resets) and play
+settings (defaults).
 
 ```ts shape
 import type { FillPart } from '@ifloom/engine'
@@ -1785,26 +1801,21 @@ type FillPart =
 
 Function. Explained in [Prose and markup](/docs/reference/prose#filltokens).
 
-Fill the tokens a line of prose may carry:
+Returns `text` with its `{{…}}` tokens filled for this state. An unset bare name prints nothing, and any other token
+that names nothing stays as written, so the missing name shows on screen.
 
-- `{{name}}`: a name of the game's own, looked up as a phrase (content's
-  `phrases`, with `.` between groups: `{{outfit.verdict}}`), then a value
-  in `rules.values`, then a key in the kv store (a name the player typed is
-  a key like any other: `{{playerName}}`);
-- `{{plugin/name}}`: a plugin's value, with any arguments after the name:
-  `{{messages/unread channel=texts}}`;
-- `{{kv:key of=storyline:baker}}`: a key in another kv store;
-- `{{v:game/name}}` and `{{v:plugin/name}}`, the older way to write a
-  value, which still works.
+The tokens are these:
 
-Any of them can end in `|` and words shown while the token is unset:
-`{{flatmateName|Your flatmate}}`. Unset is a kv key that is unset or not
-text or a number, a phrase no row of which holds, a value nobody has, or
-one that gives `''`. The fallback is shown as written, with no tokens in it.
-Without one, an unset bare name (`{{name}}`) prints nothing, and any other
-token naming nothing is left as it is, so the missing name shows on
-screen. Words a token prints are never read for tokens again, but a
-phrase's own words are filled when it is printed.
+- `{{name}}` reads one of the game's phrases (content's `phrases`, with `.` between groups: `{{outfit.verdict}}`),
+  then a value in `rules.values`, then a kv key such as `{{playerName}}`.
+- `{{plugin/name}}` reads a plugin's value, with any arguments after the name (`{{messages/unread channel=texts}}`).
+- `{{kv:key of=storyline:baker}}` reads a key in another kv store.
+- `{{v:game/name}}` and `{{v:plugin/name}}` are the older way to write a value, and still work.
+
+A token can end in `|` and the words shown while it is unset, as in `{{flatmateName|Your flatmate}}`. A token is
+unset when its kv key is missing or not text or a number, no row of its phrase holds, no one has its value, or its
+value is `''`. The fallback is shown as written, with no tokens filled. The engine never reads a token's printed
+words for tokens again, but it fills a phrase's own words when it prints the phrase.
 
 ```ts shape
 import { fillTokens, type Game } from '@ifloom/engine'
@@ -1817,7 +1828,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [Flowing scenes](/docs/reference/flows#flowchoice).
 
-A choice at a decision: a `Choice`, and what the flow shows once it is picked, before carrying on.
+A choice at a decision, a `Choice` with the blocks the flow shows once the player chooses it.
 
 ```ts shape
 import type { FlowChoice } from '@ifloom/engine'
@@ -1840,25 +1851,25 @@ type FlowChoice = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` | yes |  | Its words, as written, with tokens filled: `'Order a tea'`. A scene's choice with none shows its id; an action with none is never drawn as a button. |
-| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | Words that depend on state, "Not today" before you have bought it, "Right." after. The first whose `when` holds wins; `label` is the fallback. |
-| `when` | [`Condition`](#condition) | yes |  | Only offered, and only done, while this holds. |
-| `blocked` | [`Blocked[]`](#blocked) | yes |  | Shown but greyed out while one of these holds, with its reason (or left off with `hide`), and refused with it. The first that holds wins. |
-| `cost` | [`ActionCost`](#actioncost) | yes |  | Stats it spends: checked before it runs, listed on its button, and paid after its command. |
-| `effects` | [`EffectRef[]`](#effectref) | yes |  | Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. |
-| `command` | [`CommandRef`](#commandref) | yes |  | A command it sends as well, run first: a plugin's in short (`{ 'devices/open': { id: 'messages' } }`) or the engine's. It is greyed out with that command's reason while it would be refused, and its price includes what the command spends. Any command but `choose`. |
-| `once` | `(`[`Once`](#once) `& { key?: string; })` | yes |  | Once in the game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`): spent once it has been pressed, as `state.chosen` counts it. `reason` is what the player reads on it afterwards: a choice stays on screen and pays nothing more, an action is refused. |
-| `tags` | `string[]` | yes |  | Words the UI can style or filter it by. The engine gives them no meaning. |
-| `irreversible` | `string` | yes |  | A warning that it can't be undone, which the UI shows on it. |
-| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | Presentation hints for the UI, carried to its button as written. See `ChoiceUi`. |
-| `then` | [`Block[]`](#block) | yes |  | Shown once it is picked, then the flow carries on after the decision, or from the point its `{ point }` effect names. |
+| `id` | `string` |  |  | The choice's or action's id, unique among its scene's choices or among the actions. |
+| `label` | `string` | yes |  | The button's words, with tokens filled, such as `'Order a tea'`. A choice with no label shows its id, and an action with none is never rendered as a button. |
+| `labels` | `{ when?:` [`Condition`](#condition)`; label: string }[]` | yes |  | The button's words that depend on the state, such as "Not today" before you have bought it and "Right." after. The first entry whose `when` holds wins, and `label` is the fallback. |
+| `when` | [`Condition`](#condition) | yes |  | The condition under which the choice or action is offered and can be taken. Always, if left out. |
+| `blocked` | [`Blocked[]`](#blocked) | yes |  | The rules that refuse it for now. The first entry whose `when` holds greys the button out with its reason, or leaves it off with `hide`. |
+| `cost` | [`ActionCost`](#actioncost) | yes |  | The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. |
+| `command` | [`CommandRef`](#commandref) | yes |  | The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never `choose`. The button is refused with that command's reason while the command would be. An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends. |
+| `once` | `(`[`Once`](#once) `& { key?: string; })` | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. The choice's limit of once a game or once a turn. See `Once`. |
+| `tags` | `string[]` | yes |  | The tags a UI can style or filter it by. The engine gives them no meaning. |
+| `irreversible` | `string` | yes |  | The warning that it can't be undone, which a UI shows on the button. |
+| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The ui hints carried to its button in the view. See `ChoiceUi`. |
+| `then` | [`Block[]`](#block) | yes |  | The blocks shown once the choice is chosen. The flow then carries on after the decision, or from its `{ point }` effect's point. |
 
 ## FlowState
 
 Type. Explained in [Flowing scenes](/docs/reference/flows#flowstate).
 
-The open scene's visit: its path so far, and what the flow is waiting on, if anything.
+The visit a save keeps for the open scene, with its path so far and the wait the flow stands at. The scene's body is read from content.
 
 ```ts shape
 import type { FlowState } from '@ifloom/engine'
@@ -1871,17 +1882,18 @@ type FlowState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `scene` | `string` |  |  | The scene this visit is of. |
-| `path` | [`FlowStep[]`](#flowstep) |  |  | The picks made, the points jumped to and the minigames and panels done with, in order: what the view replays to draw the visit. |
-| `waiting` | `{ minigame: string } \| { panel: string } \| null` |  |  | The minigame being played or the panel open where the flow stands, until it is done; null while it waits on nothing. |
+| `scene` | `string` |  |  | The id of the scene the visit is of. |
+| `path` | [`FlowStep[]`](#flowstep) |  |  | The visit's steps in order, the choices made, the points jumped to and the minigames and panels done with. The view replays them to render the visit. |
+| `waiting` | `{ minigame: string } \| { panel: string } \| null` |  |  | The minigame being played or the panel open where the flow stands, until it's done. Null while the flow waits on neither. |
 
 ## FlowStep
 
 Type. Explained in [Flowing scenes](/docs/reference/flows#flowstep).
 
-One step of a visit's path, in the order they came: a pick at a decision
-or among the ending choices (`chose`), a jump to a point a pick made, or a
-minigame or panel in the flow done with.
+A step of a visit's path in `state.flow`, kept in the order the steps came.
+
+`{ chose }` is a choice at a decision or among the ending choices, `{ point }` a jump a choice made, and
+`{ minigame }` or `{ panel }` a wait done with.
 
 ```ts shape
 import type { FlowStep } from '@ifloom/engine'
@@ -1892,9 +1904,10 @@ type FlowStep = { chose: string } | { point: string } | { minigame: string } | {
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-Blocks the player can open and shut, under `label`: a letter to read, a
-long aside. It is presentation only, a section with the React UI's `fold`
-hint, and keeps no state; a UI that doesn't know the hint shows the blocks.
+Returns a fold, a section the player can open and shut under `label`, such as a letter to read. A UI without the
+`fold` hint shows the blocks open.
+
+A fold is presentation only, a section with the React UI's `fold` hint, and keeps no state.
 
 ```ts shape
 import { fold } from '@ifloom/engine'
@@ -1907,12 +1920,15 @@ Uses: [`Block`](#block), [`BlockExtras`](#blockextras).
 
 Type. Explained in [Stats](/docs/reference/stats#formula).
 
-How a derived stat is worked out from other stats. A number is itself, a
-string is another stat's value (the same entity's, for a stat with `of`),
-and the rest combine formulas:
+A formula a derived stat declares in its `derive`, to work the stat out from other stats. A number is itself, and a
+string is another stat's value.
 
-- `{ sum: [...] }`, `{ product: [...] }`, `{ min: [...] }`, `{ max: [...] }`;
-- `{ scale: f, by: n }` is f times n;
+For a stat with `of`, a string names the same entity's stat.
+
+The other forms combine formulas:
+
+- `{ sum: [...] }`, `{ product: [...] }`, `{ min: [...] }` and `{ max: [...] }` combine a list.
+- `{ scale: f, by: n }` is f times n.
 - `{ clamp: f, min?, max? }` holds f between the two.
 
 ```ts shape
@@ -1924,7 +1940,7 @@ type Formula = number | string | { sum: Formula[] } | { product: Formula[] } | {
 
 Type. Explained in [The game](/docs/reference/game#game).
 
-A game: what the core reads, and what each feature does.
+A loaded game, the core's fields and each feature's. `loadGame` makes it from the base, the content and the packs.
 
 ```ts shape
 import type { Game } from '@ifloom/engine'
@@ -1967,45 +1983,45 @@ type Game = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `title` | `string` |  |  | The game's name, as a title screen shows it. |
-| `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `migrations` carry an older save forward. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself: your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out. |
-| `packs` | `string[]` | yes |  | The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. |
-| `prose` | [`ProseStore`](#prosestore) | yes |  | The words read by key: `prose`, `variants` and their weights, filled in for a save. `loadGame` makes it from the content's `prose`. |
-| `rules` | [`GameRules`](#gamerules) | yes |  | The game's own code: its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
-| `strings` | `Record<string, string>` | yes |  | The game's words for anything the engine or a plugin says to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Packs can add theirs; a later pack's line wins. |
+| `id` | `string` |  |  | The game's id. Saves and packs record it, so a save from another game is refused. |
+| `title` | `string` |  |  | The game's title, which a title page shows. |
+| `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `rules.migrations` carry an older save forward. 1 if left out. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself, so your migration steps fill them with `tools.fill()`. |
+| `packs` | `string[]` | yes |  | The ids of the packs the game was loaded with, in order. Saves record them, and the game's own content has no id. |
+| `prose` | [`ProseStore`](#prosestore) | yes |  | The game's prose keys and variants lists, with their weights. `loadGame` makes it from the content's `prose`. |
+| `rules` | [`GameRules`](#gamerules) | yes |  | The game's own code, its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
+| `strings` | `Record<string, string>` | yes |  | The game's lines in place of the engine's and plugins' strings, by key, such as `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Packs can add theirs, and a later pack's line wins. |
 | `plugins` | `readonly` [`Plugin`](/docs/api/engine-plugin#plugin)`<any>[]` | yes |  | The plugins the game is built with, in the order their hooks run. |
-| `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | Content for plugins, by plugin id and then list: `data.quests.quests`. Merged from packs by id, as scenes are. |
-| `kinds` | [`KindDef[]`](#kinddef) | yes |  | The kinds of thing the game keeps several of, each with its own stats. |
-| `entities` | [`EntityDef[]`](#entitydef) | yes |  | The things of those kinds there are at the start. More can be created in play. |
-| `traits` | [`TraitTable`](#traittable) | yes |  | Traits by id and then entity. Given to `loadGame`, rows over what entities declare; on the game it returns, every entity's traits, worked out. Read them with `declaredTrait`. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv store a new game starts with, such as the stretch it opens in: `{ phase: 'arrival' }`. |
-| `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | kv keys put back at the start of each turn, with the value each goes back to: what "once this turn" was counting. |
-| `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | Threads of story with their own kv store, closed for a while when they need a rest. None if left out. |
-| `actions` | [`ActionDef[]`](#actiondef) | yes |  | What the player can do, by id. One with a `label` is a button in every room while no scene is open; one with none is done only by `{ type: 'action', id }`. None if left out. |
-| `triggers` | [`TriggerDef[]`](#triggerdef) | yes |  | Effects that happen by themselves the first time a condition holds. |
-| `inputs` | [`InputDef[]`](#inputdef) | yes |  | What the player can type or pick, and the kv key each one writes. |
-| `settings` | [`SettingDef[]`](#settingdef) | yes |  | What the player can change from a settings screen. None if left out. |
-| `stats` | [`StatDef[]`](#statdef) | yes |  | Every stat the game keeps. The engine has none of its own. |
-| `introScene` | `string` | yes |  | The scene on screen on the first frame. Left out, the game opens on its idle screen. |
-| `scenes` | [`DataScene[]`](#datascene) |  |  | Every scene, as data. |
+| `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | The plugins' content, by plugin id and then list, such as `data.quests.quests`. `loadGame` merges packs' entries by id, as it does scenes. |
+| `kinds` | [`KindDef[]`](#kinddef) | yes |  | The game's kinds, the sorts of entity it keeps, each with its own stats. |
+| `entities` | [`EntityDef[]`](#entitydef) | yes |  | The game's entities at the start. Play can create more. |
+| `traits` | [`TraitTable`](#traittable) | yes |  | The game's traits, by trait id and then entity. In content given to `loadGame` they're rows over what entities declare. On the game `loadGame` returns, they're every entity's traits, worked out. Read them with `declaredTrait`. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv store a new game starts with, such as the stretch it opens in, `{ phase: 'arrival' }`. |
+| `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The keys the engine puts back at the start of each turn, with the value each goes back to. Use them to count something once a turn. |
+| `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | The game's storylines, threads of story each with its own kv store, which a `closeStoryline` effect rests for some turns. None if left out. |
+| `actions` | [`ActionDef[]`](#actiondef) | yes |  | The game's actions, by id. None if left out. An action with a `label` is a button in the room while no scene is open, and one with no label is done only by `{ type: 'action', id }`. |
+| `triggers` | [`TriggerDef[]`](#triggerdef) | yes |  | The game's triggers, effects that run by themselves the first time a condition holds. They fire in this order. |
+| `inputs` | [`InputDef[]`](#inputdef) | yes |  | The game's inputs, the fields the player fills in, each writing a kv key. |
+| `settings` | [`SettingDef[]`](#settingdef) | yes |  | The game's settings, which the player changes from a settings page. None if left out. |
+| `stats` | [`StatDef[]`](#statdef) | yes |  | The game's stats. The engine has none of its own. |
+| `introScene` | `string` | yes |  | The scene open on the first frame. The game opens on the room if left out. |
+| `scenes` | [`DataScene[]`](#datascene) |  |  | The game's scenes, as data. |
 | `minigames` | [`MinigameDef[]`](#minigamedef) | yes |  | The game's minigames. None if left out. |
 | `timers` | [`TimerDef[]`](#timerdef) | yes |  | The game's timers. None if left out. |
-| `audio` | [`GameAudio`](#gameaudio) | yes |  | The game's sounds and channels. No audio if left out. |
+| `audio` | [`GameAudio`](#gameaudio) | yes |  | The game's tracks and channels. No audio if left out. |
 | `media` | [`GameMedia`](#gamemedia) | yes |  | The game's pools of pictures and videos. None if left out. |
-| `ui` | [`Ui`](#ui)`<`[`GameUi`](#gameui)`>` | yes |  | Hints for the whole game, such as how every screen comes in. Carried as written; the engine gives them no meaning. |
-| `saveable` | [`Blocked[]`](#blocked) | yes |  | When saving is refused, and why: `blocked` entries, refused while `when` holds, as a choice's are. The first that holds gives the reason. Saving is always allowed if left out. |
-| `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | What the player cannot do for now, and why. Checked in order; the first that stops a command gives the reason. |
-| `phrases` | `Record<string,` [`PhraseRow[]`](#phraserow) `\|` [`PhraseWithArgs`](#phrasewithargs)`>` | yes |  | The game's phrases, by their full dotted name (`outfit.verdict`), each as its rows, or its rows with the arguments it takes. None if left out. |
-| `changes` | [`ChangesDef`](#changesdef) | yes |  | The stats whose changes are tracked, from content and every pack together. Left out, nothing is tracked. |
-| `carryOver` | [`CarryOver`](#carryover) | yes |  | What a New Game+ carries over from the game before. See `startingState`'s `carry`. |
-| `finished` | [`Condition`](#condition) | yes |  | When the game counts as finished. The runner records the first time it holds in the profile's `core:finished`, so a title screen can offer New Game+. |
+| `ui` | [`Ui`](#ui)`<`[`GameUi`](#gameui)`>` | yes |  | The game's ui hints, such as how every screen comes in. The engine carries them to the view as written and gives them no meaning. |
+| `saveable` | [`Blocked[]`](#blocked) | yes |  | The game's reasons to refuse saving, as `blocked` entries refused while their `when` holds. The first entry that holds gives the reason, and saving is always allowed if left out. |
+| `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | The game's locks, checked in order. The first one that stops a command gives the reason. |
+| `phrases` | `Record<string,` [`PhraseRow[]`](#phraserow) `\|` [`PhraseWithArgs`](#phrasewithargs)`>` | yes |  | The game's phrases, by full dotted name (`outfit.verdict`), each as its rows or its rows with the arguments it takes. None if left out. |
+| `changes` | [`ChangesDef`](#changesdef) | yes |  | The stats the engine tracks changes of, from the content and every pack together. Nothing is tracked if left out. |
+| `carryOver` | [`CarryOver`](#carryover) | yes |  | The game's rules for a New Game+, the parts of the last game a new one keeps. `startingState`'s `carry` applies them. |
+| `finished` | [`Condition`](#condition) | yes |  | The game's condition for being finished. The runner records the first time it holds in the profile's `core:finished`, so a title page can offer New Game+. |
 
 ## GameAudio
 
 Type. Explained in [Audio](/docs/reference/audio#gameaudio).
 
-The game's sounds, the channels they play on and the settings that set their volume.
+The audio the game declares in `audio`, its tracks, the channels they play on and the settings that set their volume.
 
 ```ts shape
 import type { GameAudio } from '@ifloom/engine'
@@ -2020,19 +2036,18 @@ type GameAudio = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `tracks` | `Record<string,` [`TrackDef`](#trackdef) `\|` [`PlaylistDef`](#playlistdef)`>` |  |  | Every track and playlist, by id: a file with its volume, or a list of tracks to play in turn. |
-| `channels` | `Record<string,` [`ChannelDef`](#channeldef)`>` | yes |  | Merged over the defaults: `music` and `ambience` (background), `sfx` and `voice` (cue). |
-| `mute` | `string` | yes |  | A ui setting (a toggle) that mutes everything while it is on: a "Mute" box. |
-| `sound` | `string` | yes |  | A ui setting (a toggle) that plays sound only while it is on: a "Sound" box, the other way round from `mute`. |
-| `default` | `Record<string, string>` | yes |  | What each background channel plays when nothing else says, by channel. |
+| `tracks` | `Record<string,` [`TrackDef`](#trackdef) `\|` [`PlaylistDef`](#playlistdef)`>` |  |  | The game's tracks and playlists, by id, each a file with its volume or a list of tracks to play in turn. |
+| `channels` | `Record<string,` [`ChannelDef`](#channeldef)`>` | yes |  | The game's channels, merged over the defaults, `music` and `ambience` (background) and `sfx` and `voice` (cue). |
+| `mute` | `string` | yes |  | The id of the ui setting, a toggle, that mutes everything while it's on, such as a "Mute" box. |
+| `sound` | `string` | yes |  | The id of the ui setting, a toggle, that plays sound only while it's on, such as a "Sound" box. It's the reverse of `mute`. |
+| `default` | `Record<string, string>` | yes |  | The track each background channel plays when nothing else sets one, by channel. |
 
 ## GameBase
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#gamebase).
 
-What `loadGame` takes beside the content: what the game is (its `id`,
-`title` and `version`) and its code (its plugins and its rules). Anything a
-mod could change is content, and goes in the content or a pack instead.
+The base `loadGame` takes beside the content, the game's `id`, `title`, `version`, `plugins` and `rules`. Anything a
+mod could change goes in the content or a pack instead.
 
 ```ts shape
 import type { GameBase } from '@ifloom/engine'
@@ -2047,17 +2062,17 @@ type GameBase = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `title` | `string` |  |  | The game's name, as a title screen shows it. |
-| `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `migrations` carry an older save forward. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself: your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out. |
+| `id` | `string` |  |  | The game's id. Saves and packs record it, so a save from another game is refused. |
+| `title` | `string` |  |  | The game's title, which a title page shows. |
+| `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `rules.migrations` carry an older save forward. 1 if left out. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself, so your migration steps fill them with `tools.fill()`. |
 | `plugins` | `readonly` [`Plugin`](/docs/api/engine-plugin#plugin)`<any>[]` | yes |  | The plugins the game is built with, in the order their hooks run. |
-| `rules` | [`GameRules`](#gamerules) | yes |  | The game's own code: its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
+| `rules` | [`GameRules`](#gamerules) | yes |  | The game's own code, its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
 
 ## GameMedia
 
 Type. Explained in [Media](/docs/reference/media#gamemedia).
 
-The game's media: pools of files, by id.
+The media the game declares in `media`, pools of pictures and videos by id.
 
 ```ts shape
 import type { GameMedia } from '@ifloom/engine'
@@ -2068,27 +2083,22 @@ type GameMedia = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `pools` | `Record<string,` [`PoolFile[]`](#poolfile)`>` | yes |  | Named lists of files content picks from: `[[img:@door\|night]]`, `{ pool: 'door', tags: ['night'] }`. |
+| `pools` | `Record<string,` [`PoolFile[]`](#poolfile)`>` | yes |  | The game's pools, named lists of files content draws from, as in `[[img:@door\|night]]` or `{ pool: 'door', tags: ['night'] }`. |
 
 ## GameRules
 
 Type. Explained in [Rules and hooks](/docs/reference/rules#gamerules).
 
-The game's own code: a plain object with what a plugin can have, for the
-game itself, with no plugin to write. Content calls what it declares as it
-calls a plugin's, with `game` as the plugin's id: `{ 'game/tired': true }`
-as a condition, `{ 'game/payRent': {} }` as an effect, `{{catName}}` in
-prose, `{ 'game/rest': true }` as a command.
+The game's own code, a plain object with the members a plugin has. Content calls its members with `game` as the
+plugin id, such as the condition `{ 'game/tired': true }`.
 
-The engine runs it as the plugin `game`, the first of the game's plugins:
-every hook and provider runs before every plugin's, with the same context a
-plugin's gets (`PluginContext`, and `TurnContext` for the turn hooks), whose
-`slice`, `get` and `set` read and write the game's own state when it has a
-`start`. Every member is optional and means what a plugin's does (see
-`Plugin`), but `migrations`, which carry the whole save from one version of
-the game to the next. A plugin's identity, versions, content, words and declared calls and data are
-the game's own content, so they aren't here. What is locked and what resets
-each turn are content: `locks` and `resets`.
+The engine runs it as the plugin `game`, before every other plugin, with the same context (`PluginContext`, and
+`TurnContext` for the turn hooks). Its `slice`, `get` and `set` read and write the game's own state when it has a
+`start`. Every member is optional and means what a plugin's does (see `Plugin`), except `migrations`, which carry
+the whole save from one version of the game to the next.
+
+A plugin's id, versions, content, strings, calls and data are the game's own content, so `GameRules` leaves them
+out. Locks and per-turn resets are content too, in `locks` and `resets`.
 
 ```ts shape
 import type { GameRules, Game } from '@ifloom/engine'
@@ -2124,40 +2134,41 @@ type GameRules<S = any> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `conditions` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => boolean>` | yes |  | Conditions content can test, by name, without the prefix. |
-| `effects` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>…` | yes |  | Effects content can apply, by name. Each takes the state as the effects before it left it and returns the next one, so two in one list compose. What one does is hidden from prices and guards until it runs; an effect that only stands for other effects is a `macro` instead. |
-| `view` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => unknown)` | yes |  | What the UI needs from this plugin, at `view.plugins[id]`. `V` is its type; declare it in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
-| `references` | [`PluginReferences`](/docs/api/engine-plugin#pluginreferences) | yes |  | What this plugin's calls and content name, for the content checker to resolve as it resolves the engine's own. See `PluginReferences`. |
-| `commands` | `Record<string,` [`PluginCommand`](/docs/api/engine-plugin#plugincommand)`<S,` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`>>` | yes |  | Commands a button can send, by name. |
-| `traits` | `readonly` [`TraitDef`](/docs/api/engine-plugin#traitdef)`<any, any>[]` | yes |  | Traits this plugin gives meaning to: named data entities carry, written on a kind, an entity or content's `traits` table, which the plugin reads with `declaredTrait`. Each id is the plugin's id, `/` and a name. Data only: what a trait does is the plugin's code. |
-| `actions` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => readonly` [`ButtonDef[]`](#buttondef) `\| undefined)` | yes |  | Actions offered while no scene is open, drawn as buttons before the game's own `actions` and exactly like them: a room's things to do, say. |
-| `audio` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | What plays on background channels, by channel: a place's ambience. Below an open scene's choice and an `audio` effect's, above the game's default. Null silences a channel; a channel left out is the next plugin's, then the default's. The first plugin that names a channel wins it. |
-| `scene` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`RoomScene`](/docs/api/engine-plugin#roomscene) `\| undefined)` | yes |  | What the screen shows while no scene is open: a room's description, a shop front, a dashboard's heading. The first plugin that answers fills it; with none, the screen is the game's title and its buttons. |
-| `action` | `((state:` [`GameState`](#gamestate)`, id: string, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`ButtonDef`](#buttondef) `\| undefined)` | yes |  | One of this plugin's actions that isn't among its `actions` now, by id without the prefix: an app's, say. `{ type: 'action', id: '<plugin>/<id>' }` does it, as for a button with a cost or effects, which is looked up among the `actions` when this has none. Undefined when there is none. |
-| `label` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string \| undefined)` | yes |  | Where the game is, in a few words for a header or a save: "Day 3 · Wednesday morning". |
-| `start` | `((game:` [`Game`](#game)`) => S)` | yes |  | Its state in a new game. A plugin with no state leaves this out. |
-| `values` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string…` | yes |  | Words and numbers content can read by name, asked with arguments as a condition is: in prose as `{{id/name channel=texts}}`, and as `{ value: 'id/name', with }` for a badge or a stat's ceiling. |
-| `macros` | `Record<string,` [`Macro`](/docs/api/engine-plugin#macro)`<S,` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`>>` | yes |  | Effects that stand for other effects, by name, called by content as any effect is: each returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. A name is an effect's or a macro's, never both. See `Macro`. |
-| `queries` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => unknown>` | yes |  | Answers other plugins can ask for by name, without importing this one: `context.query('calendar/whenNext', { when })`. For what a condition's yes or no cannot say — a place, a time, a list. |
-| `statModifiers` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => readonly` [`StatModifier[]`](/docs/api/engine-plugin#statmodifier) `\| undefined)` | yes |  | Changes to what the player's stats read right now, worked out from the plugin's state: a timed boost, say. Nothing is written into the state; every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. Must not read stats itself, or it reads itself. |
-| `onTurn` | `((state:` [`GameState`](#gamestate)`, context:` [`TurnContext`](/docs/api/engine-plugin#turncontext)`<S>) =>` [`GameState`](#gamestate)`)` | yes |  | A hook: the end of a turn, once the counter has moved on and `resets` are back, in the order the hooks run (the game's first). Returns the next state. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
-| `onTurnDone` | `((state:` [`GameState`](#gamestate)`, context:` [`TurnContext`](/docs/api/engine-plugin#turncontext)`<S>) =>` [`GameState`](#gamestate)`)` | yes |  | A hook: the end of a turn, once every `onTurn` has run, so it sees what they did: the calendar's new day, a status worn off. In the same order and with the same context as `onTurn`. Returns the next state. |
-| `onStat` | `((before:` [`GameState`](#gamestate)`, after:` [`GameState`](#gamestate)`, stat: string, by: number, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<…` | yes |  | A hook: one of the player's stats just changed, by a `stat` effect. `before` is the state before it, `after` the state with it, `by` how far it moved. Return `before` to say it did not take, `after` to let it, or `after` with more besides. Runs in the order the hooks run (the game's first), each seeing what the one before returned. |
-| `onCommand` | `((before:` [`GameState`](#gamestate)`, after:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`GameState`](#gamestate)`)` | yes |  | A hook: after every command that took, with the state it started from and the state after. The context is the state after. Returns the next state. |
-| `guard` | `((state:` [`GameState`](#gamestate)`, asked:` [`Asked`](/docs/api/engine-plugin#asked)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`Refusal`](/docs/api/engine-plugin#refusal) `\| undefined)` | yes |  | Whether a command may go ahead, given what it would do (`effectsOf`). Asked of every command but the ones that ignore locks, after the locks. |
-| `price` | `((state:` [`GameState`](#gamestate)`, effects: readonly` [`Effect[]`](#effect)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string[] \|…` | yes |  | What a button costs that the engine cannot say, in the plugin's words: `['until evening']`. Asked with the effects the button would apply. |
-| `saveName` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string \| undefined)` | yes |  | The name a save is listed under, such as the name the player typed, kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it (the game's first); with none, saves have no name. |
-| `profile` | `((state:` [`GameState`](#gamestate)`, previous:` [`GameState`](#gamestate)`, stored: unknown, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>…` | yes |  | What the plugin keeps in the player's profile, which outlives saves and new games: earned achievements, a gallery of endings. The runner asks it after every command that took, with the state after, the state before and what the plugin's profile namespace (its id) holds now. Return a new value to store, or undefined to leave it. Only a runner with a `profile` asks; `apply` never does. |
-| `check` | `(game:` [`Game`](#game)`, tools:` [`CheckTools`](/docs/api/engine-plugin#checktools)`) =>` [`PluginProblem[]`](/docs/api/engine-plugin#pluginproblem) | yes |  | Rules of this plugin's own that a reference can't say: two entries with one id, an exit to nowhere. Run by the content checker after the references; `tools` words anything else the plugin names as the checker does. |
-| `migrations` | `Record<number, (state:` [`GameState`](#gamestate)`, tools:` [`MigrationTools`](#migrationtools)`) =>` [`GameState`](#gamestate)`>` | yes |  | Steps that carry a save from one version of the game to the next, keyed by the version they upgrade from: step 1 takes a version-1 save to version 2. They run when an older save loads, after the engine's and plugins' own migrations, on the whole state. A version with no step is carried forward unchanged. The version is the base's `version`. |
+| `conditions` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => boolean>` | yes |  | The plugin's conditions content can test, by name without the prefix. |
+| `effects` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>…` | yes |  | The plugin's effects content can apply, by name without the prefix. Each takes the state the effects before it left and returns the next one, so two in one list compose. Prices and guards can't see what an effect does until it runs. An effect that only stands for other effects belongs in `macros` instead. |
+| `view` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => unknown)` | yes |  | Returns the plugin's view, which a UI reads at `view.plugins[id]`. Declare its type `V` in `ViewRegistry` under the plugin's id, and every view types `view.plugins[id]` as `V`. |
+| `references` | [`PluginReferences`](/docs/api/engine-plugin#pluginreferences) | yes |  | The references the plugin's calls and content make, which the content checker resolves as it resolves the engine's own. See `PluginReferences`. |
+| `commands` | `Record<string,` [`PluginCommand`](/docs/api/engine-plugin#plugincommand)`<S,` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`>>` | yes |  | The plugin's commands a choice or action can send, by name without the prefix. |
+| `traits` | `readonly` [`TraitDef`](/docs/api/engine-plugin#traitdef)`<any, any>[]` | yes |  | The traits the plugin gives meaning to, each id the plugin's id, `/` and a name. A trait is data only, and the plugin's code decides what it does. Content writes them on a kind, an entity or content's `traits` table, and the plugin reads them with `traitOf` or `declaredTrait`. |
+| `actions` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => readonly` [`ButtonDef[]`](#buttondef) `\| undefined)` | yes |  | Returns the actions offered while no scene is open, such as a location's things to do. The view lists them before the game's own `actions`, rendered the same way. |
+| `audio` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | Returns the tracks the plugin plays on background channels, by channel, such as a location's ambience. Null silences a channel, and the first plugin that names a channel wins it. A plugin's track is below an open scene's and an `audio` effect's, and above the game's default. A channel left out is the next plugin's, then the default's. |
+| `scene` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`RoomScene`](/docs/api/engine-plugin#roomscene) `\| undefined)` | yes |  | Returns the `RoomScene` the screen shows while no scene is open, such as a location's description or a dashboard's heading. The first plugin that answers fills it. With none, the room shows the game's title and its actions. |
+| `action` | `((state:` [`GameState`](#gamestate)`, id: string, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`ButtonDef`](#buttondef) `\| undefined)` | yes |  | Returns one of the plugin's actions that isn't among its `actions` now, by id without the prefix, such as an app's. Undefined when there is none. `{ type: 'action', id: '<plugin>/<id>' }` runs it, as for an action with a cost or effects. Without this provider, the engine looks the id up among the plugin's `actions`. |
+| `label` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns a few words on the time or place in the game for a header or a save, such as "Day 3 · Wednesday morning". |
+| `start` | `((game:` [`Game`](#game)`) => S)` | yes |  | Returns the plugin's state in a new game. A plugin with no state leaves it out. |
+| `values` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string…` | yes |  | The plugin's values, words and numbers content reads by name with arguments, as a condition is asked. Prose prints one as `{{id/name channel=texts}}`, and an `Amount` reads one as `{ value: 'id/name', with }`. |
+| `macros` | `Record<string,` [`Macro`](/docs/api/engine-plugin#macro)`<S,` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`>>` | yes |  | The plugin's macros, effects that stand for other effects, by name without the prefix. A name is an effect's or a macro's, never both. Content calls one as any effect. It returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. See `Macro`. |
+| `queries` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => unknown>` | yes |  | The plugin's queries, answers other plugins ask for by name without importing it, such as `context.query('calendar/whenNext', { when })`. A query answers what a condition's yes or no can't, such as a location, a time or a list. |
+| `statModifiers` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => readonly` [`StatModifier[]`](/docs/api/engine-plugin#statmodifier) `\| undefined)` | yes |  | Returns the changes to what the player's stats read now, worked out from the plugin's state, such as a timed boost. It must not read stats itself, or it reads itself. Nothing is written into the state. Every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. |
+| `onTurn` | `((state:` [`GameState`](#gamestate)`, context:` [`TurnContext`](/docs/api/engine-plugin#turncontext)`<S>) =>` [`GameState`](#gamestate)`)` | yes |  | The hook run at the end of a turn, once the counter has moved on and `resets` are back. It returns the next state, and the hooks run in order, the game's first. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
+| `onTurnDone` | `((state:` [`GameState`](#gamestate)`, context:` [`TurnContext`](/docs/api/engine-plugin#turncontext)`<S>) =>` [`GameState`](#gamestate)`)` | yes |  | The hook run once every `onTurn` has run, so it sees their changes, such as the calendar's new day. It returns the next state and runs in the same order and context as `onTurn`. |
+| `onStat` | `((before:` [`GameState`](#gamestate)`, after:` [`GameState`](#gamestate)`, stat: string, by: number, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<…` | yes |  | The hook run when a `stat` effect changes one of the player's stats. `before` is the state before it, `after` the state with it, and `by` how far it moved. Return `before` to undo the change, `after` to keep it, or `after` with more changes. The hooks run in order, the game's first, each seeing what the one before returned. |
+| `onCommand` | `((before:` [`GameState`](#gamestate)`, after:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`GameState`](#gamestate)`)` | yes |  | The hook run after every command that took, with the state before and the state after. It returns the next state, and its context is the state after. |
+| `guard` | `((state:` [`GameState`](#gamestate)`, asked:` [`Asked`](/docs/api/engine-plugin#asked)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>` [`Refusal`](/docs/api/engine-plugin#refusal) `\| undefined)` | yes |  | Returns a `Refusal` for a command, given the effects it would apply, or undefined to let it through. The engine asks it after the locks, of every command but the ones that ignore locks. |
+| `price` | `((state:` [`GameState`](#gamestate)`, effects: readonly` [`Effect[]`](#effect)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string[] \|…` | yes |  | Returns the plugin's words for what a button costs that the engine can't say, such as `['until evening']`. The engine asks it with the effects the button would apply. |
+| `saveName` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns the name a save is listed under, such as the name the player typed. It is kept as `SaveMeta.playerName` and shown for `@you`'s lines. The first that answers names it, the game's first. With none, saves have no player name. |
+| `profile` | `((state:` [`GameState`](#gamestate)`, previous:` [`GameState`](#gamestate)`, stored: unknown, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) =>…` | yes |  | Returns the value the plugin keeps in the player's profile, which outlives saves and new games, such as earned achievements. Return undefined to leave the stored value. The runner asks it after every command that took, with the state after, the state before and the value the plugin's profile namespace (its id) holds now. Only a runner with a `profile` asks, and `apply` never does. |
+| `check` | `(game:` [`Game`](#game)`, tools:` [`CheckTools`](/docs/api/engine-plugin#checktools)`) =>` [`PluginProblem[]`](/docs/api/engine-plugin#pluginproblem) | yes |  | Returns the problems the plugin's own rules find that a reference can't express, such as two entries with one id or an exit to nowhere. The content checker runs it after the references. `tools` words problems with anything else the plugin names as the checker does. |
+| `migrations` | `Record<number, (state:` [`GameState`](#gamestate)`, tools:` [`MigrationTools`](#migrationtools)`) =>` [`GameState`](#gamestate)`>` | yes |  | The game's save migrations, keyed by the game `version` each upgrades from, so step 1 takes a version-1 save to version 2. A version with no step is carried forward unchanged. They run on the whole state when an older save loads, after the engine's and plugins' own migrations. |
 
 ## GameState
 
 Type. Explained in [Game state](/docs/reference/state#gamestate).
 
-The whole save: the core's fields and each feature's. Each field's new-game
-value and load default are declared once, in `FIELDS` (intake.ts) or the
-feature's `state`.
+The state a save keeps, the core's fields and each feature's. Definitions are read from content, so the save holds
+only what play changed.
+
+Each field declares its new-game value and load default once, in `FIELDS` or in its feature's `state`.
 
 ```ts shape
 import type { GameState, Notice } from '@ifloom/engine'
@@ -2194,39 +2205,39 @@ type GameState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `version` | `typeof SAVE_VERSION` |  |  | The save format's version, `SAVE_VERSION`: `loadState` carries an older one forward. |
-| `seed` | `number` |  |  | Fixed per save. Keeps variant variants from dealing identically every run. |
-| `plugins` | `Record<string,` [`PluginSlice`](/docs/api/engine-plugin#pluginslice)`>` |  |  | Each plugin's own state, by plugin id. |
-| `gameVersion` | `number` | yes |  | The game's own version (`game.version`) the save was made with. Only there when the game declares a version; a save without it is version 1. |
-| `entities` | `Record<string, Record<string,` [`EntityState`](#entitystate)`>>` |  |  | What play changed about the game's entities, by kind and id: `entities.staff.ana`. A declared entity has no record until something changes it; one created in play has one from the start. |
-| `created` | `Record<string, number>` |  |  | How many of each kind have been created in play, for the next one's id. |
-| `removed` | `string[]` |  |  | Entities the game declares that were removed in play, by reference: gone for good. |
-| `held` | `Record<string, Record<string, number>>` |  |  | What play changed about who holds what, by holder and then thing: `held.player['food:apple']`. A count is kept once written, 0 included; anything else reads where content's `at` starts it. |
-| `you` | [`EntityRef`](#entityref) `\| null` |  |  | The protagonist the player is playing, as `'you'` reads: null for the player themselves. |
-| `turn` | `number` |  |  | How many turns have passed: the engine's one clock. What a turn is belongs to the game — a day, an hour, a week, a chapter — and everything the engine dates (`seen`, `fired`, notices) is dated in turns. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  |  |
-| `storylines` | `Record<string,` [`StorylineState`](#storylinestate)`>` |  |  |  |
-| `notices` | [`Notice[]`](#notice) |  |  | What the game has told the player outside scenes, oldest first. |
-| `fired` | `Record<string, number>` |  |  | The turn each trigger last fired, by trigger id. |
+| `version` | `typeof SAVE_VERSION` |  |  | The save format's version, `SAVE_VERSION`. `loadState` carries an older save forward. |
+| `seed` | `number` |  |  | The save's random seed, fixed when the game starts. Every seeded draw (variants, pools, rolls, storylets) mixes it in, so two games draw differently. |
+| `plugins` | `Record<string,` [`PluginSlice`](/docs/api/engine-plugin#pluginslice)`>` |  |  | The plugins' own state, by plugin id. |
+| `gameVersion` | `number` | yes |  | The game's own version (`game.version`) the save was made with. It is set only when the game declares a version, and a save without it counts as version 1. |
+| `entities` | `Record<string, Record<string,` [`EntityState`](#entitystate)`>>` |  |  | The changes play has made to the game's entities, by kind and id, such as `entities.staff.ana`. A declared entity has no record until something changes it. An entity created in play has a record from the start. |
+| `created` | `Record<string, number>` |  |  | The number of entities of each kind created in play, for the next one's id. |
+| `removed` | `string[]` |  |  | The references of declared entities removed in play. A `create` with the same id brings one back. |
+| `held` | `Record<string, Record<string, number>>` |  |  | The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once written, 0 included. A count play hasn't changed is read from the entity's `at` in content. |
+| `you` | [`EntityRef`](#entityref) `\| null` |  |  | The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. |
+| `turn` | `number` |  |  | The number of turns that have passed, the engine's one clock. It starts at 0. The game decides how long a turn is (a day, an hour, a week or a chapter). The engine dates `seen`, `fired` and notices in turns. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The player's kv store, keys with a true/false, number or text value. |
+| `storylines` | `Record<string,` [`StorylineState`](#storylinestate)`>` |  |  | The storylines a save keeps, by id, each with its kv store and the turn it stays closed until. |
+| `notices` | [`Notice[]`](#notice) |  |  | The notices the game has raised, oldest first. The state keeps the last 50. |
+| `fired` | `Record<string, number>` |  |  | The turn each trigger last fired on, by trigger id. |
 | `settings` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The value of each `play` setting the game declares, by id. |
-| `stats` | [`Stats`](#stats) |  |  | The player's stats. An entity's are on the entity. |
-| `sceneId` | `string \| null` |  |  |  |
-| `seen` | `Record<string,` [`Times`](#times)`>` |  |  | Each scene the player has entered, by id: how many times, and the turn of the first time and the last. The engine's own record of what the player has actually watched, so a chain can say "not until you have seen the rung before this one", and how long ago, without every link needing a hand-written kv key. Re-entering the scene you are already in — a hub redrawing itself after a choice — is not a viewing and does not count. |
-| `chosen` | `Record<string,` [`Times`](#times)`>` |  |  | Each choice the player has picked, by `scene#choice`: how many times, and the turn of the first time and the last. Kept for every choice, so content can branch on an earlier decision without each one needing a kv key of its own, and a choice's `once` reads it. |
+| `stats` | [`Stats`](#stats) |  |  | The player's stats, by id. An entity's stats are kept on the entity. |
+| `sceneId` | `string \| null` |  |  | The id of the open scene. Null while no scene is open and the room shows. |
+| `seen` | `Record<string,` [`Times`](#times)`>` |  |  | The scenes the player has entered, by id, with a count and the first and last turn of each. Content can gate a chain of scenes on it without a kv key per link. Entering the scene that's already open, such as a hub rendered again after a choice, doesn't count. |
+| `chosen` | `Record<string,` [`Times`](#times)`>` |  |  | The choices the player has chosen, by `scene#choice`, with a count and the first and last turn of each. Content can gate on an earlier decision with it, and a choice's `once` reads it. |
 | `minigame` | [`MinigameState`](#minigamestate) `\| null` |  |  | The minigame being played, or null. |
-| `flow` | [`FlowState`](#flowstate) `\| null` |  |  | The open scene's visit: each pick, jump and wait passed, in order, and what the flow waits on. Null with no scene open, and for a visit with nothing to keep yet. It starts again each time a scene is entered. |
+| `flow` | [`FlowState`](#flowstate) `\| null` |  |  | The open scene's visit, each choice, jump and wait passed in order, and the wait the flow stands at. It starts again each time a scene is entered. Null while no scene is open, and for a visit with nothing to keep yet. |
 | `timers` | `Record<string,` [`RunningTimer`](#runningtimer)`>` |  |  | The running timers, by id, in the order they started. |
-| `audio` | [`AudioState`](#audiostate) |  |  | What effects have put on the audio channels, the last few sounds, and the count of scenes entered. |
+| `audio` | [`AudioState`](#audiostate) |  |  | The audio a save keeps, the tracks effects put on channels, the last sounds and the count of scenes entered. |
 | `media` | [`MediaState`](#mediastate) |  |  | The file each pool request was given, so a revisit and a reload show the same one. |
-| `panel` | [`OpenPanel`](#openpanel) `\| null` |  |  | The panel open over the story, or null. |
-| `rolls` | [`RollsState`](#rollsstate) |  |  |  |
-| `changes` | [`Change[]`](#change) |  |  | The stats the last command moved, in the order the game declares them, the player's first. A tick that moved nothing keeps the list before it. |
+| `panel` | [`OpenPanel`](#openpanel) `\| null` |  |  | The panel the `panel` effect opened over the story, or null. |
+| `rolls` | [`RollsState`](#rollsstate) |  |  | The rolls this save has made. |
+| `changes` | [`Change[]`](#change) |  |  | The stats the last command moved, in the order the game declares them, the player's first. A `tick` that moved nothing keeps the list from before it. |
 
 ## GameUi
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
 
-Hints for the whole game. Empty here; a UI package augments it.
+The ui hints the whole game takes in its `ui`. The engine declares none, and a UI package augments this interface with its own.
 
 ```ts shape
 import type { GameUi } from '@ifloom/engine'
@@ -2242,8 +2253,8 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
 
-Give the player (whoever they are playing) some of a thing: 1 if left
-out. A unique thing someone else holds is taken from them.
+Returns the effect that gives `you` `n` of a thing, 1 if left out. A unique thing someone else holds is taken from
+them.
 
 ```ts fragment
 effects: [give('food:apple', 2)]
@@ -2260,7 +2271,7 @@ Uses: [`Effect`](#effect).
 
 Function. Explained in [Randomness](/docs/reference/random#hash).
 
-FNV-1a, then the murmur3 finalizer. One character changes every bit.
+Returns a 32-bit unsigned hash of `text`. Texts that differ in one character give unrelated numbers.
 
 ```ts shape
 import { hash } from '@ifloom/engine'
@@ -2271,9 +2282,8 @@ function hash(text: string): number
 
 Function. Explained in [Entities](/docs/reference/entities#heldby).
 
-What a holder (`'you'` by default) holds, and how many of each, in the
-order the game has its entities: declared ones in content order, then
-those created in play.
+Returns the things a holder holds, `'you'` if left out, each with its count. They come in the game's entity order,
+declared ones in content order and then those made in play.
 
 ```ts shape
 import { heldBy, type Game } from '@ifloom/engine'
@@ -2286,7 +2296,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
 
 Function. Explained in [Entities](/docs/reference/entities#heldcount).
 
-How many of a thing a holder holds (`'you'` by default): 0 for anything not held there, or not in the game.
+Returns the count of a thing a holder holds, `'you'` if left out. Returns 0 for a thing not held there or not in the game.
 
 ```ts shape
 import { heldCount, type Game } from '@ifloom/engine'
@@ -2299,7 +2309,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [The view](/docs/reference/view#heldview).
 
-One thing a holder has, as the UI draws it.
+A thing you hold as the player sees it, in `view.held`. Only things whose `visible` holds are listed.
 
 ```ts shape
 import type { HeldView } from '@ifloom/engine'
@@ -2317,23 +2327,23 @@ type HeldView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ref` | [`EntityRef`](#entityref) |  |  | How content names it: `'food:apple'`. |
-| `name` | `string` |  |  | Its name, with prose tokens filled in. |
-| `description` | `string \| null` |  |  | Its description, filled in the same way; null with none. |
-| `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
-| `tags` | `string[]` |  |  | Its kind's tags, then its own. |
-| `count` | `number` |  |  | How many are held. |
-| `at` | [`Holder`](#holder) |  |  | Who holds it: the protagonist being played, or `'player'`. |
-| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | Its presentation hints, its own over its kind's, as written; left out with none. See `EntityUi`. |
+| `ref` | [`EntityRef`](#entityref) |  |  | The thing's entity reference, such as `'food:apple'`. |
+| `name` | `string` |  |  | The thing's name, with its prose tokens filled in. |
+| `description` | `string \| null` |  |  | The thing's description, with its tokens filled in. Null if it has none. |
+| `image` | `string \| null` |  |  | The thing's picture, as a path through `artSrc`. Null if it has none. |
+| `tags` | `string[]` |  |  | The thing's tags, its kind's first and then its own. |
+| `count` | `number` |  |  | The number of the thing held. |
+| `at` | [`Holder`](#holder) |  |  | The thing's holder, the protagonist being played or `'player'`. |
+| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The thing's presentation hints (a `EntityUi`), its own over its kind's, kept as written. Left out if it has none. |
 
 ## HelperRegistry
 
 Type. Explained in [The runner](/docs/reference/runner#helperregistry).
 
-What a helper started beside the runner reports, by its id, for a UI to
-draw: `startUnlocks` from `@ifloom/plugin-unlocks` reports `unlocks`. A
-helper types its own by augmenting this, as a plugin types its view in
-`ViewRegistry`.
+The registry of helper reports, by helper id, that a helper augments to type its own. It is empty until a helper
+augments it, as `startUnlocks` from `@ifloom/plugin-unlocks` does for `unlocks`.
+
+A helper types its report here as a plugin types its view in `ViewRegistry`.
 
 ```ts shape
 import type { HelperRegistry } from '@ifloom/engine'
@@ -2349,7 +2359,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [The runner](/docs/reference/runner#helpersin).
 
-What the helpers report, by id: typed for each helper that declares itself in `HelperRegistry`.
+The helpers' reports, by helper id. Each report a helper declares in `HelperRegistry` is typed, and the rest are `unknown`.
 
 ```ts shape
 import type { HelpersIn } from '@ifloom/engine'
@@ -2365,8 +2375,8 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [The runner](/docs/reference/runner#historyoptions).
 
-Undo and redo. Off unless the game asks for it; when on, `depth` steps deep,
-and never back past a barrier.
+Settings for undo and redo. Undo is off unless `createRunner` is given these or `true`, and never steps back past a
+barrier these set.
 
 ```ts shape
 import type { HistoryOptions } from '@ifloom/engine'
@@ -2380,18 +2390,17 @@ type HistoryOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `depth` | `number` | yes |  | How many steps back undo reaches. 50 if left out. |
-| `stopAtIrreversible` | `boolean` | yes |  | No undo past a choice the game marks `irreversible`. On unless set false. |
-| `stopAtNewTurn` | `boolean` | yes |  | No undo past the start of a new turn. |
-| `stopWhen` | [`Condition`](#condition) | yes |  | No undo past any state where this holds, tested after each command. |
+| `depth` | `number` | yes |  | The number of steps back undo reaches. 50 if left out. |
+| `stopAtIrreversible` | `boolean` | yes |  | The setting that stops undo at a choice marked `irreversible`. On unless set to false. |
+| `stopAtNewTurn` | `boolean` | yes |  | The setting that stops undo at the start of a new turn. Off if left out. |
+| `stopWhen` | [`Condition`](#condition) | yes |  | A condition that stops undo at any state where it holds, tested after each command. |
 
 ## Holder
 
 Type. Explained in [Entities](/docs/reference/entities#holder-and-placement).
 
-Who holds things: `'player'`, a unique entity (`'character:ava'`), or
-`'you'`, whoever the player is playing now (the player, unless a `you`
-effect switched to a protagonist).
+A holder of things, `'player'`, a unique entity (`'character:ava'`) or `'you'`. `'you'` is whoever the player is
+playing now, the player unless a `you` effect switched to a protagonist.
 
 ```ts shape
 import type { Holder } from '@ifloom/engine'
@@ -2404,7 +2413,7 @@ Uses: [`EntityRef`](#entityref).
 
 Function. Explained in [Entities](/docs/reference/entities#holderof).
 
-Who holds a thing, when one holder does (always so for a unique thing); undefined when nobody does.
+Returns the holder of a thing when one holder has it, as always for a unique thing. Returns undefined when no one holds it.
 
 ```ts shape
 import { holderOf, type Game } from '@ifloom/engine'
@@ -2417,7 +2426,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`Holder`](#holder).
 
 Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
 
-Whether the player (whoever they are playing) holds at least `n` of a thing: 1 if left out.
+Returns the condition that holds while `you` hold at least `n` of a thing, 1 if left out.
 
 ```ts shape
 import { holding } from '@ifloom/engine'
@@ -2430,10 +2439,11 @@ Uses: [`Condition`](#condition).
 
 Function. Explained in [Conditions](/docs/reference/conditions#holds).
 
-Whether a condition holds. No condition always holds. A condition is
-looked up by its one kind key (`TABLES` in core.ts); one with no kind key,
-or two, holds nowhere, and the content checker reports it. A range bound
-that is an `Amount` is worked out first, so the kind reads a number.
+Returns true when `condition` holds in this state. An undefined condition always holds.
+
+The engine finds a condition's kind by its one key. A condition with no known key, or with two, never holds, and
+the content checker reports it. A range bound that is an `Amount` is worked out first, so the kind reads a
+number.
 
 ```ts shape
 import { holds, type Game } from '@ifloom/engine'
@@ -2446,8 +2456,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`Condition`](#condition).
 
 Type. Explained in [Media](/docs/reference/media#hotspotdef).
 
-A clickable area on a picture, drawn by the UI as a button. It does one of two
-things: sends `command`, or takes the scene's choice `choice`.
+A hotspot on a picture, a clickable area the UI renders as a button. It either sends `command` or chooses the open
+scene's choice `choice`.
 
 ```ts shape
 import type { HotspotDef } from '@ifloom/engine'
@@ -2464,19 +2474,19 @@ type HotspotDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `rect` | `[ number, number, number, number ]` |  |  | Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. |
-| `label` | `string` |  |  | What a screen reader reads, and the tooltip. |
-| `command` | [`CommandRef`](#commandref) | yes |  | What it sends, as an action's `command`. |
-| `choice` | `string` | yes |  | A choice of the open scene, by id. |
-| `when` | [`Condition`](#condition) | yes |  | Only there while this holds. |
-| `layer` | `string` | yes |  | Only there while the layer with this id is shown. |
+| `id` | `string` |  |  | The hotspot's id. |
+| `rect` | `[ number, number, number, number ]` |  |  | The hotspot's area, in percent of the picture, as `[x, y, width, height]` from the top left. |
+| `label` | `string` |  |  | The hotspot's label, which a screen reader reads and the tooltip shows. |
+| `command` | [`CommandRef`](#commandref) | yes |  | The command the hotspot sends, written as an action's `command`. |
+| `choice` | `string` | yes |  | The id of the open scene's choice the hotspot chooses. |
+| `when` | [`Condition`](#condition) | yes |  | The hotspot's condition. The hotspot shows only while it holds. |
+| `layer` | `string` | yes |  | The id of the layer the hotspot goes with. The hotspot shows only while that layer does. |
 
 ## HotspotView
 
 Type. Explained in [Media](/docs/reference/media#hotspotview).
 
-A hotspot as the UI draws it: a button over the picture.
+A hotspot as the player sees it, in a `PictureView`'s `hotspots`. The UI renders it as a button over the picture.
 
 ```ts shape
 import type { HotspotView } from '@ifloom/engine'
@@ -2493,19 +2503,19 @@ type HotspotView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `rect` | `[ number, number, number, number ]` |  |  | Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. |
-| `label` | `string` |  |  |  |
-| `command` | [`Command`](#command) |  |  | What pressing it sends: its own `command`, or the command that takes its `choice`. |
-| `disabled` | `string` | yes |  | Why it cannot be pressed now, as a button's `disabled`. |
-| `warning` | `string` | yes |  | Pressable, but a plugin warns against it, as a button's `warning`. |
-| `layer` | `string` | yes |  | The layer it goes with, by id; left out for one on the picture as a whole. |
+| `id` | `string` |  |  | The hotspot's id. |
+| `rect` | `[ number, number, number, number ]` |  |  | The hotspot's area, in percent of the picture, as `[x, y, width, height]` from the top left. |
+| `label` | `string` |  |  | The hotspot's label. |
+| `command` | [`Command`](#command) |  |  | The command pressing the hotspot sends, its own `command` or the command that chooses its `choice`. |
+| `disabled` | `string` | yes |  | The reason the hotspot can't be pressed now, as on a button's `disabled`. Left out when it can. |
+| `warning` | `string` | yes |  | The warning a plugin gives against pressing the hotspot, as on a button's `warning`. |
+| `layer` | `string` | yes |  | The id of the layer the hotspot goes with. Left out for a hotspot on the whole picture. |
 
 ## image
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-A picture or a video in the flow, where it stands: `image('cafe/cup', { alt: 'A cup of tea' })`.
+Returns a `{ media }` block, a picture or a video at this place in the flow, such as `image('cafe/cup', { alt: 'A cup of tea' })`.
 
 ```ts shape
 import { image } from '@ifloom/engine'
@@ -2518,7 +2528,7 @@ Uses: [`SceneMedia`](#scenemedia), [`BlockExtras`](#blockextras), [`Block`](#blo
 
 Function. Explained in [The view](/docs/reference/view#inlinechoices).
 
-The choices and buttons a scene's or a room's prose holds inline, in the order they come.
+Returns the choices and actions that a scene's or a room's beats hold inline, in the order they come.
 
 ```ts shape
 import { inlineChoices } from '@ifloom/engine'
@@ -2531,13 +2541,13 @@ Uses: [`SceneBeat`](#scenebeat), [`RenderedChoice`](#renderedchoice).
 
 Function. Explained in [Prose and markup](/docs/reference/prose#inlinemarkup).
 
-A line of prose cut at its inline markup (`[[act:…]]`, `[[tip:…]]`,
-`[[ui:…]]`, `**bold**`, `*italic*`), or null when it has none. Markup with
-no id or key, a tooltip or UI piece with no words, a UI piece whose name
-isn't an id or with an empty argument, or stars that don't close are left
-in the words as written, so they show on screen; the content checker
-reports them. A `\*` is a star shown as it is. Bold and italics inside the
-words of inline markup, or around it, are not read.
+Returns a line of prose cut at its inline markup (`[[act:…]]`, `[[tip:…]]`, `[[ui:…]]`, `**bold**`, `*italic*`).
+Returns null when it has none.
+
+Broken markup stays in the words as written, so it shows on screen, and the content checker reports it. Broken
+markup is markup with no id or key, a tooltip or UI piece with no words, a UI piece whose name isn't an id or that
+has an empty argument, or stars that don't close. A `\*` is a star shown unchanged, and bold and italics inside or
+around inline markup are not read.
 
 ```ts shape
 import { inlineMarkup } from '@ifloom/engine'
@@ -2550,7 +2560,8 @@ Uses: [`InlinePart`](#inlinepart).
 
 Type. Explained in [Prose and markup](/docs/reference/prose#inlinepart).
 
-A piece of a line, as `inlineMarkup` reads it: words, or an inline action, tooltip, bold or italics as written.
+One piece of a line of prose as `inlineMarkup` reads it, told apart by its `type`. Each marked piece keeps its
+source in `markup`.
 
 ```ts shape
 import type { InlinePart } from '@ifloom/engine'
@@ -2561,13 +2572,8 @@ type InlinePart = { type: 'text'; text: string } | { type: 'act'; id: string; te
 
 Type. Explained in [Prose and markup](/docs/reference/prose#inlinespan).
 
-A piece of a line of prose that holds inline markup, in order. `text` is
-words to show as they are. `action` is an inline action, from
-`[[act:id|words]]`: `text` is the words to draw as its link and `choice` is
-the choice (or, in a room, the action) it presses, with its availability,
-reason and price as the list would show them. `tip` is a tooltip, from
-`[[tip:key|words]]`: `text` is the words shown and `tip` the prose line
-`key`, filled in for this save.
+One piece of a paragraph that holds inline markup, in a beat's `spans`, in order. Each piece is told apart by its
+`type`.
 
 ```ts shape
 import type { InlineSpan } from '@ifloom/engine'
@@ -2580,9 +2586,10 @@ Uses: [`RenderedChoice`](#renderedchoice).
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#inlineui).
 
-The pieces a UI draws inside a line of prose, from `[[ui:name|words|arg|…]]`,
-by name, each with the arguments it takes after the words as a tuple of
-text. Empty here; a UI package augments it:
+The UI pieces a UI renders inside a line of prose from `[[ui:name|words|arg|…]]`, by name. Each name maps to the
+arguments it takes after the words, as a tuple of text.
+
+The engine declares none, and a UI package augments this interface with its own:
 
 ```ts fragment
 declare module '@ifloom/engine' {
@@ -2590,9 +2597,8 @@ declare module '@ifloom/engine' {
 }
 ```
 
-The engine never reads it: the span it gives the view (`{ type: 'ui' }`)
-has `name: string` and `args: string[]`, so a name no UI declared still
-comes through. It's there for a UI's components to type their arguments.
+The engine never reads it. The view's `{ type: 'ui' }` span has `name: string` and `args: string[]`, so a name no
+UI declared still comes through, and this interface only types a UI's components.
 
 ```ts shape
 import type { InlineUi } from '@ifloom/engine'
@@ -2608,7 +2614,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#inlineuiargs).
 
-The arguments of a UI piece named `N`: what a UI package declared in `InlineUi`, else any text.
+The arguments of the UI piece named `N`, as a UI package declared them in `InlineUi`. Any text when no package declared `N`.
 
 ```ts shape
 import type { InlineUiArgs } from '@ifloom/engine'
@@ -2621,9 +2627,8 @@ Uses: [`InlineUi`](#inlineui).
 
 Type. Explained in [Inputs](/docs/reference/inputs#inputdef).
 
-Something the player types or picks, written to a kv key: a name for a
-pet, the time an alarm goes off, a note. The engine checks the value against
-the declaration, so a UI can't put anything else in.
+An input the game declares in `inputs`, a field the player fills in, such as a pet's name. The `input` command writes
+its value to a kv key and refuses one the declaration doesn't allow.
 
 ```ts shape
 import type { InputDef } from '@ifloom/engine'
@@ -2642,19 +2647,21 @@ type InputDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` |  |  | What the field is called. |
-| `type` | `'text' \| 'number' \| 'choice'` |  |  | What the player enters: `text` (typed words), `number` or `choice` (one of `options`). |
-| `key` | `string` | yes |  | The kv key it writes. The input's id if left out. |
-| `when` | [`Condition`](#condition) | yes |  | Only on offer while this holds. |
-| `maxLength` | `number` | yes |  | Text: the most characters, after trimming. 40 if left out. |
-| `min` | `number` | yes |  | Number: the range, inclusive. |
-| `max` | `number` | yes |  | Number: the highest it takes. |
-| `options` | `{ value:` [`KvValue`](#kvvalue)`; label: string }[]` | yes |  | Choice: the values on offer, with what the player reads for each. |
+| `id` | `string` |  |  | The input's id, which the `input` command names. |
+| `label` | `string` |  |  | The input's label, the name of the field the player fills in. |
+| `type` | `'text' \| 'number' \| 'choice'` |  |  | The input's type, `text` (typed words), `number` or `choice` (one of `options`). |
+| `key` | `string` | yes |  | The kv key the input writes. The input's id if left out. |
+| `when` | [`Condition`](#condition) | yes |  | The input's condition. The input is on offer only while it holds. |
+| `maxLength` | `number` | yes |  | The most characters a `text` input takes, after trimming. 40 if left out. |
+| `min` | `number` | yes |  | The lowest number a `number` input takes, included. No bound if left out. |
+| `max` | `number` | yes |  | The highest number a `number` input takes, included. No bound if left out. |
+| `options` | `{ value:` [`KvValue`](#kvvalue)`; label: string }[]` | yes |  | The values a `choice` input offers, each with the label the player reads. |
 
 ## InputView
 
 Type. Explained in [The view](/docs/reference/view#inputview).
+
+An input as the player sees it, in `view.inputs`. Only inputs whose `when` holds are listed.
 
 ```ts shape
 import type { InputView } from '@ifloom/engine'
@@ -2672,22 +2679,23 @@ type InputView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` |  |  |  |
-| `type` | [`InputDef`](#inputdef)`['type']` |  |  | What the player enters: `text`, `number` or `choice`. |
-| `maxLength` | `number \| null` |  |  | Text: the most characters it takes, after trimming (40 unless the input says). Null for a number or a choice. |
-| `min` | `number \| null` |  |  | Number: the lowest it takes, or null with no bound (and for text or a choice). |
-| `max` | `number \| null` |  |  | Number: the highest it takes, or null with no bound (and for text or a choice). |
-| `options` | `{ value:` [`KvValue`](#kvvalue)`; label: string }[]` |  |  | Choice: the values on offer, with what the player reads for each. Empty for text or a number. |
-| `value` | [`KvValue`](#kvvalue) `\| null` |  |  | What its key holds now, if anything. |
+| `id` | `string` |  |  | The input's id, which the `input` command names. |
+| `label` | `string` |  |  | The input's label, the name of the field. |
+| `type` | [`InputDef`](#inputdef)`['type']` |  |  | The input's type, `text`, `number` or `choice`. |
+| `maxLength` | `number \| null` |  |  | The most characters a `text` input takes, after trimming, 40 unless the input sets it. Null for a number or a choice. |
+| `min` | `number \| null` |  |  | The lowest number the input takes. Null with no bound, and for text or a choice. |
+| `max` | `number \| null` |  |  | The highest number the input takes. Null with no bound, and for text or a choice. |
+| `options` | `{ value:` [`KvValue`](#kvvalue)`; label: string }[]` |  |  | The values a `choice` input offers, each with its label. Empty for text or a number. |
+| `value` | [`KvValue`](#kvvalue) `\| null` |  |  | The value the input's kv key holds now. Null when it's unset. |
 
 ## inRange
 
 Function. Explained in [Conditions](/docs/reference/conditions#inrange).
 
-Is the number in the range? Each bound is worked out in the state first,
-so `{ gte: { stat: 'rent' } }` reads the rent. A range with no bounds asks
-whether the number is above 0.
+Returns true when `value` is in the range, with each bound worked out in this state first. A range with no bounds
+holds above 0.
+
+So `{ gte: { stat: 'rent' } }` compares the value with the rent.
 
 ```ts shape
 import { inRange, type Game } from '@ifloom/engine'
@@ -2700,7 +2708,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`Range`](#range).
 
 Type. Explained in [Mods](/docs/reference/mods#installedmod).
 
-A mod the player has added, as the store keeps it.
+A mod the player has added, as the mod store keeps it.
 
 ```ts shape
 import type { InstalledMod } from '@ifloom/engine'
@@ -2716,18 +2724,18 @@ type InstalledMod = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
+| `id` | `string` |  |  | The mod's id. |
+| `name` | `string` |  |  | The mod's name, for a mods page. |
 | `version` | `string` | yes |  | The mod's own version, as its author writes it. |
-| `description` | `string` | yes |  | A line for the mods screen. |
-| `enabled` | `boolean` |  |  | Off mods stay installed and are left out of the game. |
-| `pack` | [`Pack`](#pack) |  |  | The content it adds, as the mod file wrote it. |
+| `description` | `string` | yes |  | The mod's description, a line for a mods page. |
+| `enabled` | `boolean` |  |  | True when the mod is on. A mod that is off stays installed and is left out of the game. |
+| `pack` | [`Pack`](#pack) |  |  | The pack the mod adds, as the file wrote it, with its id set to `mod:<id>`. `loadGame` upgrades it. |
 
 ## isUnique
 
 Function. Explained in [Entities](/docs/reference/entities#isunique).
 
-Whether an entity's kind is `unique`: each one is one particular thing, which can hold others.
+Returns true when the entity's kind is `unique`, so each entity is one particular thing that can hold others.
 
 ```ts shape
 import { isUnique, type Game } from '@ifloom/engine'
@@ -2740,10 +2748,8 @@ Uses: [`Game`](#game).
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-A choice's effect that carries the flow on from a point instead of after
-its decision, once its `then` is done: `{ point: id }`. The point can be
-anywhere in the scene, and the flow reads on from it. A flow loops only
-this way, through a pick.
+Returns the jump effect `{ point: id }`, which carries the flow on from a point instead of after the choice's
+decision, once its `then` is done. A flow loops only this way, through a choice.
 
 ```ts shape
 import { jump } from '@ifloom/engine'
@@ -2754,10 +2760,10 @@ function jump(id: string): { point: string }
 
 Type. Explained in [Entities](/docs/reference/entities#kinddef).
 
-A kind of thing the game keeps several of, each with its own stats and
-kv keys: the staff of a café, the dishes on its menu, the rooms of a
-house. A stat declared with `of: 'staff'` belongs to every member of staff
-rather than to the player.
+A kind of entity the game declares in `kinds`, such as the staff of a café or the dishes on its menu. Each entity of
+the kind has its own stats and kv keys.
+
+So a stat declared with `of: 'staff'` belongs to each member of staff, not to the player.
 
 ```ts shape
 import type { KindDef } from '@ifloom/engine'
@@ -2776,21 +2782,21 @@ type KindDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` |  |  | What the player reads for one: "Member of staff". |
-| `plural` | `string` | yes |  | For more than one: "Staff". The label if left out. |
-| `unique` | `boolean` | yes |  | Each one is one particular thing, such as a person, rather than a sort of thing, such as a dish. |
-| `listed` | `boolean \|` [`Condition`](#condition) | yes |  | Whether the view lists the kind's entities: `true`, `false`, or a condition asked for each, with `'$'` as that one. A game's own kinds are listed if left out; a plugin's are not, unless the plugin says. |
-| `tags` | `string[]` | yes |  | Words every one of the kind has, before its own `tags`. |
-| `flags` | `Record<string,` [`Condition`](#condition)`>` | yes |  | Named conditions asked for each listed entity, with `'$'` as that one, for the view's `flags`: `{ met: { 'cast/met': { character: '$' } } }`. |
-| `traits` | `{ [K in keyof` [`TraitRegistry`](#traitregistry)`]?: Partial<`[`TraitRegistry`](#traitregistry)`[K]> } & Record<string, unknown>` | yes |  | Traits every one of the kind has, by trait id: defaults its entities start from. Where an entity gives the same trait, an object here is laid under the entity's, field by field; anything else is replaced whole. |
-| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | Presentation hints for the UI, for every one of the kind, under each entity's own. See `EntityUi`. |
+| `id` | `string` |  |  | The kind's id, the part before the `:` in each of its entity references. |
+| `label` | `string` |  |  | The kind's label for one entity, as the player reads it, such as "Member of staff". |
+| `plural` | `string` | yes |  | The kind's label for more than one, such as "Staff". The `label` if left out. |
+| `unique` | `boolean` | yes |  | The kind's unique mark. True when each entity is one particular thing that can hold others, such as a person, and false when its things stack, such as dishes. |
+| `listed` | `boolean \|` [`Condition`](#condition) | yes |  | The kind's listing rule for the view, `true`, `false` or a condition asked of each entity with `'$'` as it. A game's kinds are listed if left out, and a plugin's are not. |
+| `tags` | `string[]` | yes |  | The tags every entity of the kind has, before its own `tags`. |
+| `flags` | `Record<string,` [`Condition`](#condition)`>` | yes |  | The kind's flags, named conditions asked of each listed entity with `'$'` as it, such as `{ met: { 'cast/met': { character: '$' } } }`. The view answers them in each entity's `flags`. |
+| `traits` | `{ [K in keyof` [`TraitRegistry`](#traitregistry)`]?: Partial<`[`TraitRegistry`](#traitregistry)`[K]> } & Record<string, unknown>` | yes |  | The default traits of every entity of the kind, by trait id. An entity's own object for a trait is laid over this one field by field, and any other value replaces it whole. |
+| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The ui hints of every entity of the kind, under each entity's own. See `EntityUi`. |
 
 ## KvValue
 
 Type. Explained in [Game state](/docs/reference/state#kvvalue).
 
-A value in the kv store: true/false, a number or text.
+A value in the kv store, which is true or false, a number or text.
 
 ```ts shape
 import type { KvValue } from '@ifloom/engine'
@@ -2801,7 +2807,7 @@ type KvValue = boolean | number | string
 
 Function. Explained in [Stats](/docs/reference/stats#lackingline).
 
-The refusal for a cost the player cannot cover.
+Returns the refusal for a cost the player can't cover, from the stat's `lacking`, else "Not enough" and the label.
 
 ```ts shape
 import { lackingLine, type Game } from '@ifloom/engine'
@@ -2813,6 +2819,8 @@ Uses: [`Game`](#game).
 ## Loaded
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#loaded).
+
+The result of `loadGame`, the merged game with its prose, its variants and the problems found.
 
 ```ts shape
 import type { Loaded, Game } from '@ifloom/engine'
@@ -2826,16 +2834,16 @@ type Loaded = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | [`Game`](#game) |  |  | The game, ready to run. |
-| `prose` | `Record<string, string>` |  |  | Every line of prose by key, merged from the content and the packs. |
-| `variants` | `Record<string, string[]>` |  |  | Every variants list by name, with its members' keys. |
-| `problems` | [`Problem[]`](#problem) |  |  | What's wrong with the content and the packs, each naming the one it came from. Empty for a game that's fine. |
+| `game` | [`Game`](#game) |  |  | The loaded game, ready to run. |
+| `prose` | `Record<string, string>` |  |  | The game's prose keys' lines, merged from the content and the packs. |
+| `variants` | `Record<string, string[]>` |  |  | The game's variants lists by name, each with its members' prose keys. |
+| `problems` | [`Problem[]`](#problem) |  |  | The problems with the content and the packs, each naming the one it came from. Empty when there are none. |
 
 ## LoadedSave
 
 Type. Explained in [Saves](/docs/reference/saves#loadedsave).
 
-A save read back: what it says about itself, and the state, carried forward.
+A save read back, with its state carried forward to this game through `loadState`.
 
 ```ts shape
 import type { LoadedSave } from '@ifloom/engine'
@@ -2849,22 +2857,21 @@ type LoadedSave = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `meta` | [`SaveMeta`](#savemeta) |  |  | What the save says about itself. |
-| `state` | [`GameState`](#gamestate) |  |  | The state, carried forward to this game's version through `loadState`. |
-| `missingPacks` | `string[]` |  |  | Packs the save was made with that the game wasn't loaded with, such as a mod since turned off. |
-| `missingPlugins` | `string[]` |  |  | Plugins the save was made with that this game does not have. Their state is kept, unused. |
+| `meta` | [`SaveMeta`](#savemeta) |  |  | The save's `SaveMeta`. |
+| `state` | [`GameState`](#gamestate) |  |  | The save's state, carried forward to this game's version through `loadState`. |
+| `missingPacks` | `string[]` |  |  | The ids of the mods the save was made with that the game wasn't loaded with, such as a mod since turned off. |
+| `missingPlugins` | `string[]` |  |  | The ids of the plugins the save was made with that this game does not have. The save keeps their state, unused. |
 
 ## loadGame
 
 Function. Explained in [Content, packs and loading](/docs/reference/loader#loadgame).
 
-Merge the game's content, then the packs over it in order, and report
-everything wrong with the result, naming the content or pack that brought
-it. The result is checked with the content checker (`checkGame`); this adds
-only where each problem came from, and what is wrong with the content and
-packs themselves: a key declared twice across the content, or a key they
-can't hold. A mod author gets "mod:spicier · scene allie.talk · choice kiss ·
-unknown scene 'allie.snog'", not a stack trace.
+Returns the game merged from the base, the content and then the packs in order, with every problem found. Each
+problem names the content or pack that brought it.
+
+The content checker (`checkGame`) checks the merged game. `loadGame` adds where each problem came from, and the
+problems with the content and packs themselves, such as a key declared twice or a key they can't hold. So a mod
+author reads "mod:spicier · scene allie.talk · choice kiss · unknown scene 'allie.snog'", not a stack trace.
 
 ```ts shape
 import { loadGame } from '@ifloom/engine'
@@ -2877,7 +2884,7 @@ Uses: [`Content`](#content), [`GameBase`](#gamebase), [`LoadOptions`](#loadoptio
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#loadoptions).
 
-What else `loadGame` takes.
+Settings for `loadGame`. A game loaded without them has no packs.
 
 ```ts shape
 import type { LoadOptions } from '@ifloom/engine'
@@ -2888,16 +2895,17 @@ type LoadOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `packs` | `readonly` [`Pack[]`](#pack) | yes |  | Packs to load over the content, in order, each over the ones before: mods, unlocked content, JSON exports. |
+| `packs` | `readonly` [`Pack[]`](#pack) | yes |  | The packs to load over the content, in order, each over the ones before, such as mods and unlocked content. |
 
 ## loadState
 
 Function. Explained in [Saves](/docs/reference/saves#loadstate).
 
-A state from anywhere (a save, a command log, a test) made ready to play in
-this game, or the reason it can't be, through `say`. In order: the engine's
-own steps and each field's load default, the plugins' migrations, the
-game's migrations, then what the game declares and the save lacks.
+Returns a state from a save, a command log or a test made ready to play in this game. Returns a failed `Result`
+with a reason the player can read when it can't be.
+
+It runs the engine's own steps and each field's load default, then the plugins' migrations, then the game's
+migrations, and last fills in the values the game declares and the save lacks.
 
 ```ts shape
 import { loadState, type Game } from '@ifloom/engine'
@@ -2910,7 +2918,7 @@ Uses: [`Game`](#game), [`Result`](#result), [`GameState`](#gamestate).
 
 Type. Explained in [Media](/docs/reference/media#mediastate).
 
-What a save keeps about media, at `state.media`.
+The media a save keeps, in `state.media`. The pools themselves are read from content.
 
 ```ts shape
 import type { MediaState } from '@ifloom/engine'
@@ -2921,13 +2929,13 @@ type MediaState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `picks` | `Record<string, string>` |  |  | The file each pool request was given, by pick key. See `pickKey`. |
+| `picks` | `Record<string, string>` |  |  | The file each pool request was given, by the key `pickKey` returns. |
 
 ## mediaType
 
 Function. Explained in [Prose and markup](/docs/reference/prose#mediatype).
 
-Whether a file is a picture or a video, by its extension.
+Returns `'video'` for a file with a video extension (`.mp4`, `.webm`), else `'image'`.
 
 ```ts shape
 import { mediaType } from '@ifloom/engine'
@@ -2938,7 +2946,7 @@ function mediaType(src: string): 'image' | 'video'
 
 Function. Explained in [Saves](/docs/reference/saves#memorydriver).
 
-Saves in memory, gone when the page is. For tests and previews.
+Returns a `SaveDriver` that keeps saves in memory, gone when the page is. Use it for tests and previews.
 
 ```ts shape
 import { memoryDriver } from '@ifloom/engine'
@@ -2951,7 +2959,7 @@ Uses: [`SaveDriver`](#savedriver).
 
 Type. Explained in [Saves](/docs/reference/saves#migrationtools).
 
-What a step of `rules.migrations` is given besides the state.
+The tools a step of `rules.migrations` or a plugin's `migrations` gets beside the state.
 
 ```ts shape
 import type { MigrationTools, Game } from '@ifloom/engine'
@@ -2963,14 +2971,14 @@ type MigrationTools = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | [`Game`](#game) |  |  | The game the save is loading into, for a step that needs its content: which entity an old id now names, say. |
-| `fill` | `(parts?:` [`FillPart[]`](#fillpart)`) =>` [`GameState`](#gamestate) |  |  | The state this step was given, with what the game declares and the save lacks filled in: the parts asked for, or every part if left out. Nothing is filled unless a step calls this. See `FillPart`. |
+| `game` | [`Game`](#game) |  |  | The game the save is loading into, for a step that reads its content, such as the entity an old id now names. |
+| `fill` | `(parts?:` [`FillPart[]`](#fillpart)`) =>` [`GameState`](#gamestate) |  |  | Returns the state the step was given, with the values the game declares and the save lacks filled in. It fills the parts asked for, or every part if left out. A migration fills nothing unless its step calls this. See `FillPart`. |
 
 ## minigame
 
 Function. Explained in [Commands](/docs/reference/commands#minigame).
 
-A minigame played where it stands. The flow waits until it ends, then carries on.
+Returns a `{ minigame }` block, a minigame played at this place in the flow. The flow waits until it ends, then carries on.
 
 ```ts shape
 import { minigame } from '@ifloom/engine'
@@ -2983,7 +2991,7 @@ Uses: [`BlockExtras`](#blockextras), [`Block`](#block).
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigamedef).
 
-A minigame: its states, the one it starts in, its kv store and the keys a UI maps to its inputs.
+A minigame the game declares in `minigames`, a small state machine played with named inputs and timed by ticks. Every key it uses must be in its `kv`.
 
 ```ts shape
 import type { MinigameDef } from '@ifloom/engine'
@@ -2999,19 +3007,18 @@ type MinigameDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `title` | `string` | yes |  | Its heading, what the UI calls it. |
-| `start` | `string` |  |  | The state it starts in. |
-| `kv` | `Record<string, number>` | yes |  | Its kv store and where each key starts, numbers all: `{ score: 0 }`. Content reads and writes them with `of: 'minigame'`, and a key it uses must be declared here. |
-| `keys` | `Record<string, string[]>` | yes |  | The keys a UI maps to each input, by input name: `{ up: ['ArrowUp', 'w'] }`. Key names as `KeyboardEvent.key` gives them. A UI picks its own if left out. |
-| `states` | `Record<string,` [`MinigameStateDef`](#minigamestatedef)`>` |  |  | Its states, by name. See `MinigameStateDef`. |
+| `id` | `string` |  |  | The minigame's id, which the `minigame` effect and a scene's `minigame` name. |
+| `title` | `string` | yes |  | The minigame's title. |
+| `start` | `string` |  |  | The id of the state the minigame starts in. |
+| `kv` | `Record<string, number>` | yes |  | The minigame's kv store, with each key's starting number, such as `{ score: 0 }`. Content reads and writes the keys with `of: 'minigame'`. |
+| `keys` | `Record<string, string[]>` | yes |  | The keys a UI maps to each input, by input name, such as `{ up: ['ArrowUp', 'w'] }`. Key names are those `KeyboardEvent.key` gives, and a UI picks its own if left out. |
+| `states` | `Record<string,` [`MinigameStateDef`](#minigamestatedef)`>` |  |  | The minigame's states, by name. |
 
 ## MinigameInput
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigameinput).
 
-An input of the minigame being played, as a button: drawn as any other
-button is, since it has what a `RenderedChoice` needs.
+An input of the running minigame as the player sees it, in `view.minigame.inputs`. It has what a `RenderedChoice` needs, so a UI renders it as any button.
 
 ```ts shape
 import type { MinigameInput } from '@ifloom/engine'
@@ -3024,15 +3031,15 @@ type MinigameInput = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | The input's name, as the minigame's `on` names it: `'up'`. |
-| `label` | `string` |  |  | Its words: the `minigame.<input>` string (`Up`, `Space`), or its name with a capital. |
-| `command` | `{ type: 'minigame'; input: string }` |  |  | What pressing it sends. |
+| `id` | `string` |  |  | The input's name, as the minigame's `on` names it, such as `'up'`. |
+| `label` | `string` |  |  | The input's label, from its `on` entry, else the `minigame.<input>` string (`Up`, `Space`), else its name with a capital. |
+| `command` | `{ type: 'minigame'; input: string }` |  |  | The command pressing the input sends. |
 
 ## MinigameSceneFields
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigamescenefields).
 
-A scene's field that starts a minigame.
+The scene field that starts a minigame.
 
 ```ts shape
 import type { MinigameSceneFields } from '@ifloom/engine'
@@ -3043,13 +3050,13 @@ type MinigameSceneFields = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `minigame` | `string` | yes |  | A minigame that starts when the scene is entered. The scene shows again once it ends. |
+| `minigame` | `string` | yes |  | The id of the minigame that starts when the scene is entered. The scene shows again once it ends. |
 
 ## MinigameState
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigamestate).
 
-The minigame being played.
+The running minigame a save keeps, in `state.minigame`. Its states are read from content.
 
 ```ts shape
 import type { MinigameState } from '@ifloom/engine'
@@ -3064,17 +3071,17 @@ type MinigameState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `state` | `string` |  |  | The state it is in. |
-| `elapsed` | `number` |  |  | Milliseconds of ticks since it entered that state. |
-| `kv` | `Record<string, number>` |  |  | Its kv store, as play has left it. |
-| `steps` | `number` |  |  | How many transitions it has taken, for its random draws. |
+| `id` | `string` |  |  | The minigame's id. |
+| `state` | `string` |  |  | The name of the state the minigame is in. |
+| `elapsed` | `number` |  |  | The milliseconds of ticks since the minigame entered that state. |
+| `kv` | `Record<string, number>` |  |  | The minigame's kv store, as play has left it. |
+| `steps` | `number` |  |  | The number of transitions the minigame has taken, part of its random draws' seed. |
 
 ## MinigameStateDef
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigamestatedef).
 
-One state of a minigame.
+A state of a minigame, in its `states`. It can wait (`after`), listen to inputs (`on`), move on by itself (`always`) or end the minigame (`final`).
 
 ```ts shape
 import type { MinigameStateDef } from '@ifloom/engine'
@@ -3089,17 +3096,17 @@ type MinigameStateDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `label` | `string` | yes |  | What the player reads while the minigame is in this state, tokens filled. |
-| `after` | `{ ms: number } &` [`MinigameTransition`](#minigametransition) | yes |  | A timer. Once `ms` milliseconds of ticks have passed in this state, the transition is taken. Staying put (no `go` or `to`) starts the timer again. The same `tick` runs it down as runs the game's named timers, in the order they run out. |
-| `on` | `({ input: string; when?:` [`Condition`](#condition)`; label?: string } &` [`MinigameTransition`](#minigametransition)`)[]` | yes |  | What the inputs do here. The first entry for the input whose `when` holds is taken; an input with none is not live. `label` is the input's words for its button in this state, tokens filled, such as a quiz's answer: the first live entry with one gives it, and without one the button reads the `minigame.<input>` string, else the input's name. |
-| `always` | `({ when?:` [`Condition`](#condition) `} &` [`MinigameTransition`](#minigametransition)`)[]` | yes |  | Taken as soon as the state is entered: the first whose `when` holds. A state that only decides where to go next, such as a win or a loss. |
-| `final` | `{ effects?:` [`EffectRef[]`](#effectref)`; copy?: Record<string, string> }` | yes |  | Entering this state ends the minigame. `copy` writes keys of the minigame's kv to the player's (`{ score: 'arrows.best' }`); then the minigame closes and `effects` apply. |
+| `label` | `string` | yes |  | The words the player reads while the minigame is in this state, with tokens filled. |
+| `after` | `{ ms: number } &` [`MinigameTransition`](#minigametransition) | yes |  | The state's timer. Once `ms` milliseconds of ticks have passed in the state, the engine takes the transition, and one that stays put starts the timer again. The `tick` that runs down the game's named timers runs it down too, in the order they run out. |
+| `on` | `({ input: string; when?:` [`Condition`](#condition)`; label?: string } &` [`MinigameTransition`](#minigametransition)`)[]` | yes |  | The state's inputs. For each input, the first entry whose `when` holds is taken, and an input with no such entry isn't live. `label` is the input's words for its button in this state, with tokens filled, such as a quiz's answer. The first live entry with one gives it. Without one the button reads the `minigame.<input>` string, else the input's name. |
+| `always` | `({ when?:` [`Condition`](#condition) `} &` [`MinigameTransition`](#minigametransition)`)[]` | yes |  | The state's automatic transitions, the first whose `when` holds taken on entering the state. Use them for a state that only decides where to go next, such as a win. |
+| `final` | `{ effects?:` [`EffectRef[]`](#effectref)`; copy?: Record<string, string> }` | yes |  | The state's ending. Entering the state ends the minigame. `copy` writes keys of the minigame's kv store to the player's (`{ score: 'arrows.best' }`). Then the minigame closes and `effects` run. |
 
 ## MinigameTarget
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigametarget).
 
-A state a transition can go to at random: its id, or its id with a weight (1 if left out).
+A state a transition can go to at random, as its id or as its id with a weight. The weight is 1 if left out.
 
 ```ts shape
 import type { MinigameTarget } from '@ifloom/engine'
@@ -3110,7 +3117,7 @@ type MinigameTarget = string | { state: string; weight?: number }
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigametransition).
 
-Where a transition goes, and what it does on the way.
+A minigame transition, the state it goes to and the effects it runs on the way. With no `go` or `to` it stays in its state.
 
 ```ts shape
 import type { MinigameTransition } from '@ifloom/engine'
@@ -3123,15 +3130,15 @@ type MinigameTransition = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `go` | `string` | yes |  | The state it goes to. |
-| `to` | [`MinigameTarget[]`](#minigametarget) | yes |  | A state drawn at random, by weight, when there is no `go`. Seeded by the save, so the same save draws the same states. |
-| `effects` | [`EffectRef[]`](#effectref) | yes |  | What it does before it moves: any effect, a `kv` one with `of: 'minigame'` or a turn among them. A transition with no `go` or `to` stays where it is. |
+| `go` | `string` | yes |  | The id of the state the transition goes to. |
+| `to` | [`MinigameTarget[]`](#minigametarget) | yes |  | The states the transition draws one from at random, by weight, when there's no `go`. The draw is seeded by the save. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects the transition runs before it moves. Any effect works, such as a `kv` effect with `of: 'minigame'` or a `turn`. |
 
 ## MinigameView
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigameview).
 
-The minigame being played, as the UI draws it.
+The running minigame as the player sees it, in `view.minigame`.
 
 ```ts shape
 import type { MinigameView } from '@ifloom/engine'
@@ -3150,23 +3157,22 @@ type MinigameView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `title` | `string \| null` |  |  | The minigame's own title, or null. |
-| `state` | `string` |  |  | The state it is in. |
-| `label` | `string \| null` |  |  | The state's words, from its `label`, or null. `view.scene.body` has them rendered. |
-| `timeLeft` | `number \| null` |  |  | Milliseconds left on the state's timer, or null with no timer. |
-| `timeTotal` | `number \| null` |  |  | The timer's whole length, or null with no timer. |
-| `inputs` | [`MinigameInput[]`](#minigameinput) |  |  | The inputs that do something now, in the order the state lists them, as buttons. |
-| `kv` | `Record<string, number>` |  |  | Its kv store now. |
-| `keys` | `Record<string, string[]>` |  |  | The keys the game maps to each input, by input name. Empty if it maps none. |
+| `id` | `string` |  |  | The minigame's id. |
+| `title` | `string \| null` |  |  | The minigame's title, or null. |
+| `state` | `string` |  |  | The name of the state the minigame is in. |
+| `label` | `string \| null` |  |  | The state's `label`, with tokens filled, or null. `view.scene.body` has it rendered. |
+| `timeLeft` | `number \| null` |  |  | The milliseconds left on the state's timer. Null when the state has no timer. |
+| `timeTotal` | `number \| null` |  |  | The whole length of the state's timer in milliseconds. Null when the state has no timer. |
+| `inputs` | [`MinigameInput[]`](#minigameinput) |  |  | The inputs that are live now, in the order the state lists them. |
+| `kv` | `Record<string, number>` |  |  | The minigame's kv store now. |
+| `keys` | `Record<string, string[]>` |  |  | The keys the game maps to each input, by input name. Empty when it maps none. |
 
 ## ModFile
 
 Type. Explained in [Mods](/docs/reference/mods#modfile).
 
-A mod as a file: what it is, which game it is for, and the pack it adds.
-Data only — scenes, prose, locations, patches, plugin content — so it can do
-nothing a pack can't, and nothing runs that the game didn't ship.
+A mod as a JSON file, with the game it is for and the pack it adds. A mod is data only, so no code runs that the game
+didn't ship.
 
 ```ts shape
 import type { ModFile } from '@ifloom/engine'
@@ -3183,21 +3189,20 @@ type ModFile = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ifloomMod` | `1` |  |  | The format of this file: 1. |
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-| `version` | `string` | yes |  | The mod's own version, as its author writes it: `'1.2'`. |
-| `game` | `string` |  |  | The game it was made for, by id. |
-| `description` | `string` | yes |  | A line for the mods screen. |
-| `pack` | [`Pack`](#pack) |  |  | The content it adds: a `Pack`, laid over the game's content. |
+| `ifloomMod` | `1` |  |  | The file's format, 1. |
+| `id` | `string` |  |  | The mod's id. Its pack is loaded as `mod:<id>`. |
+| `name` | `string` |  |  | The mod's name, for a mods page. |
+| `version` | `string` | yes |  | The mod's own version, as its author writes it, such as `'1.2'`. |
+| `game` | `string` |  |  | The id of the game the mod was made for. |
+| `description` | `string` | yes |  | The mod's description, a line for a mods page. |
+| `pack` | [`Pack`](#pack) |  |  | The `Pack` the mod adds, laid over the game's content. |
 
 ## Mods
 
 Type. Explained in [The showcase: Small Town](/docs/guide/showcase#mods).
 
-One game's installed mods, as `mods` gives them. Nothing here rejects: when
-the driver fails, each answers a failure that says so, with the driver's
-error as its `cause`.
+One game's mod store, returned by `mods`. No call rejects, and a driver's failure answers with a reason and the
+driver's error as its `cause`.
 
 ```ts shape
 import type { Mods } from '@ifloom/engine'
@@ -3212,18 +3217,18 @@ type Mods = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `list` | `() => Promise<`[`Result`](#result)`<`[`InstalledMod[]`](#installedmod)`>>` |  |  | Every installed mod, on or off, in name order. One stored unreadably is left out. |
-| `add` | `(text: string) => Promise<`[`Result`](#result)`<`[`InstalledMod`](#installedmod)`>>` |  |  | Add a mod from a file's text, on, replacing one with the same id. The mod, or why it can't be added. |
-| `remove` | `(id: string) => Promise<`[`Result`](#result)`<void>>` |  |  | Remove a mod. Nothing happens if it isn't installed. |
-| `setEnabled` | `(id: string, enabled: boolean) => Promise<`[`Result`](#result)`<void>>` |  |  | Turn a mod on or off. Nothing happens if it isn't installed. |
-| `packs` | `() => Promise<`[`Result`](#result)`<`[`Pack[]`](#pack)`>>` |  |  | The packs of the mods that are on, in name order, to load over the game's content as `packs`. |
+| `list` | `() => Promise<`[`Result`](#result)`<`[`InstalledMod[]`](#installedmod)`>>` |  |  | Returns the installed mods, on or off, in name order. A mod stored unreadably is left out. |
+| `add` | `(text: string) => Promise<`[`Result`](#result)`<`[`InstalledMod`](#installedmod)`>>` |  |  | Adds a mod from a file's text, turned on, replacing one with the same id. It returns the mod, or the reason it can't be added. |
+| `remove` | `(id: string) => Promise<`[`Result`](#result)`<void>>` |  |  | Removes a mod, and does nothing if it isn't installed. |
+| `setEnabled` | `(id: string, enabled: boolean) => Promise<`[`Result`](#result)`<void>>` |  |  | Turns a mod on or off, and does nothing if it isn't installed. |
+| `packs` | `() => Promise<`[`Result`](#result)`<`[`Pack[]`](#pack)`>>` |  |  | Returns the packs of the mods that are on, in name order, to pass to `loadGame` as `packs`. |
 
 ## mods
 
 Function. Explained in [Mods](/docs/reference/mods#mods).
 
-One game's installed mods, kept wherever its driver keeps them — IndexedDB
-in a browser, so a mod survives reloads and needs no server.
+Returns the `Mods` store of a game, kept by a driver. In a browser, an IndexedDB driver keeps mods across reloads
+with no server.
 
 ```ts shape
 import { mods } from '@ifloom/engine'
@@ -3236,9 +3241,9 @@ Uses: [`SaveDriver`](#savedriver), [`Mods`](#mods).
 
 Function. Explained in [Effects](/docs/reference/effects#move).
 
-Move a thing to another holder: from the player (whoever they are
-playing) for a stack, from wherever it is for a unique thing, unless
-`from` says; all there is unless `by` says.
+Returns the effect that moves a thing to another holder. It moves all there is unless `by` says otherwise.
+
+Without `from`, a stack moves from `you` and a unique thing moves from wherever it is.
 
 ```ts fragment
 effects: [move('gift:scarf', 'character:ava')]
@@ -3255,8 +3260,8 @@ Uses: [`Holder`](#holder), [`Effect`](#effect).
 
 Function. Explained in [Actions and buttons](/docs/reference/actions#need).
 
-A `blocked` entry written the other way round: refused with `reason` unless
-`when` holds. `need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
+Returns a `blocked` entry written the other way round, refused with `reason` unless `when` holds. For example
+`need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
 
 ```ts shape
 import { need } from '@ifloom/engine'
@@ -3269,9 +3274,10 @@ Uses: [`Reason`](#reason), [`Condition`](#condition), [`Blocked`](#blocked).
 
 Type. Explained in [Notices](/docs/reference/notices#notice).
 
-Something the game tells the player outside a scene: a message arrived, a
-quest moved on, the rent is due. Raised by the `notify` effect, shown by the
-UI as a badge or a toast, and marked seen with the `dismiss` command.
+A message the game gives the player outside a scene, such as a quest moving on or the rent falling due. The `notify`
+effect raises one, and the `dismiss` command marks it seen.
+
+A UI shows a notice as a badge or a toast.
 
 ```ts shape
 import type { Notice } from '@ifloom/engine'
@@ -3288,17 +3294,19 @@ type Notice = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `title` | `string` |  |  | A short line, as written. |
-| `text` | `string` | yes |  | More words, as written, if there are any. Tokens are filled as the view shows it. |
-| `image` | `string` | yes |  | A picture, as a path in the game's `art/` folder (`'notes/bins.jpg'`) or a URL. |
-| `tag` | `string` | yes |  | What it is about, for badges: `'messages'`, `'quests'`. |
-| `turn` | `number` |  |  | The turn it was raised. |
-| `seen` | `boolean` |  |  | Whether the player has dismissed it. |
+| `id` | `string` |  |  | The notice's id. A notice raised with the id of an earlier one replaces it. |
+| `title` | `string` |  |  | The notice's short line, kept as written. |
+| `text` | `string` | yes |  | The notice's longer words, kept as written. The view fills their tokens. |
+| `image` | `string` | yes |  | The notice's picture, as a path in the game's `art/` folder (`'notes/bins.jpg'`) or a URL. |
+| `tag` | `string` | yes |  | The notice's subject, for grouping badges, such as `'messages'` or `'quests'`. |
+| `turn` | `number` |  |  | The turn the notice was raised on. |
+| `seen` | `boolean` |  |  | The notice's seen mark, true once the player has dismissed it. |
 
 ## NoticesView
 
 Type. Explained in [The view](/docs/reference/view#noticesview-and-noticeview).
+
+The notices as the player sees them, in `view.notices`. Only notices the player hasn't dismissed are listed.
 
 ```ts shape
 import type { NoticesView } from '@ifloom/engine'
@@ -3310,12 +3318,14 @@ type NoticesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unseen` | [`NoticeView[]`](#noticeview) |  |  | Not yet dismissed, newest first. |
-| `byTag` | `Record<string, number>` |  |  | How many unseen notices each tag has: badges. Untagged ones count under `''`. |
+| `unseen` | [`NoticeView[]`](#noticeview) |  |  | The notices the player hasn't dismissed, newest first. |
+| `byTag` | `Record<string, number>` |  |  | The number of unseen notices for each tag, for badges. Untagged notices count under `''`. |
 
 ## NoticeView
 
 Type. Explained in [The view](/docs/reference/view#noticesview-and-noticeview).
+
+A notice as the player sees it, in `view.notices.unseen`.
 
 ```ts shape
 import type { NoticeView } from '@ifloom/engine'
@@ -3331,18 +3341,18 @@ type NoticeView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `title` | `string` |  |  | A short line, as written. |
-| `text` | `string` |  |  | The notice's words, tokens filled in; empty if it has none. |
-| `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
-| `tag` | `string \| null` |  |  | What it's about, for badges: `'messages'`. Null with none. |
-| `turn` | `number` |  |  | The turn it was raised. |
+| `id` | `string` |  |  | The notice's id, which the `dismiss` command takes. |
+| `title` | `string` |  |  | The notice's short line, kept as written. |
+| `text` | `string` |  |  | The notice's longer words, with their tokens filled in. Empty if it has none. |
+| `image` | `string \| null` |  |  | The notice's picture, as a path through `artSrc`. Null if it has none. |
+| `tag` | `string \| null` |  |  | The notice's subject, for grouping badges, such as `'messages'`. Null if it has none. |
+| `turn` | `number` |  |  | The turn the notice was raised on. |
 
 ## notify
 
 Function. Explained in [Notices](/docs/reference/notices#notify).
 
-The state with a notice raised. One with the id of an earlier notice replaces it, unseen, as the newest.
+Returns the state with a notice raised. A notice with the id of an earlier one replaces it, unseen, as the newest.
 
 ```ts shape
 import { notify, type Notice } from '@ifloom/engine'
@@ -3355,9 +3365,8 @@ Uses: [`GameState`](#gamestate), [`Notice`](#notice).
 
 Type. Explained in [Storylets](/docs/reference/storylets#once-at-most-and-only-while).
 
-How often something can happen: once in the whole game, or once a turn.
-`reason` is what the player reads on a button once it is spent; the
-engine's `done` string ("Already done.") if left out.
+A limit of once a game or once a turn on a choice, an action or a plugin's entry, such as a cheat. The engine counts
+a choice's or an action's uses in `state.chosen`.
 
 ```ts shape
 import type { Once } from '@ifloom/engine'
@@ -3369,14 +3378,14 @@ type Once = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `per` | `'game' \| 'turn'` |  |  | Once in the whole game, or at most once a turn. |
-| `reason` | [`Reason`](#reason) | yes |  | What the player reads on it once it's spent. The `done` string if left out. |
+| `per` | `'game' \| 'turn'` |  |  | The limit's span, `'game'` for once in the whole game or `'turn'` for once a turn. |
+| `reason` | [`Reason`](#reason) | yes |  | The reason the player reads once the limit is spent. For a choice or an action, the engine's `done` string ("Already done.") if left out. |
 
 ## OpenPanel
 
 Type. Explained in [Panels](/docs/reference/panels#openpanel).
 
-The panel that is open: its name, and what it was opened with.
+The open panel, a named piece of UI over the story, with the arguments it was opened with. `state.panel` and `view.panel` hold it.
 
 ```ts shape
 import type { OpenPanel } from '@ifloom/engine'
@@ -3389,17 +3398,16 @@ type OpenPanel = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `panel` | `string` |  |  | Its name, as the UI knows it: `'shop'`, `'jobs'`, or one of the game's own. |
-| `with` | [`PluginArgs`](/docs/api/engine-plugin#pluginargs) |  |  | What it was opened with, such as `{ vendor: 'cafe' }`. Empty if the effect gave nothing. |
-| `scene` | `string` | yes |  | The scene that holds it open, for a scene's own `panel`: it is open for as long as the scene is, and `closePanel` doesn't close it. Left out for one the `panel` effect opened. |
+| `panel` | `string` |  |  | The panel's name, which the UI renders it by, such as `'shop'`, `'jobs'` or one of the game's own. |
+| `with` | [`PluginArgs`](/docs/api/engine-plugin#pluginargs) |  |  | The panel's arguments, such as `{ vendor: 'cafe' }`. Empty if the effect gave none. |
+| `scene` | `string` | yes |  | The scene that holds the panel open, for a scene's own `panel`, which stays open as long as the scene does. It's left out for a panel the `panel` effect opened. `closePanel` doesn't close a panel a scene holds open. |
 
 ## Pack
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#pack).
 
-Content from outside the game's code: a mod, unlocked supporter content or
-a JSON export. It goes over the game's content and the packs before it,
-replacing what they declare by id, and saves record its id.
+Content from outside the game's code, such as a mod, unlocked supporter content or a JSON export. It goes over the
+game's content and the packs before it, replacing what they declare by id.
 
 ```ts shape
 import type { Pack } from '@ifloom/engine'
@@ -3442,45 +3450,45 @@ type Pack = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | The pack's id, which saves record: `mod:<id>` for a mod's. |
-| `schema` | `number` |  |  | Schema this pack was written against. An older one is upgraded as it loads; a newer one is refused. |
-| `plugins` | `Record<string, number>` | yes |  | The version of each plugin's content this pack was written for, by plugin id (`{ shop: 13 }`), as `Plugin.contentVersion` numbers them. An older one is upgraded by that plugin's own steps as it loads. A plugin left out is read as written for the pack's `schema`, or the plugin's own version if that is lower. |
-| `strings` | `Record<string, string>` | yes |  | Player-facing words by key, over the engine's and plugins' own. |
-| `prose` | `Record<string, string>` | yes |  | Prose by key. |
-| `words` | `Record<string, string>` | yes |  | Other words for fields of the content, by key: a translation, which is one pack with this table (and its own `prose` for the lines read by key). Each key names one field the player reads, as `translatableFields` lists them: `action.wait.label`, `entity.character:ava.name`, `scene.cafe.counter.text.intro`. It is laid over the content once everything is merged, a later pack's over an earlier one's, and a key that names no field is reported. |
-| `variants` | `Record<string,` [`VariantMember[]`](#variantmember)`>` | yes |  | Variants membership by variants name, in draw order. Content and packs append to a name. A member is a prose key, or `{ prose: key, weight }` to be drawn more or less often than the rest. |
-| `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | Content for the game's plugins, by plugin id and then list: `{ quests: { quests: [...] } }`. A pack's entry replaces one with the same id, as its scenes do. |
-| `kinds` | [`KindDef[]`](#kinddef) | yes |  | Kinds of thing the game keeps several of. A later pack can redeclare one by id. |
-| `entities` | [`EntityDef[]`](#entitydef) | yes |  | Things of those kinds there at the start. A later pack can redeclare one by kind and id. |
-| `traits` | [`TraitTable`](#traittable) | yes |  | Traits given to entities, by trait id and then entity, over what each entity declares itself: `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv store a new game starts with, by key: a later pack's value replaces an earlier one's. |
-| `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | Keys reset each turn, by key: a later pack's value replaces an earlier one's. |
-| `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  |  |
-| `actions` | [`ActionDef[]`](#actiondef) | yes |  | Actions, by id: a later pack's replaces an earlier one's. |
-| `triggers` | [`TriggerDef[]`](#triggerdef) | yes |  |  |
-| `inputs` | [`InputDef[]`](#inputdef) | yes |  |  |
-| `settings` | [`SettingDef[]`](#settingdef) | yes |  | What the player can change from a settings screen. A later pack can redeclare one by id. |
-| `stats` | [`StatDef[]`](#statdef) | yes |  | Stats the game keeps. A later pack can redeclare one by id. |
-| `scenes` | [`DataScene[]`](#datascene) | yes |  |  |
-| `patches` | [`Patch[]`](#patch) | yes |  | Surgical changes to content an earlier pack declared. |
-| `introScene` | `string` | yes |  | The scene on screen on the first frame: a later pack's replaces an earlier one's. |
-| `minigames` | [`MinigameDef[]`](#minigamedef) | yes |  | Minigames. A later pack's replaces an earlier one's by id. |
-| `timers` | [`TimerDef[]`](#timerdef) | yes |  | Timers. A later pack's replaces an earlier one's by id. |
-| `audio` | `Partial<`[`GameAudio`](#gameaudio)`>` | yes |  | Sounds, channels and defaults over the game's own. A later pack's track or channel replaces an earlier one's by id; its `mute` and `default` entries win too. |
-| `media` | [`GameMedia`](#gamemedia) | yes |  | Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. |
-| `ui` | [`Ui`](#ui)`<`[`GameUi`](#gameui)`>` | yes |  | Hints for the whole game, hint by hint: a later pack's hint replaces an earlier one's, and the rest are kept. |
-| `saveable` | [`Blocked[]`](#blocked) | yes |  | When saving is refused, after the entries before; one with the `id` of an earlier one takes its place. |
-| `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | Locks after the ones before; one with the `id` of an earlier one takes its place. |
-| `phrases` | [`Phrases`](#phrases) | yes |  | Words for mid-sentence that change with the state, printed as `{{name}}`: each phrase a list of `{ when?, text }` rows tried in order (or a plain string), and a nested object a group, named with a `.`. A later pack's phrase replaces an earlier one's by its full name, and a pack can add phrases to a group. |
-| `changes` | [`ChangesDef`](#changesdef) | yes |  | The stats whose changes `view.changes` lists, by id: `{ stats: ['coins', 'trust'] }`. Every file's and pack's lists are added together. With none, nothing is tracked. |
-| `finished` | [`Condition`](#condition) | yes |  | When the game counts as finished. The runner records the first time it holds in the profile's `core:finished`, so a title screen can offer New Game+. A pack's replaces the content's. |
-| `carryOver` | [`CarryOver`](#carryover) | yes |  | What a New Game+ carries over from the game before. A pack's replaces the content's, whole. |
+| `id` | `string` |  |  | The pack's id, which saves record. A mod's is `mod:<id>`. |
+| `schema` | `number` |  |  | The schema the pack was written against. `loadGame` upgrades an older one and refuses a newer one. |
+| `plugins` | `Record<string, number>` | yes |  | The version of each plugin's content the pack was written for, by plugin id (`{ shop: 13 }`), numbered as `Plugin.contentVersion` is. That plugin's own steps upgrade an older one as it loads. A plugin left out is read as written for the pack's `schema`, or for the plugin's own version if that is lower. |
+| `strings` | `Record<string, string>` | yes |  | The lines that replace the engine's and plugins' strings, by key. |
+| `prose` | `Record<string, string>` | yes |  | The prose keys' lines, by key. |
+| `words` | `Record<string, string>` | yes |  | The words table, other words for the fields a player reads, by key. A translation is one pack with this table and its own `prose`. Each key names one field, as `translatableFields` lists them (`action.wait.label`, `entity.character:ava.name`, `scene.cafe.counter.text.intro`). `loadGame` lays it over the merged content, a later pack's over an earlier one's, and reports a key that names no field. |
+| `variants` | `Record<string,` [`VariantMember[]`](#variantmember)`>` | yes |  | The variants lists' members by list name, in order. Content and packs append to a list. A member is a prose key, or `{ prose: key, weight }` to be drawn more or less often than the rest. |
+| `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | The plugins' content, by plugin id and then list, such as `{ quests: { quests: [...] } }`. A pack's entry replaces the one with the same id, as its scenes do. |
+| `kinds` | [`KindDef[]`](#kinddef) | yes |  | The pack's kinds. A later pack's kind replaces an earlier one with the same id. |
+| `entities` | [`EntityDef[]`](#entitydef) | yes |  | The pack's entities at the start. A later pack's entity replaces an earlier one with the same kind and id. |
+| `traits` | [`TraitTable`](#traittable) | yes |  | The pack's traits, by trait id and then entity, over what each entity declares itself, such as `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's starting kv store, by key. A later pack's value replaces an earlier one's. |
+| `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's keys reset each turn, by key. A later pack's value replaces an earlier one's. |
+| `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | The pack's storylines, merged by id over the content's. |
+| `actions` | [`ActionDef[]`](#actiondef) | yes |  | The pack's actions, by id. A later pack's action replaces an earlier one with the same id. |
+| `triggers` | [`TriggerDef[]`](#triggerdef) | yes |  | The pack's triggers, merged by id over the content's. |
+| `inputs` | [`InputDef[]`](#inputdef) | yes |  | The pack's inputs, merged by id over the content's. |
+| `settings` | [`SettingDef[]`](#settingdef) | yes |  | The pack's settings. A later pack's setting replaces an earlier one with the same id. |
+| `stats` | [`StatDef[]`](#statdef) | yes |  | The pack's stats. A later pack's stat replaces an earlier one with the same id. |
+| `scenes` | [`DataScene[]`](#datascene) | yes |  | The pack's scenes. A later pack's scene replaces an earlier one with the same id. |
+| `patches` | [`Patch[]`](#patch) | yes |  | The pack's patches to the choices of scenes declared before it. |
+| `introScene` | `string` | yes |  | The scene open on the first frame. A later pack's replaces an earlier one's. |
+| `minigames` | [`MinigameDef[]`](#minigamedef) | yes |  | The pack's minigames. A later pack's minigame replaces an earlier one with the same id. |
+| `timers` | [`TimerDef[]`](#timerdef) | yes |  | The pack's timers. A later pack's timer replaces an earlier one with the same id. |
+| `audio` | `Partial<`[`GameAudio`](#gameaudio)`>` | yes |  | The pack's tracks, channels and defaults, over the content's. A later pack's track or channel replaces an earlier one with the same id, and its `mute`, `sound` and `default` entries win too. |
+| `media` | [`GameMedia`](#gamemedia) | yes |  | The pack's pools of pictures and videos. A later pack's pool replaces an earlier one with the same id, files and all. |
+| `ui` | [`Ui`](#ui)`<`[`GameUi`](#gameui)`>` | yes |  | The pack's ui hints for the whole game, merged hint by hint. A later pack's hint replaces an earlier one's, and the rest stay. |
+| `saveable` | [`Blocked[]`](#blocked) | yes |  | The pack's reasons to refuse saving, added after the content's. An entry with the `id` of an earlier one replaces it. |
+| `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | The pack's locks, added after the content's. A lock with the `id` of an earlier one replaces it. |
+| `phrases` | [`Phrases`](#phrases) | yes |  | The pack's phrases, words that change with the state, printed in a line as `{{name}}`. Each is a plain string or a list of `{ when?, text }` rows tried in order, and an object is a group. A later pack's phrase replaces an earlier one with the same full name, and a pack can add phrases to a group. |
+| `changes` | [`ChangesDef`](#changesdef) | yes |  | The pack's tracked stats, by id, such as `{ stats: ['coins', 'trust'] }`. The engine adds every file's and pack's lists together. |
+| `finished` | [`Condition`](#condition) | yes |  | The pack's condition for the game being finished. It replaces the content's, and the runner records the first time it holds in the profile's `core:finished`. |
+| `carryOver` | [`CarryOver`](#carryover) | yes |  | The pack's rules for a New Game+. They replace the content's `carryOver` whole. |
 
 ## panel
 
 Function. Explained in [Effects](/docs/reference/effects#panel).
 
-A panel opened where it stands, with what it needs. The flow waits until the player closes it.
+Returns a `{ panel }` block, a panel opened at this place in the flow with `args` as its `with`. The flow waits until the player closes it.
 
 ```ts shape
 import { panel } from '@ifloom/engine'
@@ -3493,7 +3501,7 @@ Uses: [`PluginArgs`](/docs/api/engine-plugin#pluginargs), [`BlockExtras`](#block
 
 Function. Explained in [Entities](/docs/reference/entities#parseref).
 
-Split `'staff:ana'` into its kind and id; undefined if it is not one. Takes any string, as content writes them.
+Returns an entity reference such as `'staff:ana'` split into its kind and id, or undefined when the string isn't one.
 
 ```ts shape
 import { parseRef } from '@ifloom/engine'
@@ -3504,7 +3512,11 @@ function parseRef(ref: string): { kind: string; id: string } | undefined
 
 Type. Explained in [Content, packs and loading](/docs/reference/loader#patch).
 
-A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced.
+A patch a pack declares in `patches`, a change to one choice of a scene an earlier pack or the content declared.
+It adds, drops or replaces the choice.
+
+`addChoice` puts the choice before the choice `before` names, or last when `before` is left out or not found.
+`dropChoice` names the choice to drop, and `replaceChoice` takes the place of the choice with its id.
 
 ```ts shape
 import type { Patch } from '@ifloom/engine'
@@ -3517,7 +3529,8 @@ Uses: [`DataScene`](#datascene).
 
 Type. Explained in [Phrases](/docs/reference/phrases#phrase-phraserow-and-phrasewithargs).
 
-A phrase as content writes it: its rows, tried in order, a plain string (a phrase with one row), or rows with the arguments they take.
+A phrase the game declares in `phrases`, words for the middle of a sentence that change with the state. It's a list
+of rows tried in order, a plain string, or rows with their arguments.
 
 ```ts shape
 import type { Phrase } from '@ifloom/engine'
@@ -3530,7 +3543,7 @@ Uses: [`PhraseRow`](#phraserow), [`PhraseWithArgs`](#phrasewithargs).
 
 Type. Explained in [Phrases](/docs/reference/phrases#phrase-phraserow-and-phrasewithargs).
 
-One row of a phrase: its words, shown while `when` holds (always, without one). Tokens in the words are filled.
+A row of a phrase, its words shown while `when` holds. A row with no `when` always holds, and the view fills the tokens in its words.
 
 ```ts shape
 import type { PhraseRow } from '@ifloom/engine'
@@ -3540,13 +3553,19 @@ type PhraseRow = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `when` | [`Condition`](#condition) | yes |  | The row's condition. The row's words show while it holds, and always when it's left out. |
+| `text` | `string` |  |  | The row's words, with tokens the view fills. |
+
 ## Phrases
 
 Type. Explained in [Phrases](/docs/reference/phrases#phrases).
 
-Phrases as content writes them, by name: a phrase, or a group of more by
-name, as deep as you like. `{ outfit: { verdict: [...] }, weather: 'grey' }`
-declares `outfit.verdict` and `weather`.
+The phrases the game declares in `phrases`, by name. Each entry is a phrase or a group of more phrases, nested as
+deep as you like.
+
+`{ outfit: { verdict: [...] }, weather: 'grey' }` declares `outfit.verdict` and `weather`.
 
 ```ts shape
 import type { Phrases } from '@ifloom/engine'
@@ -3559,10 +3578,11 @@ type Phrases = {
 
 Type. Explained in [Phrases](/docs/reference/phrases#phrase-phraserow-and-phrasewithargs).
 
-A phrase that takes arguments: their names in `args`, and its rows. In a
-row's `when`, a string that is exactly `$<arg>` becomes what the token
-passed, as an entity reference when it names one; in its `text`, `$<arg>`
-becomes that entity's name, or the value as passed.
+A phrase that takes arguments, with their names in `args` and its rows. A token passes each argument as
+`name=value`.
+
+In a row's `when`, a string that is exactly `$<arg>` becomes the value the token passed, as an entity reference
+when it names one. In a row's `text`, `$<arg>` becomes that entity's name, or the value as passed.
 
 ```ts shape
 import type { PhraseWithArgs } from '@ifloom/engine'
@@ -3572,11 +3592,16 @@ type PhraseWithArgs = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `args` | `string[]` |  |  | The names of the arguments the phrase takes. |
+| `rows` | [`PhraseRow[]`](#phraserow) |  |  | The phrase's rows, tried in order. |
+
 ## PictureDef
 
 Type. Explained in [Media](/docs/reference/media#picturedef).
 
-A layered picture with hotspots, on a scene or a place.
+A picture a scene or a location declares in its `picture`, layers with hotspots on them.
 
 ```ts shape
 import type { PictureDef } from '@ifloom/engine'
@@ -3589,15 +3614,15 @@ type PictureDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `layers` | [`PictureLayer[]`](#picturelayer) |  |  | Bottom first. |
-| `hotspots` | [`HotspotDef[]`](#hotspotdef) | yes |  | The clickable areas on it, each a button the UI draws over the picture. |
-| `aspect` | `string` | yes |  | Width over height, as CSS writes it: `'16/9'`. The UI's own if left out. |
+| `layers` | [`PictureLayer[]`](#picturelayer) |  |  | The picture's layers, bottom first. |
+| `hotspots` | [`HotspotDef[]`](#hotspotdef) | yes |  | The picture's hotspots, each a button the UI renders over the picture. |
+| `aspect` | `string` | yes |  | The picture's width over height, in CSS form, such as `'16/9'`. The UI's own if left out. |
 
 ## PictureLayer
 
 Type. Explained in [Media](/docs/reference/media#picturelayer).
 
-One layer of a picture: a file, or a pick from a pool, shown while `when` holds.
+A layer of a picture, a file or a pool's pick, shown while `when` holds. Give `src` or `pool`, not both.
 
 ```ts shape
 import type { PictureLayer } from '@ifloom/engine'
@@ -3617,22 +3642,22 @@ type PictureLayer = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` | yes |  | What hotspots name to go with this layer. |
-| `src` | `string` | yes |  | The file, in the game's `art/` folder or a URL. Give this or `pool`. |
-| `pool` | `string` | yes |  | A pool in `game.media.pools` to pick the file from, kept for the save once picked. |
+| `id` | `string` | yes |  | The layer's id, which a hotspot's `layer` names. |
+| `src` | `string` | yes |  | The layer's file, in the game's `art/` folder or a URL. |
+| `pool` | `string` | yes |  | The pool in `media.pools` the layer's file is drawn from. The save keeps the pick. |
 | `tags` | `string[]` | yes |  | The tags the pool's pick should have, most important first. |
-| `when` | [`Condition`](#condition) | yes |  | Shown only while this holds. |
-| `video` | `boolean` | yes |  | Draw it as a video. A `.mp4` or `.webm` file is one anyway. |
-| `controls` | `boolean` | yes |  | Show the player's controls. It then waits to be started instead of playing by itself. |
-| `once` | `boolean` | yes |  | Play once instead of looping. |
-| `sound` | `boolean` | yes |  | Play with sound instead of muted. |
-| `poster` | `string` | yes |  | A still to show before it plays, as a path like any picture's. |
+| `when` | [`Condition`](#condition) | yes |  | The layer's condition. The layer shows only while it holds. |
+| `video` | `boolean` | yes |  | The layer's video mark, true to show it as a video. A `.mp4` or `.webm` file is a video anyway. |
+| `controls` | `boolean` | yes |  | The controls flag, which shows the player's controls, so the video waits to be started instead of playing by itself. |
+| `once` | `boolean` | yes |  | The once flag, which plays the video once instead of looping. |
+| `sound` | `boolean` | yes |  | The sound flag, which plays the video with sound instead of muted. |
+| `poster` | `string` | yes |  | The still shown before the video plays, as a path like any picture's. |
 
 ## PictureLayerView
 
 Type. Explained in [Media](/docs/reference/media#picturelayerview).
 
-A picture layer as the UI draws it.
+A picture layer as the player sees it, in a `PictureView`'s `layers`.
 
 ```ts shape
 import type { PictureLayerView } from '@ifloom/engine'
@@ -3645,15 +3670,16 @@ type PictureLayerView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string \| null` |  |  |  |
-| `src` | `string` |  |  | The file to draw, through `artSrc` (a pool's pick resolved). |
-| `video` | [`VideoView`](#videoview) | yes |  | How it plays, when it is a video. |
+| `id` | `string \| null` |  |  | The layer's id, or null. |
+| `src` | `string` |  |  | The layer's file, through `artSrc`, with a pool's pick resolved. |
+| `video` | [`VideoView`](#videoview) | yes |  | The layer's playback settings when it's a video. Left out for a still picture. |
 
 ## PictureView
 
 Type. Explained in [Media](/docs/reference/media#pictureview).
 
-A picture as the UI draws it: the layers shown now, bottom first, and the hotspots on them.
+A picture as the player sees it, in `view.scene.picture` or a location's `picture`. It lists the layers shown now,
+bottom first, and the hotspots on them.
 
 ```ts shape
 import type { PictureView } from '@ifloom/engine'
@@ -3664,11 +3690,17 @@ type PictureView = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `aspect` | `string \| null` |  |  | The picture's width over height, such as `'16/9'`. Null when the picture doesn't set it. |
+| `layers` | [`PictureLayerView[]`](#picturelayerview) |  |  | The layers whose `when` holds, bottom first. |
+| `hotspots` | [`HotspotView[]`](#hotspotview) |  |  | The hotspots whose `when` holds and whose layer shows. |
+
 ## Placement
 
 Type. Explained in [Entities](/docs/reference/entities#holder-and-placement).
 
-Where a thing is placed: one holder for one of it, or how many each holder has.
+A thing's placement, one holder for one of it or a count for each holder.
 
 ```ts shape
 import type { Placement } from '@ifloom/engine'
@@ -3681,7 +3713,7 @@ Uses: [`Holder`](#holder).
 
 Const. Explained in [Entities](/docs/reference/entities#player-and-you).
 
-The player as a holder: what is theirs whoever they are playing.
+The holder id of the player, whose things stay theirs whoever they are playing.
 
 ```ts shape
 import { PLAYER } from '@ifloom/engine'
@@ -3692,7 +3724,7 @@ const PLAYER: 'player'
 
 Type. Explained in [Audio](/docs/reference/audio#playlistdef).
 
-Several background tracks played one after another, by id in `game.audio.tracks`.
+A playlist the game declares in `audio.tracks`, background tracks played one after another. Its order is `'loop'` if left out.
 
 ```ts shape
 import type { PlaylistDef } from '@ifloom/engine'
@@ -3704,19 +3736,19 @@ type PlaylistDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `playlist` | `(string \| { track: string; weight?: number })[]` |  |  | Track ids, each on a background channel. In a shuffled playlist a track can carry a weight, `{ track: 'rain', weight: 3 }`, and is then more likely to come early in the order. A plain id has weight 1. |
-| `order` | `'inOrder' \| 'loop' \| 'shuffle'` | yes |  | `'inOrder'` plays the list once, `'loop'` plays it over and over, and `'shuffle'` plays it over and over in an order drawn from the save's seed. With weights, the shuffle draws the first track by weight, then the next from those left, and so on, so a heavier track tends to play sooner. `'loop'` if left out. |
+| `playlist` | `(string \| { track: string; weight?: number })[]` |  |  | The playlist's track ids, each on a background channel. In a shuffled playlist a track can carry a weight, `{ track: 'rain', weight: 3 }`, which makes it likely to come earlier. A plain id has weight 1. |
+| `order` | `'inOrder' \| 'loop' \| 'shuffle'` | yes |  | The playlist's order. `'inOrder'` plays the list once, `'loop'` plays it over and over, and `'shuffle'` plays it over and over in an order drawn from the save's seed. `'loop'` if left out. With weights, the shuffle draws the first track by weight, then the next from those left, and so on, so a heavier track tends to play sooner. |
 
 ## PluginCall
 
 Type. Explained in [Calls by name](/docs/reference/custom#plugincall).
 
-A plugin's condition, effect or command in short, or the game's own
-(`game/…`, from its `rules`): its full name as the only key, and its
-arguments as the value, `{ 'quests/done': { quest: 'bakery' } }`. The arguments are
-always an object; `true` calls it with none, as in `{ 'calendar/weekend':
-true }`. Anything else (a list, a string, a number) is a problem the content
-checker reports, and the call is asked with no arguments.
+A plugin's or the game's condition, effect or command in the short form, with its full name as the only key. The value
+is its arguments as an object, or `true` for none.
+
+`{ 'quests/done': { quest: 'bakery' } }` and `{ 'calendar/weekend': true }` are calls. Any other value, such as a
+list, a string or a number, is a problem the content checker reports, and the engine asks the call with no
+arguments.
 
 ```ts shape
 import type { PluginCall } from '@ifloom/engine'
@@ -3729,10 +3761,10 @@ type PluginCall = {
 
 Function. Explained in [Writing a plugin](/docs/reference/plugins#pluginquery).
 
-A plugin's query by full name, ready to ask. Undefined when the game does
-not have it. As `context.query`, a name declared in `QueryRegistry` takes
-its arguments and answers its type; any other takes any arguments, with the
-answer's type given.
+Returns a plugin's query by full name, ready to ask, or undefined when the game doesn't have it.
+
+As with `context.query`, a name declared in `QueryRegistry` takes its arguments and answers its type. Any other name
+takes any arguments, with the answer's type given.
 
 ```ts shape
 import { pluginQuery, type Game } from '@ifloom/engine'
@@ -3746,7 +3778,7 @@ Uses: [`QueryRegistry`](#queryregistry), [`Game`](#game), [`GameState`](#gamesta
 
 Function. Explained in [Effects](/docs/reference/effects#point).
 
-A place in the flow a choice can jump to, with `jump(id)`: at the top of a scene's body, in a section or in a choice's `then`.
+Returns a point, a place in the flow a choice's `jump(id)` goes to, anywhere in a scene's body, a section or a choice's `then`.
 
 ```ts shape
 import { point } from '@ifloom/engine'
@@ -3759,8 +3791,7 @@ Uses: [`Block`](#block).
 
 Type. Explained in [Media](/docs/reference/media#poolfile).
 
-One file in a pool: its path, as any picture's, the tags it answers to, and
-how often it is picked against the other files that fit (1 if left out).
+A file in a pool in `media.pools`, with its path, its tags and its weight against the other files that fit. The weight is 1 if left out.
 
 ```ts shape
 import type { PoolFile } from '@ifloom/engine'
@@ -3771,13 +3802,18 @@ type PoolFile = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `src` | `string` |  |  | The file's path, in the game's `art/` folder or a URL. |
+| `tags` | `string[]` | yes |  | The file's tags, which a request's tags match. |
+| `weight` | `number` | yes |  | The file's weight in a draw, against the other files that fit. 1 if left out. |
+
 ## Price
 
 Type. Explained in [The view](/docs/reference/view#price).
 
-What pressing a button will spend, shown on it before it is pressed. Only
-costs: what a choice *pays* stays off the label, because a payout printed on
-a line tells the player which line is the right one.
+The cost of a choice or action, shown on its button before the player presses it. It lists costs only, since a payout
+printed on a choice tells the player which one is right.
 
 ```ts shape
 import type { Price } from '@ifloom/engine'
@@ -3790,15 +3826,15 @@ type Price = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stats` | `{ id: string; amount: number; text: string }[]` | yes |  | Stats it spends, in the order the button lists them, written for the player. |
-| `notes` | `string[]` | yes |  | What plugins say it costs, in their words: "until evening". |
-| `text` | `string` |  |  | The whole price as one line for the player: each stat's `text`, then the notes, joined by the `priceSeparator` string (`2 coins · until evening`). |
+| `stats` | `{ id: string; amount: number; text: string }[]` | yes |  | The stats the price spends, in the order the button lists them, each with its amount and its words in `text`. |
+| `notes` | `string[]` | yes |  | The plugins' words for what else it costs, such as "until evening". |
+| `text` | `string` |  |  | The whole price as one line for the player, such as `2 coins · until evening`. It joins each stat's `text`, then the notes, with the `priceSeparator` string. |
 
 ## Probe
 
 Type. Explained in [Checking content](/docs/reference/checks#probe).
 
-A state to render every scene against, named for the problems it finds.
+A state the content checker renders every scene against, named for the problems it finds. Make one with `probe`, by playing.
 
 ```ts shape
 import type { Probe } from '@ifloom/engine'
@@ -3810,14 +3846,14 @@ type Probe = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  | What the problems it finds are named by: `'evening, after the café'`. |
+| `name` | `string` |  |  | The probe's name, which the problems it finds carry, such as `'evening, after the café'`. |
 | `state` | [`GameState`](#gamestate) |  |  | The state to render every scene against. |
 
 ## Problem
 
 Type. Explained in [Checking content](/docs/reference/checks#problem-and-describeproblem).
 
-Something wrong with a game's content: the pack it came from (`game` for a hand-built game), where, and what.
+A fault the content checker finds in a game's content, with the pack it came from and the place in it.
 
 ```ts shape
 import type { Problem } from '@ifloom/engine'
@@ -3830,22 +3866,20 @@ type Problem = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `pack` | `string` |  |  | The content or pack it came from, by name or id: `game` for a hand-built game. |
-| `where` | `string` |  |  | What in it: `scene cafe.counter`, `finished`. |
-| `what` | `string` |  |  | What's wrong: `unknown storyline "tides"`. |
+| `pack` | `string` |  |  | The name or id of the content or pack the problem came from. It is `game` for a hand-built game. |
+| `where` | `string` |  |  | The place in the content the problem is, such as `scene cafe.counter` or `finished`. |
+| `what` | `string` |  |  | The fault, such as `unknown storyline "tides"`. |
 
 ## Profile
 
 Type. Explained in [The profile](/docs/reference/profile#profile-1).
 
-What outlives a save: the player's settings, whether they have finished the
-game, and whatever plugins keep (achievements, say). One JSON object of
-namespaces, kept at `<game id>.profile` in a save driver.
+The player's record that outlives a save, such as settings, whether they have finished the game, and plugins' records
+like achievements. It is one JSON object of namespaces, kept at `<game id>.profile` in a save driver.
 
-The engine uses two namespaces: `core:settings` (every setting's stored
-value, by id) and `core:finished` (`{ at }`, when the game was first
-finished). A UI uses `ui:` names (the React gate is `ui:gate`). A plugin
-uses its own bare id, which can't hold a `:`, so the prefixes are reserved.
+The engine uses two namespaces, `core:settings` (each setting's stored value, by id) and `core:finished` (`{ at }`,
+when the game was first finished). A UI uses `ui:` names, such as the React UI's gate, `ui:gate`. A plugin uses its
+own bare id, which can't hold a `:`, so the prefixes are reserved.
 
 ```ts shape
 import type { Profile } from '@ifloom/engine'
@@ -3859,18 +3893,19 @@ type Profile = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `get` | `<T = unknown>(namespace: string) => Promise<T \| undefined>` |  |  | What a namespace holds, or undefined if nothing does. |
-| `set` | `(namespace: string, value: unknown) => Promise<void>` |  |  | Store a value in a namespace. Undefined clears it. |
-| `update` | `<T = unknown>(namespace: string, change: (current: T \| undefined) => T \| undefined) =>…` |  |  | Change a namespace from what it holds now, with no other write in between. Return undefined (or the same value) to leave it. Resolves to what it holds afterwards. |
-| `subscribe` | `(listener: (namespace: string, value: unknown) => void) => () => void` |  |  | Hear about every write, with the namespace and its new value. Returns the way to stop. |
+| `get` | `<T = unknown>(namespace: string) => Promise<T \| undefined>` |  |  | Returns the value a namespace holds, or undefined if it holds none. |
+| `set` | `(namespace: string, value: unknown) => Promise<void>` |  |  | Stores a value in a namespace. Undefined clears it. |
+| `update` | `<T = unknown>(namespace: string, change: (current: T \| undefined) => T \| undefined) =>…` |  |  | Changes a namespace from the value it holds now, with no other write in between, and returns the value it holds afterwards. Return undefined, or the same value, from `change` to leave it. |
+| `subscribe` | `(listener: (namespace: string, value: unknown) => void) => () => void` |  |  | Calls a listener with the namespace and new value of every write, and returns a function that stops it. |
 
 ## profile
 
 Function. Explained in [The profile](/docs/reference/profile#profile).
 
-A game's profile, kept wherever its driver keeps things. Reads and writes
-run one at a time, in order. Only the game's `id` is read, so a profile can
-be opened before the game is built: `profile({ id: 'small-town' }, driver)`.
+Returns the `Profile` of a game, kept by a driver. Reads and writes run one at a time, in order.
+
+It reads only the game's `id`, so a profile can be opened before the game is built, as in
+`profile({ id: 'small-town' }, driver)`.
 
 ```ts shape
 import { profile, type Game } from '@ifloom/engine'
@@ -3883,11 +3918,12 @@ Uses: [`Game`](#game), [`SaveDriver`](#savedriver), [`Profile`](#profile).
 
 Function. Explained in [Prose and markup](/docs/reference/prose#prosebeats).
 
-The prose line `key` as beats, formatted as a scene's body is: its tokens
-filled for this save, cut into paragraphs and spoken lines, each speaker
-named from their entity, and its inline markup (bold, italics, UI pieces)
-in `spans`. For a UI that shows a line by key away from the scene, such as
-a dialog an inline piece opens. Null when the game has no line by that key.
+Returns the prose key's line rendered as beats, the way a scene's body is rendered. Returns null when the game has
+no line by that key.
+
+The engine fills its tokens for this save, cuts it into paragraphs and spoken lines, names each speaker from their
+entity and puts its inline markup (bold, italics, UI pieces) in `spans`. A UI calls it to show a line away from
+the scene, such as in a dialog an inline piece opens.
 
 ```ts shape
 import { proseBeats, type Game } from '@ifloom/engine'
@@ -3900,7 +3936,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`SceneBeat`](#scenebeat).
 
 Type. Explained in [Prose and markup](/docs/reference/prose#prosestore).
 
-Prose and variants members the declarative scenes draw on.
+The store of prose keys and variants lists that scenes read. `loadGame` makes it from the content's `prose`.
 
 ```ts shape
 import type { ProseStore } from '@ifloom/engine'
@@ -3914,16 +3950,16 @@ type ProseStore = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `line` | `(key: string, state?:` [`GameState`](#gamestate)`) => string \| undefined` |  |  | The words for a key, with `{{playerName}}` and friends filled in. |
-| `variants` | `(name: string) => string[]` |  |  | The members of a variants list, by its name, in declaration order. |
-| `weight` | `(name: string, key: string) => number` | yes |  | A member's weight in a variants list, 1 if it has none. Left out, every member weighs 1. |
-| `keys` | `() => string[]` | yes |  | Every key the store has words for, so the content checker can read all the prose's markup. Left out, it reads only the keys content names. |
+| `line` | `(key: string, state?:` [`GameState`](#gamestate)`) => string \| undefined` |  |  | The store's function that returns a prose key's line, with its tokens filled for `state`. |
+| `variants` | `(name: string) => string[]` |  |  | The store's function that returns a variants list's members by its name, in declaration order. |
+| `weight` | `(name: string, key: string) => number` | yes |  | The store's function that returns a member's weight in a variants list. Every member weighs 1 if left out. |
+| `keys` | `() => string[]` | yes |  | The store's function that lists every prose key, so the content checker can read all the prose's markup. The checker reads only the keys content names if left out. |
 
 ## protagonist
 
 Function. Explained in [Entities](/docs/reference/entities#protagonist-and-resolveholder).
 
-Who `'you'` is now: the protagonist the `you` effect chose, or `'player'` when none was.
+Returns the holder `'you'` stands for now, the protagonist the `you` effect chose or else `'player'`.
 
 ```ts shape
 import { protagonist } from '@ifloom/engine'
@@ -3936,10 +3972,10 @@ Uses: [`GameState`](#gamestate), [`Holder`](#holder).
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#query).
 
-Ask a plugin or the game something by full name. A name declared in
-`QueryRegistry` takes its arguments and answers its type; any other takes any
-arguments, with the answer's type given: `query<number>('loyalty/stampsLeft')`.
-Undefined when the game does not have it.
+A function that asks a plugin or the game a query by full name. It returns undefined when the game has no such query.
+
+A name declared in `QueryRegistry` takes its declared arguments and returns its declared answer. Any other name
+takes any arguments, and you give the answer's type, as in `query<number>('loyalty/stampsLeft')`.
 
 ```ts shape
 import type { Query } from '@ifloom/engine'
@@ -3952,10 +3988,10 @@ Uses: [`QueryRegistry`](#queryregistry), [`QueryArgs`](/docs/api/engine-plugin#q
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
-The queries plugins and the game answer, by full name, each as a function
-from its arguments to its answer, which `context.query` and `pluginQuery`
-read: `'loyalty/stampsLeft': () => number`. Holds `PartnerQueries`, what
-first-party plugins ask each other, so those are typed in every program.
+The registry of queries plugins and the game answer, by full name, each typed as a function from its arguments to
+its answer (`'loyalty/stampsLeft': () => number`). `context.query` and `pluginQuery` read it.
+
+It extends `PartnerQueries`, the queries first-party plugins ask each other, so those are typed in every program.
 
 ```ts shape
 import type { QueryRegistry } from '@ifloom/engine'
@@ -3977,23 +4013,22 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `calendar/now` | `() => { day: number; period: string }` |  |  | The calendar's day, from 0, and period. |
-| `calendar/periods` | `() => string[]` |  |  | The calendar's periods, in order. |
-| `calendar/bedtime` | `() => boolean` |  |  | Whether it's a time the player could go to bed. |
-| `places/here` | `() => string \| null` |  |  | The id of the place the player is in, or null for nowhere. |
-| `places/holder` | `() =>` [`EntityRef`](#entityref) `\| null` |  |  | The entity of the place the player is in, which holds what is put down there; null when nowhere. |
-| `places/known` | `(args: { location: string }) => boolean` |  |  | Whether the game has this place. |
-| `cast/portrait` | `(args: { character: string }) => string \| undefined` |  |  | A character's face, their person's `portrait`; undefined for none. |
-| `cast/contacts` | `() =>` [`CastContact[]`](/docs/api/engine-plugin#castcontact) |  |  | Everyone met who can be called. |
-| `cast/sender` | `(args: { from: string }) =>` [`SenderView`](/docs/api/engine-plugin#senderview) |  |  | Who a message or a post is from: the entity's name and picture, a person's `portrait` as the face. |
+| `calendar/now` | `() => { day: number; period: string }` |  |  | Returns the calendar's day, from 0, and its period. |
+| `calendar/periods` | `() => string[]` |  |  | Returns the calendar's periods, in order. |
+| `calendar/bedtime` | `() => boolean` |  |  | Returns true at a time the player could go to bed. |
+| `places/here` | `() => string \| null` |  |  | Returns the id of the location the player is at, or null when they are at none. |
+| `places/holder` | `() =>` [`EntityRef`](#entityref) `\| null` |  |  | Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. |
+| `places/known` | `(args: { location: string }) => boolean` |  |  | Returns true when the game has the location. |
+| `cast/portrait` | `(args: { character: string }) => string \| undefined` |  |  | Returns a character's face, their person's `portrait`, or undefined for none. |
+| `cast/contacts` | `() =>` [`CastContact[]`](/docs/api/engine-plugin#castcontact) |  |  | Returns the characters the player has met who can be called. |
+| `cast/sender` | `(args: { from: string }) =>` [`SenderView`](/docs/api/engine-plugin#senderview) |  |  | Returns the `SenderView` of the entity a message or a post is from, with a person's `portrait` as the face. |
 
 ## Range
 
 Type. Explained in [Conditions](/docs/reference/conditions#range).
 
-Bounds a number is compared with, as conditions compare one: `{ gte: 3 }`
-is 3 or more. Each bound is an `Amount`, so it can be another number in
-the game: `{ gte: { stat: 'rent' } }`.
+The bounds a condition compares a number with, so `{ gte: 3 }` holds for 3 or more. Each bound is an `Amount`, such
+as `{ gte: { stat: 'rent' } }`.
 
 ```ts shape
 import type { Range } from '@ifloom/engine'
@@ -4007,16 +4042,16 @@ type Range = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `gte` | [`Amount`](#amount) | yes |  | The number is this or more. |
-| `gt` | [`Amount`](#amount) | yes |  | The number is more than this. |
-| `lte` | [`Amount`](#amount) | yes |  | The number is this or less. |
-| `lt` | [`Amount`](#amount) | yes |  | The number is less than this. |
+| `gte` | [`Amount`](#amount) | yes |  | The range's lower bound, which the number must reach or pass. |
+| `gt` | [`Amount`](#amount) | yes |  | The range's lower bound, which the number must pass. |
+| `lte` | [`Amount`](#amount) | yes |  | The range's upper bound, which the number must not pass. |
+| `lt` | [`Amount`](#amount) | yes |  | The range's upper bound, which the number must stay below. |
 
 ## RawPack
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#rawpack).
 
-A pack as it came in: some schema's shape, not necessarily this one.
+A pack as it arrived, in the shape of the schema it records, which may be older than `SCHEMA`.
 
 ```ts shape
 import type { RawPack } from '@ifloom/engine'
@@ -4027,14 +4062,18 @@ type RawPack = {
 
 It also takes any other key: `[key: string]: unknown`.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `schema` | `number` |  |  | The content schema the pack was written for. |
+
 ## Reason
 
 Type. Explained in [Actions and buttons](/docs/reference/actions#reason).
 
-Words a player reads when something is refused: written in place
-(`'Closed.'`), or a line of the strings table by its key (`{ string:
-'shop/closed' }`), so a game rewords it once for every place it is used.
-Read it with `reasonOf`.
+The words a player reads when something is refused, written in place (`'Closed.'`) or as a strings key
+(`{ string: 'shop/closed' }`). Read one with `reasonOf`.
+
+A key lets a game reword a reason once for every place that uses it.
 
 ```ts shape
 import type { Reason } from '@ifloom/engine'
@@ -4045,8 +4084,8 @@ type Reason = string | { string: string }
 
 Function. Explained in [Strings](/docs/reference/strings#reasonof).
 
-A refusal's words: a `Reason` written in place as it is, or one by key
-(`{ string: 'shop/closed' }`) from the game's strings, through `stringOf`.
+Returns a refusal's words for a `Reason`. A string is returned as written, and `{ string: 'shop/closed' }` is
+read with `stringOf`.
 
 ```ts shape
 import { reasonOf, type Game } from '@ifloom/engine'
@@ -4058,6 +4097,9 @@ Uses: [`Game`](#game).
 ## RenderedChoice
 
 Type. Explained in [The view](/docs/reference/view#renderedchoice).
+
+A choice or action ready to render as a button, in `view.scene.choices`, `view.actions` or a plugin's view. A UI sends
+its `command` when the player presses it.
 
 ```ts shape
 import type { RenderedChoice } from '@ifloom/engine'
@@ -4076,26 +4118,26 @@ type RenderedChoice = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` |  |  |  |
-| `price` | [`Price`](#price) | yes |  | What pressing it costs, worked out for this state, with its words in `text`. Left out when it's free. |
-| `disabled` | `string` | yes |  | Why it can't be pressed now, as the player reads it. Left out when it can. |
-| `tags` | `string[]` | yes |  | The choice's or button's tags, for a UI to style or filter it by. |
-| `irreversible` | `string` | yes |  | A warning that it can't be undone, for the UI to show on it. |
-| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. |
-| `warning` | `string` | yes |  | Pressable, but the game would rather you didn't, and says why: a plugin guard's soft refusal: running past dawn, say. The reducer refuses it all the same, so a UI shows the warning and offers something else. |
-| `command` | [`Command`](#command) |  |  | What to send when the player presses it: `runner.apply(choice.command)`. |
+| `id` | `string` |  |  | The choice's or action's id. |
+| `label` | `string` |  |  | The button's label, with tokens filled. |
+| `price` | [`Price`](#price) | yes |  | The button's price for this state, with its words in `text`. Left out when it's free. |
+| `disabled` | `string` | yes |  | The reason the player can't press the button now, in the player's words. Left out when they can. |
+| `tags` | `string[]` | yes |  | The choice's or action's tags, for a UI to style or filter it by. |
+| `irreversible` | `string` | yes |  | The warning that the choice or action can't be undone, for a UI to show on its button. |
+| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The choice's or action's `ui` hints, unchanged from content. Left out with none, and typed by `ChoiceUi`. |
+| `warning` | `string` | yes |  | The reason a plugin's guard gives for refusing the button softly, such as running past dawn. The player can press it, but the reducer refuses it, so a UI shows the warning instead. |
+| `command` | [`Command`](#command) |  |  | The command a UI sends when the player presses the button, as `runner.apply(choice.command)`. |
 
 ## replay
 
 Function. Explained in [The runner](/docs/reference/runner#replay).
 
-Play a command log back against a game. Its start comes in through
-`loadState`, and its commands are carried forward from the versions the
-log records, by the engine's command steps and each plugin's
-`commandMigrations`, so a log from an older engine, plugin or game still
-plays; the reason comes back when it can't. Commands that are refused are
-skipped, as they were then.
+Returns the state a `CommandLog` ends in, played back against a game. A log that can't be read, such as one from
+a newer engine, gives the reason.
+
+The log's start comes in through `loadState`. The engine's command steps and each plugin's `commandMigrations` carry
+its commands forward from the versions the log records, so a log from an older engine, plugin or game still plays.
+A command that is refused is skipped, as it was when it was played.
 
 ```ts shape
 import { replay, type Game } from '@ifloom/engine'
@@ -4108,7 +4150,7 @@ Uses: [`Game`](#game), [`CommandLog`](#commandlog), [`Result`](#result), [`GameS
 
 Function. Explained in [Entities](/docs/reference/entities#protagonist-and-resolveholder).
 
-A holder as content writes it, made real: `'you'` is the protagonist, or the player.
+Returns the holder a holder id stands for now, so `'you'` becomes the protagonist or the player. Any other id is returned unchanged.
 
 ```ts shape
 import { resolveHolder } from '@ifloom/engine'
@@ -4121,12 +4163,11 @@ Uses: [`GameState`](#gamestate).
 
 Type. Explained in [The runner](/docs/reference/runner#result).
 
-The answer to anything that can fail in a way the caller should expect: a
-save that won't read, a mod for another game, a command the game refuses.
-`ok` says which it is. On success `value` holds the answer; on failure
-`reason` says why, in words a player can read, and `cause` holds the error
-behind it when one was thrown, such as a save driver's, for a log. Nothing
-that returns a `Result` throws for these failures.
+The answer of a call that can fail in a way its caller should expect, such as a save that won't read. A function
+that returns a `Result` never throws for those failures.
+
+`ok` tells success from failure. On success `value` holds the answer. On failure `reason` says why, in words a
+player can read, and `cause` holds the error behind it when one was thrown (a save driver's, say), for a log.
 
 ```ts shape
 import type { Result } from '@ifloom/engine'
@@ -4137,7 +4178,7 @@ type Result<T> = { ok: true; value: T; reason?: never; cause?: never } | { ok: f
 
 Type. Explained in [Dice rolls](/docs/reference/rolls#roll).
 
-One roll, as it was made: the faces each die showed, what was added, the total, and the outcome against a target.
+A roll the `roll` effect made, with the face each die showed, the total and the outcome against a target. `view.rolls` lists the last command's.
 
 ```ts shape
 import type { Roll } from '@ifloom/engine'
@@ -4155,20 +4196,20 @@ type Roll = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `key` | `string` |  |  | The kv key the total was stored under. |
-| `dice` | `string` |  |  | The dice thrown, as notation without what is added: `'2d6'`. |
+| `key` | `string` |  |  | The kv key the roll stored its total under. |
+| `dice` | `string` |  |  | The dice thrown, in notation without the added number, such as `'2d6'`. |
 | `faces` | `number[]` |  |  | The face each die showed, in order. |
-| `plus` | `number` |  |  | Everything added to the faces: the notation's own `+1` and the effect's `plus`. 0 when nothing was. |
-| `total` | `number` |  |  | The faces added up, plus `plus`. |
-| `against` | `number` | yes |  | The target the total had to reach, when the effect gave one. |
-| `passed` | `boolean` | yes |  | Whether the total reached `against`; there only with a target. |
-| `critical` | `'max' \| 'min'` | yes |  | `'max'` when every die showed its highest face, `'min'` when every die showed 1. |
+| `plus` | `number` |  |  | The number added to the faces, the notation's own `+1` and the effect's `plus` together. 0 when nothing was added. |
+| `total` | `number` |  |  | The roll's total, the faces added up plus `plus`. |
+| `against` | `number` | yes |  | The target the total had to reach. Left out when the effect gave none. |
+| `passed` | `boolean` | yes |  | The roll's outcome, true when the total reached `against`. Left out when there's no target. |
+| `critical` | `'max' \| 'min'` | yes |  | The roll's critical mark, `'max'` when every die showed its highest face and `'min'` when every die showed 1. |
 
 ## RollsState
 
 Type. Explained in [Dice rolls](/docs/reference/rolls#rollsstate).
 
-The rolls a save has made: how many in all, the last command's, and the latest under each key.
+The rolls a save keeps, with the count of rolls made, the last command's rolls and the latest roll under each key.
 
 ```ts shape
 import type { RollsState } from '@ifloom/engine'
@@ -4181,18 +4222,18 @@ type RollsState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `made` | `number` |  |  | How many rolls this save has made: part of each new roll's seed. |
+| `made` | `number` |  |  | The number of rolls this save has made. It's part of each new roll's seed. |
 | `last` | [`Roll[]`](#roll) |  |  | The rolls the last command made, in order. |
-| `latest` | `Record<string,` [`Roll`](#roll)`>` |  |  | The latest roll under each key, for the `roll` condition. |
+| `latest` | `Record<string,` [`Roll`](#roll)`>` |  |  | The latest roll under each key, which the `roll` condition reads. |
 
 ## Runner
 
 Type. Explained in [The runner](/docs/reference/runner#runner).
 
-The one object a UI drives, as `createRunner` (or `browserRunner` from `@ifloom/browser`) gives it.
-Anything that can fail in a way a UI should expect (a refused command, an
-empty slot, a setting with no profile to keep it) answers with a `Result`
-and never throws.
+The object a UI drives a game through, returned by `createRunner` or by `browserRunner` from `@ifloom/browser`. A call
+that can fail in a way a UI should expect answers with a `Result` and never throws.
+
+A refused command, an empty slot and a setting with no profile to keep it are such failures.
 
 ```ts shape
 import type { Runner, Game } from '@ifloom/engine'
@@ -4223,29 +4264,31 @@ type Runner = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `game` | [`Game`](#game) |  |  | The game this runner plays. |
-| `state` | [`GameState`](#gamestate) |  |  | The current state. |
-| `view` | `() =>` [`View`](#view) |  |  | What a UI draws for the current state. Built once per state: asked again for the same state, it hands back the same object, so a UI, the audio player and the backlog can all read it without building it again. Each plugin's view is shown its own profile namespace. When one of those changes, the view becomes a new object with that plugin's view built again, and listeners are told, though the state is the same. |
-| `apply` | `(ref:` [`CommandRef`](#commandref)`) =>` [`Result`](#result)`<`[`GameState`](#gamestate)`>` |  |  | Run a command: the new state, or why it was refused (the state is then left as it was). A `tick` is logged like any command, but undo steps over it, it adds nothing to the backlog, and it autosaves only when it changes the scene or the turn (for those policies). A `newGame`, sent on its own or by a choice, starts a new game as `newGame()` does, with the profile's play settings as last read. |
-| `undo` | `() => boolean` |  |  | Step back one command. False when there is nothing to undo. |
-| `redo` | `() => boolean` |  |  | Step forward again after an undo. False when there is nothing to redo. |
-| `log` | `() =>` [`CommandLog`](#commandlog) |  |  | The start state and every command since, for `replay`. |
-| `played` | `() => number` |  |  | Time played, in milliseconds, counting from any save loaded. |
-| `saves` | [`Saves`](#saves) `\| undefined` |  |  | The saves this runner writes to, for a menu that reads, exports or imports them. Undefined without `saves`. What it writes and removes shows in the snapshot's `saves`. Like the store, it never rejects: when the driver fails, each call answers why and tells `onSaveError`. |
-| `offers` | `{ undo: boolean; backlog: boolean }` |  |  | Whether the game turned on undo, and the backlog: what a menu should offer. |
-| `save` | `(slot: string, name?: string \| undefined) => Promise<`[`Result`](#result)`<`[`SaveMeta`](#savemeta)`>>` |  |  | Save to a slot now: what the save says about itself, or why it wasn't written (no `saves`, the game's `saveable` refuses it now, or the driver failed). `view().saving` says beforehand whether it would be refused. |
-| `restore` | `(loaded:` [`LoadedSave`](#loadedsave)`) => void` |  |  | Put a save in play that did not come from a slot, one the player imported from a file (`saves.importText`), as `load` would. |
-| `load` | `(slot: string) => Promise<`[`Result`](#result)`<`[`LoadedSave`](#loadedsave)`>>` |  |  | Load a slot: the state, a fresh history, backlog and log from it, and the time played it recorded. A failure says why: no `saves`, an empty slot, a save this game can't read, or the driver failed (told to `onSaveError` too). |
-| `settled` | `() => Promise<void>` |  |  | Settles when every autosave and profile write so far has been written, and the profile first read for the settings and the plugins' views. |
-| `profile` | [`Profile`](#profile) `\| undefined` |  |  | The profile this runner writes settings and `finished` to, for a UI's own namespaces. Undefined without `profile`. It never rejects: a read the driver fails answers undefined, and a write it fails is dropped, each told to `onSaveError`. |
-| `setSetting` | `(id: string, to:` [`KvValue`](#kvvalue)`) =>` [`Result`](#result)`<`[`KvValue`](#kvvalue)`>` |  |  | Change a setting of either kind, checked against its declaration. A `play` setting is sent as the `setting` command, so it changes the game in play, and the profile keeps it for the next new game. A `ui` setting is written to the profile only, and needs one. Listeners are told. The value set, or why it was refused. |
-| `newGame` | `(start?:` [`StartOptions`](#startoptions) `\| undefined) => Promise<`[`GameState`](#gamestate)`>` |  |  | Start a new game in place: fresh history, backlog and log, no time played. Play settings not given are the player's: the profile's, or without one the game in play's. The seed is random unless given. For New Game+, pass `carry: runner.state`. |
-| `snapshot` | `() =>` [`RunnerSnapshot`](#runnersnapshot) |  |  | Everything a UI draws, in one value: see `RunnerSnapshot`. The same object comes back until any part of it changes. |
-| `subscribe` | `(listener: (snapshot:` [`RunnerSnapshot`](#runnersnapshot)`) => void) => () => void` |  |  | Hear about every new snapshot: a change of state, of a setting, of what the view shows of the profile, of the saves, or of what a helper reports. Each listener is handed the new snapshot. Returns the way to stop. |
-| `setHelper` | `<K extends string>(id: K, value: (K extends 'unlocks' ?` [`HelperRegistry`](#helperregistry)`[K] : unknown) \|…` |  |  | Report what a helper started beside the runner is doing, under its id, in the snapshot's `helpers`: `startUnlocks` reports whether a code is being checked. Undefined takes it out. Listeners are told when it changes. |
+| `state` | [`GameState`](#gamestate) |  |  | The state in play. |
+| `view` | `() =>` [`View`](#view) |  |  | Returns the view of the state in play. It returns the same object for the same state, so a UI, the audio player and the backlog can all read it. Each plugin's view reads that plugin's profile namespace. When a namespace changes, the runner builds that plugin's view again into a new view object and tells listeners, though the state is the same. |
+| `apply` | `(ref:` [`CommandRef`](#commandref)`) =>` [`Result`](#result)`<`[`GameState`](#gamestate)`>` |  |  | Runs a command and returns the next state. A refused command leaves the state as it was and returns the reason. The runner logs a `tick` like any command, but undo steps over it, it adds nothing to the backlog, and it autosaves only when it changes the scene or the turn. A `newGame`, sent on its own or by a choice, starts a new game as `newGame()` does, with the profile's play settings as last read. |
+| `undo` | `() => boolean` |  |  | Steps back one command. Returns false when there is nothing to undo. |
+| `redo` | `() => boolean` |  |  | Steps forward one command after an undo. Returns false when there is nothing to redo. |
+| `log` | `() =>` [`CommandLog`](#commandlog) |  |  | Returns the `CommandLog` of this game, its start state and every command since, for `replay`. |
+| `played` | `() => number` |  |  | Returns the time played, in milliseconds. It counts on from the time a loaded save recorded. |
+| `saves` | [`Saves`](#saves) `\| undefined` |  |  | The save store this runner writes to, for a menu that reads, exports or imports saves. It is undefined without `saves`. Its writes and removals show in the snapshot's `saves`. Like the store, it never rejects. When the driver fails, each call answers why and tells `onSaveError`. |
+| `offers` | `{ undo: boolean; backlog: boolean }` |  |  | The features a menu should offer, `undo` true when history is on and `backlog` true when the backlog is on. |
+| `save` | `(slot: string, name?: string \| undefined) => Promise<`[`Result`](#result)`<`[`SaveMeta`](#savemeta)`>>` |  |  | Saves the state in play to a slot and returns the save's `SaveMeta`. It fails with the reason when there are no `saves`, the game's `saveable` refuses saving now, or the driver fails. `view().saving` says beforehand whether a save would be refused. |
+| `restore` | `(loaded:` [`LoadedSave`](#loadedsave)`) => void` |  |  | Puts a save in play that did not come from a slot, such as one the player imported from a file (`saves.importText`). It starts a fresh history, backlog and log, as `load` does. |
+| `load` | `(slot: string) => Promise<`[`Result`](#result)`<`[`LoadedSave`](#loadedsave)`>>` |  |  | Loads a slot into play and returns the save. The runner starts a fresh history, backlog and log from it, and the time played it recorded. It fails with the reason when there are no `saves`, the slot is empty, this game can't read the save, or the driver fails. A driver's failure is told to `onSaveError` too. |
+| `settled` | `() => Promise<void>` |  |  | Returns a promise that settles once every autosave and profile write so far is written. It also waits for the first listing of the saves and the first read of the profile. |
+| `profile` | [`Profile`](#profile) `\| undefined` |  |  | The profile this runner writes settings and `finished` to, which a UI can use for namespaces of its own. It is undefined without `profile`. It never rejects. A read the driver fails answers undefined, and a write it fails is dropped, each told to `onSaveError`. |
+| `setSetting` | `(id: string, to:` [`KvValue`](#kvvalue)`) =>` [`Result`](#result)`<`[`KvValue`](#kvvalue)`>` |  |  | Changes a setting of either kind and returns the value set. A value its declaration refuses, or a `ui` setting without a profile, fails with the reason. The runner sends a `play` setting as the `setting` command, so it changes the game in play, and the profile keeps it for the next new game. It writes a `ui` setting to the profile only. Listeners are told either way. |
+| `newGame` | `(start?:` [`StartOptions`](#startoptions) `\| undefined) => Promise<`[`GameState`](#gamestate)`>` |  |  | Starts a new game in place and returns its first state. The history, backlog, log and time played start fresh. Play settings not given are the player's, from the profile, or from the game in play without one. The seed is random unless given. For New Game+, pass `carry: runner.state`. |
+| `snapshot` | `() =>` [`RunnerSnapshot`](#runnersnapshot) |  |  | Returns the `RunnerSnapshot`, one value with all a UI renders. The same object comes back until any part of it changes. |
+| `subscribe` | `(listener: (snapshot:` [`RunnerSnapshot`](#runnersnapshot)`) => void) => () => void` |  |  | Calls a listener with each new snapshot and returns a function that stops it. A new snapshot comes with a change of state, of a setting, of the profile a view reads, of the saves, or of a helper's report. |
+| `setHelper` | `<K extends string>(id: K, value: (K extends 'unlocks' ?` [`HelperRegistry`](#helperregistry)`[K] : unknown) \|…` |  |  | Sets a helper's report under its id in the snapshot's `helpers`, and tells listeners when it changes. Undefined removes the report. `startUnlocks` reports this way whether it is checking a code. |
 
 ## RunnerOptions
 
 Type. Explained in [The runner](/docs/reference/runner#runneroptions).
+
+Settings for `createRunner`. Undo, the backlog, saving, autosave and the profile are each off when left out.
 
 ```ts shape
 import type { RunnerOptions } from '@ifloom/engine'
@@ -4262,25 +4305,23 @@ type RunnerOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `saves` | [`Saves`](#saves) | yes |  | Where `save`, `load` and autosave write. Needed for any of them. |
-| `history` | [`HistoryOptions`](#historyoptions) `\| boolean` | yes |  | Keep states for undo and redo: `true` for 50 steps back, or a `HistoryOptions`. Off if left out. |
-| `backlog` | [`BacklogOptions`](#backlogoptions) `\| boolean` | yes |  | Keep what was shown, scene by scene, for a backlog screen: `true` for 200 entries, or a `BacklogOptions`. Off if left out. |
-| `autosave` | [`AutosaveOptions`](#autosaveoptions) | yes |  | Save to a slot of its own (`'auto'`) after every command, or when the scene or the turn changes. Needs `saves`. Off if left out. |
-| `now` | `() => number` | yes |  | The clock for time played. `Date.now` if left out; tests pass their own. |
-| `onSaveError` | `(error: unknown) => void` | yes |  | Told the error when the driver fails: an autosave, `save`, `load`, any call through `runner.saves` or `runner.profile`, the first listing of the saves, or a profile write. Later writes still run; without this, a failure is dropped. |
-| `profile` | [`Profile`](#profile) | yes |  | What outlives a save: settings, `finished`, plugins' namespaces. Without one, nothing is written there, and a `ui` setting can't be changed. |
+| `saves` | [`Saves`](#saves) | yes |  | The save store that `save`, `load` and autosave write to. Without it, `save` and `load` refuse and autosave does nothing. |
+| `history` | [`HistoryOptions`](#historyoptions) `\| boolean` | yes |  | The undo and redo settings, `true` for 50 steps back or a `HistoryOptions`. Undo is off if left out. |
+| `backlog` | [`BacklogOptions`](#backlogoptions) `\| boolean` | yes |  | The backlog settings, `true` for 200 entries or a `BacklogOptions`. The backlog is off if left out. |
+| `autosave` | [`AutosaveOptions`](#autosaveoptions) | yes |  | The autosave policy, which writes a slot of its own (`'auto'`) as the game goes on. It needs `saves`, and autosave is off if left out. |
+| `now` | `() => number` | yes |  | The clock that times play, in milliseconds. `Date.now` if left out, and tests pass their own. |
+| `onSaveError` | `(error: unknown) => void` | yes |  | The function the runner tells each error a save driver or the profile throws. Without it, the runner drops the error. It hears about an autosave, `save`, `load`, any call through `runner.saves` or `runner.profile`, the first listing of the saves and a profile write. The writes queued after a failed one still run. |
+| `profile` | [`Profile`](#profile) | yes |  | The profile that keeps what outlives a save, such as settings, `finished` and plugins' namespaces. Without one, the runner writes nothing there and refuses to change a `ui` setting. |
 
 ## RunnerSnapshot
 
 Type. Explained in [The runner](/docs/reference/runner#runnersnapshot).
 
-Everything a UI draws from the runner, in one value: the view, the
-settings, the backlog, whether undo and redo would do anything, the saves
-and what the helpers report. `runner.snapshot()` gives it, and
-`runner.subscribe` hands each new one to its listeners. It is a new object
-whenever any part of it changes, and the same object until then, so a UI
-that keeps it whole (Vue's `shallowRef`, React's `useSyncExternalStore`, a
-Svelte store) draws again exactly when something changed.
+One value with all a UI renders from the runner, including the view, the settings, the backlog and the saves. It's a
+new object whenever a part changes, and the same object until then.
+
+`runner.snapshot()` returns it, and `runner.subscribe` passes each new one to its listeners. A UI that keeps it whole
+(Vue's `shallowRef`, React's `useSyncExternalStore`, a Svelte store) renders again exactly when something changed.
 
 ```ts shape
 import type { RunnerSnapshot } from '@ifloom/engine'
@@ -4300,22 +4341,22 @@ type RunnerSnapshot = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `state` | [`GameState`](#gamestate) |  |  | The state in play, as `runner.state`. |
-| `view` | [`View`](#view) |  |  | What a UI draws for that state, as `runner.view()`. |
-| `settings` | `Readonly<Record<string,` [`KvValue`](#kvvalue)`>>` |  |  | Every setting the game declares, by id, with its value now. A `play` setting's comes from the game in play; a `ui` setting's from the profile, or its default until the profile has been read (`settled`) or without one. Stored values that no longer fit are read as the default. |
-| `backlog` | `readonly` [`BacklogEntry[]`](#backlogentry) |  |  | What was shown, oldest first. Empty unless the backlog is on. |
-| `canUndo` | `boolean` |  |  | Whether `undo` would do anything. |
-| `canRedo` | `boolean` |  |  | Whether `redo` would do anything. |
-| `saves` | `readonly` [`SaveListing[]`](#savelisting) |  |  | Every save in the runner's `saves`, as `saves.list()` gives them: newest first, then any that can't be read. Read once when the runner starts (`settled` waits for it), then kept up to date as the runner saves and as `runner.saves` writes and removes. Empty without `saves`. |
-| `helpers` | [`HelpersIn`](#helpersin) |  |  | What the helpers started beside the runner report, by id, such as `unlocks`. See `setHelper`. |
-| `pressed` | [`RenderedChoice`](#renderedchoice) `\| null` |  |  | The choice or button that led to the screen on show, as it was offered: its `id`, its `command` and its `ui` hints as written, so a UI can play the transition a choice asks for. Set when a command the runner runs changes the screen (`view.scene.key`), from the choices, inline actions and buttons of the view it was sent from, and kept while the screen stays. Null when nothing pressed led here: a tick, a command sent by hand, an undo, a redo, a load or a new game. |
-| `fresh` | `boolean` |  |  | Whether the state on show came from a command the runner just ran, rather than an undo, a redo, a load or a new game. A UI animates what the player just did only while it's true, such as the dice of `view.rolls`. |
+| `state` | [`GameState`](#gamestate) |  |  | The state in play, the same as `runner.state`. |
+| `view` | [`View`](#view) |  |  | The view of the state in play, the same as `runner.view()`. |
+| `settings` | `Readonly<Record<string,` [`KvValue`](#kvvalue)`>>` |  |  | The value of each setting the game declares, by setting id. A stored value that no longer fits its setting reads as the default. A `play` setting's value comes from the game in play. A `ui` setting's value comes from the profile, or is its default without a profile or until the profile has been read (`settled`). |
+| `backlog` | `readonly` [`BacklogEntry[]`](#backlogentry) |  |  | The backlog's entries, oldest first. It is empty unless the backlog is on. |
+| `canUndo` | `boolean` |  |  | True when `undo` has a step to go back to. |
+| `canRedo` | `boolean` |  |  | True when `redo` has a step to go forward to. |
+| `saves` | `readonly` [`SaveListing[]`](#savelisting) |  |  | The saves in the runner's `saves`, newest first, then any that can't be read. It is empty without `saves`. The runner lists them once when it starts (`settled` waits for it). It keeps the list up to date as it saves and as `runner.saves` writes and removes. |
+| `helpers` | [`HelpersIn`](#helpersin) |  |  | The reports of the helpers started beside the runner, by helper id, such as `unlocks`. A helper sets its report with `setHelper`. |
+| `pressed` | [`RenderedChoice`](#renderedchoice) `\| null` |  |  | The choice or action that led to the screen on show, as it was offered. A UI reads its `ui` hints to play the transition it asks for. The runner sets it when a command it runs changes the screen (`view.scene.key`), from the choices, inline actions and actions of the view the command was sent from, and keeps it while the screen stays. It is null after a tick, a command no choice or action offered, an undo, a redo, a load or a new game. |
+| `fresh` | `boolean` |  |  | True when the state on show came from a command the runner just ran, and false after an undo, a redo, a load or a new game. A UI animates what the player just did, such as the dice of `view.rolls`, only while it's true. |
 
 ## RunningTimer
 
 Type. Explained in [Timers](/docs/reference/timers#runningtimer).
 
-A running timer, as the save keeps it: milliseconds left and its whole length.
+A running timer a save keeps, with the milliseconds left and its whole length. Its effects are read from content when it runs out.
 
 ```ts shape
 import type { RunningTimer } from '@ifloom/engine'
@@ -4327,17 +4368,18 @@ type RunningTimer = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `left` | `number` |  |  | Milliseconds left. At 0 it runs out on the next tick. |
-| `total` | `number` |  |  | The length it was started with, in milliseconds, which adding time can raise. |
+| `left` | `number` |  |  | The milliseconds the timer has left. At 0 it runs out on the next tick. |
+| `total` | `number` |  |  | The timer's whole length in milliseconds, the length it started with, raised when time added goes past it. |
 
 ## SAVE_VERSION
 
 Const. Explained in [Saves](/docs/reference/saves#save_version).
 
-The save format's version. Only a change to the shape of something saves
-already have bumps it, with a step in `STEPS` (intake.ts) that reshapes it.
-An added field doesn't: it declares a load default in `FIELDS` or in its
-feature's `state`, and older saves get that default when they load.
+The save format's version. Only a change to the shape of a field saves already have bumps it, with a step in
+`STEPS` that reshapes older saves.
+
+An added field doesn't bump it. The field declares a load default in `FIELDS` or in its feature's `state`, and an
+older save gets that default when it loads.
 
 ```ts shape
 import { SAVE_VERSION } from '@ifloom/engine'
@@ -4348,14 +4390,12 @@ const SAVE_VERSION: 24
 
 Type. Explained in [Saves](/docs/reference/saves#savedriver).
 
-Where saves are kept. The save store speaks to a driver and nothing else, so
-a game picks where its saves live (the browser's localStorage or IndexedDB
-from `@ifloom/browser`, memory for tests, or a driver of its own, such as a
-desktop wrapper's file system or a sync service the player signs into)
-without the rest of the engine knowing which.
+A store of text by key that the save store and the profile write to. Every driver is asynchronous, even over
+synchronous storage, so a game can swap one for another.
 
-Every driver is asynchronous, whether or not its storage is, so a game can
-swap one for another without changing a line that calls it.
+The save store talks to a driver and nothing else, so a game chooses where its saves are kept. `@ifloom/browser` has
+drivers for localStorage and IndexedDB, `memoryDriver` keeps them in memory, and a game can write its own, such as a
+desktop wrapper's file system or a sync service.
 
 ```ts shape
 import type { SaveDriver } from '@ifloom/engine'
@@ -4370,17 +4410,17 @@ type SaveDriver = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  | For diagnostics and the debug panel: "localStorage", "indexedDB"… |
-| `get` | `(key: string) => Promise<string \| null>` |  |  | The text stored under a key, or null if there's none. |
-| `set` | `(key: string, value: string) => Promise<void>` |  |  | Store text under a key, replacing what was there. |
-| `remove` | `(key: string) => Promise<void>` |  |  | Delete a key. Nothing happens if it isn't there. |
-| `keys` | `(prefix: string) => Promise<string[]>` |  |  | Every key that starts with this prefix. |
+| `name` | `string` |  |  | The driver's name, such as "localStorage" or "indexedDB", for diagnostics and the debug panel. |
+| `get` | `(key: string) => Promise<string \| null>` |  |  | Returns the text stored under a key, or null if there's none. |
+| `set` | `(key: string, value: string) => Promise<void>` |  |  | Stores text under a key, replacing what was there. |
+| `remove` | `(key: string) => Promise<void>` |  |  | Deletes a key, and does nothing if it isn't there. |
+| `keys` | `(prefix: string) => Promise<string[]>` |  |  | Returns every key that starts with a prefix. |
 
 ## SaveExtra
 
 Type. Explained in [Saves](/docs/reference/saves#saveextra).
 
-What a save's write is given besides the state.
+Settings for `Saves.write` besides the state.
 
 ```ts shape
 import type { SaveExtra } from '@ifloom/engine'
@@ -4393,17 +4433,16 @@ type SaveExtra = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` | yes |  | The player's name for it. One made from where and when if left out. |
-| `played` | `number` | yes |  | Time played, in milliseconds. 0 if left out. |
-| `savedAt` | `number` | yes |  | When it was written, epoch milliseconds. Now if left out. |
+| `name` | `string` | yes |  | The player's name for the save. The plugins' `when` words, else the turn, if left out. |
+| `played` | `number` | yes |  | The time played, in milliseconds. 0 if left out. |
+| `savedAt` | `number` | yes |  | The time the save was written, in epoch milliseconds. Now if left out. |
 
 ## SaveFile
 
 Type. Explained in [Saves](/docs/reference/saves#savefile).
 
-A save as it is written: the state, and what it says about itself. `ifloom`
-is the format of this envelope, 1, apart from the state's own `version`
-(`SAVE_VERSION`), which `loadState` carries forward.
+A save as a driver stores it, the state with its `SaveMeta`. `ifloom` is this envelope's format, 1, apart from
+the state's own `version` (`SAVE_VERSION`), which `loadState` carries forward.
 
 ```ts shape
 import type { SaveFile } from '@ifloom/engine'
@@ -4414,11 +4453,17 @@ type SaveFile = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `ifloom` | `1` |  |  | The envelope's format, 1. |
+| `meta` | [`SaveMeta`](#savemeta) |  |  | The save's `SaveMeta`. |
+| `state` | [`GameState`](#gamestate) |  |  | The saved state, in the shape of the version that wrote it. |
+
 ## SaveListing
 
 Type. Explained in [Saves](/docs/reference/saves#savelisting).
 
-One entry of a game's saves, as `list()` gives them: a save's meta, or a save that can't be read.
+One entry of a game's saves from `list()`, a `SaveMeta` or a `BrokenSave`. Tell them apart with `'broken' in entry`.
 
 ```ts shape
 import type { SaveListing } from '@ifloom/engine'
@@ -4431,7 +4476,7 @@ Uses: [`SaveMeta`](#savemeta), [`BrokenSave`](#brokensave).
 
 Type. Explained in [Saves](/docs/reference/saves#savemeta).
 
-What a save says about itself, for a load screen.
+The facts a save records about itself, for a load page. `list()` and `write` return it.
 
 ```ts shape
 import type { SaveMeta } from '@ifloom/engine'
@@ -4452,25 +4497,24 @@ type SaveMeta = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `string` |  |  | The game it belongs to; another game's save is refused on import. |
-| `slot` | `string` |  |  | The slot it's in: `'1'`, `'auto'`, or the game's own name for one. |
-| `name` | `string` |  |  | The player's name for it, or one made from where and when. |
-| `savedAt` | `number` |  |  | When it was written, epoch milliseconds. |
-| `played` | `number` |  |  | Time played, in milliseconds, as the runner counted it. |
-| `turn` | `number` |  |  | How many turns had passed. |
-| `when` | `string \| null` |  |  | When and where the game was, in plugins' words ("Day 3 · Wednesday morning · The café"), or null if none says. |
-| `playerName` | `string \| null` |  |  | What the first `saveName` that answers gave for the state (the game's `rules.saveName`, then each plugin's), such as the name the player typed, or null. |
-| `packs` | `string[]` |  |  | The ids of the packs the game was loaded with; a missing mod is reported on load. |
-| `plugins` | `Record<string, number>` |  |  | The plugins the game was built with, and the version of each one's state. |
-| `gameVersion` | `number` |  |  | The game's own version (`game.version`) the save was made with; 1 for a game that declares none. |
+| `game` | `string` |  |  | The id of the game the save belongs to. Reading or importing another game's save is refused. |
+| `slot` | `string` |  |  | The save's slot, such as `'1'`, `'auto'` or a name of the game's own. |
+| `name` | `string` |  |  | The save's name, the player's, else the plugins' `when` words, else the turn. |
+| `savedAt` | `number` |  |  | The time the save was written, in epoch milliseconds. |
+| `played` | `number` |  |  | The time played when the save was written, in milliseconds, as the runner counted it. |
+| `turn` | `number` |  |  | The number of turns that had passed when the save was written. |
+| `when` | `string \| null` |  |  | The time and place in the game in the plugins' words, such as "Day 3 · Wednesday morning · The café", or null when no plugin gives one. |
+| `playerName` | `string \| null` |  |  | The player's name for the save's game, such as the name the player typed, or null. It comes from the first `saveName` that answers, the game's `rules.saveName` first, then each plugin's. |
+| `packs` | `string[]` |  |  | The ids of the packs the game was loaded with. A mod among them that is missing on load is reported in `missingPacks`. |
+| `plugins` | `Record<string, number>` |  |  | The version of each plugin the game was built with, by plugin id. |
+| `gameVersion` | `number` |  |  | The game's own version (`game.version`) the save was made with. 1 for a game that declares none. |
 
 ## Saves
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#saves).
 
-One game's saves, as `saves` gives them. Nothing here rejects: when the
-driver fails, each answers a failure in words a player can read, with the
-driver's error as its `cause`.
+One game's save store, returned by `saves`. No call rejects, and a driver's failure answers with a reason a player can
+read and the driver's error as its `cause`.
 
 ```ts shape
 import type { Saves } from '@ifloom/engine'
@@ -4487,25 +4531,24 @@ type Saves = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `driver` | [`SaveDriver`](#savedriver) |  |  | Where the saves are kept. |
-| `write` | `(slot: string, state:` [`GameState`](#gamestate)`, extra?:` [`SaveExtra`](#saveextra) `\| undefined) => Promise<`[`Result`](#result)`<…` |  |  | Write a state to a slot: what the save says about itself, or `notSaved` if the driver fails. |
-| `read` | `(slot: string) => Promise<`[`Result`](#result)`<`[`LoadedSave`](#loadedsave) `\| null>>` |  |  | A slot read back, carried forward and checked against this game. The value is null when the slot is empty; a failure says why the save can't be read, or is `notLoaded` if the driver fails. |
-| `list` | `() => Promise<`[`Result`](#result)`<`[`SaveListing[]`](#savelisting)`>>` |  |  | Every save this game has, newest first, then any that can't be read, as `{ slot, broken }` with the reason, by slot. Tell them apart with `'broken' in entry`; a broken one can still be removed. `notListed` if the driver fails. |
-| `remove` | `(slot: string) => Promise<`[`Result`](#result)`<void>>` |  |  | Delete a slot. Nothing happens if it is empty. `notRemoved` if the driver fails. |
-| `exportSlot` | `(slot: string) => Promise<`[`Result`](#result)`<string \| null>>` |  |  | A save as text a player can keep as a file, or null if the slot is empty. `notExported` if the driver fails. |
-| `importText` | `(text: string) =>` [`Result`](#result)`<`[`LoadedSave`](#loadedsave)`>` |  |  | Text from a file a player picked, checked against this game: the save, or why it was refused. |
+| `driver` | [`SaveDriver`](#savedriver) |  |  | The driver that keeps the saves. |
+| `write` | `(slot: string, state:` [`GameState`](#gamestate)`, extra?:` [`SaveExtra`](#saveextra) `\| undefined) => Promise<`[`Result`](#result)`<…` |  |  | Writes a state to a slot and returns the save's `SaveMeta`. It fails with the `notSaved` string if the driver fails. |
+| `read` | `(slot: string) => Promise<`[`Result`](#result)`<`[`LoadedSave`](#loadedsave) `\| null>>` |  |  | Returns the save in a slot, carried forward and checked against this game, or null when the slot is empty. A failure gives the reason the save can't be read, or the `notLoaded` string if the driver fails. |
+| `list` | `() => Promise<`[`Result`](#result)`<`[`SaveListing[]`](#savelisting)`>>` |  |  | Returns the game's saves, newest first, then any that can't be read as `BrokenSave`s, by slot. It fails with the `notListed` string if the driver fails. Tell the two apart with `'broken' in entry`. A broken save can still be removed. |
+| `remove` | `(slot: string) => Promise<`[`Result`](#result)`<void>>` |  |  | Deletes the save in a slot, and does nothing if the slot is empty. It fails with the `notRemoved` string if the driver fails. |
+| `exportSlot` | `(slot: string) => Promise<`[`Result`](#result)`<string \| null>>` |  |  | Returns a slot's save as text a player can keep as a file, or null if the slot is empty. It fails with the `notExported` string if the driver fails. |
+| `importText` | `(text: string) =>` [`Result`](#result)`<`[`LoadedSave`](#loadedsave)`>` |  |  | Returns the save in text from a file the player chose, checked against this game. A text that isn't this game's save fails with the reason. |
 
 ## saves
 
 Function. Explained in [Saves](/docs/reference/saves#saves).
 
-One game's saves, kept wherever its driver keeps them.
+Returns the `Saves` store of a game, kept by a driver. The game chooses its slots' names, such as `'auto'`,
+`'quick'` or `'1'`.
 
-Keys carry the game's id: opened from disk, every game shares one storage
-origin in Chromium, and itch.io serves many games from shared domains. The
-format's version lives inside the save (`loadState`), never in the key, so a
-new version never orphans an old save. Slots are names — `'auto'`,
-`'quick'`, `'1'` — chosen by the game.
+Each key starts with the game's id, because every game opened from disk shares one storage origin in Chromium, and
+itch.io serves many games from shared domains. The format's version is inside the save (`loadState`), never in the
+key, so a new version never orphans an old save.
 
 ```ts shape
 import { saves, type Game } from '@ifloom/engine'
@@ -4518,7 +4561,7 @@ Uses: [`Game`](#game), [`SaveDriver`](#savedriver), [`Saves`](#saves).
 
 Type. Explained in [The view](/docs/reference/view#savingview).
 
-Whether the player can save now, and why not: what `view.saving` holds.
+The player's leave to save as the player sees it, in `view.saving`. A UI greys out or hides its Save button from it.
 
 ```ts shape
 import type { SavingView } from '@ifloom/engine'
@@ -4531,18 +4574,19 @@ type SavingView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `allowed` | `boolean` |  |  | False while one of `game.saveable`'s entries holds. |
-| `reason` | `string \| null` |  |  | The first entry's `reason` that holds, or null when saving is allowed. |
-| `visible` | `boolean` |  |  | False while that entry has `hide`: leave Save off the screen rather than greyed out. |
+| `allowed` | `boolean` |  |  | The leave to save, false while one of the game's `saveable` entries holds. |
+| `reason` | `string \| null` |  |  | The reason of the first `saveable` entry that holds. Null when saving is allowed. |
+| `visible` | `boolean` |  |  | The Save button's visibility, false while the entry that holds has `hide`. A UI then leaves Save off the screen rather than greying it out. |
 
 ## say
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-A spoken line, under who says it, by id as `@id: "…"` in prose names them:
-an entity, by reference or by bare id as a scene's `speaker` is (`'ava'` is
-`character:ava`), `'you'` for whoever the player is playing, or `'player'`.
-Its beat is a `say` with that `speaker` and their name.
+Returns a `{ say }` block, a spoken line under the id of who says it. Its beat is a `say` beat with that speaker and
+their name.
+
+`who` names the speaker as `@id: "…"` does in prose, an entity by reference or bare id (`'ava'` is `character:ava`),
+`'you'` for whoever the player is playing, or `'player'`.
 
 ```ts shape
 import { say } from '@ifloom/engine'
@@ -4555,8 +4599,8 @@ Uses: [`BlockExtras`](#blockextras), [`Block`](#block).
 
 Type. Explained in [Prose and markup](/docs/reference/prose#scenebeat).
 
-One piece of a scene's body, as the UI draws it. Any beat can carry `ui`:
-the presentation hints of the block it starts, as content wrote them.
+One piece of a rendered body, in `view.scene.beats`, told apart by its `type`. Any beat can carry `ui`, the ui hints
+of the block it starts.
 
 ```ts shape
 import type { SceneBeat } from '@ifloom/engine'
@@ -4569,8 +4613,8 @@ Uses: [`InlineSpan`](#inlinespan), [`EntityRef`](#entityref), [`BeatSize`](#beat
 
 Type. Explained in [Scenes](/docs/reference/scenes#scenemedia).
 
-A picture or a video in a scene's body, as a `{ media }` block. Give a file
-as `src`, or ask a pool for one with `pool` and `tags`.
+A picture or a video in a scene's body, written as a `{ media }` block. Give a file as `src`, or have a pool draw
+one with `pool` and `tags`.
 
 ```ts shape
 import type { SceneMedia } from '@ifloom/engine'
@@ -4591,23 +4635,23 @@ type SceneMedia = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `src` | `string` | yes |  |  |
-| `pool` | `string` | yes |  | A pool in `game.media.pools` to pick the file from. |
-| `tags` | `string[]` | yes |  | The tags the pick should have, most important first. See `poolCandidates`. |
-| `alt` | `string` | yes |  |  |
-| `size` | `'inline' \| 'wide'` | yes |  | `'inline'` if left out. |
-| `at` | `'lead' \| 'end'` | yes |  | Where it sits. Left out, a `{ media }` block sits where it is in the body, in order with the prose. `lead` opens the scene, which is where an establishing still belongs; `end` follows the body. |
-| `video` | `boolean` | yes |  | Draw it as a video. A `.mp4` or `.webm` file is one anyway. |
-| `controls` | `boolean` | yes |  | Show the player's controls. It then waits to be started instead of playing by itself. |
-| `once` | `boolean` | yes |  | Play once instead of looping. |
-| `sound` | `boolean` | yes |  | Play with sound instead of muted. |
-| `poster` | `string` | yes |  | A still to show before it plays, as a path like any picture's. |
+| `src` | `string` | yes |  | The media's file, a path in the game's `art/` folder or a URL. |
+| `pool` | `string` | yes |  | The pool in `game.media.pools` that draws the file. |
+| `tags` | `string[]` | yes |  | The tags the pool's pick should have, most important first. See `poolCandidates`. |
+| `alt` | `string` | yes |  | The media's alternative text, for a screen reader. |
+| `size` | `'inline' \| 'wide'` | yes |  | The media's size, `'inline'` or `'wide'`. `'inline'` if left out. |
+| `at` | `'lead' \| 'end'` | yes |  | The media's position. `lead` opens the scene, as an establishing picture does, and `end` follows the body. A block with none sits where it is in the body, in order with the prose. |
+| `video` | `boolean` | yes |  | The video mark, which renders the file as a video. A `.mp4` or `.webm` file is a video without it. |
+| `controls` | `boolean` | yes |  | The controls flag, which shows the player's controls, so the video waits to be started instead of playing by itself. |
+| `once` | `boolean` | yes |  | The once flag, which plays the video once instead of looping. |
+| `sound` | `boolean` | yes |  | The sound flag, which plays the video with sound instead of muted. |
+| `poster` | `string` | yes |  | The still shown before the video plays, as a path like any picture's. |
 
 ## sceneOf
 
 Function. Explained in [The game](/docs/reference/game#sceneof).
 
-The scene with this id, as content declares it, or undefined.
+Returns the scene with this id from the game's content, or undefined when there is none.
 
 ```ts shape
 import { sceneOf, type Game } from '@ifloom/engine'
@@ -4620,7 +4664,7 @@ Uses: [`Game`](#game), [`DataScene`](#datascene).
 
 Type. Explained in [Panels](/docs/reference/panels#scenepanel).
 
-A panel a scene holds open for as long as it is on screen: its name, and what it is opened with.
+A panel a scene declares in its `panel`, held open for as long as the scene is open. `with` is empty if left out.
 
 ```ts shape
 import type { ScenePanel } from '@ifloom/engine'
@@ -4630,11 +4674,17 @@ type ScenePanel = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `panel` | `string` |  |  | The panel's name, which the UI renders it by. |
+| `with` | [`PluginArgs`](/docs/api/engine-plugin#pluginargs) | yes |  | The panel's arguments, such as `{ vendor: 'cafe' }`. Empty if left out. |
+
 ## SceneUi
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
 
-Hints on a scene, and on a room scene (a place's), for the UI that draws it. Empty here; a UI package augments it.
+The ui hints a scene or a room scene takes in its `ui`, for the UI that renders it. The engine declares none, and
+a UI package augments this interface with its own.
 
 ```ts shape
 import type { SceneUi } from '@ifloom/engine'
@@ -4650,7 +4700,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Const. Explained in [Content, packs and loading](/docs/reference/loader#schema).
 
-The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused.
+The content schema this engine reads. `PACK_STEPS` upgrade a pack of an older schema, and a newer one is refused.
 
 ```ts shape
 import { SCHEMA } from '@ifloom/engine'
@@ -4661,7 +4711,7 @@ const SCHEMA: 30
 
 Type. Explained in [The view](/docs/reference/view#screen-1).
 
-One state's screen. See `screen`.
+One state rendered once by `screen`, with what each choice would apply, the pool picks and the audio tracks.
 
 ```ts shape
 import type { Screen } from '@ifloom/engine'
@@ -4678,25 +4728,24 @@ type Screen = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `scene` | [`ScreenScene`](#screenscene) |  |  | The open scene as rendered, or the room when none is open. A minigame being played is drawn over either: see `view.minigame`. |
-| `choices` | [`ScreenChoice[]`](#screenchoice) |  |  | The open scene's visible choices, each with its effects, availability and price. Empty for the room, and while a minigame is played. |
-| `actions` | [`ScreenChoice[]`](#screenchoice) |  |  | The room's buttons while no scene is open and no lock stops everything: the `actions` providers' (the game's rules' first, then each plugin's), then the game's own `actions`. |
+| `scene` | [`ScreenScene`](#screenscene) |  |  | The open scene as rendered, or the room when none is open. While a minigame is played, the minigame's key, title and words replace theirs, without their `ui`. `view.minigame` holds the running minigame's state. |
+| `choices` | [`ScreenChoice[]`](#screenchoice) |  |  | The open scene's visible choices, each with its effects, availability and price. It is empty for the room and while a minigame is played. |
+| `actions` | [`ScreenChoice[]`](#screenchoice) |  |  | The room's actions while no scene is open and no lock stops everything. The `actions` providers' come first (the game's rules', then each plugin's), then the game's own `actions`. |
 | `picture` | [`PictureView`](#pictureview) `\| null` |  |  | The open scene's layered picture and its hotspots, or null. |
-| `plugins` | `Record<string, unknown>` |  |  | Every plugin's view, by plugin id. |
+| `plugins` | `Record<string, unknown>` |  |  | The plugins' views, by plugin id. |
 | `picks` | `Record<string, string>` |  |  | The pool picks this screen made that the save doesn't hold yet, by pick key. The reducer records them. |
-| `audio` | [`AudioView`](#audioview) `& { tracks: Record<string, string \| null> }` |  |  | What should be playing, as `view.audio` has it, and `tracks`: the track each background channel resolved to (null for silence), which the reducer records as started. |
+| `audio` | [`AudioView`](#audioview) `& { tracks: Record<string, string \| null> }` |  |  | The audio that should be playing, as in `view.audio`, with `tracks` added. `tracks` gives the track each background channel resolved to (null for silence), and the reducer records them as started. |
 
 ## screen
 
 Function. Explained in [The view](/docs/reference/view#screen).
 
-One state, drawn once: the open scene (or the room), its choices with their
-effects, availability and price, the room's buttons, the picture, the plugins'
-views, and the pool picks and audio they imply. The open scene is rendered
-once, and every choice's availability and effects come from that one render.
+Returns the `Screen` for a state, the open scene or the room rendered once. Use it when you need what `view`
+leaves out, such as each choice's effects.
 
-`view` formats a screen for a UI. Use `screen` when you need what `view`
-leaves out: what each choice would apply, or the picks and tracks.
+The screen holds the choices, actions, picture, plugins' views, pool picks and audio of that one render.
+
+Every choice's availability and effects come from that one render of the scene. `view` formats a screen for a UI.
 
 ```ts shape
 import { screen, type Game } from '@ifloom/engine'
@@ -4709,7 +4758,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`ViewOptions`](#viewoptions),
 
 Type. Explained in [The view](/docs/reference/view#screenchoice).
 
-A choice or a button on a screen: as the view shows it, and what pressing it would apply.
+A choice or action on a `Screen`, with the effects pressing its button would apply. The view leaves the effects out.
 
 ```ts shape
 import type { ScreenChoice } from '@ifloom/engine'
@@ -4729,22 +4778,22 @@ type ScreenChoice = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` |  |  |  |
-| `price` | [`Price`](#price) | yes |  | What pressing it costs, worked out for this state, with its words in `text`. Left out when it's free. |
-| `disabled` | `string` | yes |  | Why it can't be pressed now, as the player reads it. Left out when it can. |
-| `tags` | `string[]` | yes |  | The choice's or button's tags, for a UI to style or filter it by. |
-| `irreversible` | `string` | yes |  | A warning that it can't be undone, for the UI to show on it. |
-| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. |
-| `warning` | `string` | yes |  | Pressable, but the game would rather you didn't, and says why: a plugin guard's soft refusal: running past dawn, say. The reducer refuses it all the same, so a UI shows the warning and offers something else. |
-| `command` | [`Command`](#command) |  |  | What to send when the player presses it: `runner.apply(choice.command)`. |
-| `effects` | [`Effect[]`](#effect) |  |  | What it would apply, as `effectsOf` says: a choice's effects, an action's cost and effects. |
+| `id` | `string` |  |  | The choice's or action's id. |
+| `label` | `string` |  |  | The button's label, with tokens filled. |
+| `price` | [`Price`](#price) | yes |  | The button's price for this state, with its words in `text`. Left out when it's free. |
+| `disabled` | `string` | yes |  | The reason the player can't press the button now, in the player's words. Left out when they can. |
+| `tags` | `string[]` | yes |  | The choice's or action's tags, for a UI to style or filter it by. |
+| `irreversible` | `string` | yes |  | The warning that the choice or action can't be undone, for a UI to show on its button. |
+| `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The choice's or action's `ui` hints, unchanged from content. Left out with none, and typed by `ChoiceUi`. |
+| `warning` | `string` | yes |  | The reason a plugin's guard gives for refusing the button softly, such as running past dawn. The player can press it, but the reducer refuses it, so a UI shows the warning instead. |
+| `command` | [`Command`](#command) |  |  | The command a UI sends when the player presses the button, as `runner.apply(choice.command)`. |
+| `effects` | [`Effect[]`](#effect) |  |  | The effects pressing the button would apply, such as a choice's effects or an action's cost and effects. |
 
 ## ScreenScene
 
 Type. Explained in [The view](/docs/reference/view#screenscene).
 
-The scene on a screen, or the room when none is open, without its choices and picture.
+The scene on a `Screen`, or the room when none is open, without its choices and picture.
 
 ```ts shape
 import type { ScreenScene } from '@ifloom/engine'
@@ -4765,23 +4814,24 @@ type ScreenScene = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string \| null` |  |  | The open scene's id, or null for the room. |
-| `key` | `string` |  |  | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a minigame is played, `room:<id>` for a plugin's room scene (a place, by its id), and `room` with none. It changes when the screen does, and only then. |
-| `title` | `string` |  |  | The heading: the scene's title, or the room's. |
-| `body` | `string` |  |  | The words as content wrote them, markup and all. Draw `beats`, which is this parsed. |
-| `beats` | [`SceneBeat[]`](#scenebeat) |  |  | The body parsed into paragraphs, speech, pictures and past picks, ready to draw. See `SceneBeat`. |
-| `fresh` | `number` |  |  | The first of `beats` the flow's last step brought, from its `chose` on: what a pick, a jump or a minigame or panel done with added, so a UI can animate only that. 0 when the visit has taken no step, and for the room. |
-| `tags` | `string[]` |  |  | The scene's tags, for the UI to style it by. |
-| `speaker` | [`SpeakerView`](#speakerview) `\| null` |  |  | Who is speaking: the scene's `speaker`, as their entity is. Null with none, or one that names no entity. |
-| `image` | `string \| null` |  |  | The big picture to draw with the scene: the speaker's, else null. |
-| `ui` | [`Ui`](#ui)`<`[`SceneUi`](#sceneui)`>` | yes |  | The scene's presentation hints (the room scene's, when no scene is open), as written; left out with none. See `SceneUi`. |
+| `key` | `string` |  |  | The screen's key, which changes when the screen does and only then. It is `scene:<id>` while a scene is open, `minigame:<id>` while a minigame is played, `room:<id>` for a plugin's room scene and `room` without one. |
+| `title` | `string` |  |  | The screen's title, the scene's or the room's. |
+| `body` | `string` |  |  | The body as markup text. A UI renders `beats`, which are this text parsed. |
+| `beats` | [`SceneBeat[]`](#scenebeat) |  |  | The body parsed into beats, such as paragraphs, speech, pictures and past choices, ready to render. |
+| `fresh` | `number` |  |  | The index of the first beat the flow's last step added, from its `chose` beat on, so a UI can animate only those. It's 0 for the room and before the visit's first step. |
+| `tags` | `string[]` |  |  | The scene's tags, for a UI to style it by. |
+| `speaker` | [`SpeakerView`](#speakerview) `\| null` |  |  | The scene's `speaker`, read from their entity. Null without one, or when it names no entity. |
+| `image` | `string \| null` |  |  | The speaker's picture to show with the scene, or null without one. |
+| `ui` | [`Ui`](#ui)`<`[`SceneUi`](#sceneui)`>` | yes |  | The scene's `ui` hints, or the room scene's when no scene is open, unchanged from content. Left out with none, and typed by `SceneUi`. |
 
 ## Select
 
 Type. Explained in [Entities](/docs/reference/entities#select).
 
-Which entities a `count` or an `each` looks at: those `of` a kind, those a
-holder holds (`at`), those with a tag or a trait, and those `where` holds
-for, with `'$'` as each one. Every entity in the game if it says none.
+A selection of entities that a `count` or an `each` reads. Every entity in the game when it sets nothing.
+
+It narrows to those `of` a kind, those a holder holds (`at`), those with a tag or a trait, and those `where` holds
+for, with `'$'` as each one.
 
 ```ts shape
 import type { Select } from '@ifloom/engine'
@@ -4796,19 +4846,22 @@ type Select = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `of` | `string` | yes |  | A kind. |
-| `at` | `string` | yes |  | A holder: only what it holds (`'you'`, `'player'` or a unique entity). |
-| `tag` | `string` | yes |  | A tag it has, its kind's or its own. |
-| `trait` | `string` | yes |  | A trait it has, by id. |
-| `where` | [`Condition`](#condition) | yes |  | A condition asked for each, with `'$'` as that one. |
+| `of` | `string` | yes |  | The kind the entities are of. |
+| `at` | `string` | yes |  | The holder whose things are selected, `'you'`, `'player'` or a unique entity. |
+| `tag` | `string` | yes |  | The tag the entities have, their kind's or their own. |
+| `trait` | `string` | yes |  | The id of a trait the entities carry. |
+| `where` | [`Condition`](#condition) | yes |  | The condition each entity must meet, with `'$'` as that entity. |
 
 ## SettingDef
 
 Type. Explained in [Settings](/docs/reference/settings#settingdef).
 
-Something the player can change from a settings screen, declared by the
-game. A `play` setting (the default) is part of the game state and saved
-with it; a `ui` setting never enters the state and lives in the profile.
+A setting the game declares in `settings`, which the player changes on a settings page. A `play` setting is saved
+with the state, and a `ui` setting is kept only in the profile.
+
+Its `type` sets the rest of its fields. A `toggle` has a true/false `default`. A `choice` has `options`, each a
+`value` with its `label`, and one value as its `default`. A `range` has `min`, `max`, an optional `step` and a
+number as its `default`.
 
 ```ts shape
 import type { SettingDef } from '@ifloom/engine'
@@ -4819,7 +4872,7 @@ type SettingDef = { id: string; label: string; affects?: 'play' | 'ui' } & ({ ty
 
 Type. Explained in [The view](/docs/reference/view#settingview).
 
-A setting as a settings screen draws it.
+A setting as the player sees it on a settings page, in `view.settings`.
 
 ```ts shape
 import type { SettingView } from '@ifloom/engine'
@@ -4839,22 +4892,22 @@ type SettingView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` |  |  |  |
-| `type` | `'toggle' \| 'choice' \| 'range'` |  |  | How the player sets it: a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. |
-| `affects` | `'play' \| 'ui'` |  |  | `play` settings live in the save and change the game; `ui` settings live in the profile and only change how it's shown. |
-| `options` | `{ value: string; label: string }[]` | yes |  | A choice's options. |
-| `min` | `number` | yes |  | A range's bounds and step. |
-| `max` | `number` | yes |  | A range's highest value. |
-| `step` | `number` | yes |  | A range's step. 1 if the setting gives none. |
-| `default` | [`KvValue`](#kvvalue) |  |  | The value it has until the player changes it, as the game declares it. |
-| `value` | [`KvValue`](#kvvalue) `\| null` |  |  | A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. |
+| `id` | `string` |  |  | The setting's id. |
+| `label` | `string` |  |  | The setting's label. |
+| `type` | `'toggle' \| 'choice' \| 'range'` |  |  | The setting's type, a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. |
+| `affects` | `'play' \| 'ui'` |  |  | The setting's reach. A `play` setting is kept in the save and changes the game, and a `ui` setting is kept in the profile and changes only how the game is shown. |
+| `options` | `{ value: string; label: string }[]` | yes |  | The options of a `choice` setting, each a value with its label. |
+| `min` | `number` | yes |  | The lowest value of a `range` setting. |
+| `max` | `number` | yes |  | The highest value of a `range` setting. |
+| `step` | `number` | yes |  | The step of a `range` setting. Left out when the setting gives none, which means 1. |
+| `default` | [`KvValue`](#kvvalue) |  |  | The setting's default, its value until the player changes it. |
+| `value` | [`KvValue`](#kvvalue) `\| null` |  |  | The value of a `play` setting in this game. Null for a `ui` setting, which the UI reads from the profile. |
 
 ## SpeakerView
 
 Type. Explained in [The view](/docs/reference/view#speakerview).
 
-Who is speaking, or who sent something, as the screen draws them.
+A speaker or sender as the player sees them, in `view.scene.speaker` and in plugins' views.
 
 ```ts shape
 import type { SpeakerView } from '@ifloom/engine'
@@ -4869,19 +4922,20 @@ type SpeakerView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | The id as content named them: `'ava'`, or a reference, `'character:ava'`. |
-| `ref` | [`EntityRef`](#entityref) |  |  | The entity they are. |
-| `name` | `string` |  |  |  |
-| `image` | `string \| null` |  |  | Their entity's picture, through `artSrc`; null for none. |
-| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | Their presentation hints, as their entity has them; left out with none. See `EntityUi`. |
+| `id` | `string` |  |  | The speaker's id in the content, a bare id (`'ava'`) or a reference (`'character:ava'`). |
+| `ref` | [`EntityRef`](#entityref) |  |  | The speaker's entity. |
+| `name` | `string` |  |  | The speaker's name, read from their entity with its tokens filled. |
+| `image` | `string \| null` |  |  | The speaker's picture, from their entity through `artSrc`, or null when the entity has none. |
+| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The speaker's entity's ui hints (see `EntityUi`). Left out when the entity has none. |
 
 ## startingState
 
 Function. Explained in [Commands](/docs/reference/commands#startingstate).
 
-A new game: every field at its start value, with a New Game+'s carried
-values laid over, then what features work out from the whole state (what
-the opening screen starts playing).
+Returns the state of a new game, with every field at its start value. With `carry`, the New Game+'s carried values
+go over it.
+
+Features then work out the fields that read the whole state, such as the audio the opening screen starts playing.
 
 ```ts shape
 import { startingState, type Game } from '@ifloom/engine'
@@ -4893,6 +4947,8 @@ Uses: [`Game`](#game), [`StartOptions`](#startoptions), [`GameState`](#gamestate
 ## StartOptions
 
 Type. Explained in [Commands](/docs/reference/commands#startoptions).
+
+Settings for `startingState`. A new game left without them gets a seed hashed from the game's id.
 
 ```ts shape
 import type { StartOptions } from '@ifloom/engine'
@@ -4906,18 +4962,19 @@ type StartOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `seed` | `number` | yes |  | Fixes the save's random draws. Left out, it is hashed from the game's id, so tests deal the same cards. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | Keys to write to the kv store before the first scene: a name from a title screen, a difficulty. |
-| `settings` | `Record<string, unknown>` | yes |  | The player's stored values for the game's `play` settings, usually the profile's `core:settings`. A setting given no value, or one it doesn't take, starts at its default; ids the game doesn't declare are ignored. |
-| `carry` | [`GameState`](#gamestate) | yes |  | The state a finished game ended on, for a New Game+: the stats, kv keys and things the game's `carryOver` lists are copied from it. |
+| `seed` | `number` | yes |  | The new game's random seed. Hashed from the game's id if left out, so tests draw the same. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv keys written before the first scene, such as a name from a title page or a difficulty. |
+| `settings` | `Record<string, unknown>` | yes |  | The player's stored values for the game's `play` settings, usually the profile's `core:settings`. A missing or invalid value starts at its default, and an undeclared id is ignored. |
+| `carry` | [`GameState`](#gamestate) | yes |  | The state a finished game ended on, for a New Game+. The engine copies the stats, kv keys and things the game's `carryOver` lists from it. |
 
 ## StatDef
 
 Type. Explained in [Stats](/docs/reference/stats#statdef).
 
-A number the game keeps for the player: charisma, money, energy, a
-reputation — whatever the game is about. The engine has none of its own; a
-game declares every stat it uses, and one with no stats declares none.
+A stat the game declares in `stats`, a number it keeps for the player or for each entity of a kind. The engine
+has no stats of its own.
+
+Charisma, money, energy and a reputation are stats.
 
 ```ts shape
 import type { StatDef } from '@ifloom/engine'
@@ -4942,27 +4999,27 @@ type StatDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `of` | `string` | yes |  | The kind of entity it belongs to: `'staff'` gives every member of staff one. The player's if left out. |
-| `label` | `string` |  |  | What the player reads: "Charisma", "Money". |
-| `start` | `number` | yes |  | Where a new game starts it. 0 if left out. |
-| `min` | [`Amount`](#amount) | yes |  | Lowest it can go. 0 if left out. An `Amount`, so a floor can move with the game: `{ stat: 'debtLimit' }`. |
-| `max` | [`Amount`](#amount) | yes |  | Highest it can go. 100 if left out. An `Amount`, so a ceiling can move with the game: another stat (`{ stat: 'fitness' }`), or a value by name (`{ value: 'game/energyMax' }`, with `with` for its arguments). A ceiling that reads the stat itself reads 100. |
-| `visible` | [`Condition`](#condition) | yes |  | When the player can see it. Always, if left out. |
-| `listed` | `boolean` | yes |  | Whether it belongs in the view's stat list. True if left out. A game that shows a stat its own way — a gauge, a purse — sets this false. |
-| `spendable` | `boolean` | yes |  | Spent on things: money, energy, time on the clock. A spendable stat is what a button's price is made of. |
-| `lacking` | [`StatWords`](#statwords) | yes |  | The refusal when a cost needs more than the player has, with `{n}` for the amount: `'Not enough on you.'`, `'Need {n} energy.'`, or one for 1 and one for any other amount, as `format` takes. Without it: "Not enough" and the label. |
-| `format` | [`StatWords`](#statwords) | yes |  | How the value is written for the player, with `{n}` for the number: `'£{n}'`, `'{n} energy'`. For words that change with the number, one for 1 and one for any other: `{ one: '{n} coin', other: '{n} coins' }`. Just the number if left out. |
-| `derive` | [`Formula`](#formula) | yes |  | Work the stat out from others instead of keeping it: `{ sum: ['strength', 'agility'] }`. A derived stat is read like any stat and never written; the loader reports a `stat` effect on one. See `Formula`. |
-| `levels` | [`StatLevels`](#statlevels) | yes |  | Levels the stat passes as it grows. None if left out. See `StatLevels`. |
-| `round` | [`StatRound`](#statround) | yes |  | How the value reads: `'floor'`, `'round'` or `'ceil'` to a whole number, or `'none'` to read it as it is. Applied to what is read, last, after `derive` and any plugin's modifiers, then held to the range; the kept value underneath is never rounded. `'none'` if left out. |
-| `ui` | [`Ui`](#ui)`<`[`StatUi`](#statui)`>` | yes |  | Presentation hints for the UI, carried to the stat's view as written. See `StatUi`. |
+| `id` | `string` |  |  | The stat's id. |
+| `of` | `string` | yes |  | The kind of entity the stat is kept on, such as `'staff'` for every member of staff. The player's stat if left out. |
+| `label` | `string` |  |  | The stat's label, such as "Charisma" or "Money". |
+| `start` | `number` | yes |  | The stat's value in a new game. 0 if left out. |
+| `min` | [`Amount`](#amount) | yes |  | The stat's lowest value. 0 if left out, and an `Amount`, so a floor can move with the game (`{ stat: 'debtLimit' }`). |
+| `max` | [`Amount`](#amount) | yes |  | The stat's highest value. 100 if left out, and an `Amount`, so a ceiling can move with the game. It can read another stat (`{ stat: 'fitness' }`) or a value by name (`{ value: 'game/energyMax' }`, with `with` for its arguments). A ceiling that reads the stat itself reads 100. |
+| `visible` | [`Condition`](#condition) | yes |  | The stat's condition. The player can see the stat only while it holds, and always if left out. |
+| `listed` | `boolean` | yes |  | The stat's listed mark, false to leave it out of `view.stats` for a game that shows it its own way, as a gauge or a purse. True if left out. |
+| `spendable` | `boolean` | yes |  | The stat's spendable mark, true for a stat spent on things, such as money, energy or time. A choice's or action's price is made of spendable stats. |
+| `lacking` | [`StatWords`](#statwords) | yes |  | The refusal when a cost needs more than the player has, with `{n}` for the amount. Without it the engine says "Not enough" and the label. It's one line (`'Not enough on you.'`, `'Need {n} energy.'`) or one for 1 and one for any other amount, as `format` takes. |
+| `format` | [`StatWords`](#statwords) | yes |  | The stat's value written for the player, with `{n}` for the number, such as `'£{n}'` or `'{n} energy'`. The bare number if left out. For words that change with the number, give one for 1 and one for any other, `{ one: '{n} coin', other: '{n} coins' }`. |
+| `derive` | [`Formula`](#formula) | yes |  | The formula the stat is worked out from instead of being kept, such as `{ sum: ['strength', 'agility'] }`. A derived stat is read like any stat and never written, and the loader reports a `stat` effect on one. |
+| `levels` | [`StatLevels`](#statlevels) | yes |  | The levels the stat passes as it grows. None if left out. |
+| `round` | [`StatRound`](#statround) | yes |  | The stat's rounding when it's read, `'floor'`, `'round'` or `'ceil'` to a whole number, or `'none'`. `'none'` if left out. It applies last, after `derive` and any plugin's modifiers, and the value is then held to the range. The kept value underneath is never rounded. |
+| `ui` | [`Ui`](#ui)`<`[`StatUi`](#statui)`>` | yes |  | The stat's ui hints, carried to its view as written. |
 
 ## StatKey
 
 Type. Explained in [Game state](/docs/reference/state#statkey).
 
-A stat's id. The game declares its stats; see `StatDef`.
+A stat's id. The game declares each stat with a `StatDef`.
 
 ```ts shape
 import type { StatKey } from '@ifloom/engine'
@@ -4973,9 +5030,11 @@ type StatKey = string
 
 Function. Explained in [Stats](/docs/reference/stats#statlevel).
 
-Where a stat with `levels` stands: its level, the value the next one starts
-at (null at the top), and how far it is from this level's start to the
-next, 0 to 1 (1 at the top). Undefined for a stat with no levels.
+Returns the level a stat with `levels` has reached, with the value the next level starts at and the progress
+towards it. Returns undefined for a stat with no levels.
+
+`next` is null at the top level. `progress` runs from 0 at this level's start to 1 at the next one's, and is 1 at
+the top.
 
 ```ts shape
 import { statLevel, type Game } from '@ifloom/engine'
@@ -4988,7 +5047,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [Stats](/docs/reference/stats#statlevels).
 
-Levels on a stat: thresholds it passes as it grows, and what to tell the player when it passes one.
+The levels a stat declares in its `levels`, thresholds it passes as it grows. It can raise a notice when the player's stat passes one.
 
 ```ts shape
 import type { StatLevels } from '@ifloom/engine'
@@ -5001,13 +5060,15 @@ type StatLevels = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `at` | `number[]` |  |  | The value each level starts at, lowest first. Below the first is level 0. |
-| `notice` | `string` | yes |  | Raised as a notice tagged `level` when a command takes the player's stat up a level, with `{label}` and `{level}` filled in: `'{label} is now level {level}.'`. No notice if left out. |
-| `hidden` | `boolean` | yes |  | Keep the levels from the player: the view gives the stat no `level`, so the thresholds are never shown, and `{ level }` conditions still read them. For a hidden rating such as how much a character trusts you. |
+| `at` | `number[]` |  |  | The value each level starts at, lowest first. A value below the first is level 0. |
+| `notice` | `string` | yes |  | The notice raised, tagged `level`, when a command takes the player's stat up a level, such as `'{label} is now level {level}.'`. The engine fills `{label}` and `{level}`, and raises no notice if left out. |
+| `hidden` | `boolean` | yes |  | The levels' hidden mark, true to keep them from the player. The view then gives the stat no `level`, and `{ level }` conditions still read them. Use it for a hidden rating, such as how much a character trusts you. |
 
 ## statOf
 
 Function. Explained in [Stats](/docs/reference/stats#statof).
+
+Returns the stat the game declares with this id. Undefined when there's none.
 
 ```ts shape
 import { statOf, type Game } from '@ifloom/engine'
@@ -5020,7 +5081,7 @@ Uses: [`Game`](#game), [`StatDef`](#statdef).
 
 Type. Explained in [Stats](/docs/reference/stats#statround).
 
-How a stat's value is rounded when it is read: see `StatDef.round`.
+The rounding a stat declares in its `round`, applied when the stat is read.
 
 ```ts shape
 import type { StatRound } from '@ifloom/engine'
@@ -5031,7 +5092,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 Type. Explained in [Core concepts](/docs/guide/concepts#stats).
 
-Every declared stat's current value, by id.
+The current values of the stats the save keeps, by stat id.
 
 ```ts shape
 import type { Stats } from '@ifloom/engine'
@@ -5044,7 +5105,7 @@ type Stats = {
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
 
-Hints on a stat. Empty here; a UI package augments it.
+The ui hints a stat takes in its `ui`. The engine declares none, and a UI package augments this interface with its own.
 
 ```ts shape
 import type { StatUi } from '@ifloom/engine'
@@ -5060,10 +5121,10 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [Stats](/docs/reference/stats#statvalue).
 
-A stat's value as everything reads it: the player's, or with `of`, an
-entity's (`'staff:ana'`). A derived stat is worked out from its formula and
-held to its range; a kept stat the save doesn't have yet reads as its
-`start`. An entity that isn't there reads 0.
+Returns a stat's value, the player's or, with `of`, an entity's (`'staff:ana'`). An entity that isn't there reads 0.
+
+A derived stat is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as
+its `start`.
 
 ```ts shape
 import { statValue, type Game } from '@ifloom/engine'
@@ -5076,7 +5137,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game).
 
 Type. Explained in [The view](/docs/reference/view#statview).
 
-A stat as the UI shows it: its value, its range, the value written out, and its hints.
+A stat as the player sees it, in `view.stats` and `view.statsById`, with its value, its range, the value written out and its hints.
 
 ```ts shape
 import type { StatView } from '@ifloom/engine'
@@ -5095,19 +5156,19 @@ type StatView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `key` | [`StatKey`](#statkey) |  |  | The stat's id. |
-| `label` | `string` |  |  |  |
-| `value` | `number` |  |  | Its value as play reads it: kept or derived, with the plugins' modifiers, rounded and held to its range. |
-| `min` | `number` |  |  | The lowest it can go. |
-| `max` | `number` |  |  | The highest it can go right now. |
-| `text` | `string` |  |  | The value written out with the stat's `format`: `'12 coins'`, `'80%'`. The number itself with no format. |
-| `level` | `{ level: number; next: number \| null; progress: number }` | yes |  | Where a stat with `levels` stands: its level, the value the next level starts at (null at the top), and how far it is towards it, 0 to 1. Left out for a stat with no levels. |
-| `ui` | [`Ui`](#ui)`<`[`StatUi`](#statui)`>` | yes |  | The stat's presentation hints, as written; left out with none. See `StatUi`. |
+| `label` | `string` |  |  | The stat's label. |
+| `value` | `number` |  |  | The stat's value as play reads it, kept or derived, with the plugins' modifiers, rounded and held to its range. |
+| `min` | `number` |  |  | The stat's lowest value now. |
+| `max` | `number` |  |  | The stat's highest value now. |
+| `text` | `string` |  |  | The stat's value written with its `format`, such as `'12 coins'` or `'80%'`. The bare number with no format. |
+| `level` | `{ level: number; next: number \| null; progress: number }` | yes |  | The stat's place in its `levels`, with its level, the value the next level starts at (null at the top) and its progress towards it, from 0 to 1. It's left out for a stat with no levels or hidden ones. |
+| `ui` | [`Ui`](#ui)`<`[`StatUi`](#statui)`>` | yes |  | The stat's ui hints, kept as written. Left out if it has none. |
 
 ## StatWords
 
 Type. Explained in [Stats](/docs/reference/stats#statwords).
 
-A stat's words for a number: the same for every number, or `one` for exactly 1 and `other` for the rest.
+A stat's words for a number, with `{n}` for it. It's one line for every number, or `one` for exactly 1 and `other` for the rest.
 
 ```ts shape
 import type { StatWords } from '@ifloom/engine'
@@ -5118,8 +5179,8 @@ type StatWords = string | { one: string; other: string }
 
 Type. Explained in [Scenes](/docs/reference/scenes#storyletfields).
 
-What makes a scene a storylet: the named draws it can be drawn from, how
-often, and when. See the `{ scene: { from } }` effect.
+The fields that make a scene a storylet, a scene the `{ scene: { from } }` effect draws at random from a named set.
+They name the sets, the scene's weight and when it can be drawn.
 
 ```ts shape
 import type { StoryletFields } from '@ifloom/engine'
@@ -5132,15 +5193,16 @@ type StoryletFields = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `drawnFrom` | `string[]` | yes |  | The draws this scene can come up in, by name: `['cafe']`. A `{ scene: { from: 'cafe' } }` effect draws one of the scenes that name `'cafe'` here. Separate from `tags`, which only style the scene. |
-| `weight` | `number` | yes |  | How likely a draw is to pick it, against the others it could pick. 1 if left out. Needs `drawnFrom`. |
-| `when` | [`Condition`](#condition) | yes |  | Only drawn while this holds. It gates draws only: a `scene` command or effect naming the scene opens it regardless. |
+| `drawnFrom` | `string[]` | yes |  | The sets the scene can be drawn from, by name, such as `['cafe']`. A `{ scene: { from: 'cafe' } }` effect draws one of the scenes that name `'cafe'` here. It's separate from `tags`, which only style the scene. |
+| `weight` | `number` | yes |  | The scene's weight in a draw, against the other scenes it could be drawn with. 1 if left out, and it needs `drawnFrom`. |
+| `when` | [`Condition`](#condition) | yes |  | The storylet's condition. The scene can be drawn only while it holds, but a `scene` command or effect that names the scene opens it regardless. |
 
 ## StorylineDef
 
 Type. Explained in [Storylines](/docs/reference/storylines#storylinedef).
 
-A thread of the story, followed by its kv, and closed for a while if need be.
+A storyline the game declares in `storylines`, a thread of the story with its own kv keys. A storyline can close
+until a later turn.
 
 ```ts shape
 import type { StorylineDef } from '@ifloom/engine'
@@ -5150,11 +5212,16 @@ type StorylineDef = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The storyline's id, read as `storyline:<id>` in a kv effect's `of`. |
+| `name` | `string` |  |  | The storyline's name, as the player reads it. |
+
 ## storylineOpen
 
 Function. Explained in [Storylines](/docs/reference/storylines#storylineopen).
 
-Is the storyline open: not closed, or closed until a turn that has come?
+Returns true when the storyline is open. A storyline closed until a turn opens again once that turn comes.
 
 ```ts shape
 import { storylineOpen } from '@ifloom/engine'
@@ -5167,6 +5234,8 @@ Uses: [`GameState`](#gamestate).
 
 Type. Explained in [Storylines](/docs/reference/storylines#storylinestate).
 
+The state a save keeps for one storyline. Its definition is read from content.
+
 ```ts shape
 import type { StorylineState } from '@ifloom/engine'
 type StorylineState = {
@@ -5177,14 +5246,14 @@ type StorylineState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `closedUntil` | `number \| null` |  |  | The turn it opens again, or null while it is open. |
+| `closedUntil` | `number \| null` |  |  | The storyline's turn to open again, or null while it is open. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The storyline's own kv keys, read and written with `of: 'storyline:<id>'`. |
 
 ## StringKey
 
 Type. Explained in [Strings](/docs/reference/strings#stringkey-and-strings).
 
-A key of the engine's own strings.
+A key of the engine's own lines in `STRINGS`.
 
 ```ts shape
 import type { StringKey } from '@ifloom/engine'
@@ -5195,9 +5264,11 @@ type StringKey = keyof typeof STRINGS
 
 Function. Explained in [Strings](/docs/reference/strings#stringof).
 
-The words for a key: the game's, else the plugin's default for a `plugin/name`
-key, else the engine's, else the key itself so a missing line shows up. Each
-`{name}` is replaced from `vars`; one with no value is left as it is.
+Returns the line for a key with each `{name}` token filled from `vars`. Returns the key itself when no table has
+it, so a missing line shows.
+
+The engine looks in the game's strings, then the plugin's defaults for a `<plugin>/<name>` key, then its own. A
+token with no value in `vars` stays as written.
 
 ```ts shape
 import { stringOf, type Game } from '@ifloom/engine'
@@ -5210,15 +5281,11 @@ Uses: [`Game`](#game), [`StringKey`](#stringkey).
 
 Const. Explained in [Strings](/docs/reference/strings#strings).
 
-Every word the engine shows the player, by key, in English.
+The engine's own lines for the player, in English, by key. A game replaces any of them in its content's or a pack's
+`strings`, so a translation can ship as a mod.
 
-A game replaces any of them with `game.strings` — or a pack's `strings`, so a
-translation can ship as a mod — and the engine says the game's version
-everywhere it would have said its own. `{name}` and friends are filled in
-from what the engine knows at the time.
-
-Plugins declare their own defaults under their id (`quests/notDoing`), and
-the game overrides those the same way.
+The engine fills each `{name}` token from the values it has when it shows the line. Plugins declare their own
+defaults under their id (`quests/notDoing`), and a game replaces those the same way.
 
 ```ts shape
 import { STRINGS } from '@ifloom/engine'
@@ -5280,64 +5347,64 @@ const STRINGS: {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `finishFirst` | `'Finish this first.'` |  |  |  |
-| `notSupported` | `'This game does not do that.'` |  |  |  |
-| `noSuchAction` | `'There is no such thing to do.'` |  |  |  |
-| `notEnough` | `'Not enough {stat}.'` |  |  |  |
-| `noSuchScene` | `'There is no such scene.'` |  |  |  |
-| `nothingToChoose` | `'There is nothing to choose.'` |  |  |  |
-| `notOnOffer` | `'That is not on offer.'` |  |  |  |
-| `noSuchThing` | `'There is no such thing.'` |  |  |  |
-| `badArgument` | `'That can’t be done: "{arg}" must be {kind}.'` |  |  |  |
-| `noSuchInput` | `'There is no such thing to fill in.'` |  |  |  |
-| `notNow` | `'Not now.'` |  |  |  |
-| `enterSomething` | `'Enter something first.'` |  |  |  |
-| `enterNumber` | `'Enter a number.'` |  |  |  |
-| `tooLong` | `'Keep it to {n} characters.'` |  |  |  |
-| `between` | `'Between {min} and {max}.'` |  |  |  |
-| `atLeast` | `'At least {min}.'` |  |  |  |
-| `atMost` | `'At most {max}.'` |  |  |  |
-| `notAnOption` | `'That is not one of the options.'` |  |  |  |
-| `noMinigame` | `'Nothing is being played.'` |  |  |  |
-| `noPanel` | `'Nothing is open.'` |  |  |  |
-| `notLive` | `'That does nothing now.'` |  |  |  |
-| `noTimer` | `'Nothing is counting down.'` |  |  |  |
-| `tickLength` | `'A tick is a number of milliseconds above 0.'` |  |  |  |
-| `noSuchSetting` | `'There is no such setting.'` |  |  |  |
-| `notAGameSetting` | `'That setting does not change the game.'` |  |  |  |
-| `noProfile` | `'This game keeps no settings between plays.'` |  |  |  |
-| `onOrOff` | `'Choose on or off.'` |  |  |  |
-| `inSteps` | `'In steps of {step}.'` |  |  |  |
-| `lookAround` | `'Look around'` |  |  |  |
-| `priceSeparator` | `' · '` |  |  | Between the parts of a price on a button, its stats and plugins' notes: `2 coins · until evening`. |
-| `minigame.up` | `'Up'` |  |  | A minigame input's button, by the input's name: `minigame.<input>`. A game names its own inputs the same way (`'minigame.jump': 'Jump'`); one with no line is its own name with a capital. |
-| `minigame.down` | `'Down'` |  |  |  |
-| `minigame.left` | `'Left'` |  |  |  |
-| `minigame.right` | `'Right'` |  |  |  |
-| `minigame.space` | `'Space'` |  |  |  |
-| `you` | `'You'` |  |  | The name the player's spoken lines show (`@you: "Hi."`) when the game's `rules.saveName` gives none. A game in another language sets its own. |
-| `momentPassed` | `'The moment has passed.'` |  |  |  |
-| `done` | `'Already done.'` |  |  | On a button that can be pressed only once, a game or a turn, once it has been. |
-| `notASave` | `'That is not a save file.'` |  |  |  |
-| `otherGame` | `'That save belongs to another game ({game}).'` |  |  |  |
-| `saveTooOld` | `'That save is from a version this game cannot read.'` |  |  |  |
-| `pluginNewer` | `'That save was made with a newer version of {plugin}.'` |  |  |  |
-| `gameNewer` | `'That save was made with a newer version of this game.'` |  |  |  |
-| `pluginUnreadable` | `'That save\'s {plugin} is from a version this game cannot read.'` |  |  |  |
-| `noSaves` | `'This game keeps no saves.'` |  |  |  |
-| `emptySlot` | `'Nothing is saved there.'` |  |  |  |
-| `notSaved` | `'The game could not be saved.'` |  |  |  |
-| `notLoaded` | `'The game could not be loaded.'` |  |  |  |
-| `notListed` | `'The saves could not be read.'` |  |  |  |
-| `notRemoved` | `'The save could not be deleted.'` |  |  |  |
-| `notExported` | `'The save could not be exported.'` |  |  |  |
-| `turnLabel` | `'Turn {turn}'` |  |  | A save's name when no plugin says when it is. |
+| `finishFirst` | `'Finish this first.'` |  |  | The refusal of a command that can't run while a scene or minigame is open. |
+| `notSupported` | `'This game does not do that.'` |  |  | The refusal of a command no feature, plugin or rule of the game handles. |
+| `noSuchAction` | `'There is no such thing to do.'` |  |  | The refusal of an action or a game command the game doesn't declare. |
+| `notEnough` | `'Not enough {stat}.'` |  |  | The refusal of a choice or action the player can't pay for, with `{stat}` the stat's label. |
+| `noSuchScene` | `'There is no such scene.'` |  |  | The refusal of entering a scene the game doesn't declare. |
+| `nothingToChoose` | `'There is nothing to choose.'` |  |  | The refusal of a choice while no scene is open. |
+| `notOnOffer` | `'That is not on offer.'` |  |  | The refusal of a choice or action that isn't offered now. |
+| `noSuchThing` | `'There is no such thing.'` |  |  | The refusal of a command that names an entity the game doesn't have. |
+| `badArgument` | `'That can’t be done: "{arg}" must be {kind}.'` |  |  | The refusal of a plugin command whose argument `{arg}` isn't a `{kind}`. |
+| `noSuchInput` | `'There is no such thing to fill in.'` |  |  | The refusal of the `input` command for an input the game doesn't declare. |
+| `notNow` | `'Not now.'` |  |  | The refusal of the `input` command while the input's `when` doesn't hold. |
+| `enterSomething` | `'Enter something first.'` |  |  | The refusal of an empty value for a text input. |
+| `enterNumber` | `'Enter a number.'` |  |  | The refusal of a value that isn't a number for a number input or a number setting. |
+| `tooLong` | `'Keep it to {n} characters.'` |  |  | The refusal of a text value longer than `{n}` characters. |
+| `between` | `'Between {min} and {max}.'` |  |  | The refusal of a number outside an input's or a range setting's `{min}` and `{max}`. |
+| `atLeast` | `'At least {min}.'` |  |  | The refusal of a number below the input's `{min}`. |
+| `atMost` | `'At most {max}.'` |  |  | The refusal of a number above the input's `{max}`. |
+| `notAnOption` | `'That is not one of the options.'` |  |  | The refusal of a value that isn't one of an input's or a setting's options. |
+| `noMinigame` | `'Nothing is being played.'` |  |  | The refusal of a minigame command while no minigame runs. |
+| `noPanel` | `'Nothing is open.'` |  |  | The refusal of `closePanel` while no panel is open. |
+| `notLive` | `'That does nothing now.'` |  |  | The refusal of a minigame input that does nothing in the minigame's current state. |
+| `noTimer` | `'Nothing is counting down.'` |  |  | The refusal of the `tick` command while no timer or minigame clock runs. |
+| `tickLength` | `'A tick is a number of milliseconds above 0.'` |  |  | The refusal of a `tick` whose `ms` isn't a number above 0. |
+| `noSuchSetting` | `'There is no such setting.'` |  |  | The refusal of a setting the game doesn't declare. |
+| `notAGameSetting` | `'That setting does not change the game.'` |  |  | The refusal of a `ui` setting sent as a command, since only a `play` setting changes the state. |
+| `noProfile` | `'This game keeps no settings between plays.'` |  |  | The refusal of a setting change when the runner keeps no profile. |
+| `onOrOff` | `'Choose on or off.'` |  |  | The refusal of a value other than true or false for a toggle setting. |
+| `inSteps` | `'In steps of {step}.'` |  |  | The refusal of a range setting's value that isn't a whole number of `{step}`s. |
+| `lookAround` | `'Look around'` |  |  | The label of the button that leaves a scene the game no longer declares. |
+| `priceSeparator` | `' · '` |  |  | The separator between the parts of a price on a button, such as `2 coins · until evening`. |
+| `minigame.up` | `'Up'` |  |  | The label of a minigame input's button, keyed `minigame.<input>`. An input with no line shows its own name with a capital. A game labels its own inputs the same way, as in `'minigame.jump': 'Jump'`. |
+| `minigame.down` | `'Down'` |  |  | The label of the minigame input `down`. |
+| `minigame.left` | `'Left'` |  |  | The label of the minigame input `left`. |
+| `minigame.right` | `'Right'` |  |  | The label of the minigame input `right`. |
+| `minigame.space` | `'Space'` |  |  | The label of the minigame input `space`. |
+| `you` | `'You'` |  |  | The name the player's spoken lines (`@you: "Hi."`) show when no `saveName` gives one. A game in another language sets its own. |
+| `momentPassed` | `'The moment has passed.'` |  |  | The text shown for an open scene the game no longer declares, such as after a mod is removed. |
+| `done` | `'Already done.'` |  |  | The reason on a choice or action with `once`, after the player has taken it that game or turn. |
+| `notASave` | `'That is not a save file.'` |  |  | The refusal of an imported file or a state that isn't a save. |
+| `otherGame` | `'That save belongs to another game ({game}).'` |  |  | The refusal of a save made by another game, with `{game}` that game's id. |
+| `saveTooOld` | `'That save is from a version this game cannot read.'` |  |  | The refusal of a save from an engine version too old for the engine's steps to carry forward. |
+| `pluginNewer` | `'That save was made with a newer version of {plugin}.'` |  |  | The refusal of a save made with a newer version of the plugin `{plugin}`. |
+| `gameNewer` | `'That save was made with a newer version of this game.'` |  |  | The refusal of a save made with a newer version of the game. |
+| `pluginUnreadable` | `'That save\'s {plugin} is from a version this game cannot read.'` |  |  | The refusal of a save whose state for the plugin `{plugin}` its migrations can't carry forward. |
+| `noSaves` | `'This game keeps no saves.'` |  |  | The refusal of a save or load when the runner keeps no saves. |
+| `emptySlot` | `'Nothing is saved there.'` |  |  | The refusal of loading a slot that holds no save. |
+| `notSaved` | `'The game could not be saved.'` |  |  | The reason a save failed to write. |
+| `notLoaded` | `'The game could not be loaded.'` |  |  | The reason a save failed to read. |
+| `notListed` | `'The saves could not be read.'` |  |  | The reason the saves failed to list. |
+| `notRemoved` | `'The save could not be deleted.'` |  |  | The reason a save failed to delete. |
+| `notExported` | `'The save could not be exported.'` |  |  | The reason a save failed to export. |
+| `turnLabel` | `'Turn {turn}'` |  |  | The save's name when no plugin's `saveName` gives one. |
 
 ## Strings
 
 Type. Explained in [Strings](/docs/reference/strings#stringkey-and-strings).
 
-What a game, pack or plugin gives for strings: any engine key, or a plugin's `id/name`.
+A table of lines a game, pack or plugin gives by key. A key is an engine key or a plugin's `<id>/<name>`.
 
 ```ts shape
 import type { Strings } from '@ifloom/engine'
@@ -5406,7 +5473,7 @@ Its fields are the keys of `Partial<Record<StringKey, string>> & Record<string, 
 
 Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
 
-Take some of a thing from the player (whoever they are playing): 1 if left out, never below 0.
+Returns the effect that takes `n` of a thing from `you`, 1 if left out. The count never goes below 0.
 
 ```ts shape
 import { take } from '@ifloom/engine'
@@ -5419,13 +5486,13 @@ Uses: [`Effect`](#effect).
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-Words as written: a paragraph, or several. The indentation every line
-shares is taken off, so the words can sit indented in your code, and
-blank lines at the start and the end go. A blank line between lines
-starts a new paragraph. The words are read as prose is: `@ava: "…"` is a
-spoken line, `[[img:…]]` a picture, `{{key}}` a token, and inline markup
-works. Give it an `id` to name it for a translation's `words` table,
-`scene.<scene>.text.<id>`; without one it is named by a hash of its words.
+Returns a `{ text }` block of words in place, one paragraph or several. A blank line between lines starts a new
+paragraph.
+
+It strips the indentation every line shares and the blank lines at either end, so the words can sit indented in your
+code. The words are read as prose is, so `@ava: "…"` is a spoken line, `[[img:…]]` a picture and `{{key}}` a token.
+An `id` keys the block in a translation's words table as `scene.<scene>.text.<id>`, and a hash of its words keys it
+without one.
 
 ```ts shape
 import { text } from '@ifloom/engine'
@@ -5438,7 +5505,7 @@ Uses: [`BlockExtras`](#blockextras), [`Block`](#block).
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#textline).
 
-A line of words a player reads, with where it is: a prose line, or words written in place. Any `[[ui:…]]` pieces in it are a UI's to check.
+A line of words a player reads, a prose line or words in place. A UI checks the `[[ui:…]]` pieces in it.
 
 ```ts shape
 import type { TextLine } from '@ifloom/engine'
@@ -5448,11 +5515,16 @@ type TextLine = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `where` | `string` |  |  | The place the line is, written as a `Problem`'s `where` is. |
+| `text` | `string` |  |  | The line's words, markup and all. |
+
 ## TimerDef
 
 Type. Explained in [Timers](/docs/reference/timers#timerdef).
 
-A timer a game declares: how long it runs, and what happens when it runs out.
+A timer the game declares in `timers`, a named countdown in real time. The `timer` effect starts it, and its `effects` run when it runs out.
 
 ```ts shape
 import type { TimerDef } from '@ifloom/engine'
@@ -5466,16 +5538,16 @@ type TimerDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` | yes |  | What a UI calls it, such as `'The phone'`. None if left out. |
-| `ms` | `number` |  |  | How long it runs when started, in milliseconds. |
-| `effects` | [`EffectRef[]`](#effectref) | yes |  | What happens when it runs out. Stopping it with `to: null` runs none of them. |
+| `id` | `string` |  |  | The timer's id, which the `timer` effect and condition name. |
+| `label` | `string` | yes |  | The timer's label, such as `'The phone'`. None if left out. |
+| `ms` | `number` |  |  | The timer's length when started, in milliseconds. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | The timer's effects, which run when it runs out. Stopping it with `to: null` runs none of them. |
 
 ## TimerView
 
 Type. Explained in [Timers](/docs/reference/timers#timerview).
 
-A running timer, as a UI draws it. Its effects are never in the view.
+A running timer as the player sees it, in `view.timers`. The view never lists its effects.
 
 ```ts shape
 import type { TimerView } from '@ifloom/engine'
@@ -5489,18 +5561,16 @@ type TimerView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string \| null` |  |  | Its `label`, or null. |
-| `left` | `number` |  |  | Milliseconds left. |
-| `total` | `number` |  |  | Its whole length, for a bar: `left / total` is the share left. |
+| `id` | `string` |  |  | The timer's id. |
+| `label` | `string \| null` |  |  | The timer's `label`, or null. |
+| `left` | `number` |  |  | The milliseconds the timer has left. |
+| `total` | `number` |  |  | The timer's whole length in milliseconds, for a bar. `left / total` is the share left. |
 
 ## Times
 
 Type. Explained in [Game state](/docs/reference/state#times).
 
-How many times something happened, and the turn of the first time and the
-last: what `GameState.seen` keeps for each scene and `GameState.chosen` for
-each choice.
+A count of times something happened, with the turns of the first and the last. `GameState.seen` keeps one per scene and `GameState.chosen` one per choice.
 
 ```ts shape
 import type { Times } from '@ifloom/engine'
@@ -5511,11 +5581,17 @@ type Times = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `n` | `number` |  |  | The number of times it happened. |
+| `first` | `number` |  |  | The turn it first happened on. |
+| `last` | `number` |  |  | The turn it last happened on. |
+
 ## TrackDef
 
 Type. Explained in [Audio](/docs/reference/audio#trackdef).
 
-A sound file the game ships, by id in `game.audio.tracks`.
+A track the game declares in `audio.tracks`, a sound file it ships. It plays on the `'sfx'` channel unless `channel` says otherwise.
 
 ```ts shape
 import type { TrackDef } from '@ifloom/engine'
@@ -5529,16 +5605,16 @@ type TrackDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `src` | `string` |  |  | The file, relative to the game's public folder: `'audio/cafe.ogg'`. See `audioSrc`. |
-| `channel` | `string` | yes |  | The channel it plays on. A `sound` effect and `[[sound:id]]` play it there; a background channel can only be given a track whose channel is a background one. `'sfx'` if left out. |
-| `loop` | `boolean` | yes |  | Whether it repeats while it is on a background channel. True if left out. |
-| `volume` | `number` | yes |  | Its own volume, from 0 to 1. 1 if left out. |
+| `src` | `string` |  |  | The track's file, under the game's `audio/` folder, such as `'audio/cafe.ogg'`. `audioSrc` turns it into a path. |
+| `channel` | `string` | yes |  | The channel the track plays on. `'sfx'` if left out. A `sound` effect and `[[sound:id]]` play it there, and a background channel takes only a track whose channel is a background one. |
+| `loop` | `boolean` | yes |  | The track's loop mark, true to repeat it while it's on a background channel. True if left out. |
+| `volume` | `number` | yes |  | The track's own volume, from 0 to 1. 1 if left out. |
 
 ## TraitData
 
 Type. Explained in [Entities](/docs/reference/entities#traitregistry-and-traitdata).
 
-The data a trait takes: what `TraitRegistry` says for an id a plugin declared, and `unknown` for any other.
+The data trait `K` takes, as `TraitRegistry` declares it, or `unknown` for an undeclared id.
 
 ```ts shape
 import type { TraitData } from '@ifloom/engine'
@@ -5551,11 +5627,10 @@ Uses: [`TraitRegistry`](#traitregistry).
 
 Function. Explained in [Entities](/docs/reference/entities#traitof).
 
-The data of one trait on one entity as play reads it, typed as
-`TraitRegistry` says for the id: `declaredTrait` for a declared entity;
-for one created in play, the trait data it was created with laid over that
-of the one it was created `like` (or else its kind's default). Undefined
-when it doesn't have the trait.
+Returns the data of one trait on one entity in play, typed by `TraitRegistry`, or undefined when it lacks the trait.
+
+A declared entity reads as `declaredTrait` does. An entity made in play reads the trait data it was made with, laid
+over its `like`'s, or else over its kind's default.
 
 ```ts shape
 import { traitOf, type Game } from '@ifloom/engine'
@@ -5568,9 +5643,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`TraitData`](#traitdata).
 
 Type. Explained in [Entities](/docs/reference/entities#traitregistry-and-traitdata).
 
-The traits plugins give meaning to, by trait id, with the data each one
-takes. Empty here: a plugin adds its own by augmenting it, which types
-`declaredTrait` and the `traits` an entity, a kind or content writes.
+The registry of the traits plugins declare, by trait id, with the data each takes. A plugin augments it to type
+`declaredTrait` and the `traits` field of entities, kinds and `traits` tables.
 
 ```ts fragment
 declare module '@ifloom/engine' {
@@ -5594,7 +5668,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [Entities](/docs/reference/entities#traitsource).
 
-What a game's traits are worked out from: its kinds, its entities and its `traits` table.
+The parts of a game its traits are worked out from, its kinds, its entities and its `traits` table.
 
 ```ts shape
 import type { TraitSource } from '@ifloom/engine'
@@ -5607,18 +5681,18 @@ type TraitSource = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `kinds` | [`KindDef[]`](#kinddef) | yes |  | The kinds of thing the game keeps several of, each with its own stats. |
-| `entities` | [`EntityDef[]`](#entitydef) | yes |  | The things of those kinds there are at the start. More can be created in play. |
-| `traits` | [`TraitTable`](#traittable) | yes |  | Traits by id and then entity. Given to `loadGame`, rows over what entities declare; on the game it returns, every entity's traits, worked out. Read them with `declaredTrait`. |
+| `kinds` | [`KindDef[]`](#kinddef) | yes |  | The game's kinds, the sorts of entity it keeps, each with its own stats. |
+| `entities` | [`EntityDef[]`](#entitydef) | yes |  | The game's entities at the start. Play can create more. |
+| `traits` | [`TraitTable`](#traittable) | yes |  | The game's traits, by trait id and then entity. In content given to `loadGame` they're rows over what entities declare. On the game `loadGame` returns, they're every entity's traits, worked out. Read them with `declaredTrait`. |
 
 ## TraitTable
 
 Type. Explained in [Entities](/docs/reference/entities#traittable).
 
-A trait's data on the entities that have it, by trait id and then entity:
-`{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. In
-content, rows that give an entity a trait, over what it declares itself;
-on a loaded game, every entity's traits, worked out.
+A table of trait data by trait id and then entity, such as `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`.
+
+In content, its rows give entities a trait over the entity's own. On a loaded game, it holds every entity's traits,
+worked out.
 
 ```ts shape
 import type { TraitTable } from '@ifloom/engine'
@@ -5634,11 +5708,10 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [The words table](/docs/reference/words#translatablefields).
 
-Every field of a game's content a player reads and a translation can give
-other words for, each once, by its key in a pack's `words` table, with the
-words it has and where it is. Load the game without its translation packs
-to list the words to translate: a `{ text }` block with no `id` is named by
-a hash of its words, so its key follows the words it has.
+Returns every field of the game's content a player reads and a translation can reword, each once, by its words-table
+key. Load the game without its translation packs to list the words to translate.
+
+A `{ text }` block with no `id` is keyed by a hash of its words, so its key changes when its words do.
 
 ```ts fragment
 const table = Object.fromEntries(translatableFields(game).map((field) => [field.key, field.text]))
@@ -5655,9 +5728,11 @@ Uses: [`Game`](#game), [`WordField`](#wordfield).
 
 Type. Explained in [Triggers](/docs/reference/triggers#triggerdef).
 
-Effects that happen by themselves: the first time `when` holds after a
-command, they apply. A text that arrives the turn after a meeting, a notice
-when a debt comes due, a scene that interrupts.
+A trigger the game declares in `triggers`, effects that run by themselves. They run the first time `when` holds
+after a command.
+
+Use one for a text that arrives the turn after a meeting, a notice when a debt comes due, or a scene that
+interrupts.
 
 ```ts shape
 import type { TriggerDef } from '@ifloom/engine'
@@ -5671,17 +5746,17 @@ type TriggerDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `when` | [`Condition`](#condition) |  |  | The trigger fires the first time this holds after a command. |
-| `effects` | [`EffectRef[]`](#effectref) |  |  | What it applies when it fires. |
-| `once` | `{ per: 'game' \| 'turn' }` | yes |  | Fire once in the whole game (`{ per: 'game' }`, the default), or at most once a turn (`{ per: 'turn' }`). |
+| `id` | `string` |  |  | The trigger's id, which `state.fired` records. |
+| `when` | [`Condition`](#condition) |  |  | The trigger's condition. The trigger fires the first time it holds after a command. |
+| `effects` | [`EffectRef[]`](#effectref) |  |  | The trigger's effects, which run when it fires. |
+| `once` | `{ per: 'game' \| 'turn' }` | yes |  | The trigger's limit, once in the whole game (`{ per: 'game' }`) or at most once a turn (`{ per: 'turn' }`). `{ per: 'game' }` if left out. |
 
 ## Ui
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#ui-and-the-hint-interfaces).
 
-A `ui` field as content writes it: the hints a UI package declared for that
-place, typed, and any others, which the engine carries all the same.
+A `ui` field of ui hints, typed by the hints a UI package declared for that target. It also takes undeclared hints,
+which the engine carries all the same.
 
 ```ts shape
 import type { Ui } from '@ifloom/engine'
@@ -5694,7 +5769,7 @@ type Ui<T> = {
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#uifield).
 
-A `ui` field in a game's content: what it's written on, that thing's id where it has one, where it is (as a problem names it), and the hints as written.
+A `ui` field in a game's content, with the thing it's written on and the place it is.
 
 ```ts shape
 import type { UiField } from '@ifloom/engine'
@@ -5706,11 +5781,18 @@ type UiField = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `on` | [`UiTarget`](#uitarget) |  |  | The sort of thing the field is written on, such as a scene, a choice or a stat. |
+| `id` | `string` | yes |  | The id of the thing the field is written on, where it has one. |
+| `where` | `string` |  |  | The place the field is, written as a `Problem`'s `where` is. |
+| `ui` | `unknown` |  |  | The field's hints, unchanged from content. |
+
 ## UiInContent
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent-1).
 
-What `uiInContent` finds: every `ui` field and every line of words, in the order the content checker walks them.
+The `ui` fields and lines of words `uiInContent` finds, in the order the content checker walks them.
 
 ```ts shape
 import type { UiInContent } from '@ifloom/engine'
@@ -5720,16 +5802,20 @@ type UiInContent = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `fields` | [`UiField[]`](#uifield) |  |  | The `ui` fields in the content. |
+| `lines` | [`TextLine[]`](#textline) |  |  | The lines of words that could hold a UI piece. |
+
 ## uiInContent
 
 Function. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent).
 
-Every `ui` field in a game's content and every line of words that could
-hold a UI piece, found by the content checker's own walk: scenes, the
-blocks and decisions in their flows, choices, actions, stats, kinds,
-entities, the game's, and whatever a plugin's content holds (a place's
-room and body). A UI package's checker reads it, so it checks its own
-hints without walking the content itself.
+Returns the `UiInContent` of a game, every `ui` field and every line that could hold a UI piece. A UI package's
+checker reads it to check its own hints.
+
+The content checker's own walk finds them, in scenes, the blocks and decisions of their flows, choices, actions,
+stats, kinds, entities, the game's own and plugins' content, such as a location's room and body.
 
 ```ts shape
 import { uiInContent, type Game } from '@ifloom/engine'
@@ -5742,10 +5828,10 @@ Uses: [`Game`](#game), [`UiInContent`](#uiincontent).
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#uitarget).
 
-What a `ui` field is written on, as a UI package's checker reads it: a
-scene or a place's room (`scene`), a choice, an action or a room's button
-(`choice`), a block or a section (`block`), a stat, a kind or an entity
-(`entity`), or the game.
+The target a `ui` field is written on, which a UI package's checker reads.
+
+It's a scene or room scene (`scene`), a choice or action (`choice`), a block or section (`block`), a stat, a kind or
+entity (`entity`), or the game.
 
 ```ts shape
 import type { UiTarget } from '@ifloom/engine'
@@ -5756,20 +5842,16 @@ type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
 
 Function. Explained in [Content, packs and loading](/docs/reference/loader#upgradepack).
 
-A pack brought up to `SCHEMA` and to each of `plugins`' content versions,
-step by step, or why it can't be: it was written for a newer engine or a
-newer version of a plugin, or for an engine so old there is no step from
-it. Pass the game's plugins (`game.plugins`, or the base's), so what each
-one reads is carried forward with the rest.
+Returns the pack upgraded to `SCHEMA` and to each plugin's content version. Returns a failed `Result` when the pack
+was written for a newer engine or plugin, or for a schema older than any step.
 
-The engine's step from each schema runs after every plugin step keyed by
-that schema or below, so a first-party plugin's step meets the pack as the
-engine had it then. Then each plugin's later steps run. A pack that records
-no version for a plugin is read as written for its schema, or for the
-plugin's own version if that is lower. The result records every plugin's
-version in `plugins`. A pack with nothing to do comes back as it is.
-`context` is what a step needs of the game besides the pack (see
-`PackContext`); `loadGame` gives it.
+Pass the game's plugins (`game.plugins`, or the base's), so each one's content is carried forward too. The engine's
+step from each schema runs after every plugin step keyed by that schema or below, so a first-party plugin's step
+meets the pack as the engine had it then. Each plugin's later steps run after.
+
+A pack that records no version for a plugin is read as written for its schema, or for the plugin's own version if
+that is lower. The result records every plugin's version in `plugins`, and a pack with nothing to upgrade comes back
+unchanged. `loadGame` passes `context` (see `PackContext`).
 
 ```ts shape
 import { upgradePack } from '@ifloom/engine'
@@ -5782,9 +5864,8 @@ Uses: [`Plugin`](/docs/api/engine-plugin#plugin), [`PackContext`](/docs/api/engi
 
 Type. Explained in [Calls by name](/docs/reference/custom#valueref).
 
-A value named by content, with what it is asked: a stat's ceiling, an
-app's badge, an achievement's progress. `{ value: 'messages/unread', with:
-{ channel: 'texts' } }`.
+A reference to a value by full name, with the arguments it is asked with. It sets a stat's ceiling, an app's badge
+or an achievement's progress, as in `{ value: 'messages/unread', with: { channel: 'texts' } }`.
 
 ```ts shape
 import type { ValueRef } from '@ifloom/engine'
@@ -5794,13 +5875,17 @@ type ValueRef = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `value` | `string` |  |  | The value's full name, a plugin's (`messages/unread`) or the game's (`game/…`). |
+| `with` | [`PluginArgs`](/docs/api/engine-plugin#pluginargs) | yes |  | The arguments the value is asked with. None if left out. |
+
 ## VariantMember
 
 Type. Explained in [Prose and markup](/docs/reference/prose#variantmember).
 
-One member of a variants list: a prose key, or a prose key with a weight.
-`{ prose: 'cafe.order/late', weight: 3 }` is drawn three times as often as a
-member of weight 1. A plain key has weight 1.
+A member of a variants list, a prose key or a prose key with a weight. A plain key has weight 1, so
+`{ prose: 'cafe.order/late', weight: 3 }` is drawn three times as often.
 
 ```ts shape
 import type { VariantMember } from '@ifloom/engine'
@@ -5811,7 +5896,7 @@ type VariantMember = string | { prose: string; weight?: number }
 
 Type. Explained in [Media](/docs/reference/media#videoflags).
 
-A video's flags as markup and data write them. Each one changes a default.
+The flags a video's markup or `{ media }` block can set, each changing one default.
 
 ```ts shape
 import type { VideoFlags } from '@ifloom/engine'
@@ -5825,16 +5910,16 @@ type VideoFlags = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `controls` | `boolean` | yes |  | Show the player's controls. It then waits to be started instead of playing by itself. |
-| `once` | `boolean` | yes |  | Play once instead of looping. |
-| `sound` | `boolean` | yes |  | Play with sound instead of muted. |
-| `poster` | `string` | yes |  | A still to show before it plays, as a path like any picture's. |
+| `controls` | `boolean` | yes |  | The controls flag, which shows the player's controls, so the video waits to be started instead of playing by itself. |
+| `once` | `boolean` | yes |  | The once flag, which plays the video once instead of looping. |
+| `sound` | `boolean` | yes |  | The sound flag, which plays the video with sound instead of muted. |
+| `poster` | `string` | yes |  | The still shown before the video plays, as a path like any picture's. |
 
 ## VideoView
 
 Type. Explained in [Media](/docs/reference/media#videoview).
 
-How a video plays, worked out from its flags.
+A video's playback settings as the player sees them, worked out from its `VideoFlags`.
 
 ```ts shape
 import type { VideoView } from '@ifloom/engine'
@@ -5849,17 +5934,17 @@ type VideoView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `autoplay` | `boolean` |  |  | Start playing as soon as it's shown: true unless it has controls. |
-| `loop` | `boolean` |  |  | Play it again when it ends. |
-| `muted` | `boolean` |  |  | Without sound: true unless its flags ask for sound. |
-| `controls` | `boolean` |  |  | Show the player's play, pause and volume controls. |
-| `poster` | `string` | yes |  | A still to show before it plays, through `artSrc`. |
+| `autoplay` | `boolean` |  |  | The video's autoplay mark, which starts it as soon as it is shown. True unless it shows controls. |
+| `loop` | `boolean` |  |  | The video's loop mark, which plays it again when it ends. True unless its flags ask to play once. |
+| `muted` | `boolean` |  |  | The video's muted mark. True unless its flags ask for sound. |
+| `controls` | `boolean` |  |  | The video's controls mark, which shows the player's play, pause and volume controls. |
+| `poster` | `string` | yes |  | The still shown before the video plays, through `artSrc`. |
 
 ## View
 
 Type. Explained in [The view](/docs/reference/view#view-1).
 
-Everything a UI draws for one state: the core's fields and each feature's.
+One state as a UI renders it, returned by `view`. It holds the core's fields and each feature's.
 
 ```ts shape
 import type { View } from '@ifloom/engine'
@@ -5890,39 +5975,36 @@ type View = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `title` | `string` |  |  | The game's title. |
-| `when` | `string \| null` |  |  | Where the game is in time, in plugins' words ("Day 3 · Wednesday morning"), or null if none says. |
-| `scene` | `{ id: string \| null; key: string; title: string; body: string; beats:` [`SceneBeat[]`](#scenebeat)`; fresh:…` |  |  |  |
-| `actions` | [`RenderedChoice[]`](#renderedchoice) |  |  | The buttons on offer besides the scene's choices: the game's actions and the plugins' (wait, sleep, travel), each ready to draw. |
-| `plugins` | [`ViewsIn`](#viewsin) |  |  | What each plugin gives the UI, by plugin id: typed for each plugin that declares its view in `ViewRegistry`. |
-| `entities` | [`EntitiesView[]`](#entitiesview) |  |  | Each listed kind with its listed entities, in the order the kinds are declared. |
-| `held` | [`HeldView[]`](#heldview) |  |  | What you hold, in the game's order of its entities: the protagonist's things while one is played, then the player's. |
-| `turn` | `number` |  |  | How many turns have passed: 0 on the first. |
-| `notices` | [`NoticesView`](#noticesview) |  |  |  |
-| `inputs` | [`InputView[]`](#inputview) |  |  | The inputs on offer now, in the order the game declares them, with the value each holds. |
-| `settings` | [`SettingView[]`](#settingview) |  |  | Every setting the game declares, in order, for a settings screen. |
-| `stats` | [`StatView[]`](#statview) |  |  |  |
-| `statsById` | `Record<string,` [`StatView`](#statview)`>` |  |  | Every declared stat, by id, whether or not it is listed. |
+| `when` | `string \| null` |  |  | The time in the game in the plugins' words, such as "Day 3 · Wednesday morning", or null when no plugin gives one. |
+| `scene` | `{ id: string \| null; key: string; title: string; body: string; beats:` [`SceneBeat[]`](#scenebeat)`; fresh:…` |  |  | The open scene as the player sees it, or the room when none is open, or the minigame while one is played. |
+| `actions` | [`RenderedChoice[]`](#renderedchoice) |  |  | The actions on offer besides the scene's choices, ready to render. The `actions` providers' come first, such as wait, sleep and travel, then the game's own `actions`. |
+| `plugins` | [`ViewsIn`](#viewsin) |  |  | The plugins' views, by plugin id. Each plugin that declares its view in `ViewRegistry` has it typed. |
+| `entities` | [`EntitiesView[]`](#entitiesview) |  |  | Each listed kind with its listed, visible entities, in the order the kinds are declared. A kind whose `listed` is false is left out, and a listed kind with no entities shows empty. |
+| `held` | [`HeldView[]`](#heldview) |  |  | The things you hold, in the game's order of its entities. The protagonist's come first while one is played, then the player's. |
+| `turn` | `number` |  |  | The number of turns that have passed, 0 on the first. |
+| `notices` | [`NoticesView`](#noticesview) |  |  | The notices the player hasn't dismissed, with a count for each tag. |
+| `inputs` | [`InputView[]`](#inputview) |  |  | The inputs on offer now, in the order the game declares them, each with its value. |
+| `settings` | [`SettingView[]`](#settingview) |  |  | Every setting the game declares, in order, for a settings page. |
+| `stats` | [`StatView[]`](#statview) |  |  | The player's listed stats the player can see now, in the order the game declares them. |
+| `statsById` | `Record<string,` [`StatView`](#statview)`>` |  |  | Every one of the player's stats, by id, listed and visible or not. |
 | `minigame` | [`MinigameView`](#minigameview) `\| null` |  |  | The minigame being played, or null. |
 | `timers` | [`TimerView[]`](#timerview) |  |  | The running timers, in the order they started. |
-| `audio` | [`AudioView`](#audioview) |  |  | What should be playing on each channel, and the sounds that are due. Empty when the game has no audio. |
-| `panel` | [`OpenPanel`](#openpanel) `\| null` |  |  | The panel open over the story: one the `panel` effect opened, else the open scene's own, else null. |
-| `saving` | [`SavingView`](#savingview) |  |  | Whether the player can save now, for a Save button. |
+| `audio` | [`AudioView`](#audioview) |  |  | The audio each channel should play and the sounds that are due. Empty when the game has no audio. |
+| `panel` | [`OpenPanel`](#openpanel) `\| null` |  |  | The panel open over the story. It's the one the `panel` effect opened, else the open scene's own, else null. |
+| `saving` | [`SavingView`](#savingview) |  |  | The player's leave to save now, with the reason when it's refused. |
 | `rolls` | [`Roll[]`](#roll) |  |  | The rolls the last command made, in order. Empty when it made none. |
-| `changes` | [`ChangeView[]`](#changeview) |  |  | The stats the last command moved that the player can see, the player's first, each with the words that say what moved. See `ChangeView`. |
+| `changes` | [`ChangeView[]`](#changeview) |  |  | The stats the last command moved that the player can see, the player's first, each with the words that say what moved. |
 
 ## view
 
 Function. Explained in [The view](/docs/reference/view#view).
 
-Everything the UI draws, assembled from the state in one pass.
+Returns the `View` of a state, the value a UI renders. Without `options.profile`, no plugin's view reads the
+profile.
 
-The scene, its choices, the room's buttons, the plugins' views and the audio
-come from `screen`, which renders the open scene once; the rest is read from
-the state here. `view` only formats: what each choice would apply and the
-picks stay on the screen.
-
-`options.profile` hands each plugin's view its profile namespace; the
-runner passes it, and without it no view sees the profile.
+The scene, its choices, the room's actions, the plugins' views and the audio come from `screen`, which renders the
+open scene once, and the rest comes from the state. `view` only formats, so each choice's effects and the pool picks
+stay on the screen.
 
 ```ts shape
 import { view, type Game } from '@ifloom/engine'
@@ -5935,10 +6017,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`ViewOptions`](#viewoptions),
 
 Type. Explained in [The view](/docs/reference/view#viewoptions).
 
-What a screen or a view is drawn with besides the state. `profile` is what
-the player's profile holds, by namespace: each plugin's view is handed its
-own as `context.profile`. The runner passes it; without it, no view sees
-the profile.
+Settings for `screen` and `view` besides the state. Without `profile`, no plugin's view reads the profile.
 
 ```ts shape
 import type { ViewOptions } from '@ifloom/engine'
@@ -5947,12 +6026,16 @@ type ViewOptions = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `profile` | `Readonly<Record<string, unknown>>` | yes |  | The player's profile, by namespace. Each plugin's view reads its own namespace as `context.profile`, and the runner passes this. |
+
 ## ViewRegistry
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
-What each plugin puts in the view, by its id, which `view.plugins` reads:
-`shop: ShopView`. The game's own `rules.view` is `game`.
+The registry of each plugin's view by plugin id (`shop: ShopView`), which types `view.plugins`. The game's own
+`rules.view` is under `game`.
 
 ```ts shape
 import type { ViewRegistry } from '@ifloom/engine'
@@ -5968,7 +6051,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#viewsin).
 
-What the plugins put in the view, by plugin id: typed for each plugin that declares its view in `ViewRegistry`.
+The plugins' views by plugin id, in `view.plugins`. Each plugin that declares its view in `ViewRegistry` is typed.
 
 ```ts shape
 import type { ViewsIn } from '@ifloom/engine'
@@ -5984,13 +6067,10 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [Randomness](/docs/reference/random#weighted).
 
-One of these, drawn from these parts with each one's weight: an item of
-weight 3 comes up three times as often as one of weight 1. A weight left
-out (`undefined`) counts as 1; a weight of 0 or less, or one that isn't a
-number, is never drawn. Undefined when nothing can be drawn.
+Returns one entry of `items`, drawn from `parts` by each entry's weight. Returns undefined when no entry can be drawn.
 
-With every weight a whole number the draw is `hash % total`, so a list where
-every weight is 1 draws exactly what `drawOne` would from the same parts.
+An entry of weight 3 comes up three times as often as one of weight 1. A weight left out counts as 1. An entry
+whose weight is 0 or less, or not a number, is never drawn.
 
 ```ts shape
 import { weighted } from '@ifloom/engine'
@@ -6001,7 +6081,7 @@ function weighted<T>(items: readonly T[], weightOf: (item: T) => number | undefi
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
-Blocks shown only while `condition` holds: a section, which can hold anything a body can.
+Returns a section of blocks shown only while `condition` holds. A section can hold any block a body can.
 
 ```ts shape
 import { when } from '@ifloom/engine'
@@ -6014,16 +6094,13 @@ Uses: [`Condition`](#condition), [`Block`](#block), [`BlockExtras`](#blockextras
 
 Function. Explained in [Actions and buttons](/docs/reference/actions#whynot).
 
-Why the player cannot do this right now, or undefined if they can.
+Returns the reason the player can't send this command now, or undefined when they can.
 
-The one place availability is decided. The reducer refuses a command with
-this line, and the view greys its button out with the same line — so a
-button and the rule behind it cannot disagree, and a refusal is always a
-sentence the player can be shown.
+The reducer refuses a command with this reason, and the view greys out its button with the same words. So a button
+and the rule behind it can't disagree, and every refusal is a sentence the player can read.
 
-Checked in the order the player would notice: a lock first (what the
-features refuse before anything else), the plugins' guards, then a command
-the game handles itself, then what the command needs.
+The engine checks in the order the player would notice: the core's refusals such as a lock first, then the plugins'
+guards, then the command's own needs.
 
 ```ts shape
 import { whyNot, type Game } from '@ifloom/engine'
@@ -6036,9 +6113,8 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`CommandRef`](#commandref).
 
 Function. Explained in [Entities](/docs/reference/entities#withtrait).
 
-Every entity in the game that has a trait, as references, as play reads
-it: declared ones not removed, in content order, then those created in
-play (with their kind's trait, their `like`'s or their own).
+Returns every entity in the game that has a trait, as references. Declared ones not removed come first in content
+order, then those made in play with their kind's, their `like`'s or their own trait.
 
 ```ts shape
 import { withTrait, type Game } from '@ifloom/engine'
@@ -6051,7 +6127,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
 
 Type. Explained in [The words table](/docs/reference/words#wordfield).
 
-One field of a game's content a translation can give other words for.
+A field of the game's content a player reads and a translation can reword, as `translatableFields` lists it.
 
 ```ts shape
 import type { WordField } from '@ifloom/engine'
@@ -6064,15 +6140,15 @@ type WordField = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `key` | `string` |  |  | Its key in a pack's `words` table: `action.wait.label`. |
-| `text` | `string` |  |  | The words it has, as written, tokens and markup included. |
-| `where` | `string` |  |  | Where it is, as a problem names it: `scene cafe.counter`, `quests coffee`. |
+| `key` | `string` |  |  | The field's key in a pack's words table, such as `action.wait.label`. |
+| `text` | `string` |  |  | The field's words from content, tokens and markup included. |
+| `where` | `string` |  |  | The field's place as a problem names it, such as `scene cafe.counter` or `quests coffee`. |
 
 ## WordPart
 
 Type. Explained in [The words table](/docs/reference/words#wordpart).
 
-One field of a `WordShape`.
+One field's part in a `WordShape`, telling how the walk reads that field.
 
 ```ts shape
 import type { WordPart } from '@ifloom/engine'
@@ -6085,9 +6161,10 @@ Uses: [`WordShape`](#wordshape).
 
 Type. Explained in [The words table](/docs/reference/words#wordshape).
 
-Which fields of a piece of content are words a translation can replace: a
-plugin's `words` gives one for each list of its `data`, and a trait's
-`words` one for its data. Each field of the shape is one of these:
+A map of the fields of an entry that hold words a translation can replace. A plugin's `defineData` declares one for
+each `data` list, and a trait's `words` declares one for its data.
+
+Each field of the shape is one of these:
 - `true`: a field of words, or a record of them (a stat's `{ one, other }`);
 - `'blocks'`: a list of blocks, as a scene's body;
 - `'effects'`: a list of effects, for the words of the notices they raise;
@@ -6108,7 +6185,7 @@ type WordShape = {
 
 Function. Explained in [Entities](/docs/reference/entities#writeentity).
 
-The state with one entity's record replaced. A record for an entity not there adds it, after the rest of its kind.
+Returns the state with one entity's record replaced. A record for an entity not yet there is added after the rest of its kind.
 
 ```ts shape
 import { writeEntity } from '@ifloom/engine'
@@ -6121,7 +6198,7 @@ Uses: [`GameState`](#gamestate), [`EntityState`](#entitystate).
 
 Const. Explained in [Entities](/docs/reference/entities#player-and-you).
 
-Whoever the player is playing now: the protagonist the `you` effect last chose, or the player.
+The holder id of whoever the player is playing now, the protagonist the `you` effect last chose or else the player.
 
 ```ts shape
 import { YOU } from '@ifloom/engine'

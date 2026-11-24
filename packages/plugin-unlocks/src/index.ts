@@ -1,16 +1,13 @@
 /**
- * @ifloom/plugin-unlocks: codes a player enters to unlock things, such as
- * the codes a game's supporters get. An unlock can open a cheat or a scene
- * through the `unlocks/has` condition, and can carry content of its own:
- * packs that `ifloom build` encrypts with a key only the code can make, so
- * the shipped game can't be read or patched open without it.
+ * The unlocks plugin, which checks codes the player enters to unlock things, such as the codes a game's supporters get.
  *
- * The game ships no codes, only a slow hash of each. A code that works is
- * remembered in the player's profile (as a proof derived from it, never the
- * code), so it outlives saves and new games, and the save records the unlock
- * through the `unlocks/record` command, so a replay plays the same.
+ * An unlock can open a cheat or a scene through the `unlocks/has` condition. It can also carry packs of its own, which
+ * `ifloom build` encrypts with a key only the code can make, so the shipped game can't be read or patched open
+ * without it.
  *
- * Imports only @ifloom/engine and requires no other plugin (ADR 0003).
+ * The game ships no codes, only a slow hash of each. The player's profile remembers a code that works as a proof made
+ * from it, never the code, so it outlives saves. The save records the unlock through the `unlocks/record` command, so
+ * a replay plays the same. The plugin requires no other plugin.
  */
 import { stringOf, upgradePack, type CommandRef, type Condition, type Game, type Pack, type Profile, type Result, type Runner } from '@ifloom/engine'
 import {
@@ -65,96 +62,104 @@ const CALLS = defineCalls(ID, {
 /** Where the page keeps the encrypted content `ifloom build` puts in it. */
 const GLOBAL = '__ifloomUnlocks'
 
-/** An unlock in the game's content: one entry of `data.unlocks.unlocks`, the plugin's list of unlocks. */
+/** An unlock the game declares in `data.unlocks.unlocks`. It holds the code's hash, never the code. */
 export type UnlockDef = {
+  /** The unlock's id. */
   id: string
-  /** Its name for the player: "Supporter edition". */
+  /** The unlock's name, such as "Supporter edition". */
   name: string
-  /** What it opens, for the list of unlocks. */
+  /** The unlock's description, a line for the list of unlocks. */
   description?: string
-  /** The code's hash, in hex, as `ifloom unlock-hash` prints it. Never the code. */
+  /** The code's hash in hex, as `ifloom unlock-hash` prints it. */
   hash: string
-  /** Extra salt for the hash, mixed in after the game's and the unlock's ids. Change it to change the hash without changing the code. */
+  /** The unlock's extra salt, mixed in after the game's and the unlock's ids. Changing it changes the hash without changing the code. */
   salt?: string
-  /** PBKDF2's rounds for this code. 600,000 if left out; fewer only in tests. */
+  /** The number of PBKDF2 rounds for this code. 600,000 if left out, and fewer only in tests. */
   iterations?: number
 }
 
-/** What the plugin keeps in a save: the unlocks recorded in it, in the order they were. */
-export type UnlocksState = { unlocked: string[] }
+/** The unlocks a save keeps. Unlocks themselves are read from content. */
+export type UnlocksState = {
+  /** The ids of the unlocks recorded in this save, in the order they were recorded. */
+  unlocked: string[]
+}
 
-/** What the plugin keeps in the player's profile, under `unlocks`: a proof made from each code that worked, in hex. Never the code. */
-export type UnlocksProfile = { unlocked: Record<string, { proof: string }> }
+/** The record the plugin keeps in the player's profile, under `unlocks`. It never holds a code. */
+export type UnlocksProfile = {
+  /** The proof made from each code that worked, in hex, by unlock id. */
+  unlocked: Record<string, { proof: string }>
+}
 
-/** An unlock's content, encrypted, as `ifloom build` writes it into the page. */
+/** An unlock's encrypted packs as `ifloom build` writes them into the page. */
 export type LockedContent = {
-  /** The format of this file: 1. */
+  /** The format of this record, 1. */
   ifloomUnlock: 1
   /** The game's id. */
   game: string
   /** The unlock's id. */
   unlock: string
-  /** AES-GCM's nonce, in base64. */
+  /** The AES-GCM nonce, in base64. */
   iv: string
   /** The packs as JSON, encrypted, in base64. */
   data: string
 }
 
-/** An unlock as the UI shows it. */
+/** An unlock as the player sees it, in `view.plugins.unlocks.unlocks`. */
 export type UnlockView = {
+  /** The unlock's id. */
   id: string
+  /** The unlock's name. */
   name: string
-  /** What it opens, as the player reads it; `''` with none. */
+  /** The unlock's description, or `''` when it has none. */
   description: string
-  /** Recorded in this save. */
+  /** True when this save records the unlock. */
   unlocked: boolean
 }
 
-/** What the UI reads at `view.plugins.unlocks`. */
+/** The unlocks as the player sees them, in `view.plugins.unlocks`. */
 export type UnlocksView = {
-  /** Every unlock, in the order the game declares them. */
+  /** The game's unlocks, in the order the game declares them. */
   unlocks: UnlockView[]
-  /** How many are unlocked. */
+  /** The number of unlocks this save records. */
   unlocked: number
-  /** How many unlocks the game declares. */
+  /** The number of unlocks the game declares. */
   total: number
 }
 
-/** What a code that worked unlocked. */
+/** The unlock a code opened, as `enterCode` returns it. */
 export type Entered = {
   /** The unlock's id. */
   unlock: string
-  /** Its name. */
+  /** The unlock's name. */
   name: string
-  /** It was unlocked already: the code worked, and nothing changed. */
+  /** True when the unlock was open already, so the code worked and changed nothing. */
   already: boolean
-  /** It has content the game in play doesn't have yet: build the game again (reload the page) to add it. */
+  /** True when the unlock has packs the game in play doesn't have yet. Reloading the page builds the game again with them. */
   restart: boolean
 }
 
-/**
- * Where entering codes stands, as `startUnlocks` reports it in the runner's
- * snapshot, at `snapshot.helpers.unlocks`, so every UI reads it the same way.
- */
+/** The state of code entry that `startUnlocks` reports in the runner's snapshot, at `snapshot.helpers.unlocks`. */
 export type UnlockStatus = {
   /**
-   * `checking` while a code is checked (which takes a moment on purpose) and
-   * while the codes the profile remembers are, as codes start; `wrong` when
-   * the last code didn't work; `unlocked` when it did; `idle` otherwise.
+   * The state of code entry, `checking`, `wrong`, `unlocked` or `idle`. It's `wrong` when the last code didn't work and
+   * `unlocked` when it did.
+   *
+   * It's `checking` while a code is checked, slowly on purpose, and while the profile's remembered codes are checked
+   * at start.
    */
   status: 'idle' | 'checking' | 'wrong' | 'unlocked'
-  /** Why the last code didn't work, while `status` is `wrong`; null otherwise. */
+  /** The reason the last code didn't work while `status` is `wrong`, else null. */
   reason: string | null
-  /** What the last code unlocked, while `status` is `unlocked`; null otherwise. */
+  /** The unlock the last code opened while `status` is `unlocked`, else null. */
   entered: Entered | null
 }
 
-/** The game's unlocks: `data.unlocks.unlocks`, from its content and packs. */
+/** Returns the game's unlocks, from `data.unlocks.unlocks` in its content and packs. */
 export function unlocksOf(game: Game): UnlockDef[] {
   return DATA.unlocks.all(game)
 }
 
-/** The environment variable `ifloom build` reads an unlock's code from: `IFLOOM_UNLOCK_SUPPORTER` for `supporter`. */
+/** Returns the name of the environment variable `ifloom build` reads an unlock's code from, such as `IFLOOM_UNLOCK_SUPPORTER` for `supporter`. */
 export function envName(unlock: string): string {
   return `IFLOOM_UNLOCK_${unlock.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`
 }
@@ -170,23 +175,24 @@ async function proofFor(code: string, game: string, def: UnlockDef): Promise<Uin
 }
 
 /**
- * The hash of a code for an unlock, in hex: what goes in the unlock's `hash`.
- * `ifloom unlock-hash` prints it, so you never write the code into the game.
+ * Returns the hash of a code for an unlock, in hex, the value for the unlock's `hash`. `ifloom unlock-hash` prints
+ * it, so you never write the code into the game.
  */
 export async function unlockHash(code: string, game: string, def: Pick<UnlockDef, 'id' | 'salt' | 'iterations'>): Promise<string> {
   return hashOfProof(await proofOf(code, saltOf(game, def.id, def.salt), iterationsOf(def)))
 }
 
-/** Whether this is the unlock's code. */
+/** Returns true when the code is the unlock's code. */
 export async function codeFits(code: string, game: string, def: UnlockDef): Promise<boolean> {
   return (await proofFor(code, game, def)) !== undefined
 }
 
 /**
- * Encrypt an unlock's packs under its code, for the page: what `ifloom build`
- * does with each file in `src/unlocks/`. The packs must be data, as a mod's
- * are. Throws if the code isn't the unlock's, so a build can't ship content
- * no code opens.
+ * Returns an unlock's packs encrypted under its code, for the page, as `ifloom build` does with each file in
+ * `src/unlocks/`. The packs must be data, as a mod's are.
+ *
+ * It throws when the code isn't the unlock's, so a build can't ship content no code opens, and when a pack holds a
+ * function.
  */
 export async function lockContent(code: string, game: string, def: UnlockDef, packs: readonly Pack[]): Promise<LockedContent> {
   const proof = await proofFor(code, game, def)
@@ -211,13 +217,13 @@ function functionIn(value: unknown, at = 'packs'): string | undefined {
   return undefined
 }
 
-/** The script `ifloom build` puts in the page's head: the encrypted content, by unlock. */
+/** Returns the script `ifloom build` puts in the page's head, which holds the encrypted content by unlock. */
 export function contentScript(locked: readonly LockedContent[]): string {
   const map = Object.fromEntries(locked.map((entry) => [entry.unlock, entry]))
   return `<script>window.${GLOBAL}=${JSON.stringify(map).replace(/</g, '\\u003c')}</script>`
 }
 
-/** The encrypted content the page holds, by unlock: what `ifloom build` put there. Empty in a page without any. */
+/** Returns the encrypted content `ifloom build` put in the page, by unlock. Returns an empty record in a page without any. */
 export function lockedContent(): Readonly<Record<string, LockedContent>> {
   const found = (globalThis as Record<string, unknown>)[GLOBAL]
   return found && typeof found === 'object' ? (found as Record<string, LockedContent>) : {}
@@ -247,12 +253,11 @@ function proofsIn(stored: unknown): Record<string, Uint8Array> {
 }
 
 /**
- * The content of every unlock the profile remembers, decrypted and checked
- * that this engine can read it, to load over the game's content (which
- * upgrades it). Call it before
- * building the game: `loadGame(content, base, { packs: unlocked.packs })`. An
- * unlock whose code has changed since (a new release with new codes) can't be
- * opened, and is listed in `problems`; the player enters the new code.
+ * Returns the packs of every unlock the profile remembers, decrypted and checked that this engine can read them. Call
+ * it before building the game, and pass them as `loadGame(content, base, { packs: unlocked.packs })`.
+ *
+ * An unlock whose code has changed since it was entered, as in a new release with new codes, can't be opened and is
+ * listed in `problems`. The player then enters the new code.
  */
 export async function unlockedPacks(
   game: string,
@@ -284,13 +289,13 @@ export async function unlockedPacks(
 const started = new WeakMap<Runner, (code: string) => Promise<Result<Entered>>>()
 
 /**
- * Codes in a running game, shaped like `startClock`: one call that returns
- * the way to stop. From then on it records every unlock the profile
- * remembers into the game in play and into each new game and loaded save, so
- * a supporter enters a code once, and `enterCode` checks the codes the player
- * enters. Where it stands is in the runner's snapshot, as an `UnlockStatus`
- * at `snapshot.helpers.unlocks`. Needs the runner's `profile`. Pass `content`
- * only in tests: the page's own is read otherwise. Start it once per runner.
+ * Starts code entry on a runner and returns the function that stops it. Start it once per runner, which needs a
+ * `profile`.
+ *
+ * It records every unlock the profile remembers into the game in play, each new game and each loaded save, so a
+ * supporter enters a code once, and `enterCode` checks the codes the player enters. It reports an
+ * {@link UnlockStatus} at `snapshot.helpers.unlocks`. Pass `content` only in tests, since it reads the page's own
+ * otherwise.
  */
 export function startUnlocks(runner: Runner, options: { content?: Readonly<Record<string, LockedContent>> } = {}): () => void {
   const game = runner.game
@@ -386,10 +391,11 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
 }
 
 /**
- * Try a code against every unlock, on a runner `startUnlocks` was started on:
- * what it unlocked, or why not. One that works is remembered in the profile
- * and recorded in the game in play. While it is checked, and after, the
- * runner's snapshot says so at `helpers.unlocks`. Never throws.
+ * Returns the unlock a code opens, checked against every unlock on a runner `startUnlocks` was started on, or the
+ * reason it opens none. It never throws.
+ *
+ * The profile remembers a code that works, and the game in play records its unlock. The runner's snapshot reports the
+ * check at `helpers.unlocks` while it runs and after.
  */
 export function enterCode(runner: Runner, code: string): Promise<Result<Entered>> {
   const enter = started.get(runner)
@@ -397,8 +403,8 @@ export function enterCode(runner: Runner, code: string): Promise<Result<Entered>
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, put unlocks in its content's
- * `data.unlocks.unlocks`, and start entering codes with `startUnlocks`.
+ * Returns the unlocks plugin for the game's `plugins`. The game declares its unlocks in `data.unlocks.unlocks`, and
+ * `startUnlocks` starts code entry.
  */
 function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
   return definePlugin<UnlocksState, UnlocksView, typeof CALLS>({
@@ -462,13 +468,18 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
   })
 }
 
-/** A condition: the unlock is recorded in this save. */
+/** Returns the `unlocks/has` condition, which holds once this save records the unlock. */
 const hasUnlock = (unlock: string): Condition => CALLS.conditions.has({ unlock })
-/** A command: record the unlock in this save. `startUnlocks` sends it; a game rarely needs to. */
+/** Returns the `unlocks/record` command, which records the unlock in this save. `startUnlocks` sends it, so a game seldom needs it. */
 const recordUnlock = (unlock: string): CommandRef => CALLS.commands.record({ id: unlock })
 
 /**
- * The plugin, with its helpers on it: `unlocks()` makes the plugin for the
- * game's `plugins`, and content is written with `unlocks.has('supporter')`.
+ * The unlocks plugin's factory, with its helpers as properties. `unlocks()` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `unlocks.has('supporter')`.
  */
-export const unlocks = Object.assign(unlocksPlugin, { has: hasUnlock, record: recordUnlock })
+export const unlocks = Object.assign(unlocksPlugin, {
+  /** Returns the `unlocks/has` condition, which holds once this save records the unlock. */
+  has: hasUnlock,
+  /** Returns the `unlocks/record` command, which records the unlock in this save. `startUnlocks` sends it. */
+  record: recordUnlock,
+})

@@ -1,8 +1,6 @@
 /**
- * Who someone is, for the screen: a scene's speaker, the sender of a
- * message, whoever a spoken line is written under. People are entities, so
- * the answer is the entity's own name, picture and hints, read as any
- * entity's are, with no plugin to ask.
+ * Speakers for the screen, such as a scene's speaker, a message's sender or the entity a spoken line is written
+ * under. Each speaker is an entity, so the engine reads its name, picture and hints without asking a plugin.
  */
 import type { Game } from './game.ts'
 import type { GameState } from './types.ts'
@@ -13,24 +11,25 @@ import { artSrc, type SpeakerFinder } from './sceneBody.ts'
 import { pluginSaveName } from './plugin.ts'
 import { stringOf } from './strings.ts'
 
-/** Who is speaking, or who sent something, as the screen draws them. */
+/** A speaker or sender as the player sees them, in `view.scene.speaker` and in plugins' views. */
 export type SpeakerView = {
-  /** The id as content named them: `'ava'`, or a reference, `'character:ava'`. */
+  /** The speaker's id in the content, a bare id (`'ava'`) or a reference (`'character:ava'`). */
   id: string
-  /** The entity they are. */
+  /** The speaker's entity. */
   ref: EntityRef
+  /** The speaker's name, read from their entity with its tokens filled. */
   name: string
-  /** Their entity's picture, through `artSrc`; null for none. */
+  /** The speaker's picture, from their entity through `artSrc`, or null when the entity has none. */
   image: string | null
-  /** Their presentation hints, as their entity has them; left out with none. See `EntityUi`. */
+  /** The speaker's entity's ui hints (see `EntityUi`). Left out when the entity has none. */
   ui?: Ui<EntityUi>
 }
 
 /**
- * Who a speaker id is: their entity's name (its tokens filled), picture and
- * hints. Null when the id names no entity in the game. What a scene's
- * `speaker` becomes on screen, and what a plugin asks for the sender of a
- * message or a post.
+ * Returns the speaker a speaker id names, with their entity's name, picture and hints. Returns null when the id names
+ * no entity in the game.
+ *
+ * The view renders a scene's `speaker` with it, and a plugin calls it for the sender of a message or a post.
  */
 export function speakerOf(state: GameState, game: Game, id: string): SpeakerView | null {
   const ref = speakerRef(state, game, id)
@@ -41,22 +40,21 @@ export function speakerOf(state: GameState, game: Game, id: string): SpeakerView
 }
 
 /**
- * The name the player's own lines show: the name a save is listed under
- * (the first `saveName` that answers, such as the name the player typed), else the game's
- * string `you` (`You` in English).
+ * Returns the name the player's own spoken lines show. It is the first `saveName` answer, such as the name the player
+ * typed, else the string `you` (`You` in English).
  */
 export function playerName(state: GameState, game: Game): string {
   return pluginSaveName(game, state) ?? stringOf(game, 'you')
 }
 
 /**
- * Who a spoken line under an id is, in this game. `'player'` is the player.
- * `'you'` is whoever the player is playing: their entity, else the player.
- * Any other id names an entity as a scene's `speaker` does (`'ava'` is
- * `character:ava`, else the one entity with that id), and the line is the
- * player's own when that entity is the one the player is playing. The name
- * shown is the entity's or the player's. An id that names no entity is a
- * character's line under the id, and the checker reports it.
+ * Returns the function that finds the speaker of a spoken line by its id, in this game and state. The name shown is
+ * the entity's or the player's.
+ *
+ * `'player'` is the player, and `'you'` is whoever the player is playing. Any other id names an entity the way a
+ * scene's `speaker` does (`'ava'` is `character:ava`, else the one entity with that id), and the line is the player's
+ * own when that entity is the one the player is playing. An id that names no entity gives a character's line under
+ * the bare id, and the content checker reports it.
  */
 export function lineSpeakers(state: GameState, game: Game): SpeakerFinder {
   const playing = protagonist(state)

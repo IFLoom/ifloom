@@ -1,20 +1,27 @@
 /**
- * @ifloom/plugin-shop/react: the shop's React UI, for a game drawn with
- * `@ifloom/react`. List `shopUi` in the game's `plugins` to have the `shop`
- * panel drawn as a vendor's counter, or draw it yourself from `useShop`.
+ * The shop plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `shopUi` in the game's `plugins` to render the `shop` panel as a vendor's counter. To render it yourself, read
+ * `useShop`.
  */
 import type { EntityRef, GameState, Result } from '@ifloom/engine'
 import { ChoiceButton, usePart } from '@ifloom/react'
 import { overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 import { shop, type ShopView, type VendorView } from '../index.ts'
 
-/** The shop's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.buy': 'Get' }`. */
+/** The shop plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings, such as `{ 'ui.buy': 'Get' }`. */
 export const SHOP_WORDS = {
+  /** The label of a good's buy button. */
   buy: 'Buy',
+  /** The label of a good's sell button, with its `{price}`. */
   sellFor: 'Sell for {price}',
+  /** The count of a good the vendor has left, with `{n}`. */
   stockLeft: '{n} left',
+  /** The count of a good the player holds, with `{n}`. */
   owned: 'You have {n}',
+  /** The badge on a good with today's discount, with its `{percent}`. */
   percentOff: '{percent}% off',
+  /** The line a vendor's counter shows while it has no goods. */
   noGoods: 'Nothing for sale.',
 } as const
 
@@ -44,17 +51,17 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useShop` returns: the shop plugin's view, the vendors where the player is, and its commands. */
+/** The shop plugin's view with the vendors here and functions that send its commands, as `useShop` returns it. */
 export type ShopControls = ShopView & {
-  /** The vendors at the player's location (every vendor, in a game without places): what a layout of your own can show where the player is. */
+  /** The vendors whose `here` is true, for a layout of your own to show. */
   here: VendorView[]
-  /** Buy `count` (1 if left out) of a thing, by its reference: sends `shop/buy`, refused with its reason as the buy button says. */
+  /** Sends `shop/buy` for `count` of a thing, 1 if left out. A refusal carries the same reason the buy button shows. */
   buy: (vendor: string, entity: EntityRef, count?: number) => Result<GameState>
-  /** Sell `count` (1 if left out) of a thing back: sends `shop/sell`. */
+  /** Sends `shop/sell` for `count` of a thing, 1 if left out. */
   sell: (vendor: string, entity: EntityRef, count?: number) => Result<GameState>
 }
 
-/** The shop plugin's view with its commands, or null in a game without the plugin. `ShopDialog`, `ShopCounter` and the `shop` panel are drawn from it. */
+/** Returns the shop plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useShop(): ShopControls | null {
   const { view, send } = usePlugin(SHOP)
   if (!view) return null
@@ -66,7 +73,13 @@ export function useShop(): ShopControls | null {
   }
 }
 
-export type ShopCounterProps = { vendor: VendorView; className?: string }
+/** Props for `ShopCounter`. */
+export type ShopCounterProps = {
+  /** The vendor to render, from `view.plugins.shop`. */
+  vendor: VendorView
+  /** The class added to the counter's root. */
+  className?: string
+}
 
 function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
   const { words } = usePlugin(SHOP)
@@ -117,16 +130,23 @@ function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
 }
 
 /**
- * A vendor's goods: each with its picture and name and a line about it,
- * today's discount and the full price struck out, how many are left (when
- * they can run out) and how many the player has, a Buy button
- * with today's price, and a Sell button with what it pays when the vendor
- * buys back and the player has one. A greyed-out button says why on it. A
- * closed vendor says so above its goods.
+ * Renders a vendor's goods from a {@link VendorView}, each with its picture, name, price, stock and a buy button. A
+ * sell button shows when the vendor buys back and the player holds one.
+ *
+ * Each good also shows its description, today's discount and how many the player holds.
+ * A disabled button shows its reason, and a closed vendor shows its reason above its goods. A preset can style the
+ * parts `shop`, `shop-closed`, `shop-empty`, `goods`, `good`, `good-name`, `good-desc`, `good-image`, `good-details`,
+ * `good-off`, `good-full-price`, `good-stock`, `good-owned` and `good-actions`.
  */
 export const ShopCounter = overridable('ShopCounter', ShopCounterImpl)
 
-export type ShopDialogProps = { vendorId: string | null; onClose: () => void }
+/** Props for `ShopDialog`. */
+export type ShopDialogProps = {
+  /** The id of the vendor to show, or null to keep the dialog closed. */
+  vendorId: string | null
+  /** The function the dialog calls when the player closes it. */
+  onClose: () => void
+}
 
 function ShopDialogImpl({ vendorId, onClose }: ShopDialogProps) {
   const vendor = useShop()?.vendors.find((entry) => entry.id === vendorId)
@@ -137,7 +157,10 @@ function ShopDialogImpl({ vendorId, onClose }: ShopDialogProps) {
   )
 }
 
-/** The vendor with this id in a dialog, titled with its name and drawn as a `ShopCounter`. Closed while `vendorId` is null or names no vendor. */
+/**
+ * Renders the vendor with this id from `view.plugins.shop.vendors` as a `ShopCounter` in a dialog titled with its name.
+ * The dialog is closed while `vendorId` is null or names no vendor.
+ */
 export const ShopDialog = overridable('ShopDialog', ShopDialogImpl)
 
 /** The `shop` panel: the vendor whose counter it shows, the view's `panel`. */
@@ -147,10 +170,10 @@ function ShopPanel() {
 }
 
 /**
- * The shop's React UI, for `plugins` on `mountGame` or `GameProvider`: the
- * `shop` panel, which `shop.open(vendor)` opens, drawn as that vendor's
- * `ShopCounter` and titled with its name, and the shop's words. The shop puts
- * nothing in the layout by itself: content opens a vendor.
+ * The shop plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `shop` panel, which
+ * `shop.open(vendor)` opens, as that vendor's `ShopCounter` titled with its name, and adds the plugin's words.
+ *
+ * It adds nothing to the layout, so a counter shows only when content opens one.
  */
 export const shopUi: PluginUi = {
   ...SHOP,

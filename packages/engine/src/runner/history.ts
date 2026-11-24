@@ -10,27 +10,30 @@ import type { View } from '../view.ts'
 import type { BacklogEntry } from './backlog.ts'
 
 /**
- * Undo and redo. Off unless the game asks for it; when on, `depth` steps deep,
- * and never back past a barrier.
+ * Settings for undo and redo. Undo is off unless `createRunner` is given these or `true`, and never steps back past a
+ * barrier these set.
  */
 export type HistoryOptions = {
-  /** How many steps back undo reaches. 50 if left out. */
+  /** The number of steps back undo reaches. 50 if left out. */
   depth?: number
-  /** No undo past a choice the game marks `irreversible`. On unless set false. */
+  /** The setting that stops undo at a choice marked `irreversible`. On unless set to false. */
   stopAtIrreversible?: boolean
-  /** No undo past the start of a new turn. */
+  /** The setting that stops undo at the start of a new turn. Off if left out. */
   stopAtNewTurn?: boolean
-  /** No undo past any state where this holds, tested after each command. */
+  /** A condition that stops undo at any state where it holds, tested after each command. */
   stopWhen?: Condition
 }
 
-/** One place in play to step back or forward to: its state, its backlog and the commands that led there. */
+/** A point in play that undo or redo goes to, with its state, its backlog and the commands that led there. */
 export type Step = { state: GameState; backlog: BacklogEntry[]; commands: Command[] }
 
+/** The runner's undo and redo steps. */
 export type History = {
-  /** Whether the game turned undo on. */
+  /** True when the game turned undo on. */
   readonly on: boolean
+  /** True when there is a step to undo. */
   readonly canUndo: boolean
+  /** True when there is a step to redo. */
   readonly canRedo: boolean
   /**
    * A command ran from `prior`: at a barrier, nothing before it can be undone;
@@ -46,6 +49,7 @@ export type History = {
   clear(): void
 }
 
+/** Returns the undo and redo steps for a game, off when `given` is false or left out. */
 export function history(game: Game, given: HistoryOptions | boolean | undefined): History {
   const options: HistoryOptions | null = given === true ? {} : given ? given : null
   const depth = options?.depth ?? 50

@@ -1,17 +1,17 @@
 /**
- * Holding things: who holds what, and how many. The player and unique
- * entities hold; any entity can be held. What content declares an entity
- * starts with (`EntityDef.at`) is read through, and `state.held` keeps only
- * what play changed: a count written once, 0 included, is kept, so a thing
- * placed and then used up stays used up, and a thing a later version of the
- * game places reaches an older save. Who holds a thing is worked out from
- * both and kept for the state it was read from, never saved.
+ * Holdings, the counts of each thing each holder holds. The player and unique entities hold, and any entity can be
+ * held.
+ *
+ * The engine reads each entity's starting holder from content (`EntityDef.at`), and `state.held` keeps only the
+ * counts play changed. A count written once is kept, 0 included, so a thing used up stays used up, and a thing a later
+ * version of the game places reaches an older save. The engine works out each thing's holders from both and caches
+ * them for that state, never in the save.
  */
 import type { Game } from './game.ts'
 import type { Condition, Effect, GameState } from './types.ts'
 import { entityDef, everyEntity, hasEntity, isUnique, parseRef, PLAYER, resolveHolder, YOU, type EntityRef, type Holder, type Placement } from './entities.ts'
 
-/** A placement as counts by holder: `'player'` is one held by the player. */
+/** Returns a placement as counts by holder. A single holder such as `'player'` counts as 1 held there. */
 export function placementCounts(at: Placement | undefined): Record<string, number> {
   if (at === undefined) return {}
   return typeof at === 'string' ? { [at]: 1 } : (at as Record<string, number>)
@@ -47,7 +47,7 @@ type Cached = { game: Game; removed: unknown; entities: unknown; holdings: Holdi
 const holdingsCache = new WeakMap<object, Cached>()
 const NOTHING_HELD = {}
 
-/** Whether a holder is there to hold: the player always, a unique entity while it is in the game. */
+/** Returns true when `holder` can hold things now. The player always can, and a unique entity can while it is in the game. */
 export function canHold(state: GameState, game: Game, holder: string): holder is Holder {
   if (holder === PLAYER) return true
   return isUnique(game, holder) && hasEntity(state, game, holder)
@@ -85,32 +85,31 @@ function holdings(state: GameState, game: Game): Holdings {
   return out
 }
 
-/** How many of a thing a holder holds (`'you'` by default): 0 for anything not held there, or not in the game. */
+/** Returns the count of a thing a holder holds, `'you'` if left out. Returns 0 for a thing not held there or not in the game. */
 export function heldCount(state: GameState, game: Game, ref: string, at: string = YOU): number {
   return holdings(state, game).byHolder.get(resolveHolder(state, at))?.get(ref) ?? 0
 }
 
-/** How many of a thing are held, by everyone together. */
+/** Returns the count of a thing held by every holder together. */
 export function heldTotal(state: GameState, game: Game, ref: string): number {
   let total = 0
   for (const count of holdings(state, game).byThing.get(ref)?.values() ?? []) total += count
   return total
 }
 
-/** Who holds a thing, and how many each: the holders in no particular order. Empty when nobody does. */
+/** Returns each holder of a thing with its count, in no set order. Returns an empty list when no one holds it. */
 export function holdersOf(state: GameState, game: Game, ref: string): { holder: Holder; count: number }[] {
   return [...(holdings(state, game).byThing.get(ref) ?? [])].map(([holder, count]) => ({ holder: holder as Holder, count }))
 }
 
-/** Who holds a thing, when one holder does (always so for a unique thing); undefined when nobody does. */
+/** Returns the holder of a thing when one holder has it, as always for a unique thing. Returns undefined when no one holds it. */
 export function holderOf(state: GameState, game: Game, ref: string): Holder | undefined {
   return holdings(state, game).byThing.get(ref)?.keys().next().value as Holder | undefined
 }
 
 /**
- * What a holder (`'you'` by default) holds, and how many of each, in the
- * order the game has its entities: declared ones in content order, then
- * those created in play.
+ * Returns the things a holder holds, `'you'` if left out, each with its count. They come in the game's entity order,
+ * declared ones in content order and then those made in play.
  */
 export function heldBy(state: GameState, game: Game, at: string = YOU): { ref: EntityRef; count: number }[] {
   const things = holdings(state, game).byHolder.get(resolveHolder(state, at))
@@ -120,7 +119,7 @@ export function heldBy(state: GameState, game: Game, at: string = YOU): { ref: E
     .map((ref) => ({ ref, count: things.get(ref)! }))
 }
 
-/** Whether putting a thing with a holder would have something hold itself, however far round: the box in the bag in the box. */
+/** Returns true when giving a thing to a holder would make something hold itself at any depth, such as a box in a bag in the box. */
 export function wouldHoldItself(state: GameState, game: Game, ref: string, holder: string): boolean {
   const seen = new Set<string>()
   for (let at: string | undefined = holder; at !== undefined && at !== PLAYER; at = holderOf(state, game, resolveHolder(state, at))) {
@@ -137,10 +136,11 @@ function written(state: GameState, holder: string, ref: string, count: number): 
 }
 
 /**
- * The state with a holder's count of a thing set: held to 0 or more, and to
- * at most 1 for a unique thing, which giving to one holder takes from any
- * other. Left as it is for a holder that can't hold, a thing not in the
- * game, or a thing that would end up holding itself.
+ * Returns the state with a holder's count of a thing set, at 0 or more and at most 1 for a unique thing. Giving a
+ * unique thing to one holder takes it from any other.
+ *
+ * The state is returned unchanged for a holder that can't hold, a thing not in the game, or a thing that would end up
+ * holding itself.
  */
 export function setHeld(state: GameState, game: Game, ref: string, at: string, count: number): GameState {
   const holder = resolveHolder(state, at)
@@ -158,9 +158,10 @@ export function setHeld(state: GameState, game: Game, ref: string, at: string, c
 }
 
 /**
- * The state with up to `by` of a thing moved from one holder to another
- * (all there is, if left out): never more than the first holds. Left as it
- * is when either can't hold, they are the same, or the thing would end up
+ * Returns the state with up to `by` of a thing moved from one holder to another, or all the first holds if `by` is
+ * left out. It never moves more than the first holds.
+ *
+ * The state is returned unchanged when the target can't hold, the holders are the same, or the thing would end up
  * holding itself.
  */
 export function moveHeld(state: GameState, game: Game, ref: string, from: string, to: string, by?: number): GameState {
@@ -175,9 +176,8 @@ export function moveHeld(state: GameState, game: Game, ref: string, from: string
 }
 
 /**
- * What removing an entity does to holdings, before its record goes: it is
- * held by nobody, and what it held goes to whoever held it, or with it when
- * nobody did.
+ * Returns the state with an entity's holdings released before it is removed. No one holds it any more, and the things
+ * it held go to its own holder, or leave with it when it had none.
  */
 export function releaseHeld(state: GameState, game: Game, ref: string): GameState {
   const owner = holderOf(state, game, ref)
@@ -201,14 +201,14 @@ function withoutKey(things: Record<string, number>, ref: string): Record<string,
   return rest
 }
 
-/** Whether a reference names a holder at all: the player, `'you'`, `'$'`, or an entity reference. */
+/** Returns true when `holder` has a holder's form, `'player'`, `'you'`, `'$'` or an entity reference. */
 export function looksLikeHolder(holder: string): boolean {
   return holder === PLAYER || holder === YOU || holder === '$' || parseRef(holder) !== undefined
 }
 
 /**
- * Give the player (whoever they are playing) some of a thing: 1 if left
- * out. A unique thing someone else holds is taken from them.
+ * Returns the effect that gives `you` `n` of a thing, 1 if left out. A unique thing someone else holds is taken from
+ * them.
  *
  * ```ts
  * effects: [give('food:apple', 2)]
@@ -218,15 +218,15 @@ export function give(ref: string, n = 1): Effect {
   return { entity: ref, by: n }
 }
 
-/** Take some of a thing from the player (whoever they are playing): 1 if left out, never below 0. */
+/** Returns the effect that takes `n` of a thing from `you`, 1 if left out. The count never goes below 0. */
 export function take(ref: string, n = 1): Effect {
   return { entity: ref, by: -n }
 }
 
 /**
- * Move a thing to another holder: from the player (whoever they are
- * playing) for a stack, from wherever it is for a unique thing, unless
- * `from` says; all there is unless `by` says.
+ * Returns the effect that moves a thing to another holder. It moves all there is unless `by` says otherwise.
+ *
+ * Without `from`, a stack moves from `you` and a unique thing moves from wherever it is.
  *
  * ```ts
  * effects: [move('gift:scarf', 'character:ava')]
@@ -236,7 +236,7 @@ export function move(ref: string, to: string, options: { from?: Holder; by?: num
   return { move: ref, to, ...options }
 }
 
-/** Whether the player (whoever they are playing) holds at least `n` of a thing: 1 if left out. */
+/** Returns the condition that holds while `you` hold at least `n` of a thing, 1 if left out. */
 export function holding(ref: string, n = 1): Condition {
   return { entity: ref, at: YOU, gte: n }
 }

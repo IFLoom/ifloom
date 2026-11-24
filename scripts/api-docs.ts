@@ -284,6 +284,18 @@ type Kind = 'function' | 'component' | 'const' | 'type' | 'class'
 /** One export of an entry, ready to write. */
 type Section = { name: string; kinds: Kind[]; body: string[] }
 
+/** One TSDoc comment the API pages print (an export's, a field's or a helper's), for the docs' style check. */
+export type ApiComment = {
+  /** The entry the comment is first printed under, such as `@ifloom/engine`. */
+  entry: string
+  /** The export's name, or `Export.field` for a field or a helper. */
+  name: string
+  /** The file and line that declare it, relative to the repo, such as `packages/engine/src/stats.ts:12`. */
+  source: string
+  /** The comment's text as the page prints it, empty when it has none. */
+  text: string
+}
+
 class Writer {
   checker: ts.TypeChecker
   /** Every name the entries export, and the globals: what a block may name and still compile. */
@@ -295,6 +307,10 @@ class Writer {
   homes = new Map<ts.Symbol, Home>()
   /** The page being written. */
   page?: PageSpec
+  /** The export being written, and its entry, for the comments `note` records. */
+  at = { entry: '', name: '' }
+  /** Each comment the pages print, by the declaration it is on, so an export two entries share is recorded once. */
+  comments = new Map<ts.Node, ApiComment>()
   constructor(program: ts.Program, probe: string) {
     this.checker = program.getTypeChecker()
     this.known = new Set(this.checker.getSymbolsInScope(program.getSourceFile(probe)!, ts.SymbolFlags.Type | ts.SymbolFlags.Value).map((symbol) => symbol.name))
@@ -311,6 +327,14 @@ class Writer {
       }
     }
     this.headings = handWritten()
+  }
+
+  /** Records a comment the pages print, once for each declaration. Nothing written depends on it. */
+  note(declaration: ts.Node | undefined, name: string, text: string) {
+    if (!declaration || this.comments.has(declaration)) return
+    const file = declaration.getSourceFile()
+    const line = file.getLineAndCharacterOfPosition(declaration.getStart()).line + 1
+    this.comments.set(declaration, { entry: this.at.entry, name, source: `${relative(ROOT, file.fileName)}:${line}`, text })
   }
 
   /** Exported aliases the checker would print expanded (`GameState` is a `Flat<…>`), by their expanded text. */
@@ -402,6 +426,7 @@ class Writer {
       const text = this.propertyType(property, shown)
       lines.push(`  ${readonly}${name}${optional ? '?' : ''}: ${text}`)
       const description = docText(property.getDocumentationComment(this.checker))
+      this.note(property.declarations?.[0], `${this.at.name}.${property.name}`, description)
       const fallback = tagText(property, this.checker, 'default')
       if (description || fallback) documented = true
       rows.push(
@@ -618,6 +643,8 @@ class Writer {
     const kinds: Kind[] = []
     const body: string[] = []
     const summary = docText(target.getDocumentationComment(checker))
+    this.at = { entry, name }
+    this.note(declaration, name, summary)
     const isReact = entry.includes('react')
 
     if (target.flags & ts.SymbolFlags.Value && !(target.flags & ts.SymbolFlags.Module && !(target.flags & ts.SymbolFlags.Function))) {
@@ -645,8 +672,10 @@ class Writer {
           for (const helper of helpers) {
             const helperType = checker.getTypeOfSymbol(helper)
             const signature = helperType.getCallSignatures().map((each) => this.signatureText(each))
+            const description = docText(helper.getDocumentationComment(checker))
+            this.note(helper.declarations?.[0], `${name}.${helper.name}`, description)
             body.push(
-              `| \`${name}.${helper.name}\` | ${signature.length ? signature.map((each) => this.linked(each)).join('<br>') : this.linked(shortened(this.typeText(helperType)))} | ${cell(docText(helper.getDocumentationComment(checker)))} |`,
+              `| \`${name}.${helper.name}\` | ${signature.length ? signature.map((each) => this.linked(each)).join('<br>') : this.linked(shortened(this.typeText(helperType)))} | ${cell(description)} |`,
             )
           }
         }
@@ -851,6 +880,17 @@ function homesOf(checker: ts.TypeChecker, specs: PageSpec[], modules: Map<string
 
 /** Every page of the API section, by its file name, and the number of exports listed. */
 export function apiDocs(): { files: Map<string, string>; exports: number } {
+  const { files, exports } = generated()
+  return { files, exports }
+}
+
+/** Every comment the API pages print (each export's, field's and helper's), in the pages' order, once each. */
+export function apiComments(): ApiComment[] {
+  return generated().comments
+}
+
+/** The API pages, and the comments they print. */
+function generated(): { files: Map<string, string>; exports: number; comments: ApiComment[] } {
   const { program, probe } = programOf()
   const writer = new Writer(program, probe)
   const modules = new Map<string, ts.Symbol>()
@@ -881,7 +921,7 @@ export function apiDocs(): { files: Map<string, string>; exports: number } {
   }
   files.set('index.md', indexOf(counts))
   files.set('meta.json', metaOf())
-  return { files, exports: [...counts.values()].reduce((a, b) => a + b, 0) }
+  return { files, exports: [...counts.values()].reduce((a, b) => a + b, 0), comments: [...writer.comments.values()] }
 }
 
 /** The committed pages, by file name, to compare with what `apiDocs` makes. */

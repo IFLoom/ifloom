@@ -17,7 +17,7 @@ function TitleImpl({ className }: { className?: string }) {
   return <h1 {...usePart('title', 'font-heading text-title font-semibold', className)}>{view.title}</h1>
 }
 
-/** The game's title. `Clock` is where it is in time. */
+/** Renders the game's title from `view.title`, the `title` part. */
 export const Title = overridable('Title', TitleImpl)
 
 function RoomActionsImpl({ className }: { className?: string }) {
@@ -25,15 +25,18 @@ function RoomActionsImpl({ className }: { className?: string }) {
   return <ChoiceList choices={view.actions} part="actions" className={className} />
 }
 
-/** The buttons offered while no scene is open: the game's own and its plugins', such as a place's things to do. */
+/**
+ * Renders the room's actions from `view.actions`, the game's own and its plugins', such as a location's. Its list is
+ * the `actions` part.
+ */
 export const RoomActions = overridable('RoomActions', RoomActionsImpl)
 
 /**
- * The React UI's own layout, which `GameShell` and `mountGame` draw when you
- * give them none. The react and next templates start you with a copy of it in
- * `src/layout.tsx`. Each section hides itself when the game has nothing for
- * it, so the same layout suits a novel and a town. What the game's plugin UIs
- * bring goes at each `<Plugins at="…" />`, in the order of its `plugins` list.
+ * Renders the React UI's own layout, which `GameShell` and `mountGame` render when you give them none. The `react` and
+ * `next` templates start you with a copy of it in `src/layout.tsx`.
+ *
+ * Each section hides itself when the game has nothing for it, so the same layout suits a novel and a town. The plugin
+ * UIs' components go at each `<Plugins at="…" />`, in the order of the game's `plugins` list.
  */
 export function DefaultLayout() {
   const words = useWords()

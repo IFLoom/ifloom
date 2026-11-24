@@ -6,15 +6,16 @@ import { Picture } from './picture.tsx'
 import { Video } from './video.tsx'
 import { useWords } from './words.ts'
 
-/** A picture or a video beat: what the viewer shows. */
+/** A picture or video beat, which the media viewer shows large. */
 export type ViewerMedia = Extract<SceneBeat, { type: 'image' } | { type: 'video' }>
 
+/** The props of `MediaViewer`. */
 export type MediaViewerProps = {
-  /** The picture or video to show. */
+  /** The picture or video beat to show. */
   media: ViewerMedia
-  /** Whether it's showing. */
+  /** True while the viewer is open. */
   open: boolean
-  /** Called with false when the player closes it. */
+  /** The function the viewer calls with false when the player closes it. */
   onOpenChange: (open: boolean) => void
 }
 
@@ -60,8 +61,9 @@ function MediaViewerImpl({ media, open, onOpenChange }: MediaViewerProps) {
 }
 
 /**
- * A picture or a video from the story, shown large over the page. A `Beat`
- * opens it when the player clicks its picture or clip; Escape, a click
- * outside or the close button closes it. Turn it off with `viewer: false`.
+ * Renders a picture or video from the story large over the page, as the `viewer` part. A `Beat` opens it when the
+ * player clicks its picture or clip, and `viewer: false` turns it off.
+ *
+ * Escape, a click outside or the close button closes it.
  */
 export const MediaViewer = overridable('MediaViewer', MediaViewerImpl)

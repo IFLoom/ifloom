@@ -7,13 +7,12 @@ function choiceLine(choice: RenderedChoice): string {
 }
 
 /**
- * Every scene and every location rendered in every probe state, as text: what
- * the player would read, and a scene's choices with what greys them out. Both
- * come from the engine's `view`, so a snapshot reads as the screen does: a
- * choice a lock or a plugin's guard refuses is greyed out with its reason.
- * Compared with the file from the last run, a difference is either a bug or a
- * change you meant, and the diff says which scene, in which state, read
- * differently.
+ * Returns every scene and every location rendered as text in every probe state. It's what `ifloom snapshot` writes.
+ *
+ * The text comes from the engine's `view`, so it reads as the screen does. Each scene shows its body and its choices,
+ * and a choice that a lock or a plugin's guard refuses shows as disabled, with its reason. Locations come from the
+ * places plugin's `places/all` query, and a game without it has none. Compared with the last run's file, the diff
+ * names the scene and the probe that read differently.
  */
 export function snapshot(game: Game, probes: Probe[]): string {
   const out: string[] = []

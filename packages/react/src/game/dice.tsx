@@ -41,11 +41,16 @@ function signed(n: number): string {
   return n < 0 ? `−${-n}` : `+${n}`
 }
 
+/** The props of `DiceRoll`. */
 export type DiceRollProps = {
-  /** The roll to draw, from `view.rolls`: its dice, each die's face and its total. */
+  /** The roll to render, from `view.rolls`, with its dice, each die's face and its total. */
   roll: Roll
-  /** Tumble before settling. True if left out; the motion option or a player's reduced-motion setting turns it off whatever this says. */
+  /**
+   * True to let the dice tumble before they settle. True if left out, and the `motion` option or a player's reduced-motion
+   * setting turns it off either way.
+   */
   animate?: boolean
+  /** Classes added to the `dice` part's own. */
   className?: string
 }
 
@@ -147,13 +152,12 @@ function DiceRollImpl({ roll, animate = true, className }: DiceRollProps) {
 }
 
 /**
- * One roll the engine made: its dice, tumbling for `DICE_ROLL_MS` and then
- * settling on the rolled faces, what was added, the total, and with a target,
- * passed or failed and what it needed. A die on its top face or on 1 is marked,
- * and so is a critical. Parts: `dice` (with `data-roll`, `data-state`
- * `rolling` or `settled`, `data-passed` and `data-critical`), `dice-label`,
- * `dice-faces`, `dice-face`, `dice-plus`, `dice-total`, `dice-outcome` and
- * `dice-critical`. A screen reader hears the result once the dice settle.
+ * Renders one roll from `view.rolls`, its dice tumbling for a second and then settling on the rolled faces. It shows
+ * the bonus, the total and, with a target, the outcome and the number needed.
+ *
+ * A die on its top face or on 1 is marked, and so is a critical. Its parts are `dice` (with `data-roll`, `data-state`
+ * `rolling` or `settled`, `data-passed` and `data-critical`), `dice-label`, `dice-faces`, `dice-face`, `dice-plus`,
+ * `dice-total`, `dice-outcome` and `dice-critical`. Screen readers announce the result once the dice settle.
  */
 export const DiceRoll = overridable('DiceRoll', DiceRollImpl)
 
@@ -191,10 +195,9 @@ function DiceOverlayImpl({ rolls, className }: { rolls: readonly Roll[]; classNa
 }
 
 /**
- * Rolls the story doesn't name, shown for a moment over the scene: those the
- * last command made that no block's `ui.dice` hint names, such as a roll a
- * trigger made as the player came in. Each is a `DiceRoll`; the whole is the
- * `dice-overlay` part, which goes after a few seconds or when the player
- * dismisses it (`dice-dismiss`). `Scene` draws it.
+ * Renders the last command's rolls that no block's `ui.dice` hint names, for a moment over the scene, such as a roll a
+ * trigger made. Each is a `DiceRoll` inside the `dice-overlay` part.
+ *
+ * It goes a few seconds after the dice settle, or when the player presses `dice-dismiss`. `Scene` renders it.
  */
 export const DiceOverlay = overridable('DiceOverlay', DiceOverlayImpl)

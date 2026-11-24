@@ -99,10 +99,10 @@ function PanelHostImpl() {
 }
 
 /**
- * Draws the panel content opened (`view.panel`) in a dialog: the game's own
- * `panels` by its name, else a plugin UI's panel of that name, else one of
- * `BUILT_IN_PANELS`, with what it was opened with as `data`. Closing the
- * dialog sends `closePanel`. The default layout has one; a layout of your own
- * puts it anywhere inside the `GameProvider`.
+ * Renders the open panel, `view.panel`, in a `PartDialog`, and sends `closePanel` when the player closes it. The panel
+ * gets its `with` as `data`.
+ *
+ * It renders the game's own panel of that name, else a plugin UI's, else a built-in one (`stats` or `inventory`). The
+ * default layout has one, and a layout of your own puts it anywhere inside the `GameProvider`.
  */
 export const PanelHost = overridable('PanelHost', PanelHostImpl)

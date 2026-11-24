@@ -10,12 +10,11 @@ import type { Command, RenderedChoice } from '@ifloom/engine'
 import { useGame } from './context.tsx'
 import { useKeysOption } from './overrides.tsx'
 
-/** What `keys` turns on, when it's an object rather than `true`. */
+/** Settings for the `keys` option, given as an object in place of `true`. */
 export type KeyOptions = {
   /**
-   * Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the
-   * command each sends. They come before the built-in keys, so mapping `'1'`
-   * or `'Escape'` replaces what that key does.
+   * The game's own keys, each mapped by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`) to the command it sends. They come
+   * before the built-in keys, so mapping `'1'` or `'Escape'` replaces that key.
    */
   map?: Record<string, Command>
 }

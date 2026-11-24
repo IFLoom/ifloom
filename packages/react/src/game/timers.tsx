@@ -41,12 +41,15 @@ export function useTicking(runner: Runner): void {
   }, [runner])
 }
 
-/** The running timers, as `view.timers` has them, in the order they started. */
+/** Returns the running timers from `view.timers`, in the order they started, and re-renders with each new view. */
 export function useTimers(): TimerView[] {
   return useGame().view.timers
 }
 
-/** One running timer by id, or null when it isn't running (not started, stopped, or run out). */
+/**
+ * Returns one running timer by id from `view.timers`, or null when it isn't running because it hasn't started, has
+ * stopped or has run out.
+ */
 export function useTimer(id: string): TimerView | null {
   return useGame().view.timers.find((timer) => timer.id === id) ?? null
 }
@@ -61,11 +64,13 @@ export function timerUrgent(timer: TimerView): boolean {
   return timerShare(timer) <= 0.25
 }
 
+/** The props of `Countdown`. */
 export type CountdownProps = {
-  /** The timer's id. Nothing is drawn while it isn't running. */
+  /** The timer's id. `Countdown` renders nothing while it isn't running. */
   timer: string
-  /** Show the timer's `label` above the bar. True if left out. */
+  /** True to show the timer's `label` above the bar. True if left out. */
   label?: boolean
+  /** Classes added to the `timer` part's own. */
   className?: string
 }
 
@@ -109,10 +114,11 @@ function CountdownImpl({ timer, label = true, className }: CountdownProps) {
 }
 
 /**
- * A running timer, by id: its label, a bar that empties as it runs down, and
- * the seconds left. Marked `data-urgent` with a quarter or less to go. With
- * motion off, or a player who asks for reduced motion, only the seconds show.
- * Draws nothing once the timer has run out or stopped.
+ * Renders a running timer by id as the `timer` part, with its label, a bar that empties and the seconds left. It
+ * renders nothing once the timer has run out or stopped.
+ *
+ * It's marked `data-urgent` with a quarter or less to go. With motion off, or for a player who asks for reduced
+ * motion, only the seconds show.
  */
 export const Countdown = overridable('Countdown', CountdownImpl)
 
@@ -129,5 +135,5 @@ function TimersImpl({ className }: { className?: string }) {
   )
 }
 
-/** Every running timer's `Countdown`, in the order they started. Nothing while none runs. */
+/** Renders a `Countdown` for every running timer in `view.timers`, in the order they started, and nothing while none runs. */
 export const Timers = overridable('Timers', TimersImpl)

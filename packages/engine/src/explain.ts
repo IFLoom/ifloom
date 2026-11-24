@@ -5,18 +5,17 @@ import type { GameState } from './types.ts'
 import { withAmounts } from './amount.ts'
 
 /**
- * Why a condition holds or not, part by part.
+ * A condition's tree with each part marked as holding or not, returned by `explain`. Each leaf says what it read and
+ * what it wanted.
  *
- * The question authors ask most is "why is this greyed out?" or "why is this
- * missing?". `explain` answers it: the whole condition tree, each part marked
- * true or false, each leaf saying what it read and what it wanted.
+ * It answers the question authors ask most, why a choice is refused or missing.
  */
 export type Explanation = {
-  /** Whether this part holds. */
+  /** True when this part of the condition holds. */
   holds: boolean
-  /** One line: what this part checked, what it found. */
+  /** The part's one line, saying what it checked and what it found. */
   why: string
-  /** The parts of an `all`, `any` or `not`. */
+  /** The parts of an `all`, `any` or `not`, each explained. */
   parts?: Explanation[]
 }
 
@@ -28,7 +27,7 @@ function leaf(state: GameState, condition: Condition, game: Game): string {
   return kinds.length ? `a condition with ${kinds.length} keys (${kinds.join(', ')}); wants one` : 'an unknown condition'
 }
 
-/** Explain a condition against a state, part by part. No condition always holds. */
+/** Returns the {@link Explanation} of a condition against a state, part by part. An undefined condition always holds. */
 export function explain(state: GameState, game: Game, condition: Condition | undefined): Explanation {
   if (!condition) return { holds: true, why: 'no condition' }
   // `all`, `any` and `not` are explained part by part. A condition with another kind key besides is a leaf, and holds nowhere.
@@ -59,7 +58,7 @@ export function explain(state: GameState, game: Game, condition: Condition | und
   return { holds: holds(state, game, condition), why: leaf(state, condition, game) }
 }
 
-/** An explanation as indented lines, ✓ or ✗ on each: for a log or a debug panel. */
+/** Returns an {@link Explanation} as indented lines with ✓ or ✗ on each, for a log or a debug panel. */
 export function explainText(explanation: Explanation, depth = 0): string {
   const line = `${'  '.repeat(depth)}${explanation.holds ? '✓' : '✗'} ${explanation.why}`
   return [line, ...(explanation.parts ?? []).map((part) => explainText(part, depth + 1))].join('\n')

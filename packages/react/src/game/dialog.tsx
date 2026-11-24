@@ -18,7 +18,10 @@ export const DIALOG_CLASSES = {
   close: 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100',
 } as const
 
-/** The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with `extra` classes on the dialog. */
+/**
+ * Returns the attributes for a dialog's `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with
+ * `extra` classes on the dialog. Every dialog of the UI uses them, so they all look alike.
+ */
 export function useDialogParts(extra?: string) {
   return {
     dialog: usePart('dialog', DIALOG_CLASSES.dialog, extra),
@@ -29,9 +32,10 @@ export function useDialogParts(extra?: string) {
 }
 
 /**
- * A dialog drawn with the UI's `dialog` parts, as the menu's is: open while
- * `open` is true, titled `title`, calling `onClose` when the player closes it.
- * `PanelHost` and the plugins' UIs use it, and a layout of your own can too.
+ * Renders a dialog with the UI's `dialog` parts, open while `open` is true and titled `title`. It calls `onClose` when
+ * the player closes it.
+ *
+ * The menu, `PanelHost` and the plugins' UIs use it, and a layout of your own can too.
  */
 export function PartDialog({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const words = useWords()

@@ -20,57 +20,70 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
-/** A period of the day: its id, and what the player reads (the id, if left out). */
-export type PeriodDef = { id: string; label?: string }
+/** A period of the day, one entry of `CalendarOptions.periods`. A bare string in `periods` is a period with only an id. */
+export type PeriodDef = {
+  /** The period's id, such as `'morning'`. */
+  id: string
+  /** The period's name as the player reads it. The id if left out. */
+  label?: string
+}
 
+/** Settings for `calendar()`. Every field is optional and has the default its comment gives. */
 export type CalendarOptions = {
   /** The periods of a day, in order. Morning, afternoon, evening, night and late if left out. */
   periods?: (string | PeriodDef)[]
-  /** Days in a week. 7 if left out. */
+  /** The number of days in a week. 7 if left out. */
   week?: number
-  /** Which days of the week are the weekend, counting from 0. The last two if left out. */
+  /** The days of the week that are the weekend, counting from 0. The last two days of the week if left out. */
   weekend?: number[]
   /**
-   * What a turn is: one `'period'`, one `'day'` (the default) or one `'week'`.
-   * Passing time ends a turn at each boundary it crosses, and a turn ended any
-   * other way moves the clock to the start of the next. `false`: the clock and
-   * the turn go their own ways.
+   * The length of a turn, one `'period'`, one `'day'` or one `'week'`. `'day'` if left out.
+   *
+   * Passing time ends a turn at each boundary it crosses, and a turn ended any other way moves the clock to the start
+   * of the next. With `false`, the clock and the turn run independently.
    */
   turn?: 'period' | 'day' | 'week' | false
-  /** Where a new game starts: day 0 and the first period if left out. */
+  /** The day and period a new game starts at. Day 0 and the first period if left out. */
   start?: { day?: number; period?: string }
   /**
-   * The `sleep` command: the periods it can be used from (the last three if
-   * left out) and the one it wakes in, the next day (the first if left out).
-   * `false`: no sleep command.
+   * The settings of the `calendar/sleep` command. `false` leaves the command out.
+   *
+   * `from` lists the periods the player can sleep from, the last three if left out. `wake` is the period the player
+   * wakes in the next day, the first if left out.
    */
   sleep?: { from?: string[]; wake?: string } | false
   /**
-   * While this holds, passing time over the end of the day is warned against
-   * and refused — the player is to go to bed instead. Always, if left out;
-   * `false`, never.
+   * The curfew's condition. While it holds, the calendar warns against passing time over the end of the day, and the
+   * engine refuses that command so the player goes to bed instead.
+   *
+   * The curfew always binds if left out, and never with `false`.
    */
   curfew?: Condition | false
 }
 
-/** The calendar's state: the day (from 0) and the period. */
-export type CalendarState = { day: number; period: string }
-
-/** What the UI reads at `view.plugins.calendar`. */
-export type CalendarView = {
-  /** From 1, as the player counts. */
+/** The clock a save keeps for the calendar. Periods and the week are read from the options, so only the day and period are kept. */
+export type CalendarState = {
+  /** The day, counting from 0. */
   day: number
-  /** The day's name: `'Wednesday'`. */
-  weekday: string
-  /** From 0. */
-  weekdayIndex: number
-  /** The period's id: `'morning'`. */
+  /** The id of the period the clock is in. */
   period: string
-  /** The period's name as the player reads it: `'Morning'`. */
+}
+
+/** The calendar as the player sees it, in `view.plugins.calendar`. Its `label` is the line a UI's clock shows. */
+export type CalendarView = {
+  /** The day, counting from 1 as the player does. */
+  day: number
+  /** The weekday's name, such as `'Wednesday'`. In a week of other than 7 days, it reads "Day 3 of the week". */
+  weekday: string
+  /** The weekday's position in the week, counting from 0. */
+  weekdayIndex: number
+  /** The period's id, such as `'morning'`. */
+  period: string
+  /** The period's name as the player reads it, such as `'Morning'`. */
   periodLabel: string
-  /** The whole of it, as the header shows it: "Day 3 · Wednesday morning". */
+  /** The calendar's whole line, such as "Day 3 · Wednesday morning", from the `calendar/label` string. */
   label: string
-  /** The last period, with no scene open, while the curfew binds: time for bed. */
+  /** True in the day's last period, with no scene open, while the curfew binds. A UI can offer bed then. */
   curfew: boolean
 }
 
@@ -315,7 +328,22 @@ const weekend = (): Condition => CALLS.conditions.weekend()
 const day = (range: Range): Condition => CALLS.conditions.day(range)
 
 /**
- * The plugin, with its helpers on it: `calendar()` makes the plugin for the
- * game's `plugins`, and content is written with `calendar.sleep()` and `calendar.day({ gte: 3 })`.
+ * Returns the calendar plugin, for the game's `plugins`. List it before other plugins, so their hooks see the new day
+ * when a turn ends.
+ *
+ * Its helpers write its calls, such as `calendar.sleep()` and `calendar.day({ gte: 3 })`.
  */
-export const calendar = Object.assign(calendarPlugin, { sleep, pass, period, weekday, weekend, day })
+export const calendar = Object.assign(calendarPlugin, {
+  /** Returns the `calendar/sleep` command, which passes time to the waking period of the next day. */
+  sleep,
+  /** Returns the `calendar/pass` effect, which moves the clock on `n` periods (1 if left out). */
+  pass,
+  /** Returns the `calendar/period` condition, which holds in any of the periods named. */
+  period,
+  /** Returns the `calendar/weekday` condition, which holds on any of the days of the week named, counting from 0. */
+  weekday,
+  /** Returns the `calendar/weekend` condition, which holds on a day in `CalendarOptions.weekend`. */
+  weekend,
+  /** Returns the `calendar/day` condition, which holds while the day, counting from 0, is in the range. */
+  day,
+})

@@ -14,12 +14,15 @@ import { withUi, type StatUi, type Ui } from './ui.ts'
 import { inRange, wanted } from '../range.ts'
 
 /**
- * How a derived stat is worked out from other stats. A number is itself, a
- * string is another stat's value (the same entity's, for a stat with `of`),
- * and the rest combine formulas:
+ * A formula a derived stat declares in its `derive`, to work the stat out from other stats. A number is itself, and a
+ * string is another stat's value.
  *
- * - `{ sum: [...] }`, `{ product: [...] }`, `{ min: [...] }`, `{ max: [...] }`;
- * - `{ scale: f, by: n }` is f times n;
+ * For a stat with `of`, a string names the same entity's stat.
+ *
+ * The other forms combine formulas:
+ *
+ * - `{ sum: [...] }`, `{ product: [...] }`, `{ min: [...] }` and `{ max: [...] }` combine a list.
+ * - `{ scale: f, by: n }` is f times n.
  * - `{ clamp: f, min?, max? }` holds f between the two.
  */
 export type Formula =
@@ -32,178 +35,178 @@ export type Formula =
   | { scale: Formula; by: number }
   | { clamp: Formula; min?: number; max?: number }
 
-/** Levels on a stat: thresholds it passes as it grows, and what to tell the player when it passes one. */
+/** The levels a stat declares in its `levels`, thresholds it passes as it grows. It can raise a notice when the player's stat passes one. */
 export type StatLevels = {
-  /** The value each level starts at, lowest first. Below the first is level 0. */
+  /** The value each level starts at, lowest first. A value below the first is level 0. */
   at: number[]
   /**
-   * Raised as a notice tagged `level` when a command takes the player's stat
-   * up a level, with `{label}` and `{level}` filled in: `'{label} is now level {level}.'`.
-   * No notice if left out.
+   * The notice raised, tagged `level`, when a command takes the player's stat up a level, such as
+   * `'{label} is now level {level}.'`. The engine fills `{label}` and `{level}`, and raises no notice if left out.
    */
   notice?: string
   /**
-   * Keep the levels from the player: the view gives the stat no `level`, so
-   * the thresholds are never shown, and `{ level }` conditions still read
-   * them. For a hidden rating such as how much a character trusts you.
+   * The levels' hidden mark, true to keep them from the player. The view then gives the stat no `level`, and
+   * `{ level }` conditions still read them.
+   *
+   * Use it for a hidden rating, such as how much a character trusts you.
    */
   hidden?: boolean
 }
 
 /**
- * A number the game keeps for the player: charisma, money, energy, a
- * reputation — whatever the game is about. The engine has none of its own; a
- * game declares every stat it uses, and one with no stats declares none.
+ * A stat the game declares in `stats`, a number it keeps for the player or for each entity of a kind. The engine
+ * has no stats of its own.
+ *
+ * Charisma, money, energy and a reputation are stats.
  */
 export type StatDef = {
+  /** The stat's id. */
   id: string
-  /**
-   * The kind of entity it belongs to: `'staff'` gives every member of staff
-   * one. The player's if left out.
-   */
+  /** The kind of entity the stat is kept on, such as `'staff'` for every member of staff. The player's stat if left out. */
   of?: string
-  /** What the player reads: "Charisma", "Money". */
+  /** The stat's label, such as "Charisma" or "Money". */
   label: string
-  /** Where a new game starts it. 0 if left out. */
+  /** The stat's value in a new game. 0 if left out. */
   start?: number
-  /**
-   * Lowest it can go. 0 if left out. An `Amount`, so a floor can move with
-   * the game: `{ stat: 'debtLimit' }`.
-   */
+  /** The stat's lowest value. 0 if left out, and an `Amount`, so a floor can move with the game (`{ stat: 'debtLimit' }`). */
   min?: Amount
   /**
-   * Highest it can go. 100 if left out. An `Amount`, so a ceiling can move
-   * with the game: another stat (`{ stat: 'fitness' }`), or a value by name
-   * (`{ value: 'game/energyMax' }`, with `with` for its arguments). A ceiling
-   * that reads the stat itself reads 100.
+   * The stat's highest value. 100 if left out, and an `Amount`, so a ceiling can move with the game.
+   *
+   * It can read another stat (`{ stat: 'fitness' }`) or a value by name (`{ value: 'game/energyMax' }`, with `with`
+   * for its arguments). A ceiling that reads the stat itself reads 100.
    */
   max?: Amount
-  /** When the player can see it. Always, if left out. */
+  /** The stat's condition. The player can see the stat only while it holds, and always if left out. */
   visible?: Condition
-  /**
-   * Whether it belongs in the view's stat list. True if left out. A game that
-   * shows a stat its own way — a gauge, a purse — sets this false.
-   */
+  /** The stat's listed mark, false to leave it out of `view.stats` for a game that shows it its own way, as a gauge or a purse. True if left out. */
   listed?: boolean
-  /**
-   * Spent on things: money, energy, time on the clock. A spendable stat is
-   * what a button's price is made of.
-   */
+  /** The stat's spendable mark, true for a stat spent on things, such as money, energy or time. A choice's or action's price is made of spendable stats. */
   spendable?: boolean
   /**
-   * The refusal when a cost needs more than the player has, with `{n}` for
-   * the amount: `'Not enough on you.'`, `'Need {n} energy.'`, or one for 1
-   * and one for any other amount, as `format` takes. Without it: "Not
-   * enough" and the label.
+   * The refusal when a cost needs more than the player has, with `{n}` for the amount. Without it the engine says
+   * "Not enough" and the label.
+   *
+   * It's one line (`'Not enough on you.'`, `'Need {n} energy.'`) or one for 1 and one for any other amount, as
+   * `format` takes.
    */
   lacking?: StatWords
   /**
-   * How the value is written for the player, with `{n}` for the number:
-   * `'£{n}'`, `'{n} energy'`. For words that change with the number, one
-   * for 1 and one for any other: `{ one: '{n} coin', other: '{n} coins' }`.
-   * Just the number if left out.
+   * The stat's value written for the player, with `{n}` for the number, such as `'£{n}'` or `'{n} energy'`. The bare
+   * number if left out.
+   *
+   * For words that change with the number, give one for 1 and one for any other,
+   * `{ one: '{n} coin', other: '{n} coins' }`.
    */
   format?: StatWords
   /**
-   * Work the stat out from others instead of keeping it: `{ sum: ['strength', 'agility'] }`.
-   * A derived stat is read like any stat and never written; the loader
-   * reports a `stat` effect on one. See `Formula`.
+   * The formula the stat is worked out from instead of being kept, such as `{ sum: ['strength', 'agility'] }`.
+   *
+   * A derived stat is read like any stat and never written, and the loader reports a `stat` effect on one.
    */
   derive?: Formula
-  /** Levels the stat passes as it grows. None if left out. See `StatLevels`. */
+  /** The levels the stat passes as it grows. None if left out. */
   levels?: StatLevels
   /**
-   * How the value reads: `'floor'`, `'round'` or `'ceil'` to a whole number,
-   * or `'none'` to read it as it is. Applied to what is read, last, after
-   * `derive` and any plugin's modifiers, then held to the range; the kept
-   * value underneath is never rounded. `'none'` if left out.
+   * The stat's rounding when it's read, `'floor'`, `'round'` or `'ceil'` to a whole number, or `'none'`. `'none'` if
+   * left out.
+   *
+   * It applies last, after `derive` and any plugin's modifiers, and the value is then held to the range. The kept
+   * value underneath is never rounded.
    */
   round?: StatRound
-  /** Presentation hints for the UI, carried to the stat's view as written. See `StatUi`. */
+  /** The stat's ui hints, carried to its view as written. */
   ui?: Ui<StatUi>
 }
 
-/** How a stat's value is rounded when it is read: see `StatDef.round`. */
+/** The rounding a stat declares in its `round`, applied when the stat is read. */
 export type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
-/** A stat as the UI shows it: its value, its range, the value written out, and its hints. */
+/** A stat as the player sees it, in `view.stats` and `view.statsById`, with its value, its range, the value written out and its hints. */
 export type StatView = {
   /** The stat's id. */
   key: StatKey
+  /** The stat's label. */
   label: string
-  /** Its value as play reads it: kept or derived, with the plugins' modifiers, rounded and held to its range. */
+  /** The stat's value as play reads it, kept or derived, with the plugins' modifiers, rounded and held to its range. */
   value: number
-  /** The lowest it can go. */
+  /** The stat's lowest value now. */
   min: number
-  /** The highest it can go right now. */
+  /** The stat's highest value now. */
   max: number
-  /** The value written out with the stat's `format`: `'12 coins'`, `'80%'`. The number itself with no format. */
+  /** The stat's value written with its `format`, such as `'12 coins'` or `'80%'`. The bare number with no format. */
   text: string
   /**
-   * Where a stat with `levels` stands: its level, the value the next level
-   * starts at (null at the top), and how far it is towards it, 0 to 1. Left
-   * out for a stat with no levels.
+   * The stat's place in its `levels`, with its level, the value the next level starts at (null at the top) and its
+   * progress towards it, from 0 to 1.
+   *
+   * It's left out for a stat with no levels or hidden ones.
    */
   level?: { level: number; next: number | null; progress: number }
-  /** The stat's presentation hints, as written; left out with none. See `StatUi`. */
+  /** The stat's ui hints, kept as written. Left out if it has none. */
   ui?: Ui<StatUi>
 }
 
-/** What the stats feature adds, as types. */
+/** The stats feature's state, calls, content key, view and reference, as types. */
 export type StatsShape = {
   state: {
-    /** The player's stats. An entity's are on the entity. */
+    /** The player's stats, by id. An entity's stats are kept on the entity. */
     stats: Stats
   }
   conditions: {
-    /** A stat: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
+    /** A condition on a stat's value, the player's, or with `of` an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
     stat: { stat: StatKey; of?: string } & Range
     /**
-     * The level a stat with `levels` is at: the player's, or with `of`, an
-     * entity's. Bare, level 1 or more: `{ level: 'baking', gte: 2 }`. A stat
-     * with no levels is always level 0.
+     * A condition on the level a stat with `levels` is at, the player's or with `of` an entity's. With no range it
+     * holds at level 1 or more, and `{ level: 'baking', gte: 2 }` asks for 2.
+     *
+     * A stat with no levels is always at level 0.
      */
     level: { level: StatKey; of?: string } & Range
   }
   effects: {
     /**
-     * Change a stat `by` an amount, or put it `to` a value (energy back to
-     * full overnight), held to its range: the player's, or with `of`, an
-     * entity's (`'staff:ana'`, or `'$'` in an `each`). Each is an `Amount`,
-     * worked out as the effect applies: `{ stat: 'coins', by: { stat: 'wage', of: '$' } }`.
+     * An effect that changes a stat `by` an amount or sets it `to` a value, held to its range. It's the player's
+     * stat, or with `of` an entity's (`'staff:ana'`, or `'$'` in an `each`).
+     *
+     * `by` and `to` are each an `Amount`, worked out as the effect applies, as in
+     * `{ stat: 'coins', by: { stat: 'wage', of: '$' } }`.
      */
     stat: { stat: StatKey; by: Amount; of?: string } | { stat: StatKey; to: Amount; of?: string }
   }
   game: {
-    /** Every stat the game keeps. The engine has none of its own. */
+    /** The game's stats. The engine has none of its own. */
     stats?: StatDef[]
   }
   pack: {
-    /** Stats the game keeps. A later pack can redeclare one by id. */
+    /** The pack's stats. A later pack's stat replaces an earlier one with the same id. */
     stats?: StatDef[]
   }
   view: {
+    /** The player's listed stats the player can see now, in the order the game declares them. */
     stats: StatView[]
-    /** Every declared stat, by id, whether or not it is listed. */
+    /** Every one of the player's stats, by id, listed and visible or not. */
     statsById: Record<string, StatView>
   }
   lists: 'stat'
   fill: 'stats'
   references: {
     /**
-     * A stat, read on the player or, with `of`, on an entity (`'staff:ana'`, or
-     * `'staff:*'` for any of a kind). `writes` for an effect that changes it.
-     * With `starts`, a stat an entity of that kind is given a starting value for.
+     * A reference to a stat, on the player or with `of` on an entity (`'staff:ana'`, or `'staff:*'` for any of a
+     * kind). `writes` marks an effect that changes it.
+     *
+     * With `starts`, it's a stat an entity of that kind is given a starting value for.
      */
     stat: { stat: string; of?: string; writes?: boolean } | { stat: string; starts: string }
   }
 }
 
+/** Returns the stat the game declares with this id. Undefined when there's none. */
 export function statOf(game: Game, id: string): StatDef | undefined {
   return game.stats?.find((stat) => stat.id === id)
 }
 
-/** Every one of the player's stats at its starting value. A derived stat is worked out, never kept, so it is not here. */
+/** Returns each of the player's kept stats at its starting value. A derived stat is worked out, never kept, so it's left out. */
 export function startingStats(game: Game): Stats {
   return Object.fromEntries((game.stats ?? []).filter((stat) => !stat.of && stat.derive === undefined).map((stat) => [stat.id, stat.start ?? 0]))
 }
@@ -228,11 +231,13 @@ function evaluate(formula: Formula, read: (id: string, depth: number) => number,
 }
 
 /**
- * A stat's value as everything reads it: the player's, or with `of`, an
- * entity's (`'staff:ana'`). A derived stat is worked out from its formula and
- * held to its range; a kept stat the save doesn't have yet reads as its
- * `start`. Then the plugins' modifiers, then the stat's `round`, then its
- * range again. An entity that isn't there reads 0.
+ * Returns a stat's value as play reads it, the player's or with `whose` an entity's (`'staff:ana'`). An entity that
+ * isn't there reads 0.
+ *
+ * @remarks
+ * A derived stat is worked out from its formula and held to its range, and a kept stat the save doesn't have yet
+ * reads its `start`. Then the plugins' modifiers apply to the player's stats, then the stat's `round`, then its range
+ * again.
  */
 export function statValue(state: GameState, game: Game, id: string, whose: string | undefined, cx: FeatureContext): number {
   const of = ownerOf(state, whose)
@@ -282,7 +287,7 @@ function modified(state: GameState, game: Game, key: string, value: number, modi
   return named ? clampStat(state, game, key, (value + add) * multiply, cx) : value
 }
 
-/** Which level a value is at: how many of the thresholds, lowest first, it has reached. */
+/** Returns the level a value is at, the number of thresholds in `at`, lowest first, it has reached. */
 export function levelAt(value: number, at: readonly number[]): number {
   let level = 0
   for (const threshold of at) {
@@ -293,9 +298,10 @@ export function levelAt(value: number, at: readonly number[]): number {
 }
 
 /**
- * Where a stat with `levels` stands: its level, the value the next one starts
- * at (null at the top), and how far it is from this level's start to the
- * next, 0 to 1 (1 at the top). Undefined for a stat with no levels.
+ * Returns a stat's place in its `levels`, with its level and the value the next level starts at (null at the top).
+ * Undefined for a stat with no levels.
+ *
+ * `progress` runs from 0 at this level's start to 1 at the next, and is 1 at the top.
  */
 export function statLevel(
   state: GameState,
@@ -316,7 +322,7 @@ export function statLevel(
   return { level, next, progress }
 }
 
-/** The stat ids a formula reads. */
+/** Returns the ids of the stats a formula reads. */
 export function formulaStats(formula: Formula): string[] {
   if (typeof formula === 'number') return []
   if (typeof formula === 'string') return [formula]
@@ -330,10 +336,10 @@ export function formulaStats(formula: Formula): string[] {
 }
 
 /**
- * What is wrong with the game's derived stats and levels, each with where
- * (`stat brains`): a formula naming an unknown stat or another owner's, a
- * cycle, a derived stat that is spendable or given a start, levels out of
- * order or outside the stat's range.
+ * Returns the problems with the game's derived stats and levels, each with where it is, such as `stat brains`.
+ *
+ * It reports a formula that names an unknown stat or another owner's, a cycle, a derived stat that is spendable or
+ * has a start, and levels out of order or outside the stat's range.
  */
 export function statProblems(game: Game): { where: string; what: string }[] {
   const out: { where: string; what: string }[] = []
@@ -406,34 +412,34 @@ function bound(state: GameState, game: Game, id: string, which: 'min' | 'max', f
   }
 }
 
-/** The highest a stat can go right now: its declared max, worked out if it is an `Amount`. 100 if it says none. */
+/** Returns a stat's highest value now, its `max` worked out when it's an `Amount`. 100 when the stat sets none. */
 export function statMax(state: GameState, game: Game, id: string, cx: FeatureContext): number {
   return bound(state, game, id, 'max', 100, cx)
 }
 
-/** The lowest a stat can go right now: its declared min, worked out if it is an `Amount`. 0 if it says none. */
+/** Returns a stat's lowest value now, its `min` worked out when it's an `Amount`. 0 when the stat sets none. */
 export function statMin(state: GameState, game: Game, id: string, cx: FeatureContext): number {
   return bound(state, game, id, 'min', 0, cx)
 }
 
-/** A value held to the stat's declared range (0–100 unless it says). */
+/** Returns a value held to the stat's range, 0 to 100 unless the stat sets `min` or `max`. */
 export function clampStat(state: GameState, game: Game, id: string, value: number, cx: FeatureContext): number {
   return Math.max(statMin(state, game, id, cx), Math.min(statMax(state, game, id, cx), value))
 }
 
-/** The refusal for a cost the player cannot cover. */
+/** Returns the refusal for a cost the player can't cover, from the stat's `lacking`, else "Not enough" and the label. */
 export function lackingLine(game: Game, id: string, amount: number): string {
   const def = statOf(game, id)
   if (def?.lacking) return counted(def.lacking, amount)
   return stringOf(game, 'notEnough', { stat: (def?.label ?? id).toLowerCase(), n: amount })
 }
 
-/** A value as the player reads it, through the stat's `format`. */
+/** Returns a value written for the player with the stat's `format`. The bare number when the stat has no format. */
 export function formatStat(def: StatDef | undefined, value: number): string {
   return def?.format ? counted(def.format, value) : String(value)
 }
 
-/** A stat's words for a number: the same for every number, or `one` for exactly 1 and `other` for the rest. */
+/** A stat's words for a number, with `{n}` for it. It's one line for every number, or `one` for exactly 1 and `other` for the rest. */
 export type StatWords = string | { one: string; other: string }
 
 /** A stat's words for a number, with `{n}` filled in. */
@@ -442,7 +448,7 @@ function counted(words: StatWords, n: number): string {
   return text.replaceAll('{n}', String(n))
 }
 
-/** One stat as the UI shows it: the player's, or with `of`, an entity's. */
+/** Returns a stat as the player sees it, the player's or with `of` an entity's. */
 export function statView(state: GameState, game: Game, stat: StatDef, of: string | undefined, cx: FeatureContext): StatView {
   const value = statValue(state, game, stat.id, of, cx)
   const level = stat.levels?.hidden ? undefined : statLevel(state, game, stat.id, of, cx)
@@ -492,6 +498,7 @@ function writeStat(state: GameState, game: Game, key: StatKey, of: string | unde
   return { ...state, stats: { ...state.stats, [key]: value } }
 }
 
+/** The stats feature, which keeps the player's stats, reads every stat and raises level-up notices. */
 export const stats = defineFeature<StatsShape>({
   name: 'stats',
   state: {

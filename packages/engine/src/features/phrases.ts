@@ -14,40 +14,57 @@ import type { Condition } from '../types.ts'
 import { defineFeature, type PackMerge } from './feature.ts'
 import type { WordWalk } from '../words.ts'
 
-/** One row of a phrase: its words, shown while `when` holds (always, without one). Tokens in the words are filled. */
-export type PhraseRow = { when?: Condition; text: string }
+/** A row of a phrase, its words shown while `when` holds. A row with no `when` always holds, and the view fills the tokens in its words. */
+export type PhraseRow = {
+  /** The row's condition. The row's words show while it holds, and always when it's left out. */
+  when?: Condition
+  /** The row's words, with tokens the view fills. */
+  text: string
+}
 
 /**
- * A phrase that takes arguments: their names in `args`, and its rows. In a
- * row's `when`, a string that is exactly `$<arg>` becomes what the token
- * passed, as an entity reference when it names one; in its `text`, `$<arg>`
- * becomes that entity's name, or the value as passed.
+ * A phrase that takes arguments, with their names in `args` and its rows. A token passes each argument as
+ * `name=value`.
+ *
+ * In a row's `when`, a string that is exactly `$<arg>` becomes the value the token passed, as an entity reference
+ * when it names one. In a row's `text`, `$<arg>` becomes that entity's name, or the value as passed.
  */
-export type PhraseWithArgs = { args: string[]; rows: PhraseRow[] }
+export type PhraseWithArgs = {
+  /** The names of the arguments the phrase takes. */
+  args: string[]
+  /** The phrase's rows, tried in order. */
+  rows: PhraseRow[]
+}
 
-/** A phrase as content writes it: its rows, tried in order, a plain string (a phrase with one row), or rows with the arguments they take. */
+/**
+ * A phrase the game declares in `phrases`, words for the middle of a sentence that change with the state. It's a list
+ * of rows tried in order, a plain string, or rows with their arguments.
+ */
 export type Phrase = string | PhraseRow[] | PhraseWithArgs
 
 /**
- * Phrases as content writes them, by name: a phrase, or a group of more by
- * name, as deep as you like. `{ outfit: { verdict: [...] }, weather: 'grey' }`
- * declares `outfit.verdict` and `weather`.
+ * The phrases the game declares in `phrases`, by name. Each entry is a phrase or a group of more phrases, nested as
+ * deep as you like.
+ *
+ * `{ outfit: { verdict: [...] }, weather: 'grey' }` declares `outfit.verdict` and `weather`.
  */
 export type Phrases = { [name: string]: Phrase | Phrases }
 
-/** What the phrases feature adds, as types. */
+/** The phrases feature's content key, as types. */
 export type PhrasesShape = {
   game: {
-    /** The game's phrases, by their full dotted name (`outfit.verdict`), each as its rows, or its rows with the arguments it takes. None if left out. */
+    /**
+     * The game's phrases, by full dotted name (`outfit.verdict`), each as its rows or its rows with the arguments it
+     * takes. None if left out.
+     */
     phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
   }
   pack: {
     /**
-     * Words for mid-sentence that change with the state, printed as
-     * `{{name}}`: each phrase a list of `{ when?, text }` rows tried in
-     * order (or a plain string), and a nested object a group, named with a
-     * `.`. A later pack's phrase replaces an earlier one's by its full name,
-     * and a pack can add phrases to a group.
+     * The pack's phrases, words that change with the state, printed in a line as `{{name}}`. Each is a plain string or
+     * a list of `{ when?, text }` rows tried in order, and an object is a group.
+     *
+     * A later pack's phrase replaces an earlier one with the same full name, and a pack can add phrases to a group.
      */
     phrases?: Phrases
   }
@@ -55,31 +72,31 @@ export type PhrasesShape = {
 }
 
 /**
- * A token in a line of prose: `{{name}}`, `{{plugin/name}}`, `{{kv:key …}}` or
- * `{{v:plugin/name …}}`, with any arguments as `key=value` after the name,
- * and after a `|`, the words shown while it is unset: `{{name|Your flatmate}}`.
- * The first group is the `kv` or `v` in front, the second the name, the third
- * the arguments, the fourth the fallback.
+ * The pattern of a token in a line of prose, such as `{{name}}`, `{{plugin/name}}`, `{{kv:key …}}` or
+ * `{{v:plugin/name …}}`. Arguments follow the name as `key=value`, and the words after a `|` show while it is unset.
+ *
+ * Its first group is the `kv` or `v` in front, the second the name, the third the arguments and the fourth the
+ * fallback, as in `{{name|Your flatmate}}`.
  */
 export const TOKEN = /\{\{(?:(kv|v):)?([A-Za-z0-9_][A-Za-z0-9_.:/-]*)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}|]+)*)\s*(?:\|([^}]*))?\}\}/g
 
-/** A name of the game's own, as a bare token prints it: a phrase, a value or a kv key, with `.` between groups and no `/`. */
+/** The pattern of the game's own name in a bare token, a phrase, a value or a kv key. Groups are joined by `.`, with no `/`. */
 export const BARE_NAME = /^[A-Za-z_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)*$/
-/** A plugin's value, as a bare token prints it: the plugin's id, a `/` and the value's name. */
+/** The pattern of a plugin's value in a bare token, the plugin's id, a `/` and the value's name. */
 export const PLUGIN_NAME = /^[A-Za-z0-9-]+\/[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/
-/** A key, as a `{{kv:…}}` token prints it. */
+/** The pattern of a key in a `{{kv:…}}` token. */
 export const KV_NAME = /^[A-Za-z_][A-Za-z0-9_.:-]*$/
-/** A value, as an older `{{v:…}}` token prints it: the plugin's id (or `game`), a `/` and the name. */
+/** The pattern of a value in an older `{{v:…}}` token, the plugin's id (or `game`), a `/` and the name. */
 export const V_NAME = /^(?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/** Is this a phrase with arguments, `{ args, rows }`, rather than a group? Its `rows` say so. */
+/** Returns true for a phrase with arguments, `{ args, rows }`, and false for a group. A `rows` list tells them apart. */
 export const isPhraseWithArgs = (value: unknown): value is PhraseWithArgs => isRecord(value) && Array.isArray(value.rows)
 
 const asRows = (rows: readonly unknown[]): PhraseRow[] => rows.map((row) => (typeof row === 'string' ? { text: row } : row)) as PhraseRow[]
 
-/** Phrases as content writes them, flattened to full dotted names: a plain string is one row, and a phrase with arguments keeps them. */
+/** Returns phrases flattened to full dotted names. A plain string becomes one row, and a phrase with arguments keeps them. */
 export function flatPhrases(tree: Phrases | undefined, prefix = ''): [string, PhraseRow[] | PhraseWithArgs][] {
   const out: [string, PhraseRow[] | PhraseWithArgs][] = []
   for (const [key, value] of Object.entries(tree ?? {})) {
@@ -98,31 +115,30 @@ function phraseOf(game: Game | undefined, name: string): PhraseRow[] | PhraseWit
   return phrases && Object.hasOwn(phrases, name) ? phrases[name] : undefined
 }
 
-/** The rows of the game's phrase by its full name, or undefined when it has none. */
+/** Returns the rows of the game's phrase with this full name. Undefined when the game has no such phrase. */
 export function phraseRows(game: Game | undefined, name: string): readonly PhraseRow[] | undefined {
   const phrase = phraseOf(game, name)
   return phrase === undefined ? undefined : isPhraseWithArgs(phrase) ? phrase.rows : phrase
 }
 
-/** The arguments the game's phrase by its full name takes: none for a phrase without `args`. */
+/** Returns the names of the arguments the game's phrase with this full name takes. Empty for a phrase without `args`. */
 export function phraseArgs(game: Game | undefined, name: string): readonly string[] {
   const phrase = phraseOf(game, name)
   return isPhraseWithArgs(phrase) && Array.isArray(phrase.args) ? phrase.args : []
 }
 
-/** `$` and a name that could be an argument's: a letter, then letters, digits or `_`. A price such as `$5` isn't one. */
+/** The pattern of `$` and a name that could be an argument's, a letter then letters, digits or `_`. A price such as `$5` doesn't match. */
 export const ARG_USE = /\$([A-Za-z][A-Za-z0-9_]*)/g
 
-/** Where the declared arguments are used in a row's words: `$who`, not followed by more of a name. */
+/** Returns a pattern that finds the declared arguments in a row's words, such as `$who` not followed by more of a name. Undefined when there are none. */
 export function argPattern(args: readonly string[]): RegExp | undefined {
   const names = args.filter((arg) => /^[A-Za-z][A-Za-z0-9_]*$/.test(arg))
   return names.length ? new RegExp(`\\$(${names.join('|')})(?![A-Za-z0-9_])`, 'g') : undefined
 }
 
 /**
- * A condition with each string that is exactly `$<arg>` put back as `to`
- * says: the argument's value, as the token passed it or the entity it names.
- * Strings that aren't one, `'$'` included, are left as written.
+ * Returns a value with each string that is exactly `$<arg>` replaced by `to(arg)`, the argument's value. Other
+ * strings, `'$'` included, stay as written.
  */
 export function bindArgs<T>(value: T, args: readonly string[], to: (arg: string) => unknown): T {
   if (!args.length) return value
@@ -314,6 +330,7 @@ function phraseWords(game: Game, walk: WordWalk) {
   }
 }
 
+/** The phrases feature, which merges phrases and checks the tokens in prose. */
 export const phrases = defineFeature<PhrasesShape>({
   name: 'phrases',
   pack: { merge },

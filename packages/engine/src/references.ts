@@ -23,64 +23,64 @@ import { boundReferences } from './amount.ts'
  * declares its own kinds in its shape's `references`, and resolves them.
  */
 type CoreReferences = {
-  /** A prose key that needs words. */
+  /** A prose key that the game's `prose` must have. */
   prose: { prose: string }
   /**
-   * Words written in place, as a label, a line of text or a notice's text:
-   * reported when they are a prose key the game has, as content wrote them
-   * before schema 25. `oldKey` is where a choice with no label read its
-   * words then, reported when the game's prose has it.
+   * Words written in place, such as a label, a line of text or a notice's text, in the field `field`. The checker
+   * reports them when they are a prose key the game has, as content wrote them before schema 25.
+   *
+   * `oldKey` is the prose key a choice with no label read its words from then, reported when the game's prose has it.
    */
   words: { words: string | undefined; field: string; oldKey?: string }
-  /** Something content writes the way an older schema did, with how to write it now. */
+  /** Content written the way an older schema wrote it, with the way to write it now. */
   outdated: { outdated: string }
-  /** Something a plugin's own rule finds wrong, as it reads: `{ problem: 'count must be a whole number, 1 or more' }`. */
+  /** A problem a plugin's own rule finds, in the words the report shows, such as `{ problem: 'count must be a whole number, 1 or more' }`. */
   problem: { problem: string }
-  /** A variants list that needs lines. */
+  /** A variants key that the game's `prose` must have lines for. */
   variants: { variants: string }
-  /** A custom value. */
+  /** A custom value by name, which the game or a plugin must declare. */
   value: { value: string }
-  /** An `Amount`, which must be well formed, with what it reads looked inside: a stat, a kv key's owner, a value, a count. */
+  /** An `Amount`, which must be well formed, with the stats, kv owners, values and counts it reads looked inside. */
   amount: { amount: unknown }
-  /** A call to a plugin's condition, effect or command by name, or the game's own (`game/…`). */
+  /** A call by name to a plugin's condition, effect or command, or to the game's own (`game/…`). */
   call: { call: CallTable; name: string; with?: PluginArgs }
   /**
-   * An entry in a plugin's content, such as a quest: `{ entry: 'bread',
-   * plugin: 'quests', list: 'quests', noun: 'quest' }`. Not checked when
-   * the game doesn't have that plugin.
+   * An entry in a plugin's content, such as a quest, as in
+   * `{ entry: 'bread', plugin: 'quests', list: 'quests', noun: 'quest' }`. The checker skips it when the game doesn't
+   * have that plugin.
    */
   entry: { entry: string; plugin: string; list: string; noun: string }
-  /** A refusal's words: one by key (`{ string: 'shop/closed' }`) must be a string the game, a plugin or the engine has. */
+  /** A refusal's reason. One by key (`{ string: 'shop/closed' }`) must be a string the game, a plugin or the engine has. */
   reason: { reason: string | { string: string } | undefined }
-  /** A picture file, through `artSrc`. */
+  /** A picture file, resolved through `artSrc`. */
   picture: { picture: string }
-  /** A video file, through `artSrc`. */
+  /** A video file, resolved through `artSrc`. */
   video: { video: string }
-  /** Prose with markup in it: the sounds, pools and files it names. `shownWhen` is the condition it shows under, if any. */
+  /** Prose with markup in it, whose sounds, pools and files the checker resolves. `shownWhen` is the condition it shows under, if any. */
   markup: { markup: string; shownWhen?: Condition }
-  /** A condition, looked inside. */
+  /** A condition, whose references the checker looks inside for. */
   when: { when: Condition | undefined }
-  /** Effects, looked inside. */
+  /** A list of effects, whose references the checker looks inside for. */
   effects: { effects: readonly EffectRef[] | undefined }
-  /** A button's command, looked inside. */
+  /** An action's command, whose references the checker looks inside for. */
   command: { command: CommandRef | undefined }
-  /** More references, whose problems are worded as `label: what`. */
+  /** A group of references, whose problems the report words as `<within>: <problem>`. */
   within: { within: string; refs: readonly Reference[] }
 }
 
-/** Every kind of reference by its key: the core's and each feature's. */
+/** The kinds of {@link Reference}, the core's and each feature's, by the key that tells each apart. */
 export type ReferenceMap = CoreReferences & FeatureReferences
 
 /**
- * One thing a piece of content names, for the content checker to resolve.
- * Ids by what they are, files by kind, and content that names more (a
- * condition, effects, a command, blocks, a picture) to be looked inside.
- * Built from the core's kinds and each feature's (`references` in its
- * shape), as `Condition` is.
+ * One name a piece of content uses, such as an id, a file or a nested condition, for the content checker to resolve.
+ *
+ * The checker looks inside content that names more, such as a condition, effects, a command, blocks or a picture.
+ *
+ * The type is built from the core's kinds and each feature's (`references` in its shape), as `Condition` is.
  */
 export type Reference = ReferenceMap[keyof ReferenceMap]
 
-/** What a condition names, one level down: nested conditions come back as `{ when }`. */
+/** Returns the references a condition makes, one level down. Nested conditions come back as `{ when }`. */
 export function conditionReferences(condition: Condition | undefined): Reference[] {
   if (!condition) return []
   // A condition with no kind key, or several, names nothing; the checker reports its shape.
@@ -89,12 +89,15 @@ export function conditionReferences(condition: Condition | undefined): Reference
   return entry ? [...entry.references(condition), ...boundReferences(condition)] : []
 }
 
-/** What one effect names: its key's, or a call's. An effect with no key of the engine's, or several, names nothing; the checker reports its shape. */
+/**
+ * Returns the references one effect makes, by its key or as a call. An effect with no key of the engine's, or several,
+ * makes none, and the checker reports its shape.
+ */
 export function effectReferences(effect: EffectRef): Reference[] {
   return effectEntry(effect)?.references(effect) ?? []
 }
 
-/** What a command names, in either form. */
+/** Returns the references a command makes, in either form. */
 export function commandReferences(ref: CommandRef): Reference[] {
   const command = commandOf(ref)
   return commandEntry(command)?.references(command) ?? []

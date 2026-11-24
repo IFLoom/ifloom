@@ -13,95 +13,96 @@ import type { UiHint } from '../hints.ts'
 import { uiSay, type Say, type UiStringKey, type Words } from './words.ts'
 
 /**
- * Where the layout puts what plugin UIs bring, in the order of the game's
- * `plugins` list:
+ * A spot in the layout where plugin UIs place their components, in the order of the game's `plugins` list. Each spot
+ * is one of these:
  *
  * - `stats`: inside the side column's Stats section, under the stats.
  * - `sidebar`: the side column, after the Stats section.
- * - `room`: the story, after the scene and before the room's actions. Nothing is drawn here while a minigame runs.
+ * - `room`: the story, after the scene and before the room's actions. Nothing renders here while a minigame runs.
  * - `story`: the end of the story, after the room's actions.
  * - `strip`: the `NoticeStrip`'s row of counts, after the notices.
  */
 export type PluginSpot = 'stats' | 'sidebar' | 'room' | 'story' | 'strip'
 
-/** A panel a plugin UI draws by name, for content's `panel` effect. */
+/** A panel a plugin UI renders by name, which content opens with the `panel` effect. */
 export type PluginPanel = {
-  /** What it draws, given what the panel was opened with as `data`. */
+  /** The component that renders the panel. It gets the panel's `with` as `data`. */
   component: PanelComponent
   /**
-   * The dialog's title: a key of the module's words (or the UI's), or a
-   * function of what the panel was opened with and the view. Content's
-   * `with.title` goes over it.
+   * The panel dialog's title, as a key of the module's words or the UI's, or a function of the panel's `with` and the
+   * view. Content's `with.title` replaces it.
    */
   title?: string | ((data: Readonly<Record<string, unknown>>, view: View) => string | undefined)
 }
 
-/** A page a plugin UI adds among the pages around the game, as a game's `PageDef` does. */
+/** A page a plugin UI adds among the pages around the game, as a game's {@link PageDef} does. */
 export type PluginPage = {
-  /** The title screen's button for it: a key of the module's words (or the UI's). */
+  /** The label of the page's button on the title screen, as a key of the module's words or the UI's. */
   label: string
-  /** What the page shows. It's drawn inside the game, so `useGame()` works in it. */
+  /** The component that renders the page. It renders inside the game, so `useGame()` works in it. */
   component: ComponentType
-  /** Whether the title screen offers it. On unless set false. */
+  /** True to show a button for the page on the title screen. True if left out. */
   showOnTitle?: boolean
 }
 
 /**
- * A plugin's React UI, as its `/react` subpath exports it (`shopUi`), for a
- * game's `plugins` list. Everything in it is optional, and it's a plain
- * object: spread it and leave out what you don't want, such as
+ * A plugin's React UI, which its `/react` subpath exports (`shopUi`) for a game's `plugins` list. Every field but `id`
+ * is optional.
+ *
+ * It's a plain object, so a game spreads it and leaves out the parts it doesn't want, such as
  * `{ ...achievementsUi, pages: undefined }`.
  */
 export type PluginUi = {
-  /** The plugin's id, as its engine side names it. The module does nothing in a game without that plugin. */
+  /** The plugin's id, the same as its engine side's. The UI does nothing in a game without that plugin. */
   id: string
-  /** Its words in English, by key. A game rewords any with `ui.<key>` in its strings. */
+  /** The UI's words in English, by key. A game rewords any of them with `ui.<key>` in its strings. */
   words?: Words
-  /** Panels by name, which `PanelHost` draws when content opens one. A game's own `panels` of the same name go over these. */
+  /** The UI's panels by name, which `PanelHost` renders when content opens one. A game's own `panels` of the same name replace them. */
   panels?: Readonly<Record<string, PluginPanel>>
-  /** What the default layout places, by spot. A layout of your own places them with `<Plugins at="…" />`, or draws the components itself. */
+  /** The components the layout places, by spot. A layout of your own places them with `<Plugins at="…" />`, or renders them itself. */
   layout?: Readonly<Partial<Record<PluginSpot, readonly ComponentType[]>>>
-  /** Renderers for a plugin's section in a device's app, by that plugin's id. The game's own `sections` go over these. */
+  /** The components that render a plugin's section in a device's app, by that plugin's id. The game's own `sections` replace them. */
   sections?: Readonly<Record<string, PluginSectionComponent>>
-  /** Inline pieces it draws, for `[[ui:name|…]]` in prose. The game's own `inline` go over these. `checkUiHints` knows their names. */
+  /**
+   * The UI pieces it renders for `[[ui:name|…]]` in prose, by name. The game's own `inline` replace them, and
+   * `checkUiHints` checks their names.
+   */
   inline?: InlineComponents
-  /** The `ui` hints its components read, declared as `UI_HINTS` declares the React UI's, so `checkUiHints` checks them. */
+  /** The `ui` hints its components read, each a {@link UiHint}, so `checkUiHints` checks them as it checks the React UI's own. */
   hints?: readonly UiHint[]
-  /** Pages it adds among the pages around the game, by id. A game's own page of the same id goes over it. */
+  /** The pages it adds among the pages around the game, by id. A game's own page with the same id replaces one. */
   pages?: Readonly<Record<string, PluginPage>>
   /**
-   * Something for the settings page, such as a code box: drawn there with
-   * pages on, and behind a menu button labelled `label` (a key of its
-   * words) without them.
+   * The plugin UI's component for the settings page, such as a box for codes. Without pages it renders behind a menu
+   * button labelled by `label`, a key of the UI's words.
    */
   settings?: { label: string; component: ComponentType }
-  /** Built-in components it replaces by name, as a game's `components` do. The game's own go over these. */
+  /** The built-in components it replaces, by name, as a game's `components` do. The game's own replace these. */
   components?: Components
-  /** Wraps the game, for state the module keeps beside the runner, such as codes being entered. */
+  /** A component that wraps the game, for state the UI keeps beside the runner, such as codes being entered. */
   provider?: ComponentType<{ children: ReactNode }>
 }
 
 /**
- * A plugin's slice of the view, by its id: the type its engine side declares
- * in the engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
+ * The type of a plugin's slice of the view, `view.plugins[id]`, by the plugin's id. It's the plugin's entry in the
+ * engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
  */
 export type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegistry[Id] : unknown
 
 /**
- * One plugin's UI, declared once: its id and its words. Spread it into the
- * module's `PluginUi`, and hand it to `usePlugin` in each component, so the
- * words are written in one place and the view comes typed.
+ * A plugin UI's id and words, declared once with `pluginKit`. Spread it into the {@link PluginUi} and pass it to
+ * `usePlugin` in each component, so every component reads the same words and a typed view.
  */
 export type PluginKit<Id extends string = string, W extends Words = Words> = {
-  /** The plugin's id, as its engine side names it. */
+  /** The plugin's id, the same as its engine side's. */
   readonly id: Id
-  /** Its words in English, by key. A game rewords any with `ui.<key>` in its strings. */
+  /** The UI's words in English, by key. A game rewords any of them with `ui.<key>` in its strings. */
   readonly words: W
 }
 
 /**
- * Declare a plugin's UI once, by the plugin's id and its words, for
- * `usePlugin` and the module's `PluginUi`:
+ * Returns the {@link PluginKit} for a plugin's id and its words, for `usePlugin` and the UI's {@link PluginUi}. The
+ * words are empty if left out.
  *
  *   const SHOP = pluginKit('shop', SHOP_WORDS)
  *   export const shopUi: PluginUi = { ...SHOP, panels: { ... } }
@@ -111,25 +112,25 @@ export function pluginKit<const Id extends string, const W extends Words = Recor
   return { id, words: words ?? ({} as W) }
 }
 
-/** What `usePlugin` gives a component: the plugin's view, its words and a way to send its commands. */
+/** The plugin's view, words and `send` that `usePlugin` returns to a component. */
 export type PluginControls<Id extends string, W extends Words> = {
-  /** The plugin's slice of the view, `view.plugins[id]`, typed; undefined in a game without the plugin. */
+  /** The plugin's slice of the view, `view.plugins[id]`, typed. It's undefined in a game without the plugin. */
   view: PluginViewOf<Id> | undefined
-  /** Say one of the plugin's words, or the UI's, by key: the game's `ui.<key>` over the English. */
+  /** Returns one of the plugin's words or the UI's by key, the game's `ui.<key>` string over the English. */
   words: Say<(keyof W & string) | UiStringKey>
   /**
-   * Run a command, as the plugin's helpers write it: `send(shop.buy(vendor,
-   * entity))`, or a button's `command` from the view. Returns what
-   * `runner.apply` returned, so a caller can show a refusal.
+   * Sends a command and returns the runner's result, so a caller can show a refusal. The command is one a plugin helper
+   * writes, `send(shop.buy(vendor, entity))`, or a `RenderedChoice`'s `command` from the view.
    */
   send: (command: CommandRef) => Result<GameState>
 }
 
 /**
- * A plugin's view, words and commands, for a component of its UI: what
- * `pluginKit` declared, bound to the game in context. The view is typed by
- * the plugin's `ViewRegistry` entry, the words are its table with the game's
- * rewording over them, and `send` takes the commands its helpers write.
+ * Returns a plugin's view, words and `send` from the running game, for a component of the plugin's UI. It re-renders
+ * whenever the view changes.
+ *
+ * The view is typed by the plugin's `ViewRegistry` entry, and the words are the kit's with the game's `ui.<key>`
+ * strings over them.
  */
 export function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W> {
   const { runner, view, send } = useGame()
@@ -157,7 +158,7 @@ export function mergedFrom<T>(plugins: readonly PluginUi[], pick: (ui: PluginUi)
   return Object.assign({}, ...plugins.map((ui) => pick(ui) ?? {})) as Record<string, T>
 }
 
-/** The plugin UIs the game in context has, in the order of its `plugins` list. */
+/** Returns the running game's plugin UIs, those whose plugin the game has, in the order of its `plugins` list. */
 export function usePluginUis(): readonly PluginUi[] {
   return useGame().plugins
 }
@@ -168,11 +169,10 @@ export function PluginProviders({ plugins, children }: { plugins: readonly Plugi
 }
 
 /**
- * What the game's plugin UIs place at one spot of the layout, in the order of
- * its `plugins` list: nothing for a plugin the game doesn't have. The default
- * layout has one at each `PluginSpot`; a layout of your own puts them where
- * it likes, or draws the plugins' components itself. The `room` spot draws
- * nothing while a minigame runs, since the minigame stands where the room is.
+ * Renders the components the game's plugin UIs place at one spot of the layout, in `plugins` order. The `room` spot
+ * renders nothing while a minigame runs, since the minigame replaces the room.
+ *
+ * The default layout has one at each {@link PluginSpot}, and a layout of your own puts them where it likes.
  */
 export function Plugins({ at }: { at: PluginSpot }) {
   const { plugins, view } = useGame()

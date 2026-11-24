@@ -9,7 +9,7 @@ import type { CastView } from '../index.ts'
 import { ChoiceButton, Picture, Section, StatGauge, useGame, usePart } from '@ifloom/react'
 import { cn, overridable, type Override, pluginKit, type PluginUi, PROSE, usePlugin } from '@ifloom/react/kit'
 
-/** The cast plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The cast plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings. */
 export const CAST_WORDS = {
   people: 'People',
 } as const
@@ -36,7 +36,13 @@ declare module '@ifloom/react' {
   }
 }
 
-/** The cast plugin's view: who is here (`present`, each with their buttons) and everyone met (`people`), or null in a game without the plugin. `PeopleHere` and `Relationships` are drawn from it. */
+/**
+ * Returns the cast plugin's view from the running game, or null in a game without the plugin. It re-renders when the
+ * view changes.
+ *
+ * The view lists the people here in `present`, each with their actions, and everyone met in `people`. `PeopleHere`
+ * and `Relationships` render from it.
+ */
 export function usePeople(): CastView | null {
   return usePlugin(CAST).view ?? null
 }
@@ -74,7 +80,12 @@ function PeopleHereImpl({ className }: { className?: string }) {
   )
 }
 
-/** Who is here, with what the player can do with each of them: the cast plugin's. Nothing without it. A thin default on `usePeople`. */
+/**
+ * Renders the people at the player's location from `view.plugins.cast.present`, each with their actions. A preset
+ * styles its `people`, `person`, `person-portrait`, `person-name`, `person-desc` and `person-actions` parts.
+ *
+ * It renders nothing in a game without the plugin, or while nobody is here.
+ */
 export const PeopleHere = overridable('PeopleHere', PeopleHereImpl)
 
 function RelationshipsImpl({ className }: { className?: string }) {
@@ -124,14 +135,15 @@ function RelationshipsImpl({ className }: { className?: string }) {
 }
 
 /**
- * Everyone the player has met, from the cast plugin, with the stats the
- * player can see on each of them (friendship, say), as the game declares them
- * on the cast's kind of entity. Nothing without the plugin, or before anyone
- * is met. A thin default on `usePeople`.
+ * Renders everyone the player has met from `view.plugins.cast.people`, each with the stats the view lists on their
+ * entity, such as friendship. A preset styles its `relationships`, `relationship`, `relationship-header` and
+ * `relationship-stats` parts.
+ *
+ * It renders nothing in a game without the plugin, or before the player has met anyone.
  */
 export const Relationships = overridable('Relationships', RelationshipsImpl)
 
-/** The default layout's People section: a button that opens `Relationships` in a dialog. */
+/** Renders the default layout's People section, a button that opens `Relationships` in a dialog. Its title is the `people` word. */
 export function PeopleSection() {
   const { words } = usePlugin(CAST)
   return (
@@ -142,10 +154,8 @@ export function PeopleSection() {
 }
 
 /**
- * The cast plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: a People section in the side column that opens
- * `Relationships` in a dialog, `PeopleHere` after the room's actions, the
- * `people` panel, and the cast's words.
+ * The cast plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds `PeopleSection` to the sidebar,
+ * `PeopleHere` to the story after the room's actions, the `people` panel and the plugin's words.
  */
 export const castUi: PluginUi = {
   ...CAST,

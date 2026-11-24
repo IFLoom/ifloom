@@ -6,39 +6,39 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
-/** What `useSaves` gives a save menu. */
+/** The saves and the functions that change them, which `useSaves` returns to a save menu. Each function resolves to true when it worked. */
 export type SavesState = {
-  /** False when the runner was made without `saves`: there is nothing to list. */
+  /** True when the runner has saves. It's false when the runner was made without `saves`, and there's nothing to list. */
   available: boolean
-  /** Whether the game lets the player save now, and why not: `view.saving`. Loading is always allowed. */
+  /** The game's answer to saving now, from `view.saving`, with the reason when it refuses. Loading is always allowed. */
   saving: SavingView
-  /** Every save that can be read, newest first, as the runner's snapshot lists them. */
+  /** Every save that can be read, newest first, from the runner's snapshot. */
   slots: SaveMeta[]
-  /** Saves that are there but can't be read, with why. They can only be deleted. */
+  /** The saves that exist but can't be read, each with the reason. They can only be deleted. */
   broken: BrokenSave[]
-  /** Save in a new slot (the next free number), with the player's `name` for it if given. True if it was written. */
+  /** Saves in a new slot, the next free number, with the player's `name` for it if given. */
   save: (name?: string) => Promise<boolean>
-  /** Save over an existing slot. True if it was written. */
+  /** Saves over an existing slot. */
   overwrite: (slot: string) => Promise<boolean>
-  /** Load a slot. True if it loaded. */
+  /** Loads a slot. */
   load: (slot: string) => Promise<boolean>
-  /** Delete a slot. True if it was deleted; if not, `message` says why. */
+  /** Deletes a slot. When it fails, `message` gives the reason. */
   remove: (slot: string) => Promise<boolean>
-  /** Download a slot as a `.json` file the player can keep. True if it was there to download; if it failed, `message` says why. */
+  /** Downloads a slot as a `.json` file the player can keep. When it fails, `message` gives the reason. */
   exportFile: (slot: string) => Promise<boolean>
-  /** Load a save from a file the player kept. True if it loaded. */
+  /** Loads a save from a file the player kept. */
   importFile: (file: File) => Promise<boolean>
-  /** Why the last save, load, delete, export or import failed, or null. */
+  /** The reason the last save, load, delete, export or import failed, or null. */
   message: string | null
-  /** Packs the last loaded save was made with that this game doesn't have. */
+  /** The packs the last loaded save was made with that this game doesn't have. */
   missingPacks: string[]
-  /** Plugins the last loaded save was made with that this game doesn't have. */
+  /** The plugins the last loaded save was made with that this game doesn't have. */
   missingPlugins: string[]
 }
 
 /**
- * The save menu without the menu: the slots, and saving, loading, deleting,
- * exporting and importing them. Needs the runner made with `saves`.
+ * Returns the saves and the functions that save, load, delete, export and import them, for a save menu of your own. It
+ * re-renders when the saves change, and needs a runner made with `saves`.
  */
 export function useSaves(): SavesState {
   const { runner, view, snapshot } = useGame()
@@ -232,10 +232,11 @@ export function BrokenSlot({ save, onRemove }: { save: BrokenSave; onRemove: (sl
 }
 
 /**
- * The save and load menu: every slot newest first, to load, overwrite, delete
- * or export as a file; a save that can't be read, to delete; a new slot; and importing a file a player kept.
- * While the game's `saveable` refuses saving, the Save buttons are greyed out with the reason. Needs
- * the runner made with `saves`. Says plainly when a save was made with packs or
- * plugins this game doesn't have. `useSaves` is the same without the look.
+ * Renders the save and load menu as the `saves` part from `useSaves`. It needs a runner made with `saves`.
+ *
+ * It lists every slot newest first, to load, overwrite, delete or export as a file, and each save that can't be read,
+ * to delete. It has buttons for a new slot and for importing a file. While the game's `saveable` refuses saving, the
+ * Save buttons are disabled with the reason. It says when a loaded save was made with packs or plugins this game
+ * doesn't have.
  */
 export const SavesMenu = overridable('SavesMenu', SavesMenuImpl)

@@ -14,80 +14,84 @@ import { useMotion, useSkipKey } from './motion.tsx'
 /** How long a reveal takes to come in, as `--ifloom-reveal-ms` sets it in the base styles. Only for when to stop waiting for a skip. */
 export const REVEAL_MS = 400
 
-/** The screen on show, and how it comes in and goes out. */
+/** The transitions of the screen showing, how it comes in and goes out. */
 export type ScreenTransition = {
-  /** `view.scene.key`: key the screen's element by it, so a new screen is a new element. */
+  /** The screen's key, `view.scene.key`. Key the screen's element by it, so a new screen is a new element. */
   key: string
-  /** How this screen comes in. */
+  /** The transition the screen comes in with. */
   in: TransitionName
-  /** How it goes out. */
+  /** The transition the screen goes out with. */
   out: TransitionName
-  /** How long each takes, in milliseconds. */
+  /** The length of each transition, in milliseconds. */
   ms: number
 }
 
-/** A reveal as the React UI plays it: where the prose holds back, how long since the run before (`delay`), how it comes in (`as`), and when, from the screen coming on (`at`). */
+/** A reveal the React UI plays, a point where the body holds back its next run of beats. It gives the run's delay, transition and time. */
 export type RevealPoint = {
-  /** Milliseconds since the run before. */
+  /** The time between the run before and this run, in milliseconds. */
   delay: number
-  /** How the run comes in. */
+  /** The transition the run comes in with. */
   as: TransitionName
-  /** When it comes, in milliseconds from the screen coming on. */
+  /** The time the run comes in, in milliseconds from the screen coming on. */
   at: number
 }
 
-/** One beat of a run, with its index in the scene's beats, and the roll drawn settled before it, if its `ui.dice` names one that isn't new. */
+/** One beat of a run, with its index in the scene's beats and the settled roll its `ui.dice` names, if any. */
 export type RevealBeat = {
+  /** The beat. */
   beat: SceneBeat
-  /** Its index in `view.scene.beats`. */
+  /** The beat's index in `view.scene.beats`. */
   index: number
-  /** The roll its `ui.dice` names, drawn settled, when it isn't new. */
+  /** The roll the beat's `ui.dice` names, rendered settled, when the roll isn't new. */
   roll?: Roll
 }
 
-/** A run of a scene's beats, and the reveal that holds it back (null for the first, shown with the screen). */
+/** A run of a scene's beats with the reveal that holds it back. The first run shows with the screen and has no reveal. */
 export type RevealGroup = {
-  /** The reveal that holds this run back, or null for the first run, shown with the screen. */
+  /** The reveal that holds this run back, or null for the first run, which shows with the screen. */
   reveal: RevealPoint | null
-  /** A new roll whose dice tumble before this run, which waits for them to settle: the one its first beat's `ui.dice` names. */
+  /** The new roll its first beat's `ui.dice` names. Its dice tumble before the run, which waits for them to settle. */
   dice?: Roll
   /** The run's beats, in order. */
   beats: RevealBeat[]
 }
 
-/** The rolls on screen: all the last command made, the new ones that tumble, and `at`, which counts each new set. */
+/** The rolls on screen, both all the last command made and the new ones whose dice tumble. */
 export type SceneRolls = {
-  /** The rolls the last command made: `view.rolls`. */
+  /** The rolls the last command made, `view.rolls`. */
   all: readonly Roll[]
-  /** The rolls the command that led here made, whose dice tumble. Empty for a screen that wasn't new. */
+  /** The new rolls whose dice tumble, made by the command that led here. It's empty for a screen that wasn't new. */
   fresh: readonly Roll[]
-  /** A count that moves on with each new set of rolls: key the dice by it, so a new set tumbles again. */
+  /** A count that goes up with each new set of rolls. Key the dice by it, so a new set tumbles again. */
   at: number
 }
 
-/** Everything `Scene` works out before it draws: see `useScene`. */
+/** The scene's timing that `useScene` returns and `Scene` renders from, with its transitions, runs of beats, wait and rolls. */
 export type SceneTiming = {
-  /** The view drawn. */
+  /** The view being rendered. */
   view: View
-  /** Whether transitions, reveals and tumbling dice play: the `motion` option, unless the player asks for reduced motion. */
+  /** True when transitions, reveals and tumbling dice play. It's the `motion` option, unless the player asks for reduced motion. */
   motion: boolean
-  /** How this screen comes in and goes out. `key` is `view.scene.key`: key the screen's element by it. */
+  /** The transitions this screen comes in and goes out with. Key the screen's element by its `key`. */
   transition: ScreenTransition
-  /** How the screen before goes, when the choice that led here says (its `out` and `ms`), over that screen's own. */
+  /** The transition the screen before goes out with, from the choice that led here, over that screen's own. */
   leave: { out?: TransitionName; ms?: number }
-  /** The scene's beats in runs: those shown with the screen, then each that waits for a reveal or for dice. Empty while a minigame runs. */
+  /**
+   * The scene's beats in runs, first those shown with the screen, then each that waits for a reveal or for dice. It's
+   * empty while a minigame runs.
+   */
   groups: RevealGroup[]
-  /** When the last run comes, in milliseconds from the screen coming on; 0 with none. The choices come with it. */
+  /** The time the last run comes in, in milliseconds from the screen coming on, or 0 with none. The choices come with it. */
   last: number
-  /** Whether runs are still to come: until then the choices can't be pressed, and a click or a key calls `skip`. */
+  /** True while runs are still to come. Until then the choices are disabled, and a click or a key calls `skip`. */
   pending: boolean
-  /** Whether the player skipped the wait, or every run came in. Dice drawn after it show settled. */
+  /** True once the player skipped the wait or every run has come in. Dice rendered after that show settled. */
   revealed: boolean
-  /** Show everything at once. */
+  /** Shows every run at once. */
   skip: () => void
   /** The rolls on screen. */
   rolls: SceneRolls
-  /** New rolls that no beat on screen names, for a moment over the scene (`DiceOverlay`). */
+  /** The new rolls that no beat on screen names, which show for a moment over the scene in a `DiceOverlay`. */
   unnamed: readonly Roll[]
 }
 
@@ -97,7 +101,10 @@ function asPair(spec: Transition | TransitionName | undefined): Transition {
   return typeof spec === 'string' ? { in: spec, out: spec } : spec
 }
 
-/** How the screen in `view` comes and goes: its own `ui.transition` over the game's, with `pressed` (the transition of the choice that led here) deciding how it comes in. */
+/**
+ * How the screen in `view` comes and goes: its own `ui.transition` over the game's, with `pressed` (the transition of
+ * the choice that led here) deciding how it comes in.
+ */
 export function screenTransition(view: View, game: Game, pressed?: Transition | TransitionName): ScreenTransition {
   const own = asPair(view.scene.ui?.transition)
   const fallback = asPair(game.ui?.transition)
@@ -171,23 +178,25 @@ function useFreshRolls(): { rolls: readonly Roll[]; at: number } {
 }
 
 /**
- * The scene's timing and state, with nothing drawn: what `Scene` draws from.
- * Use it in a scene of your own to keep the React UI's motion.
+ * Returns the scene's timing from the running game, which `Scene` renders from. Use it in a scene component of your
+ * own to keep the React UI's motion.
+ *
+ * It covers these:
  *
  * - The transition: the screen's `ui.transition` over the game's, with the
- *   choice that led here (the runner's `snapshot.pressed`) deciding how it
+ *   choice that led here (the runner's `snapshot.pressed`) setting how it
  *   comes in and, with an `out`, how the screen before goes.
  * - The runs: the beats shown with the screen, then each block with a
- *   `ui.reveal`, or a `ui.dice` naming a roll the last command just made,
+ *   `ui.reveal`, or a `ui.dice` naming a new roll from the last command,
  *   and the beats after it, each with when it comes.
  * - The wait: `pending` until the player clicks or presses a key (the first
  *   key press after a screen comes on calls `skip`, and does nothing else),
  *   or until the last run has come in.
- * - The dice: new rolls (`rolls.fresh`) tumble before their run; any other
- *   roll a beat names is on its `roll`, drawn settled; new rolls no beat
- *   names are `unnamed`.
+ * - The dice: new rolls (`rolls.fresh`) tumble before their run. Any other
+ *   roll a beat names is on its `roll`, rendered settled, and new rolls no
+ *   beat names are `unnamed`.
  *
- * With motion off, nothing waits: `pending` is false and every roll is settled.
+ * With motion off nothing waits, so `pending` is false and every roll is settled.
  */
 export function useScene(): SceneTiming {
   const { view, runner, snapshot } = useGame()

@@ -23,37 +23,39 @@ import { bounded, inRange, wanted } from '../range.ts'
 import { byId, defineFeature, listWords, mergedById, type FeatureContext } from './feature.ts'
 import { minigameAdvanced, minigameDue, minigamePlay, minigameTimedOut } from './minigames.ts'
 
-/** A timer a game declares: how long it runs, and what happens when it runs out. */
+/** A timer the game declares in `timers`, a named countdown in real time. The `timer` effect starts it, and its `effects` run when it runs out. */
 export type TimerDef = {
+  /** The timer's id, which the `timer` effect and condition name. */
   id: string
-  /** What a UI calls it, such as `'The phone'`. None if left out. */
+  /** The timer's label, such as `'The phone'`. None if left out. */
   label?: string
-  /** How long it runs when started, in milliseconds. */
+  /** The timer's length when started, in milliseconds. */
   ms: number
-  /** What happens when it runs out. Stopping it with `to: null` runs none of them. */
+  /** The timer's effects, which run when it runs out. Stopping it with `to: null` runs none of them. */
   effects?: EffectRef[]
 }
 
-/** A running timer, as the save keeps it: milliseconds left and its whole length. */
+/** A running timer a save keeps, with the milliseconds left and its whole length. Its effects are read from content when it runs out. */
 export type RunningTimer = {
-  /** Milliseconds left. At 0 it runs out on the next tick. */
+  /** The milliseconds the timer has left. At 0 it runs out on the next tick. */
   left: number
-  /** The length it was started with, in milliseconds, which adding time can raise. */
+  /** The timer's whole length in milliseconds, the length it started with, raised when time added goes past it. */
   total: number
 }
 
-/** A running timer, as a UI draws it. Its effects are never in the view. */
+/** A running timer as the player sees it, in `view.timers`. The view never lists its effects. */
 export type TimerView = {
+  /** The timer's id. */
   id: string
-  /** Its `label`, or null. */
+  /** The timer's `label`, or null. */
   label: string | null
-  /** Milliseconds left. */
+  /** The milliseconds the timer has left. */
   left: number
-  /** Its whole length, for a bar: `left / total` is the share left. */
+  /** The timer's whole length in milliseconds, for a bar. `left / total` is the share left. */
   total: number
 }
 
-/** What the timers feature adds, as types. */
+/** The timers feature's state, calls, content key, view and reference, as types. */
 export type TimersShape = {
   state: {
     /** The running timers, by id, in the order they started. */
@@ -61,28 +63,30 @@ export type TimersShape = {
   }
   conditions: {
     /**
-     * A timer. Bare, whether it is running; with a range, whether it is
-     * running with that many milliseconds left: `{ timer: 'phone', lte: 3000 }`.
-     * False once it has run out or been stopped.
+     * A condition on a timer, such as `{ timer: 'phone', lte: 3000 }`. With no range it holds while the timer runs,
+     * and with one while it runs with that many milliseconds left.
+     *
+     * It no longer holds once the timer has run out or been stopped.
      */
     timer: { timer: string } & Range
   }
   effects: {
     /**
-     * Start a declared timer, or start it again from the top: for its own `ms`,
-     * or `to` milliseconds. `to: null` stops it without running its effects;
-     * `by` adds milliseconds to a running one (a negative `by` takes them away,
-     * down to 0, and at 0 it runs out on the next tick). Adding to a timer that
-     * isn't running does nothing.
+     * An effect that starts a declared timer from the top, for its own `ms` or for `to` milliseconds. `to: null`
+     * stops it without running its effects.
+     *
+     * `by` adds milliseconds to a running timer, and a negative `by` takes them away, down to 0. At 0 the timer runs
+     * out on the next tick. Adding to a timer that isn't running does nothing.
      */
     timer: { timer: string; to?: number | null } | { timer: string; by: number }
   }
   commands: {
     /**
-     * Time passing: `ms` milliseconds off every running timer and the clock of
-     * the minigame being played. Whatever runs out does so in the order it
-     * would have, its effects running then. A UI sends it while anything
-     * counts down. Refused with nothing counting down.
+     * A command that takes `ms` milliseconds off every running timer and off the clock of the minigame being played.
+     * A UI sends it while anything counts down, and the engine refuses it when nothing does.
+     *
+     * Whatever runs out during the tick does so in the order it would have, its effects running then. No lock stops
+     * a tick.
      */
     tick: { type: 'tick'; ms: number }
   }
@@ -91,7 +95,7 @@ export type TimersShape = {
     timers?: TimerDef[]
   }
   pack: {
-    /** Timers. A later pack's replaces an earlier one's by id. */
+    /** The pack's timers. A later pack's timer replaces an earlier one with the same id. */
     timers?: TimerDef[]
   }
   view: {
@@ -100,7 +104,7 @@ export type TimersShape = {
   }
   lists: 'timer'
   references: {
-    /** A timer, by id, with a `timer` effect's `to` and `by`, which must be milliseconds. */
+    /** A reference to a timer by id, with a `timer` effect's `to` and `by`, which must be milliseconds. */
     timer: { timer: string; to?: unknown; by?: unknown }
   }
 }
@@ -108,7 +112,7 @@ export type TimersShape = {
 /** The most things one tick runs out, so a timer that keeps starting itself again can't hang the game. */
 const MOST_STEPS = 1000
 
-/** A declared timer, by id. */
+/** Returns the timer the game declares with this id. Undefined when there's none. */
 export function timerOf(game: Game, id: string): TimerDef | undefined {
   return game.timers?.find((entry) => entry.id === id)
 }
@@ -184,6 +188,7 @@ function amountProblems(ref: { to?: unknown; by?: unknown }): string[] {
   return []
 }
 
+/** The timers feature, which runs timers and the minigame's clock down by the `tick` command. */
 export const timers = defineFeature<TimersShape>({
   name: 'timers',
   requires: ['minigames'],

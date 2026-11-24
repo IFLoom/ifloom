@@ -1,14 +1,12 @@
 /**
- * @ifloom/plugin-messages — messages that arrive when the story allows, in
- * threads, with replies that are choices.
+ * The messages plugin, which delivers messages in threads when the story allows, with replies that are choices.
  *
- * A message is a scene that arrives instead of one you walk into: prose blocks
- * for its words, a sender, and replies that carry effects. It arrives the first
- * time its condition holds after a command, and raises a notice tagged with
- * its channel. A message drawn from a pool arrives only when `messages/draw`
- * draws it, as often as it is drawn. Channels are the game's: texts, email, letters on the mat, notes
- * pushed under a door. Nothing here knows about phones; a device shows a
- * channel as an app.
+ * A message has a sender, a body of blocks and replies that carry effects. It arrives the first time its condition
+ * holds after a command, and raises a notice tagged with its channel. A message in a pool arrives only when
+ * `messages/draw` draws it, as often as it is drawn.
+ *
+ * The game declares its channels, such as texts, email or letters on the mat. The plugin has no phone of its own, and
+ * the devices plugin can show a channel as an app.
  */
 import {
   applyEffects,
@@ -50,161 +48,175 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** Where messages go: texts, email, the doormat. */
-export type Channel = { id: string; name: string }
-
-/** A reply the player can send. */
-export type ReplyDef = {
+/** A channel the game declares in `data.messages.channels`, such as texts, email or the doormat. */
+export type Channel = {
+  /** The channel's id, which a message's `channel` names. */
   id: string
-  /** Its words, as written, with tokens filled: "On my way". Its id if left out. */
+  /** The channel's name. */
+  name: string
+}
+
+/** A reply the game declares in a {@link MessageDef}'s `replies`. The player can send one reply to each arrival. */
+export type ReplyDef = {
+  /** The reply's id, unique within its message. */
+  id: string
+  /** The reply's label, such as "On my way", with tokens filled. The reply's id if left out. */
   label?: string
-  /** Only on offer while this holds. */
+  /** The condition that must hold for the reply to be on offer. */
   when?: Condition
-  /** What sending it does, besides recording the reply. */
+  /** The effects of sending the reply, after the plugin records it. */
   effects?: EffectRef[]
 }
 
+/** A message the game declares in `data.messages.messages`. It arrives once by its `when`, or each time `messages/draw` draws it from a pool. */
 export type MessageDef = {
+  /** The message's id. */
   id: string
-  /** The channel it arrives in, by id. */
+  /** The id of the channel the message arrives in. */
   channel: string
-  /** Who sent it: a character id, or any name the game's prose uses. */
+  /** The message's sender, a character id or any name the game's prose uses. */
   from: string
-  /** The thread it belongs in. The sender if left out. */
+  /** The id of the thread the message belongs in. The sender if left out. */
   thread?: string
   /**
-   * It arrives the first time this holds after a command; left out, after
-   * the first command. For a message drawn from a pool, it can be drawn only
-   * while this holds; left out, any time.
+   * The condition for the message to arrive, the first time it holds after a command. Left out, the message arrives
+   * after the first command.
+   *
+   * For a message in a pool, `messages/draw` can draw it only while this holds, and any time if left out.
    */
   when?: Condition
   /**
-   * The pools it can be drawn from by `messages/draw`. A message with pools
-   * arrives only when drawn, never by `when` alone, and can arrive again
-   * each time it is drawn.
+   * The pools `messages/draw` can draw the message from. A message with pools arrives only when drawn, never by
+   * `when` alone, and arrives again each time it is drawn.
    */
   drawnFrom?: string[]
-  /** How likely a draw picks it, against the others that can be drawn: 1 if left out. */
+  /** The message's weight in a draw, against the others that can be drawn. 1 if left out. */
   weight?: number
-  /** Its words, as a scene's body: prose blocks. */
+  /** The message's words, a body of blocks like a scene's. */
   body: Block[]
-  /** What the player can send back; one, once. None if left out. */
+  /** The replies the player can choose from, one per arrival. None if left out. */
   replies?: ReplyDef[]
   /**
-   * What happens as it arrives, each time it does: in the same command, after
-   * the arrival is recorded. A trigger on `messages/arrived` would run a
-   * command later, since triggers run before the plugins deliver.
+   * The effects that run each time the message arrives, in the same command, after the plugin records the arrival.
+   *
+   * A trigger on `messages/arrived` runs a command later, since triggers run before the plugins deliver.
    */
   effects?: EffectRef[]
   /**
-   * How long it takes to arrive once its `when` holds: `ms` milliseconds after
-   * the thread's previous arrival, run down by the engine's `tick` as a timer
-   * is. Left out, it arrives straight away. One message waits at a time, so
-   * the next waits until this one has come.
+   * The message's wait of `ms` milliseconds after the thread's previous arrival, once its `when` holds. The message
+   * arrives at once if left out.
+   *
+   * The engine's `tick` runs it down as it does a timer. One message waits at a time, and while it waits, every other
+   * message with `after` and every later message in its thread wait until it has arrived.
    */
   after?: { ms: number }
-  /** Whether its thread shows the other side typing while it waits. True if left out. */
+  /** True when the thread shows the other side typing while the message waits. True if left out. */
   typing?: boolean
 }
 
 /**
- * One arrival of a message. A message the story sends arrives once; one
- * drawn from a pool can arrive again, each time a new arrival with its own
- * reply and its own read mark.
+ * The record a save keeps of one arrival of a message, in {@link MessagesState}'s `arrived`. A message drawn from a
+ * pool can arrive again, and each arrival has its own reply and read mark.
  */
 export type Arrival = {
   /**
-   * This arrival's key: the message's id the first time it arrives, then
-   * `<id>~2`, `<id>~3` and on. Replies and reads are kept by it, and the
-   * reply command names it.
+   * The arrival's key, the message's id the first time it arrives and then `<id>~2`, `<id>~3` and so on. The plugin
+   * keeps replies and reads by this key, and the reply command names it.
    */
   key: string
   /** The message's id. */
   message: string
-  /** The turn it arrived. */
+  /** The turn the message arrived on. */
   turn: number
-  /** The day it arrived: the calendar's, or the turn in a game without it. */
+  /** The day the message arrived, the calendar's day or the turn in a game without the calendar. */
   day: number
 }
 
-/** What the plugin keeps in a save. */
+/** The messages a save keeps for the player, their arrivals, replies and reads. Messages themselves are read from content. */
 export type MessagesState = {
-  /** Every arrival, oldest first. */
+  /** The arrivals so far, oldest first. */
   arrived: Arrival[]
-  /** The reply sent to each arrival, by its key. */
+  /** The id of the reply sent to each arrival, by the arrival's key. */
   replied: Record<string, string>
-  /** The day each reply was sent, by the arrival's key: the calendar's, or the turn without it. */
+  /** The day each reply was sent, by the arrival's key, the calendar's day or the turn without the calendar. */
   repliedOn: Record<string, number>
-  /** Arrivals the player has opened, by key. */
+  /** The arrivals the player has read, by key. */
   read: Record<string, true>
   /**
-   * The message waiting to arrive, if one is: its id, its thread, and whether
-   * the thread shows typing. The plugin's timer `messages.due` runs while it
-   * waits, and delivers it when it runs out.
+   * The message waiting to arrive, with its id, its thread and whether the thread shows typing, or null. The plugin's
+   * timer `messages.due` runs while it waits and delivers it when it runs out.
    */
   due: { key: string; thread: string; typing: boolean } | null
 }
 
+/** One arrival of a message as the player sees it, in a {@link ThreadView}'s `messages`. */
 export type MessageView = {
-  /** The message's id. A message drawn twice shows twice, with one id and two keys. */
+  /** The message's id. A message that arrives twice shows twice, with one id and two keys. */
   id: string
-  /** This arrival's key, for a UI's list key: see `Arrival`. */
+  /** The arrival's key, which a UI can use as a list key (see {@link Arrival}). */
   key: string
-  /** Who sent it, as written: a character id or a name. */
+  /** The message's sender as the message's `from` gives it, a character id or a name. */
   from: string
-  /** The sender's name if they are a character, else `from` as written. */
+  /** The sender's name if the sender is a character, else `from` as given. */
   name: string
-  /** The words, filled in, with any picture and video markup in them. */
+  /** The message's words with tokens filled, including any picture and video markup. */
   text: string
   /**
-   * The words as beats, as a scene's are: paragraphs, and the pictures and
-   * videos in them in the order written, from markup or `{ media }` blocks.
+   * The message's body rendered as beats, as a scene's is. The beats are its paragraphs and its pictures and videos,
+   * from markup or `{ media }` blocks, in the order written.
    */
   beats: SceneBeat[]
-  /** The turn it arrived. */
+  /** The turn the message arrived on. */
   turn: number
-  /** Whether the player has read it. */
+  /** True once the player has read the message. */
   read: boolean
-  /** Replies on offer, until one is sent: buttons like any other, each sending its `command`. */
+  /** The replies on offer until one is sent, each a button that sends its `command`. */
   replies: RenderedChoice[]
-  /** The label of the reply sent, if one was. */
+  /** The label of the reply sent, or null before one is sent. */
   replied: string | null
 }
 
+/** A thread of messages as the player sees it, in a {@link ChannelView}'s `threads`. */
 export type ThreadView = {
+  /** The thread's id, its `thread` or its sender. */
   id: string
+  /** The thread's name, the sender's name for a character or the id as given. */
   name: string
-  /** The sender's picture: their entity's `image`, through `artSrc`; null for a name as written. */
+  /** The path of the sender's picture, their entity's `image` through `artSrc`, or null for a sender who is only a name. */
   image: string | null
-  /** The sender's face, for an avatar: a person's `portrait` with the cast, else their `image`. */
+  /** The path of the sender's face for an avatar, a character's `portrait` with the cast plugin, else their `image`. */
   portrait: string | null
-  /** Oldest first. */
+  /** The thread's messages, oldest first. */
   messages: MessageView[]
-  /** How many of its messages the player hasn't read. */
+  /** The number of the thread's messages the player hasn't read. */
   unread: number
-  /** The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. */
+  /** The button that marks the thread read, labelled with the `messages/markRead` string (`Mark read`), or null while nothing in it is unread. */
   read: RenderedChoice | null
-  /** Whether the other side is typing: a message with `after` is waiting to arrive in this thread, and its `typing` isn't false. */
+  /** True while a message with `after` waits to arrive in this thread and its `typing` isn't false. */
   typing: boolean
 }
 
+/** A channel as the player sees it, in `view.plugins.messages.channels`. */
 export type ChannelView = {
+  /** The channel's id. */
   id: string
+  /** The channel's name. */
   name: string
-  /** Newest activity first. */
+  /** The channel's threads, the one with the latest arrival first. */
   threads: ThreadView[]
-  /** How many of its messages the player hasn't read. */
+  /** The number of the channel's messages the player hasn't read. */
   unread: number
-  /** The button that marks the whole channel read (the `messages/allRead` string, `Mark all read`), or null while nothing in it is unread. */
+  /** The button that marks the whole channel read, labelled with the `messages/allRead` string (`Mark all read`), or null while nothing in it is unread. */
   read: RenderedChoice | null
 }
 
+/** The messages as the player sees them, in `view.plugins.messages`. */
 export type MessagesView = {
-  /** Every channel the game declares, in order, with its threads. */
+  /** The game's channels in the order it declares them, each with its threads. */
   channels: ChannelView[]
-  /** How many messages are unread, in all channels. */
+  /** The number of unread messages in all channels. */
   unread: number
-  /** Whether a message with `after` is waiting to arrive, in any thread. */
+  /** True while a message with `after` waits to arrive in any thread. */
   waiting: boolean
 }
 
@@ -228,7 +240,10 @@ const DUE = 'messages.due'
 /** How long a notice's line can be, in characters, before it is cut. */
 const NOTICE_LENGTH = 80
 
-/** The plugin's two lists, as content writes them in `data.messages.channels` and `data.messages.messages` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
+/**
+ * The plugin's two lists, as content writes them in `data.messages.channels` and `data.messages.messages` (a plugin's
+ * `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table.
+ */
 const DATA = defineData(ID, {
   channels: list<Channel>({ noun: 'channel', words: { name: true } }),
   messages: list<MessageDef>({ noun: 'message', words: { body: 'blocks', effects: 'effects', replies: [{ label: true, effects: 'effects' }] } }),
@@ -269,7 +284,7 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's messages: `data.messages.messages`, from its content and packs. */
+/** Returns the game's messages, from `data.messages.messages` in its content and packs. */
 export function messagesOf(game: Game): MessageDef[] {
   return DATA.messages.all(game)
 }
@@ -352,15 +367,14 @@ const empty = (): MessagesState => ({ arrived: [], replied: {}, repliedOn: {}, r
 /** Whether a condition's arguments give any bound of a range. */
 const ranged = (args: Range) => args.gte !== undefined || args.gt !== undefined || args.lte !== undefined || args.lt !== undefined
 
-/** The game's channels, in order: `data.messages.channels`, from its content and packs. */
+/** Returns the game's channels in order, from `data.messages.channels` in its content and packs. */
 export function channelsOf(game: Game): Channel[] {
   return DATA.channels.all(game)
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put the channels and the
- * messages in the content's `data.messages.channels` and `data.messages.messages`,
- * so a mod can add either.
+ * Returns the messages plugin for the game's `plugins`. The game declares its channels in `data.messages.channels`
+ * and its messages in `data.messages.messages`, so a mod can add either.
  */
 function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
   function unreadIn(record: MessagesState, game: Game, channel?: string): number {
@@ -662,36 +676,52 @@ function applyRefs(state: GameState, game: Game, refs: readonly EffectRef[]): Ga
   return applyEffects(state, game, buildEffects(game, refs))
 }
 
-/** A command: send this reply to this message: its id for its first arrival, or an arrival's key. */
+/** Returns the `messages/reply` command, which sends the reply to an arrival, named by the message's id for its first arrival or by the arrival's key. */
 const replyTo = (message: string, reply: string): CommandRef => CALLS.commands.reply({ message, reply })
-/** An effect: deliver one message drawn from the pool, as a new arrival. */
+/** Returns the `messages/draw` effect, which draws one message from the pool and delivers it as a new arrival. */
 const drawMessage = (pool: string): EffectRef => CALLS.effects.draw({ pool })
-/** A condition: whole days since the message last arrived, in this range; false if it never has. */
+/**
+ * Returns the `messages/since` condition, which holds while the whole days since the message last arrived fall in the
+ * range. It never holds before the message arrives.
+ */
 const messageSince = (message: string, range: Range): Condition => CALLS.conditions.since({ message, ...range })
-/** A command: mark a thread read, by its id; a whole channel's, with `{ channel }`; or every message, with neither. */
+/** Returns the `messages/read` command, which marks a thread read by its id, a channel with `{ channel }`, or every message with neither. */
 const readThread = (thread?: string | { channel: string }): CommandRef =>
   CALLS.commands.read(thread === undefined ? undefined : typeof thread === 'string' ? { id: thread } : { channel: thread.channel })
-/** A condition: the message has arrived. */
+/** Returns the `messages/arrived` condition, which holds once the message has arrived. */
 const messageArrived = (message: string): Condition => CALLS.conditions.arrived({ message })
 /**
- * A condition: the player replied to the message, or with that reply; with a
- * range, as many whole days ago: `messages.replied('ava.hi', undefined, { gte: 2 })`.
+ * Returns the `messages/replied` condition, which holds once the player has replied to the message's latest arrival,
+ * with `reply` if given. With a range, the whole days since the reply must fall in it too.
+ *
+ * @example
+ * messages.replied('ava.hi', undefined, { gte: 2 })
  */
 const messageReplied = (message: string, reply?: string, range?: Range): Condition =>
   CALLS.conditions.replied({ message, ...(reply === undefined ? {} : { reply }), ...range })
-/** A condition: the player has read the message's latest arrival. (`messages.read` is the command that marks a thread read.) */
+/**
+ * Returns the `messages/read` condition, which holds once the player has read the message's latest arrival. The
+ * `messages.read` helper returns the command instead.
+ */
 const messageRead = (message: string): Condition => CALLS.conditions.read({ message })
 
 /**
- * The plugin, with its helpers on it: `messages()` makes the plugin for the
- * game's `plugins`, and content is written with `messages.reply('hi', 'wave')`.
+ * The messages plugin's factory, with its helpers as properties. `messages()` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `messages.reply('hi', 'wave')`.
  */
 export const messages = Object.assign(messagesPlugin, {
+  /** Returns the `messages/reply` command, which sends the reply to an arrival, by the message's id or the arrival's key. */
   reply: replyTo,
+  /** Returns the `messages/draw` effect, which draws one message from the pool and delivers it as a new arrival. */
   draw: drawMessage,
+  /** Returns the `messages/since` condition, which holds while the whole days since the message last arrived fall in the range. */
   since: messageSince,
+  /** Returns the `messages/read` command, which marks a thread, a channel (`{ channel }`) or every message read. */
   read: readThread,
+  /** Returns the `messages/arrived` condition, which holds once the message has arrived. */
   arrived: messageArrived,
+  /** Returns the `messages/replied` condition, which holds once the player has replied to the message, with `reply` and in the range if given. */
   replied: messageReplied,
+  /** Returns the `messages/read` condition, which holds once the player has read the message's latest arrival. */
   messageRead,
 })

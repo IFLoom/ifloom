@@ -17,40 +17,48 @@ import {
   type View,
 } from '@ifloom/engine'
 
-/** Picks the next command from what is on screen, or null to stop. */
+/** A function that chooses the next command for `playtest` from the view, the state and the game. It returns null to stop the run. */
 export type Policy = (screen: View, state: GameState, game: Game) => CommandRef | null
 
+/** Settings for `playtest`. Each is optional. */
 export type PlaytestOptions = {
-  /** Stop after this many turns have passed. 7 if left out. */
+  /** The number of turns the run plays before it stops. 7 if left out. */
   turns?: number
-  /** Stop after this many commands, whatever the turn: a guard against a policy going round in circles. 2000 if left out. */
+  /** The most commands the run sends, whatever the turn, so a policy that goes round in circles still stops. 2000 if left out. */
   steps?: number
 }
 
-/** One turn's numbers, as the turn ended: the player's stats and a count of each kind of entity. `turn` counts from 1. */
+/**
+ * One turn's numbers in a playtest, taken as the turn ended. They hold the player's stats and the number of entities of
+ * each listed kind.
+ */
 export type TurnMetrics = {
-  /** The turn, from 1. */
+  /** The turn's number, counting from 1. */
   turn: number
-  /** The player's stats as it ended, by id. */
+  /** The player's stats and, by kind id, the number of entities of each listed kind, as the turn ended. */
   stats: Record<string, number>
-  /** The scenes shown during it, by id, in order. */
+  /** The ids of the scenes the turn opened, in order. */
   scenes: string[]
-  /** How many commands the policy chose that were refused during it. */
+  /** The number of the policy's commands the game refused during the turn. */
   refused: number
 }
 
+/** The result of a `playtest` run, with its transcript, each turn's numbers and the refusals. */
 export type Playtest = {
-  /** Every screen, and the command taken on it, as plain text. */
+  /** The run's transcript as plain text, with each screen and the command sent from it. */
   transcript: string
   /** Each turn's numbers, in order. */
   turns: TurnMetrics[]
-  /** Commands the policy chose that were refused, with why: each one a policy or game bug. */
+  /** The policy's commands that the game refused, each with its turn and reason. Each one is a bug in the policy or the game. */
   refusals: { turn: number; command: Command; reason: string }[]
-  /** The state it ended on. */
+  /** The state the run ended on. */
   state: GameState
 }
 
-/** A screen as plain text: where, when, the prose, every button with its price or reason, and a scene's inputs with what each holds. */
+/**
+ * Returns a view as plain text, as `ifloom playtest` writes it. The text has the turn, the time, the body, each choice
+ * and action with its price or reason, and the inputs.
+ */
 export function screenText(screen: View): string {
   const where = [`Turn ${screen.turn + 1}`, screen.when].filter(Boolean)
   const lines = [`== ${where.join(' · ')}`, `# ${screen.scene.title}`, screen.scene.body]
@@ -142,13 +150,13 @@ function waitFor(screen: View): Command | null {
 }
 
 /**
- * A policy that explores: in a scene, a choice it has not made yet; at
- * bedtime (the calendar's), bed, walking home if it must; else someone to talk
- * to and something to do, each once a turn, leaving what ends the turn till
- * last; else the nearest place it hasn't been this turn; else, while a timer
- * runs, wait for it (a `tick`); else end the turn. It
- * never presses a button the game warns against. It knows nothing about any
- * game, so it shows what a curious player meets — not a route through the story.
+ * Returns a policy that explores the game as a curious player would, rather than following a route through the story.
+ * It never chooses a choice or action that carries a warning.
+ *
+ * In a scene it chooses a choice it hasn't chosen yet. Otherwise, at the calendar's bedtime it goes to bed, walking
+ * home if it must. Failing that it talks to someone and does something, each once a turn, leaving an action that ends
+ * the turn till last. Then it walks to the nearest location it hasn't visited this turn, waits for a running timer with
+ * a `tick`, and at last ends the turn.
  */
 export function explorer(): Policy {
   const visited = new Map<number, Set<string>>()
@@ -215,9 +223,10 @@ export function explorer(): Policy {
 }
 
 /**
- * Play from `start` with `policy` until the turns are up, the policy stops, the game starts over, it goes
- * round in circles, or the step limit is hit. Each notice raised along the way is written once, under the
- * screen it first shows on.
+ * Returns the result of playing from `start` with `policy`, the explorer by default. It stops when `turns` or `steps`
+ * run out, the policy returns null, the game restarts or a screen keeps repeating.
+ *
+ * The transcript writes each notice once, under the screen it first shows on.
  */
 export function playtest(game: Game, start: GameState, policy: Policy = explorer(), options: PlaytestOptions = {}): Playtest {
   const turns = options.turns ?? 7
@@ -290,7 +299,7 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
   return { transcript: lines.join('\n\n'), turns: metrics, refusals, state }
 }
 
-/** The turn-by-turn numbers as a table, one row a turn. */
+/** Returns a playtest's turn numbers as a tab-separated table, with a header row and one row a turn. */
 export function metricsText(turns: TurnMetrics[]): string {
   const stats = Object.keys(turns[0]?.stats ?? {})
   const rows = [['turn', ...stats, 'scenes', 'refused'].join('\t')]

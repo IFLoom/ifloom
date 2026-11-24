@@ -8,36 +8,44 @@
  */
 import type { AudioChannelView, AudioCue, AudioView, CommandLog, KvValue, Runner } from '@ifloom/engine'
 
-/** The parts of an `HTMLAudioElement` the player uses. Tests pass a fake through `createAudio`. */
+/** The part of an `HTMLAudioElement` that the audio player uses. Tests pass a fake through `AudioOptions.createAudio`. */
 export type AudioLike = {
+  /** Starts playing. The browser may refuse, by throwing or by rejecting the promise it returns. */
   play(): Promise<void> | void
+  /** Pauses playing. */
   pause(): void
+  /** The element's volume, from 0 to 1. */
   volume: number
+  /** True when the element starts again from the beginning as it ends. */
   loop: boolean
+  /** The element's position in the file, in seconds. */
   currentTime: number
+  /** True once the element has played to its end. */
   readonly ended: boolean
+  /** The handler the element calls when it plays to its end. */
   onended: ((event: Event) => void) | null
+  /** The element's file. */
   src: string
 }
 
+/** Settings for `startAudio`. Each is optional. */
 export type AudioOptions = {
-  /** Makes the element for a file. `new Audio(src)` if left out. */
+  /** The function that makes the element for a file. `new Audio(src)` if left out. */
   createAudio?: (src: string) => AudioLike
-  /** Told every decision the player makes, for debugging: `log: console.debug`. */
+  /** A function that receives a line for each decision the player makes, for debugging, such as `console.debug`. */
   log?: (message: string) => void
-  /** Where the first `pointerdown` or `keydown` unlocks sound. `document` if left out. */
+  /** The element whose first `pointerdown` or `keydown` unlocks sound. `document` if left out. */
   root?: EventTarget
 }
 
 /**
- * What `startAudio` gives back: a function that stops the player, as every
- * other `start*` gives, with what else a player can do on it. Calling it stops
- * listening to the runner and the profile, and pauses everything.
+ * The audio player `startAudio` returns, a function that stops it with two methods on it. Calling it stops following
+ * the runner and the page's clicks and key presses, and pauses every sound.
  */
 export type AudioPlayer = (() => void) & {
-  /** Allow sound now, as the first click or key press does, and start whatever is due. */
+  /** Allows sound now, as the first click or key press does, and starts the sounds that are due. */
   unlock(): void
-  /** Play a file once on a channel, such as a voice line again. `'sfx'` and full volume if left out. */
+  /** Plays a file once on a channel, such as a voice line again. The channel is `'sfx'` and the volume 1 if left out. */
   play(src: string, channel?: string, volume?: number): void
 }
 
@@ -81,13 +89,12 @@ function errorName(error: unknown): string {
 }
 
 /**
- * Play a runner's `view.audio` in the browser until the function it returns
- * is called, as `startClock`'s and `startKeys`' are. Background
- * channels crossfade when their file changes and step through playlists. Each
- * cue key plays once, and the keys already in the view when the player starts
- * count as heard, so loading a save replays nothing. Volumes and muting come
- * from the game's settings, as the runner's snapshot has them. Nothing plays until the player first
- * clicks or presses a key, or until `unlock()`.
+ * Starts playing a runner's `view.audio` in the browser, and returns the {@link AudioPlayer} that stops it. Nothing
+ * plays until the player first clicks or presses a key, or until `unlock()`.
+ *
+ * Background channels crossfade when their file changes, and step through playlists. Each cue key plays once, and the
+ * player counts the cues already in the view when it starts as heard, so loading a save replays nothing. Volumes and
+ * muting follow the game's settings in the runner's snapshot.
  */
 export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPlayer {
   const create = options.createAudio ?? ((src: string) => new Audio(src) as AudioLike)

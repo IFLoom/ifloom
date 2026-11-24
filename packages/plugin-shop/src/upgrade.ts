@@ -87,9 +87,10 @@ function gatingToBlocked(vendor: Record<string, unknown>): Record<string, unknow
 /** How the words table names a blocked entry, which has no id: a short hash of its reason as written, as the engine names it. */
 const entryKey = (text: string) => hash(text).toString(16).padStart(8, '0').slice(0, 6)
 
-/** The version of what content writes for this plugin. */
+/** The schema of the content this plugin reads, numbered by the engine's schema. */
 export const CONTENT_VERSION = 27
 
+/** The steps that carry this plugin's content forward, each keyed by the schema it upgrades from. */
 export const contentMigrations: Record<number, ContentStep> = {
   // 12 → 13: items leave the engine; what a vendor sells is an entity, and the shop's calls name it.
   12: (pack, tools) => tools.calls(goodsToThings(pack), (call) => (ITEM_CALLS.has(call.name) ? { name: call.name, with: itemArgs(call.with) } : call)),
@@ -127,9 +128,10 @@ function closedKey(pack: RawPack, key: string): string | undefined {
   return typeof closed === 'string' ? entryKey(closed) : undefined
 }
 
-/** The version of this plugin's commands. */
+/** The version of this plugin's commands, which command logs record. */
 export const COMMAND_VERSION = 13
 
+/** The steps that carry this plugin's logged commands forward, each keyed by the version it upgrades from. */
 export const commandMigrations: Record<number, CommandStep> = {
   // 12 → 13: what was an item's id names the entity it became.
   12: (command) =>

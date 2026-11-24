@@ -1,12 +1,11 @@
 import { ignoredKey } from './keys.ts'
 
 /**
- * Until stopped, the next key press calls `skip`, to show everything a scene
- * still holds back, and does nothing else: it listens before other shortcuts
- * and swallows the key, so a number key can't pick a choice that isn't shown
- * yet. Typing in a field and keys held with a modifier are left alone. Start
- * it while a UI holds something back, such as prose it reveals in steps, and
- * stop it once everything is shown.
+ * Starts calling `skip` on each key press, and returns a function that stops it. Run it while a UI reveals a scene in
+ * steps, and stop it once the scene shows in full.
+ *
+ * It listens before other shortcuts and stops the key there, so a number key can't choose a choice the player can't
+ * see yet. It leaves alone a key typed into a field and a key held with a modifier.
  */
 export function startRevealSkip(skip: () => void): () => void {
   const onKey = (event: KeyboardEvent) => {

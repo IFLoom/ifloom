@@ -2,13 +2,12 @@ import { createRunner, profile, saves, startingState, type Game, type GameState,
 import { localStorageDriver } from './drivers.ts'
 
 /**
- * A runner with what most games in a browser want: a new game with a random
- * seed, undo 50 steps deep, saves and a profile in `localStorage`, and an
- * autosave each turn. It reads the profile before it starts, so the new
- * game has the player's play settings and `settings()` has their ui
- * settings from the first frame. Pass a `start` to begin elsewhere, and
- * runner options to change any default; they are merged over these. Any UI
- * can use it: the React UI's `mountGame` does, and so do the templates.
+ * Returns a runner set up for a browser, with saves and a profile in `localStorage`. Each runner option you pass
+ * replaces that option's default whole.
+ *
+ * The defaults are a new game with a random seed, undo 50 steps deep and an autosave each turn. It reads the profile
+ * before it starts, so the new game has the player's play settings and `settings()` has their UI settings from the
+ * first frame. Pass `start` to begin from another state. The React UI's `mountGame` and the templates use it.
  */
 export async function browserRunner(game: Game, options: RunnerOptions & { start?: GameState } = {}): Promise<Runner> {
   const { start, ...runnerOptions } = options

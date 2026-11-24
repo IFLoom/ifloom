@@ -6,97 +6,110 @@ import type { GameState } from './types.ts'
 import { loadState } from './intake.ts'
 import { fail, ok, type Result } from './result.ts'
 
-/** What a save says about itself, for a load screen. */
+/** The facts a save records about itself, for a load page. `list()` and `write` return it. */
 export type SaveMeta = {
-  /** The game it belongs to; another game's save is refused on import. */
+  /** The id of the game the save belongs to. Reading or importing another game's save is refused. */
   game: string
-  /** The slot it's in: `'1'`, `'auto'`, or the game's own name for one. */
+  /** The save's slot, such as `'1'`, `'auto'` or a name of the game's own. */
   slot: string
-  /** The player's name for it, or one made from where and when. */
+  /** The save's name, the player's, else the plugins' `when` words, else the turn. */
   name: string
-  /** When it was written, epoch milliseconds. */
+  /** The time the save was written, in epoch milliseconds. */
   savedAt: number
-  /** Time played, in milliseconds, as the runner counted it. */
+  /** The time played when the save was written, in milliseconds, as the runner counted it. */
   played: number
-  /** How many turns had passed. */
+  /** The number of turns that had passed when the save was written. */
   turn: number
-  /** When and where the game was, in plugins' words ("Day 3 · Wednesday morning · The café"), or null if none says. */
+  /** The time and place in the game in the plugins' words, such as "Day 3 · Wednesday morning · The café", or null when no plugin gives one. */
   when: string | null
-  /** What the first `saveName` that answers gave for the state (the game's `rules.saveName`, then each plugin's), such as the name the player typed, or null. */
+  /**
+   * The player's name for the save's game, such as the name the player typed, or null. It comes from the first
+   * `saveName` that answers, the game's `rules.saveName` first, then each plugin's.
+   */
   playerName: string | null
-  /** The ids of the packs the game was loaded with; a missing mod is reported on load. */
+  /** The ids of the packs the game was loaded with. A mod among them that is missing on load is reported in `missingPacks`. */
   packs: string[]
-  /** The plugins the game was built with, and the version of each one's state. */
+  /** The version of each plugin the game was built with, by plugin id. */
   plugins: Record<string, number>
-  /** The game's own version (`game.version`) the save was made with; 1 for a game that declares none. */
+  /** The game's own version (`game.version`) the save was made with. 1 for a game that declares none. */
   gameVersion: number
 }
 
 /**
- * A save that is there but can't be read, as `list()` gives it: its slot, and
- * why, in the words `read` would give. Listed so the player can delete it.
+ * A save in a slot that can't be read, as `list()` gives it. The listing keeps it so the player can delete it.
  */
-export type BrokenSave = { slot: string; broken: string }
+export type BrokenSave = {
+  /** The broken save's slot. */
+  slot: string
+  /** The reason the save can't be read, in the words `read` would give. */
+  broken: string
+}
 
-/** One entry of a game's saves, as `list()` gives them: a save's meta, or a save that can't be read. */
+/** One entry of a game's saves from `list()`, a {@link SaveMeta} or a {@link BrokenSave}. Tell them apart with `'broken' in entry`. */
 export type SaveListing = SaveMeta | BrokenSave
 
 /**
- * A save as it is written: the state, and what it says about itself. `ifloom`
- * is the format of this envelope, 1, apart from the state's own `version`
- * (`SAVE_VERSION`), which `loadState` carries forward.
+ * A save as a driver stores it, the state with its {@link SaveMeta}. `ifloom` is this envelope's format, 1, apart from
+ * the state's own `version` (`SAVE_VERSION`), which `loadState` carries forward.
  */
-export type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
-
-/** A save read back: what it says about itself, and the state, carried forward. */
-export type LoadedSave = {
-  /** What the save says about itself. */
+export type SaveFile = {
+  /** The envelope's format, 1. */
+  ifloom: 1
+  /** The save's {@link SaveMeta}. */
   meta: SaveMeta
-  /** The state, carried forward to this game's version through `loadState`. */
+  /** The saved state, in the shape of the version that wrote it. */
   state: GameState
-  /** Packs the save was made with that the game wasn't loaded with, such as a mod since turned off. */
+}
+
+/** A save read back, with its state carried forward to this game through `loadState`. */
+export type LoadedSave = {
+  /** The save's {@link SaveMeta}. */
+  meta: SaveMeta
+  /** The save's state, carried forward to this game's version through `loadState`. */
+  state: GameState
+  /** The ids of the mods the save was made with that the game wasn't loaded with, such as a mod since turned off. */
   missingPacks: string[]
-  /** Plugins the save was made with that this game does not have. Their state is kept, unused. */
+  /** The ids of the plugins the save was made with that this game does not have. The save keeps their state, unused. */
   missingPlugins: string[]
 }
 
-/** What a save's write is given besides the state. */
+/** Settings for `Saves.write` besides the state. */
 export type SaveExtra = {
-  /** The player's name for it. One made from where and when if left out. */
+  /** The player's name for the save. The plugins' `when` words, else the turn, if left out. */
   name?: string
-  /** Time played, in milliseconds. 0 if left out. */
+  /** The time played, in milliseconds. 0 if left out. */
   played?: number
-  /** When it was written, epoch milliseconds. Now if left out. */
+  /** The time the save was written, in epoch milliseconds. Now if left out. */
   savedAt?: number
 }
 
 /**
- * One game's saves, as `saves` gives them. Nothing here rejects: when the
- * driver fails, each answers a failure in words a player can read, with the
- * driver's error as its `cause`.
+ * One game's save store, returned by `saves`. No call rejects, and a driver's failure answers with a reason a player can
+ * read and the driver's error as its `cause`.
  */
 export interface Saves {
-  /** Where the saves are kept. */
+  /** The driver that keeps the saves. */
   readonly driver: SaveDriver
-  /** Write a state to a slot: what the save says about itself, or `notSaved` if the driver fails. */
+  /** Writes a state to a slot and returns the save's {@link SaveMeta}. It fails with the `notSaved` string if the driver fails. */
   write(slot: string, state: GameState, extra?: SaveExtra): Promise<Result<SaveMeta>>
   /**
-   * A slot read back, carried forward and checked against this game. The
-   * value is null when the slot is empty; a failure says why the save can't
-   * be read, or is `notLoaded` if the driver fails.
+   * Returns the save in a slot, carried forward and checked against this game, or null when the slot is empty.
+   *
+   * A failure gives the reason the save can't be read, or the `notLoaded` string if the driver fails.
    */
   read(slot: string): Promise<Result<LoadedSave | null>>
   /**
-   * Every save this game has, newest first, then any that can't be read, as
-   * `{ slot, broken }` with the reason, by slot. Tell them apart with
-   * `'broken' in entry`; a broken one can still be removed. `notListed` if the driver fails.
+   * Returns the game's saves, newest first, then any that can't be read as {@link BrokenSave}s, by slot. It fails with
+   * the `notListed` string if the driver fails.
+   *
+   * Tell the two apart with `'broken' in entry`. A broken save can still be removed.
    */
   list(): Promise<Result<SaveListing[]>>
-  /** Delete a slot. Nothing happens if it is empty. `notRemoved` if the driver fails. */
+  /** Deletes the save in a slot, and does nothing if the slot is empty. It fails with the `notRemoved` string if the driver fails. */
   remove(slot: string): Promise<Result<void>>
-  /** A save as text a player can keep as a file, or null if the slot is empty. `notExported` if the driver fails. */
+  /** Returns a slot's save as text a player can keep as a file, or null if the slot is empty. It fails with the `notExported` string if the driver fails. */
   exportSlot(slot: string): Promise<Result<string | null>>
-  /** Text from a file a player picked, checked against this game: the save, or why it was refused. */
+  /** Returns the save in text from a file the player chose, checked against this game. A text that isn't this game's save fails with the reason. */
   importText(text: string): Result<LoadedSave>
 }
 
@@ -106,13 +119,12 @@ function isSaveFile(data: unknown): data is { ifloom: 1; meta: SaveMeta; state: 
 }
 
 /**
- * One game's saves, kept wherever its driver keeps them.
+ * Returns the {@link Saves} store of a game, kept by a driver. The game chooses its slots' names, such as `'auto'`,
+ * `'quick'` or `'1'`.
  *
- * Keys carry the game's id: opened from disk, every game shares one storage
- * origin in Chromium, and itch.io serves many games from shared domains. The
- * format's version lives inside the save (`loadState`), never in the key, so a
- * new version never orphans an old save. Slots are names — `'auto'`,
- * `'quick'`, `'1'` — chosen by the game.
+ * Each key starts with the game's id, because every game opened from disk shares one storage origin in Chromium, and
+ * itch.io serves many games from shared domains. The format's version is inside the save (`loadState`), never in the
+ * key, so a new version never orphans an old save.
  */
 export function saves(game: Game, driver: SaveDriver): Saves {
   const prefix = `${game.id}.save.`

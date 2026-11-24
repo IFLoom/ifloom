@@ -1,17 +1,17 @@
 /**
- * Deterministic picks from a save.
+ * Seeded draws from a save. The same save and the same turn give the same draws, which keeps tests stable and stops
+ * save-scumming.
  *
- * Nothing here is random at runtime — the same save and the same day deal the
- * same cards, which is what keeps tests stable and stops save-scumming. What
- * matters is that near-identical inputs give *unrelated* outputs.
- *
- * The naive `n * 31 + charCode` hash does not: hashing "…:0" and "…:1" gives
- * two integers one apart, so anything read out of the high bits is identical
- * across a run of indices. Derive each value from its own named draw instead of
- * slicing bits out of one number, and it cannot happen again.
+ * Near-identical inputs must give unrelated outputs. A naive `n * 31 + charCode` hash fails this, because "…:0" and
+ * "…:1" hash to integers one apart, so the high bits match across a run of indices. Each value comes from its own
+ * named draw instead of bits sliced out of one number.
  */
 
-/** FNV-1a, then the murmur3 finalizer. One character changes every bit. */
+/**
+ * Returns a 32-bit unsigned hash of `text`. Texts that differ in one character give unrelated numbers.
+ *
+ * @remarks FNV-1a, then the murmur3 finaliser. A one-character change flips about half the bits.
+ */
 export function hash(text: string): number {
   let h = 2166136261
   for (let i = 0; i < text.length; i += 1) {
@@ -26,30 +26,30 @@ export function hash(text: string): number {
   return h >>> 0
 }
 
-/** A whole number in [0, max), drawn from these parts. */
+/** Returns a whole number from 0 up to but not including `max`, drawn from `parts`. Returns 0 when `max` is 0 or less. */
 export function draw(max: number, ...parts: (string | number)[]): number {
   if (max <= 0) return 0
   return hash(parts.join(':')) % max
 }
 
-/** One of these, drawn from these parts. */
+/** Returns one entry of `items`, drawn from `parts`. Every entry is equally likely. */
 export function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T {
   return items[draw(items.length, ...parts)]
 }
 
-/** True `numerator` times in `outOf`, drawn from these parts. */
+/** Returns true `numerator` times in `outOf`, drawn from `parts`. */
 export function chance(numerator: number, outOf: number, ...parts: (string | number)[]): boolean {
   return draw(outOf, ...parts) < numerator
 }
 
 /**
- * One of these, drawn from these parts with each one's weight: an item of
- * weight 3 comes up three times as often as one of weight 1. A weight left
- * out (`undefined`) counts as 1; a weight of 0 or less, or one that isn't a
- * number, is never drawn. Undefined when nothing can be drawn.
+ * Returns one entry of `items`, drawn from `parts` by each entry's weight. Returns undefined when no entry can be drawn.
  *
- * With every weight a whole number the draw is `hash % total`, so a list where
- * every weight is 1 draws exactly what `drawOne` would from the same parts.
+ * An entry of weight 3 comes up three times as often as one of weight 1. A weight left out counts as 1. An entry
+ * whose weight is 0 or less, or not a number, is never drawn.
+ *
+ * @remarks With every weight a whole number the draw is `hash % total`, so a list where every weight is 1 draws the
+ * same entry `drawOne` would from the same parts.
  */
 export function weighted<T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]): T | undefined {
   const weights = items.map((item) => {

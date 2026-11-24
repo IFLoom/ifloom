@@ -1,5 +1,5 @@
 /**
- * @ifloom/react: the React UI, components built on shadcn/ui that draw an
+ * @ifloom/react: the React UI, components built on shadcn/ui that render an
  * IFLoom game's view and send its commands.
  *
  * `mountGame` and `GameShell` are the whole thing. Everything they're made of

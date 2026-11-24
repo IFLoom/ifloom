@@ -11,6 +11,12 @@ Generated from the source of `@ifloom/cli/vite` and its TSDoc by `npm run api-do
 
 Function.
 
+Returns the Vite config every IFLoom game builds with, which writes one HTML file with relative paths. It names no
+UI framework, so a game adds its framework's Vite plugin in `vite.plugins`.
+
+The preset's plugins come after the game's. Inside the IFLoom checkout it reads the `@ifloom` packages' source, and
+it encrypts a game's `src/unlocks/` packs into the page.
+
 ```ts fragment
 function ifloom(options?: IfloomViteOptions): UserConfig
 ```
@@ -21,6 +27,8 @@ Uses: [`IfloomViteOptions`](#ifloomviteoptions).
 
 Type. Explained in [The CLI](/docs/cli#ifloomviteoptions).
 
+Settings for `ifloom()`, the Vite preset. Each is optional.
+
 ```ts fragment
 type IfloomViteOptions = {
   singleFile?: boolean
@@ -30,5 +38,5 @@ type IfloomViteOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `singleFile` | `boolean` | yes |  | Put everything in the one HTML file, or leave the JS and CSS beside it. One file if left out. |
-| `vite` | `UserConfig \| undefined` | yes |  | Merged over the preset: the game's framework plugin and anything else it needs go in `vite.plugins`. |
+| `singleFile` | `boolean` | yes |  | True to put the JS and CSS inside the one HTML file, rather than beside it. True if left out. |
+| `vite` | `UserConfig \| undefined` | yes |  | The game's own Vite config, which the preset builds on. The preset keeps `base` at `'./'` and adds its plugins after the game's `plugins`, where the game's framework plugin goes. |

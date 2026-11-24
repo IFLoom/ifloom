@@ -10,14 +10,18 @@ import type { LoadedSave, SaveListing, SaveMeta, Saves } from '../save.ts'
 import { stringOf } from '../strings.ts'
 import type { GameState } from '../types.ts'
 
-/** When the runner saves on its own. Off unless the game sets it. */
+/** Settings for autosave, when the runner saves on its own. Autosave is off unless `createRunner` is given these. */
 export type AutosaveOptions = {
-  /** The slot it writes to. `'auto'` if left out. */
+  /** The slot autosave writes to. `'auto'` if left out. */
   slot?: string
-  /** After every command, or only when the scene or the turn changes. Skipped while the game's `saveable` refuses saving. */
+  /**
+   * The moment autosave writes, after every command or only when the scene or the turn changes. It skips a save while
+   * the game's `saveable` refuses saving.
+   */
   every: 'command' | 'scene' | 'turn'
 }
 
+/** The runner's saves, its writes and its autosave. */
 export type SaveKeeper = {
   /** The saves written to, watched: what they write and remove shows in `listed`. Undefined without saves. */
   readonly store: Saves | undefined
@@ -33,8 +37,11 @@ export type SaveKeeper = {
   settled(): Promise<void>
 }
 
+/** Settings for `saveKeeper`. */
 export type SaveOptions = {
+  /** The save store, or undefined for none. */
   saves?: Saves
+  /** The autosave policy, or undefined for none. */
   autosave?: AutosaveOptions
   /** Told the driver's error whenever the store answers a failure it caused. */
   onError?: (error: unknown) => void
@@ -44,6 +51,7 @@ export type SaveOptions = {
   changedList: () => void
 }
 
+/** Returns the runner's saves for a game, its writes queued in order. */
 export function saveKeeper(game: Game, options: SaveOptions): SaveKeeper {
   const { saves: given, autosave, onError, refuses, changedList } = options
   let queue: Promise<unknown> = Promise.resolve()

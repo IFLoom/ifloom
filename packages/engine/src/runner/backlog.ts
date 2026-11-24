@@ -7,37 +7,43 @@ import { inlineChoices, pastBeats } from '../screen.ts'
 import type { Command, GameState } from '../types.ts'
 import type { View } from '../view.ts'
 
-/** What was shown, turn by turn, for a "what did she just say" screen. Off unless asked for. */
+/**
+ * Settings for the backlog, the list of scenes the player has seen with the choice made in each. The backlog is off
+ * unless `createRunner` is given these or `true`.
+ */
 export type BacklogOptions = {
-  /** How many entries to keep. 200 if left out. */
+  /** The number of entries the backlog keeps, dropping the oldest. 200 if left out. */
   limit?: number
 }
 
-/** One scene as the player saw it. */
+/** One scene of the backlog, as the player saw it. The backlog keeps scenes only, never the room or a minigame. */
 export type BacklogEntry = {
-  /** The turn it was shown in. */
+  /** The turn the scene was shown in. */
   turn: number
-  /** Where the game was in time, in plugins' words (`view.when`), or null if none says. */
+  /** The time in the game when the scene was shown, from `view.when`, or null when no plugin gives one. */
   when: string | null
-  /** The scene's id. The backlog keeps scenes only, not the room. */
+  /** The scene's id. */
   sceneId: string
-  /** The scene's heading as it was shown. */
+  /** The scene's title as it was shown. */
   title: string
-  /** What the player read, as the view's beats. */
+  /** The scene's beats as the player read them. */
   beats: SceneBeat[]
-  /** The label of the choice the player made in this scene, once they made one. */
+  /** The label of the choice the player made in the scene, once they made one. A choice at a decision of a flow shows in `beats` instead. */
   chose?: string
 }
 
-/** How many entries the backlog keeps: 0 when it's off. */
+/** Returns the number of entries the backlog keeps, 0 when it's off. */
 export function backlogLimit(options: BacklogOptions | boolean | undefined): number {
   return options === true ? 200 : options ? (options.limit ?? 200) : 0
 }
 
-/** What a command did, as the backlog reads it. */
+/** A command's before and after, read by `backlogAfter`. */
 export type Shown = {
+  /** The state before the command. */
   before: GameState
+  /** The state after the command. */
   after: GameState
+  /** The command that ran. */
   command: Command
   /** The view the command was sent from. */
   from: View
@@ -51,7 +57,7 @@ function entry(screen: View): BacklogEntry {
 }
 
 /**
- * The backlog after a command, at most `limit` long. The scene on screen
+ * Returns the backlog after a command, at most `limit` long. The scene on screen
  * before the command goes in first if it isn't there yet (the opening scene,
  * say), the choice is written on it, then whatever new scene the command
  * opened goes in after. A minigame drawn over a scene is not the scene: it

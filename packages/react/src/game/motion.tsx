@@ -28,12 +28,15 @@ function reducedNow(): boolean {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(REDUCED).matches
 }
 
-/** Whether the player's system asks for reduced motion. Follows the setting as it changes. */
+/** Returns true while the player's system asks for reduced motion, and re-renders when the setting changes. */
 export function useReducedMotion(): boolean {
   return useSyncExternalStore(subscribeReduced, reducedNow, () => false)
 }
 
-/** Whether to play transitions and reveals: the `motion` option, unless the player asks for reduced motion. */
+/**
+ * Returns true when the UI plays transitions and reveals. That's the `motion` option, unless the player's system asks
+ * for reduced motion.
+ */
 export function useMotion(): boolean {
   const option = useMotionOption()
   const reduced = useReducedMotion()

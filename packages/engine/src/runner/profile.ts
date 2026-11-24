@@ -12,6 +12,7 @@ import type { Profile } from '../profile.ts'
 import { runnerHooks } from '../features/registry.ts'
 import type { Command, GameState } from '../types.ts'
 
+/** The runner's side of the profile, its writes queued in order. */
 export type ProfileKeeper = {
   /** The profile kept, or undefined without one: then every write is dropped and nothing is read. */
   readonly profile: Profile | undefined
@@ -31,7 +32,9 @@ export type ProfileKeeper = {
   record(before: GameState, after: GameState, command: Command): void
 }
 
+/** Settings for `profileKeeper`. */
 export type ProfileOptions = {
+  /** The profile, or undefined for none. */
   profile?: Profile
   /** The clock `finished` is dated by. */
   now: () => number
@@ -41,6 +44,7 @@ export type ProfileOptions = {
   onShown: (plugin: Plugin<unknown>) => void
 }
 
+/** Returns the runner's side of the profile for a game. */
 export function profileKeeper(game: Game, options: ProfileOptions): ProfileKeeper {
   const { profile, now, onError, onShown } = options
   let queue: Promise<unknown> = Promise.resolve()
@@ -126,7 +130,7 @@ function frozenCopy(value: unknown): unknown {
 }
 
 /**
- * The profile as `runner.profile` hands it out: one that never rejects. A
+ * Returns the profile as `runner.profile` gives it, one that never rejects. A
  * read the driver fails answers undefined, and a write it fails is dropped,
  * each told to `onError`, so a UI can call it without a `catch`.
  */

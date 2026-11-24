@@ -10,7 +10,7 @@ import { feed as feedPlugin, type FeedsView } from '../index.ts'
 import { Beat, Picture, usePart, Video } from '@ifloom/react'
 import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
-/** The feed plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The feed plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings. */
 export const FEED_WORDS = {
   likes: '♥ {n}',
 } as const
@@ -37,13 +37,16 @@ declare module '@ifloom/react' {
 
 type SectionProps = { data: unknown; with: Record<string, unknown> }
 
-/** What `useFeed` returns: the feed plugin's view, and its command. */
+/** The feed plugin's view with a way to mark a feed seen, as `useFeed` returns it. */
 export type FeedControls = FeedsView & {
-  /** Mark a feed's posts seen: sends `feed/seen`. */
+  /** Sends the `feed/seen` command, which marks the feed's posts seen. */
   seen: (feed: string) => Result<GameState>
 }
 
-/** The feed plugin's view with its command, or null in a game without the plugin. `FeedSection` is drawn from it. */
+/**
+ * Returns the feed plugin's view and its command from the running game, or null in a game without the plugin. It
+ * re-renders when the view changes. `FeedSection` renders from it.
+ */
 export function useFeed(): FeedControls | null {
   const { view, send } = usePlugin(FEED)
   if (!view) return null
@@ -110,15 +113,18 @@ function FeedSectionImpl({ with: options }: SectionProps) {
 }
 
 /**
- * A feed in an app: posts newest first, with likes and comments, and a button
- * to mark the feed seen. A post's words are drawn as beats through `Beat`, and
- * its `video` through `Video`, like a GIF. A thin default on `useFeed`.
+ * Renders the feed named by an app section's `with.feed`, from `view.plugins.feed`, newest post first. A preset styles
+ * its `feed`, `post` and `post-*` parts.
+ *
+ * Each post shows its likes and comments, and a button marks the feed seen.
+ *
+ * A post's words render as beats through `Beat`, and its `video` through `Video`, playing, looping and muted.
  */
 export const FeedSection = overridable('FeedSection', FeedSectionImpl)
 
 /**
- * The feed plugin's React UI, for `plugins` on `mountGame` or `GameProvider`:
- * a `FeedSection` wherever a device's app shows a feed, and the feed's words.
+ * The feed plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It registers `FeedSection` for a
+ * device app's `feed` section, and adds the plugin's words.
  */
 export const feedUi: PluginUi = {
   ...FEED,

@@ -6,10 +6,11 @@ import type { Condition, GameState } from './types.ts'
 export type { Condition, Range } from './types.ts'
 
 /**
- * Whether a condition holds. No condition always holds. A condition is
- * looked up by its one kind key (`TABLES` in core.ts); one with no kind key,
- * or two, holds nowhere, and the content checker reports it. A range bound
- * that is an `Amount` is worked out first, so the kind reads a number.
+ * Returns true when `condition` holds in this state. An undefined condition always holds.
+ *
+ * The engine finds a condition's kind by its one key. A condition with no known key, or with two, never holds, and
+ * the content checker reports it. A range bound that is an `Amount` is worked out first, so the kind reads a
+ * number.
  */
 export function holds(state: GameState, game: Game, condition: Condition | undefined): boolean {
   if (!condition) return true

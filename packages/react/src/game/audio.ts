@@ -71,11 +71,11 @@ export function usePlayer(runner: Runner | undefined): AudioPlayer | null {
 }
 
 /**
- * Play the game's sound while the component is mounted, with `@ifloom/audio`.
- * Inside a `GameProvider` it plays that game; outside, pass `runner`. Returns
- * the player once it has started. `GameShell` and `mountGame` play the
- * game's sound themselves; a `useAudio` beside them takes over from theirs,
- * with its options, so the sound never plays twice.
+ * Returns the audio player once it has started, and plays the game's sound with `@ifloom/audio` while mounted. Outside
+ * a `GameProvider` it throws unless you pass `runner`.
+ *
+ * `GameShell` and `mountGame` play the game's sound themselves. A `useAudio` beside them takes over from theirs with
+ * its options, so the sound never plays twice. It reads the options once, when the player starts.
  */
 export function useAudio(options: AudioOptions & { runner?: Runner } = {}): AudioPlayer | null {
   const context = useGameIfAny()

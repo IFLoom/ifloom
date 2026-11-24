@@ -13,7 +13,7 @@ Generated from the source of `@ifloom/plugin-feed` and `@ifloom/plugin-feed/reac
 
 Type. Explained in [Feed](/docs/plugins/feed#comment).
 
-A comment on a post. `text` is its words, as written.
+A comment on a post, one entry of a post's comments in `FeedState`.
 
 ```ts shape
 import type { Comment } from '@ifloom/plugin-feed'
@@ -23,12 +23,20 @@ type Comment = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `from` | `string` |  |  | The commenter, a character's id or a name. |
+| `text` | `string` |  |  | The comment's words, as written. The view fills in their prose tokens. |
+
 ### feed
 
 Function. Explained in [Feed](/docs/plugins/feed#feed).
 
-The plugin, with its helpers on it: `feed()` makes the plugin for the
-game's `plugins`, and content is written with `feed.react('post-1', { likes: 2 })`.
+Returns the feed plugin, for the game's `plugins`. It cooperates with the cast, which gives posters their names and
+faces.
+
+Content declares feeds and posts in `data.feed.feeds` and `data.feed.posts`, and the helpers write its calls, such as
+`feed.react('post-1', { likes: 2 })`.
 
 ```ts shape
 import { feed } from '@ifloom/plugin-feed'
@@ -39,14 +47,16 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`FeedState`](#f
 
 | Helper | Signature | Description |
 |---|---|---|
-| `feed.post` | `(feedId: string, id: string, post?: { text?: string; image?: string; video?: string; likes?: number }):` [`EffectRef`](/docs/api/engine#effectref) |  |
-| `feed.react` | `(post: string, reaction: { likes?: number; from?: string; text?: string }):` [`EffectRef`](/docs/api/engine#effectref) |  |
-| `feed.seen` | `(feedId?: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
-| `feed.posted` | `(gte?: number, feedId?: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `feed.post` | `(feedId: string, id: string, post?: { text?: string; image?: string; video?: string; likes?: number }):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `feed/post` effect, which posts the player's post `id` to the feed, with its words in place, picture, video and likes. A post id already used is left as it is. |
+| `feed.react` | `(post: string, reaction: { likes?: number; from?: string; text?: string }):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `feed/react` effect, which adds likes, a comment from `from`, or both, to a post that has appeared. |
+| `feed.seen` | `(feedId?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `feed/seen` command, which marks the feed seen, or every feed when none is named. |
+| `feed.posted` | `(gte?: number, feedId?: string):` [`Condition`](/docs/api/engine#condition) | Returns the `feed/posted` condition, which holds once the player has made at least `gte` posts, to the feed or to any. |
 
 ### FeedDef
 
 Type. Explained in [Feed](/docs/plugins/feed#feeddef).
+
+A feed the game declares in `data.feed.feeds`, such as a social app, a notice board or a paper. Posts name it in their `feed`.
 
 ```ts shape
 import type { FeedDef } from '@ifloom/plugin-feed'
@@ -56,11 +66,16 @@ type FeedDef = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The feed's id, unique among the game's feeds. |
+| `name` | `string` |  |  | The feed's name. |
+
 ### feedsOf
 
 Function. Explained in [Feed](/docs/plugins/feed#feedsof).
 
-The game's feeds, in order: `data.feed.feeds`, from its content and packs.
+Returns the game's feeds, `data.feed.feeds` from its content and packs, in declared order.
 
 ```ts shape
 import { feedsOf } from '@ifloom/plugin-feed'
@@ -73,7 +88,7 @@ Uses: [`Game`](/docs/api/engine#game), [`FeedDef`](#feeddef).
 
 Type. Explained in [Feed](/docs/plugins/feed#feedstate).
 
-What the plugin keeps in a save.
+The feeds a save keeps for the player. Feeds and other people's posts are read from content, so only what play changed is kept.
 
 ```ts shape
 import type { FeedState } from '@ifloom/plugin-feed'
@@ -87,14 +102,16 @@ type FeedState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `appeared` | `Record<string, number>` |  |  | The turn each post appeared, by post id. |
+| `appeared` | `Record<string, number>` |  |  | The posts that have appeared, each id mapped to the turn it appeared on. |
 | `own` | [`OwnPost[]`](#ownpost) |  |  | The player's own posts, oldest first. |
-| `reactions` | `Record<string, { likes: number; comments:` [`Comment[]`](#comment) `}>` |  |  | Likes and comments added to other people's posts since they appeared. |
-| `seen` | `Record<string, number>` |  |  | How many posts each feed had when the player last looked. |
+| `reactions` | `Record<string, { likes: number; comments:` [`Comment[]`](#comment) `}>` |  |  | The likes and comments added to other people's posts since they appeared, by post id. |
+| `seen` | `Record<string, number>` |  |  | The number of other people's posts each feed had when the player last looked, by feed id. |
 
 ### FeedsView
 
 Type. Explained in [Feed](/docs/plugins/feed#feedsview).
+
+The feeds as the player sees them, in `view.plugins.feed`.
 
 ```ts shape
 import type { FeedsView } from '@ifloom/plugin-feed'
@@ -104,11 +121,16 @@ type FeedsView = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `feeds` | [`FeedView[]`](#feedview) |  |  | The game's feeds, in declared order. |
+| `unread` | `number` |  |  | The number of unseen posts across every feed. |
+
 ### FeedView
 
 Type. Explained in [Feed](/docs/plugins/feed#feedview).
 
-One feed, newest post first, with how many posts the player hasn't seen: `unread`, as messages count theirs.
+A feed as the player sees it, in `view.plugins.feed.feeds`. Its `unread` counts other people's posts the player hasn't seen.
 
 ```ts shape
 import type { FeedView } from '@ifloom/plugin-feed'
@@ -123,17 +145,17 @@ type FeedView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-| `posts` | [`PostView[]`](#postview) |  |  | Its posts, newest first, the player's own among them. |
-| `unread` | `number` |  |  | How many of its posts the player hasn't seen. |
-| `seen` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks the feed seen (the `feed/allSeen` string, `Mark all seen`), or null while nothing in it is new. |
+| `id` | `string` |  |  | The feed's id. |
+| `name` | `string` |  |  | The feed's name. |
+| `posts` | [`PostView[]`](#postview) |  |  | The feed's posts, newest first, the player's own among them. |
+| `unread` | `number` |  |  | The number of other people's posts in the feed the player hasn't seen. The player's own posts never count. |
+| `seen` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks the feed seen, labelled with the `feed/allSeen` string. Null while nothing in it is new. |
 
 ### OwnPost
 
 Type. Explained in [Feed](/docs/plugins/feed#ownpost).
 
-A post the player made, as the state keeps it.
+A post the player made with the `feed/post` effect, as `FeedState` keeps it.
 
 ```ts shape
 import type { OwnPost } from '@ifloom/plugin-feed'
@@ -151,20 +173,20 @@ type OwnPost = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `feed` | `string` |  |  | The feed it was posted to. |
-| `turn` | `number` |  |  | The turn it was posted. |
-| `text` | `string` | yes |  | Its words, as written; tokens are filled as it is shown. |
-| `image` | `string` | yes |  | Its picture, as written. |
-| `video` | `string` | yes |  | Its video clip, as written. |
-| `likes` | `number` |  |  | How many likes it has. |
-| `comments` | [`Comment[]`](#comment) |  |  | The comments on it, in order. |
+| `id` | `string` |  |  | The post's id, which `feed/react` and `feed/likes` name. |
+| `feed` | `string` |  |  | The id of the feed the post went to. |
+| `turn` | `number` |  |  | The turn the post was made on. |
+| `text` | `string` | yes |  | The post's words, as written. The view fills in their prose tokens. |
+| `image` | `string` | yes |  | The post's picture, as written. |
+| `video` | `string` | yes |  | The post's video clip, as written. |
+| `likes` | `number` |  |  | The number of likes the post has. |
+| `comments` | [`Comment[]`](#comment) |  |  | The comments on the post, oldest first. |
 
 ### PostDef
 
 Type. Explained in [Feed](/docs/plugins/feed#postdef).
 
-Someone else's post.
+Someone else's post, which the game declares in `data.feed.posts`. It appears the first time its `when` holds after a command.
 
 ```ts shape
 import type { PostDef } from '@ifloom/plugin-feed'
@@ -182,20 +204,20 @@ type PostDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `feed` | `string` |  |  | The feed it appears in, by id. |
-| `from` | `string` |  |  | A character id, or any name the game's prose uses. |
-| `when` | [`Condition`](/docs/api/engine#condition) |  |  | It appears the first time this holds after a command. |
-| `body` | [`Block[]`](/docs/api/engine#block) |  |  | Its words, as prose blocks. |
-| `image` | `string` | yes |  | A picture on the post: a path in the game's `art/` folder (`'photo/park.jpg'`), as an entity's `image` is, or a URL. |
-| `video` | `string` | yes |  | A video clip on the post, a path like `image`'s (a bare name is an `.mp4`). Drawn like a GIF: playing, looping, muted. |
-| `likes` | `number` | yes |  | Likes it shows when it appears. |
+| `id` | `string` |  |  | The post's id, unique among the game's posts. |
+| `feed` | `string` |  |  | The id of the feed the post appears in. |
+| `from` | `string` |  |  | The poster, a character's id or any name the game's prose uses. |
+| `when` | [`Condition`](/docs/api/engine#condition) |  |  | The post's condition. The post appears the first time it holds after a command, and stays. |
+| `body` | [`Block[]`](/docs/api/engine#block) |  |  | The post's words, as blocks. |
+| `image` | `string` | yes |  | The post's picture, a path in the game's `art/` folder (`'photo/park.jpg'`) or a URL. |
+| `video` | `string` | yes |  | The post's video clip, a path like `image`'s, where a bare name is an `.mp4`. The React UI plays it like a GIF, looping and muted. |
+| `likes` | `number` | yes |  | The number of likes the post has when it appears. 0 if left out. |
 
 ### postsOf
 
 Function. Explained in [Feed](/docs/plugins/feed#postsof).
 
-The game's posts: `data.feed.posts`, from its content and packs.
+Returns the game's posts, `data.feed.posts` from its content and packs, in declared order.
 
 ```ts shape
 import { postsOf } from '@ifloom/plugin-feed'
@@ -207,6 +229,8 @@ Uses: [`Game`](/docs/api/engine#game), [`PostDef`](#postdef).
 ### PostView
 
 Type. Explained in [Feed](/docs/plugins/feed#postview).
+
+A post as the player sees it, in a `FeedView`'s `posts`.
 
 ```ts shape
 import type { PostView } from '@ifloom/plugin-feed'
@@ -228,18 +252,18 @@ type PostView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `from` | `string` |  |  | Who posted it, as written: a character id or a name; `''` for the player's own. |
-| `name` | `string` |  |  |  |
-| `portrait` | `string \| null` |  |  | The poster's face, for an avatar: a person's `portrait` with the cast, else their entity's picture, through `artSrc`; null for the player's own and for a name as written. |
-| `text` | `string` |  |  | The words, filled in, with any picture and video markup in them. |
-| `beats` | [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | The words as beats, as a scene's are, with pictures and videos in the order written. |
-| `image` | `string \| null` |  |  | The post's picture's path, through `artSrc`, or null. |
-| `video` | `string \| null` |  |  | The post's video clip's path, through `artSrc`, or null. Drawn like a GIF: playing, looping, muted. |
-| `turn` | `number` |  |  | The turn it appeared, or was posted. |
-| `likes` | `number` |  |  | How many likes it has. |
-| `comments` | `{ from: string; name: string; text: string }[]` |  |  | The comments on it, in order, each with who wrote it and their name. |
-| `mine` | `boolean` |  |  | The player's own. |
+| `id` | `string` |  |  | The post's id. |
+| `from` | `string` |  |  | The poster as written, a character's id or a name. It's `''` for the player's own post. |
+| `name` | `string` |  |  | The poster's name, or for the player's own post the `playerName` kv key, else the `feed/you` string ("You"). |
+| `portrait` | `string \| null` |  |  | The poster's face for an avatar, through `artSrc`. It's a person's `portrait` with the cast, else their entity's picture. It's null for the player's own post and for a poster named only as written. |
+| `text` | `string` |  |  | The post's words, tokens filled in, with any picture and video markup in them. |
+| `beats` | [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | The post's words rendered as beats, as a scene's are, with pictures and videos in the order written. |
+| `image` | `string \| null` |  |  | The post's picture's path, through `artSrc`, or null when it has none. |
+| `video` | `string \| null` |  |  | The post's video clip's path, through `artSrc`, or null when it has none. |
+| `turn` | `number` |  |  | The turn the post appeared on, or was posted on. |
+| `likes` | `number` |  |  | The number of likes the post has, its starting likes plus any reactions. |
+| `comments` | `{ from: string; name: string; text: string }[]` |  |  | The comments on the post, oldest first, each with its commenter as written, their name and its words. |
+| `mine` | `boolean` |  |  | True for the player's own post. |
 
 ## @ifloom/plugin-feed/react
 
@@ -251,7 +275,7 @@ type PostView = {
 
 Const.
 
-The feed plugin's words, in English. A game rewords any with `ui.<key>` in its strings.
+The feed plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings.
 
 ```ts shape
 import { FEED_WORDS } from '@ifloom/plugin-feed/react'
@@ -262,7 +286,7 @@ const FEED_WORDS: { readonly likes: '♥ {n}'; }
 
 Type.
 
-What `useFeed` returns: the feed plugin's view, and its command.
+The feed plugin's view with a way to mark a feed seen, as `useFeed` returns it.
 
 ```ts shape
 import type { FeedControls } from '@ifloom/plugin-feed/react'
@@ -275,17 +299,20 @@ type FeedControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `feeds` | [`FeedView[]`](#feedview) |  |  |  |
-| `unread` | `number` |  |  |  |
-| `seen` | `(feed: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Mark a feed's posts seen: sends `feed/seen`. |
+| `feeds` | [`FeedView[]`](#feedview) |  |  | The game's feeds, in declared order. |
+| `unread` | `number` |  |  | The number of unseen posts across every feed. |
+| `seen` | `(feed: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends the `feed/seen` command, which marks the feed's posts seen. |
 
 ### FeedSection
 
 Const. Explained in [Feed](/docs/plugins/feed#feedsection).
 
-A feed in an app: posts newest first, with likes and comments, and a button
-to mark the feed seen. A post's words are drawn as beats through `Beat`, and
-its `video` through `Video`, like a GIF. A thin default on `useFeed`.
+Renders the feed named by an app section's `with.feed`, from `view.plugins.feed`, newest post first. A preset styles
+its `feed`, `post` and `post-*` parts.
+
+Each post shows its likes and comments, and a button marks the feed seen.
+
+A post's words render as beats through `Beat`, and its `video` through `Video`, playing, looping and muted.
 
 ```ts shape
 import { FeedSection } from '@ifloom/plugin-feed/react'
@@ -298,8 +325,8 @@ Uses: [`SectionProps`](/docs/api/react#sectionprops).
 
 Const. Explained in [Feed](/docs/plugins/feed#feedui).
 
-The feed plugin's React UI, for `plugins` on `mountGame` or `GameProvider`:
-a `FeedSection` wherever a device's app shows a feed, and the feed's words.
+The feed plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It registers `FeedSection` for a
+device app's `feed` section, and adds the plugin's words.
 
 ```ts shape
 import { feedUi } from '@ifloom/plugin-feed/react'
@@ -312,7 +339,8 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 Function. Explained in [Feed](/docs/plugins/feed#usefeed).
 
-The feed plugin's view with its command, or null in a game without the plugin. `FeedSection` is drawn from it.
+Returns the feed plugin's view and its command from the running game, or null in a game without the plugin. It
+re-renders when the view changes. `FeedSection` renders from it.
 
 ```ts shape
 import { useFeed } from '@ifloom/plugin-feed/react'

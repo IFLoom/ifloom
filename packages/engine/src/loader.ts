@@ -9,79 +9,72 @@ import { upgradePack } from './upgrade.ts'
 import { layWords } from './words.ts'
 
 /**
- * A game arrives as content and packs, and is merged into one game.
+ * The loader, which merges a game's content and packs into one game.
  *
- * Content is the game's own: the files in its `world/` and `story/`, written
- * against this engine. Each key is declared once across them. Packs come from
- * outside the game's code (a mod, unlocked supporter content, a JSON export):
- * each has an id that saves record and the schema it was written for, and goes
- * over the content and the packs before it.
+ * Content is the game's own files in `world/` and `story/`, written against this engine, and each key is declared once
+ * across them. A pack comes from outside the game's code (a mod, unlocked supporter content, a JSON export). It has
+ * an id that saves record and the schema it was written for, and it goes over the content and the packs before it.
  */
 export { SCHEMA } from './upgrade.ts'
 
 export type { Patch } from './features/scenes.ts'
 
-/** What content and packs both declare, beside each feature's keys: the words, and plugin content. */
+/** The keys content and packs both declare beside each feature's keys, the words and the plugins' content. */
 type Declarations = {
-  /** Player-facing words by key, over the engine's and plugins' own. */
+  /** The lines that replace the engine's and plugins' strings, by key. */
   strings?: Record<string, string>
-  /** Prose by key. */
+  /** The prose keys' lines, by key. */
   prose?: Record<string, string>
   /**
-   * Other words for fields of the content, by key: a translation, which is
-   * one pack with this table (and its own `prose` for the lines read by
-   * key). Each key names one field the player reads, as
-   * `translatableFields` lists them: `action.wait.label`,
-   * `entity.character:ava.name`, `scene.cafe.counter.text.intro`. It is laid
-   * over the content once everything is merged, a later pack's over an
-   * earlier one's, and a key that names no field is reported.
+   * The words table, other words for the fields a player reads, by key. A translation is one pack with this table and
+   * its own `prose`.
+   *
+   * Each key names one field, as `translatableFields` lists them (`action.wait.label`, `entity.character:ava.name`,
+   * `scene.cafe.counter.text.intro`). `loadGame` lays it over the merged content, a later pack's over an earlier one's,
+   * and reports a key that names no field.
    */
   words?: Record<string, string>
   /**
-   * Variants membership by variants name, in draw order. Content and packs
-   * append to a name. A member is a prose key, or `{ prose: key, weight }` to
-   * be drawn more or less often than the rest.
+   * The variants lists' members by list name, in order. Content and packs append to a list. A member is a prose key,
+   * or `{ prose: key, weight }` to be drawn more or less often than the rest.
    */
   variants?: Record<string, VariantMember[]>
   /**
-   * Content for the game's plugins, by plugin id and then list:
-   * `{ quests: { quests: [...] } }`. A pack's entry replaces one with the
-   * same id, as its scenes do.
+   * The plugins' content, by plugin id and then list, such as `{ quests: { quests: [...] } }`. A pack's entry replaces
+   * the one with the same id, as its scenes do.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
 }
 
 /**
- * The game's own content: one file of it, such as `story/cafe.ts`. It has no
- * id or schema, since it is compiled with the engine it runs on, and each
- * thing it declares (a scene, a stat, a prose key) may be declared only once
+ * One file of the game's own content, such as `story/cafe.ts`. Each scene, stat or prose key may be declared only once
  * across the game's content.
+ *
+ * Content has no id or schema, since it is compiled with the engine it runs on.
  */
 export type Content = Flat<
   {
-    /** What problems call this content, such as `story.cafe`. Without one, they say `content`. */
+    /** The content's name in problems, such as `story.cafe`. `content` if left out. */
     name?: string
   } & Declarations &
     Omit<FeaturePack, FeaturePackOnly>
 >
 
 /**
- * Content from outside the game's code: a mod, unlocked supporter content or
- * a JSON export. It goes over the game's content and the packs before it,
- * replacing what they declare by id, and saves record its id.
+ * Content from outside the game's code, such as a mod, unlocked supporter content or a JSON export. It goes over the
+ * game's content and the packs before it, replacing what they declare by id.
  */
 export type Pack = Flat<
   {
-    /** The pack's id, which saves record: `mod:<id>` for a mod's. */
+    /** The pack's id, which saves record. A mod's is `mod:<id>`. */
     id: string
-    /** Schema this pack was written against. An older one is upgraded as it loads; a newer one is refused. */
+    /** The schema the pack was written against. `loadGame` upgrades an older one and refuses a newer one. */
     schema: number
     /**
-     * The version of each plugin's content this pack was written for, by
-     * plugin id (`{ shop: 13 }`), as `Plugin.contentVersion` numbers them.
-     * An older one is upgraded by that plugin's own steps as it loads. A
-     * plugin left out is read as written for the pack's `schema`, or the
-     * plugin's own version if that is lower.
+     * The version of each plugin's content the pack was written for, by plugin id (`{ shop: 13 }`), numbered as
+     * `Plugin.contentVersion` is. That plugin's own steps upgrade an older one as it loads.
+     *
+     * A plugin left out is read as written for the pack's `schema`, or for the plugin's own version if that is lower.
      */
     plugins?: Record<string, number>
   } & Declarations &
@@ -89,15 +82,14 @@ export type Pack = Flat<
 >
 
 /**
- * What `loadGame` takes beside the content: what the game is (its `id`,
- * `title` and `version`) and its code (its plugins and its rules). Anything a
- * mod could change is content, and goes in the content or a pack instead.
+ * The base `loadGame` takes beside the content, the game's `id`, `title`, `version`, `plugins` and `rules`. Anything a
+ * mod could change goes in the content or a pack instead.
  */
 export type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
 
-/** What else `loadGame` takes. */
+/** Settings for `loadGame`. A game loaded without them has no packs. */
 export type LoadOptions = {
-  /** Packs to load over the content, in order, each over the ones before: mods, unlocked content, JSON exports. */
+  /** The packs to load over the content, in order, each over the ones before, such as mods and unlocked content. */
   packs?: readonly Pack[]
 }
 
@@ -169,25 +161,25 @@ function declarations(content: Content): Declared[] {
 /** What problems call a piece of content. */
 const contentName = (content: Content) => content.name ?? 'content'
 
+/** The result of `loadGame`, the merged game with its prose, its variants and the problems found. */
 export type Loaded = {
-  /** The game, ready to run. */
+  /** The loaded game, ready to run. */
   game: Game
-  /** Every line of prose by key, merged from the content and the packs. */
+  /** The game's prose keys' lines, merged from the content and the packs. */
   prose: Record<string, string>
-  /** Every variants list by name, with its members' keys. */
+  /** The game's variants lists by name, each with its members' prose keys. */
   variants: Record<string, string[]>
-  /** What's wrong with the content and the packs, each naming the one it came from. Empty for a game that's fine. */
+  /** The problems with the content and the packs, each naming the one it came from. Empty when there are none. */
   problems: Problem[]
 }
 
 /**
- * Merge the game's content, then the packs over it in order, and report
- * everything wrong with the result, naming the content or pack that brought
- * it. The result is checked with the content checker (`checkGame`); this adds
- * only where each problem came from, and what is wrong with the content and
- * packs themselves: a key declared twice across the content, or a key they
- * can't hold. A mod author gets "mod:spicier · scene allie.talk · choice kiss ·
- * unknown scene 'allie.snog'", not a stack trace.
+ * Returns the game merged from the base, the content and then the packs in order, with every problem found. Each
+ * problem names the content or pack that brought it.
+ *
+ * The content checker (`checkGame`) checks the merged game. `loadGame` adds where each problem came from, and the
+ * problems with the content and packs themselves, such as a key declared twice or a key they can't hold. So a mod
+ * author reads "mod:spicier · scene allie.talk · choice kiss · unknown scene 'allie.snog'", not a stack trace.
  */
 export function loadGame(content: readonly Content[], base: GameBase, { packs = [] }: LoadOptions = {}): Loaded {
   const problems: Problem[] = []

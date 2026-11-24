@@ -11,9 +11,8 @@ Generated from the source of `@ifloom/engine/testing` and its TSDoc by `npm run 
 
 Function. Explained in [Testing helpers](/docs/reference/testing#boundaryproblems).
 
-What breaks the plugin rules in a plugin package's source, given as each
-file's text by its path (any path with `src/` in it, such as a glob's keys):
-one line for each, or none.
+Returns one line for each break of the plugin rules in a plugin package's source, or none. Give each file's text by
+its path, any path with `src/` in it, such as a glob's keys.
 
 - The main entry, everything in `src/` but `src/react/`, imports only
   `@ifloom/engine`, `@ifloom/engine/plugin` and its own files beside it,
@@ -32,7 +31,7 @@ function boundaryProblems(sources: Readonly<Record<string, string>>): string[]
 
 Function. Explained in [Testing helpers](/docs/reference/testing#exportednames).
 
-Every name a source exports, sorted: its `export function`, `const`, `type` and the rest, and each name in an export list.
+Returns the names a source exports, sorted, from its `export function`, `const`, `type` and the rest, and each export list.
 
 ```ts shape
 import { exportedNames } from '@ifloom/engine/testing'
@@ -43,7 +42,7 @@ function exportedNames(source: string): string[]
 
 Function. Explained in [Testing helpers](/docs/reference/testing#freshstate).
 
-A new game, as `startingState` makes it, with no scene open: the room, where a plugin's actions and panels are.
+Returns a new game's state from `startingState` with no scene open, so the room shows a plugin's actions and panels.
 
 ```ts shape
 import { freshState } from '@ifloom/engine/testing'
@@ -56,7 +55,7 @@ Uses: [`Game`](/docs/api/engine#game), [`StartOptions`](/docs/api/engine#startop
 
 Function. Explained in [Testing helpers](/docs/reference/testing#loadchecked).
 
-`loadGame`, for a test: the game, or an `Error` listing every problem the content checker found.
+Returns the game `loadGame` builds, for a test. It throws an `Error` listing every problem the content checker finds.
 
 ```ts shape
 import { loadChecked } from '@ifloom/engine/testing'
@@ -69,7 +68,7 @@ Uses: [`Content`](/docs/api/engine#content), [`GameBase`](/docs/api/engine#gameb
 
 Type. Explained in [Testing helpers](/docs/reference/testing#partnercase).
 
-One way to load a plugin for a test: alone, or with one of the plugins it cooperates with.
+One way to load a plugin for a test, alone or with one of the plugins it cooperates with.
 
 ```ts shape
 import type { PartnerCase } from '@ifloom/engine/testing'
@@ -83,18 +82,17 @@ type PartnerCase = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  | `alone`, or `with <id>`, for a test's name. |
-| `partner` | `string \| null` |  |  | The partner's id, or `null` alone. |
-| `plugins` | [`Plugin[]`](/docs/api/engine-plugin#plugin) |  |  | The plugins to load: the partner, if any, then the plugin under test. |
-| `has` | `(id: string) => boolean` |  |  | Whether this case loads the plugin `id`: the plugin under test or the partner. |
+| `name` | `string` |  |  | The case's name for a test, `alone` or `with <id>`. |
+| `partner` | `string \| null` |  |  | The partner's id, or `null` for the plugin alone. |
+| `plugins` | [`Plugin[]`](/docs/api/engine-plugin#plugin) |  |  | The plugins to load, the partner first if there is one, then the plugin under test. |
+| `has` | `(id: string) => boolean` |  |  | Returns true when the case loads the plugin `id`, the plugin under test or the partner. |
 
 ## partnerCases
 
 Function. Explained in [Testing helpers](/docs/reference/testing#partnercases).
 
-The plugin alone, then with each partner in turn, for a test to run a block
-in each. Every partner must be in the plugin's `cooperates`, since a plugin
-reaches no other; one that isn't, or is listed twice, throws.
+Returns the `PartnerCase`s of a plugin, alone and then with each partner in turn, for a test to run in each. It
+throws for a partner missing from `cooperates` or listed twice.
 
 ```ts shape
 import { partnerCases } from '@ifloom/engine/testing'
@@ -107,7 +105,7 @@ Uses: [`Plugin`](/docs/api/engine-plugin#plugin), [`PartnerCase`](#partnercase).
 
 Function. Explained in [Testing helpers](/docs/reference/testing#play).
 
-The state after each command in turn. Throws on the first one refused, naming it and its reason.
+Returns the state after each command in turn. It throws on the first command refused, naming it and the reason.
 
 ```ts shape
 import { play } from '@ifloom/engine/testing'
@@ -120,7 +118,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Function. Explained in [Testing helpers](/docs/reference/testing#undocumentedexports).
 
-Each name the entries' sources export that the page never mentions as a word, sorted.
+Returns the names the entries' sources export that a docs page never mentions as a word, sorted.
 
 ```ts shape
 import { undocumentedExports } from '@ifloom/engine/testing'

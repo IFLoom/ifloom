@@ -1,12 +1,9 @@
 /**
- * The words table: every field of a game's content that a player reads and a
- * translation can give other words for, each under one key, and how a pack's
- * `words` table is laid over them.
+ * The words table, which names each field of content a player reads by one key, and lays a pack's `words` over them.
  *
- * A key is the path to the field, as content writes it, with each list entry
- * named by its id: `action.wait.label`, `entity.character:ava.name`,
- * `quests/quests.coffee.stages.order.hint`. Three things are named so that a
- * key stays put while a scene is rearranged:
+ * A key is the path to the field in content, with each list entry named by its id, such as `action.wait.label`,
+ * `entity.character:ava.name` or `quests/quests.coffee.stages.order.hint`. Three things are named so that a key stays
+ * put while a scene is rearranged:
  * - every choice in a scene or a body is `<entry>.choice.<id>`, wherever it sits;
  * - every block of words written in place, `{ text }` or `say`, is
  *   `<entry>.text.<id>`, by its `id`, or by a short hash of its words when it has none;
@@ -21,20 +18,21 @@ import { callOf } from './calls.ts'
 import { argWords, callNames, callShape } from './pluginCalls.ts'
 import { contentKeys } from './features/registry.ts'
 
-/** One field of a game's content a translation can give other words for. */
+/** A field of the game's content a player reads and a translation can reword, as `translatableFields` lists it. */
 export type WordField = {
-  /** Its key in a pack's `words` table: `action.wait.label`. */
+  /** The field's key in a pack's words table, such as `action.wait.label`. */
   key: string
-  /** The words it has, as written, tokens and markup included. */
+  /** The field's words from content, tokens and markup included. */
   text: string
-  /** Where it is, as a problem names it: `scene cafe.counter`, `quests coffee`. */
+  /** The field's place as a problem names it, such as `scene cafe.counter` or `quests coffee`. */
   where: string
 }
 
 /**
- * Which fields of a piece of content are words a translation can replace: a
- * plugin's `words` gives one for each list of its `data`, and a trait's
- * `words` one for its data. Each field of the shape is one of these:
+ * A map of the fields of an entry that hold words a translation can replace. A plugin's `defineData` declares one for
+ * each `data` list, and a trait's `words` declares one for its data.
+ *
+ * Each field of the shape is one of these:
  * - `true`: a field of words, or a record of them (a stat's `{ one, other }`);
  * - `'blocks'`: a list of blocks, as a scene's body;
  * - `'effects'`: a list of effects, for the words of the notices they raise;
@@ -46,16 +44,16 @@ export type WordField = {
  */
 export type WordShape = { readonly [field: string]: WordPart }
 
-/** One field of a `WordShape`. */
+/** One field's part in a `WordShape`, telling how the walk reads that field. */
 export type WordPart = true | 'blocks' | 'effects' | 'button' | WordShape | readonly [WordPart]
 
-/** Where a field is, from the game: `['scenes', 3, 'title']`. Internal. */
+/** A field's path from the game's root, such as `['scenes', 3, 'title']`. Internal. */
 export type WordPath = readonly (string | number)[]
 
-/** What a field is in, for a problem to name the pack it came from: a feature's list, or a plugin's. Internal. */
+/** The list entry a field is in, a feature's or a plugin's, so a problem can name the pack it came from. Internal. */
 export type WordSource = { list: string; id: string } | { plugin: string; list: string; id: string }
 
-/** A field with where it sits in the game, for the loader to lay a translation over. Internal. */
+/** A field with its path in the game, which the loader lays a translation over. Internal. */
 export type WordSpot = WordField & { at: WordPath; source?: WordSource }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -74,23 +72,23 @@ const BUTTON: WordShape = {
 }
 
 /**
- * What a feature's words walk is lent (`ContentKey.words`): the fields it
- * finds go in, under their keys, with where each sits in the game.
+ * The walk a feature's `ContentKey.words` gets, which collects the fields it finds under their keys with their paths
+ * in the game. Internal.
  */
 export type WordWalk = {
-  /** The fields found so far, in order. A walk may rename one it just found, as entities do a trait's words from a kind. */
+  /** The walk's fields so far, in order. A walk may rename one it just found, as entities do a trait's words from a kind. */
   readonly spots: readonly WordSpot[]
   /** The entry being walked, for the problems about its fields. */
   source: WordSource | undefined
-  /** A field of words at `key`, if it has any. */
+  /** Adds a field of words at `key`, when it has any. */
   field(key: string, text: unknown, at: WordPath, where: string): void
-  /** One part of a shape at `key`, in the entry keyed `entry`, which choices, blocks and notices are named under. */
+  /** Adds the fields of one part of a shape at `key`, in the entry keyed `entry`, which names its choices, blocks and notices. */
   part(part: WordPart, value: unknown, entry: string, key: string, at: WordPath, where: string): void
-  /** A body's words, as deep as a flow goes. */
+  /** Adds a body's words, as deep as a flow goes. */
   blocks(value: unknown, entry: string, at: WordPath, where: string): void
-  /** A choice's words, under `<entry>.choice.<id>`, and what its `then` shows. */
+  /** Adds a choice's words under `<entry>.choice.<id>`, and the words of its `then`. */
   choice(choice: Choice & { then?: Block[] }, entry: string, at: WordPath, where: string): void
-  /** Each entry of one of the game's lists by `shape`, under `<noun>.<id>`, with `noun` the list as problems name it. */
+  /** Adds each entry of one of the game's lists by `shape`, under `<noun>.<id>`, with `noun` the list's name in problems. */
   list(list: keyof Game, noun: string, shape: WordPart): void
 }
 
@@ -226,9 +224,8 @@ function entryName(item: unknown, part: WordPart, index: number): string {
 }
 
 /**
- * Every field of the game's content a translation can give other words for,
- * with where it sits. A field whose key another has too is listed for each:
- * the loader lays the words over all of them.
+ * Returns every field of the game's content a translation can reword, with its path. A key shared by several fields
+ * is listed for each, and the loader lays the words over all of them.
  */
 export function wordSpots(game: Game): WordSpot[] {
   const calls = new Map<string, WordShape>()
@@ -259,11 +256,10 @@ export function wordSpots(game: Game): WordSpot[] {
 }
 
 /**
- * Every field of a game's content a player reads and a translation can give
- * other words for, each once, by its key in a pack's `words` table, with the
- * words it has and where it is. Load the game without its translation packs
- * to list the words to translate: a `{ text }` block with no `id` is named by
- * a hash of its words, so its key follows the words it has.
+ * Returns every field of the game's content a player reads and a translation can reword, each once, by its words-table
+ * key. Load the game without its translation packs to list the words to translate.
+ *
+ * A `{ text }` block with no `id` is keyed by a hash of its words, so its key changes when its words do.
  *
  * ```ts
  * const table = Object.fromEntries(translatableFields(game).map((field) => [field.key, field.text]))
@@ -280,7 +276,7 @@ export function translatableFields(game: Game): WordField[] {
   return out
 }
 
-/** Two fields under one key with different words: a translation could give them only one. */
+/** Returns each key that two fields share with different words, since a translation can give them only one. */
 export function wordClashes(game: Game): { key: string; where: string; source?: WordSource }[] {
   const first = new Map<string, string>()
   const wheres = new Map<string, string>()
@@ -316,10 +312,11 @@ function setIn(value: unknown, path: WordPath, next: unknown): unknown {
 }
 
 /**
- * Lay a `words` table over a merged game: each key's words go in every field
- * that has that key. Returns the keys that name no field. The game is changed
- * in place, field by field, with what lies on the way copied, so the content
- * it was merged from is never changed.
+ * Lays a words table over a merged game, putting each key's words in every field with that key. Returns the keys that
+ * name no field.
+ *
+ * It changes the game in place, copying each object on the way to a field, so the content it was merged from never
+ * changes.
  */
 export function layWords(game: Game, words: Readonly<Record<string, string>>): string[] {
   const keys = Object.keys(words)

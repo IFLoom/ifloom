@@ -5,13 +5,16 @@ import { overridable, usePart } from './overrides.tsx'
 import { MAX_PIPS } from '../hints.ts'
 import { useWords } from './words.ts'
 
-/** What `useClock` returns: where the game is in time. */
+/** The game's time that `useClock` returns. */
 export type ClockState = {
-  /** The line the plugins wrote (`view.when`), such as "Day 3 · Wednesday morning", or null when none says. */
+  /** The time line the plugins' `label`s write, `view.when`, such as "Day 3 · Wednesday morning". It's null when none writes one. */
   when: string | null
 }
 
-/** Where the game is in time, as the plugins' `label`s write it. `Clock` is drawn from it; the calendar plugin's UI has its parts (`useCalendar`). */
+/**
+ * Returns the game's time from the running game, as the plugins' `label`s write it in `view.when`. It re-renders with
+ * each new view, and `Clock` renders from it.
+ */
 export function useClock(): ClockState {
   const { view } = useGame()
   return { when: view.when || null }
@@ -24,18 +27,21 @@ function ClockImpl() {
   return <p {...attrs}>{when}</p>
 }
 
-/** Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. A thin default on `useClock`. */
+/**
+ * Renders the game's time from `view.when` as the `clock` part, and nothing when no plugin writes one. The calendar
+ * plugin's UI has fuller parts.
+ */
 export const Clock = overridable('Clock', ClockImpl)
 
 /** The most pips in a row; more wrap into rows of equal length. */
 const PIPS_PER_ROW = 10
 
 /**
- * A stat's value as a bar from its `min` to its `max`, or as pips, one per
- * point, in rows of ten at most and of equal length, by its `ui.display`
- * hint: the `<dd>` `StatList` draws under a stat. The row's length is the
- * `--pips-per-row` custom property on the `stat-pips` part.
- * A plugin's UI that lists stats of its own draws it too.
+ * Renders a stat's value as a bar from its `min` to its `max`, or as one pip per point, by its `ui.display` hint.
+ * `StatList` renders it as the `<dd>` under each stat.
+ *
+ * Pips wrap in rows of ten at most, of equal length, set by the `--pips-per-row` custom property on the `stat-pips`
+ * part.
  */
 export function StatGauge({ stat }: { stat: StatView }) {
   const bar = usePart('stat-bar', 'col-span-2 h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
@@ -118,10 +124,10 @@ function StatListImpl() {
 }
 
 /**
- * The stats the game lists, with their values written as the game formats them.
- * A stat with levels also shows its level and a bar towards the next one. A
- * stat whose `ui.display` hint is `'bar'` gets a bar from its `min` to its
- * `max` under it, and one with `'pips'` a row of pips, one per point (a bar
- * past 20).
+ * Renders the stats in `view.stats` as the `stats` list, each value formatted by the game. A stat with levels also
+ * shows its level and a bar towards the next one.
+ *
+ * A stat whose `ui.display` hint is `'bar'` gets a bar from its `min` to its `max` under it, and one with `'pips'` a
+ * row of pips, one per point, or a bar past 20.
  */
 export const StatList = overridable('StatList', StatListImpl)

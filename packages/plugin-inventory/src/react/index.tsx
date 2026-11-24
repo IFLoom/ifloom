@@ -1,8 +1,8 @@
 /**
- * @ifloom/plugin-inventory/react: the inventory plugin's React UI, for a game
- * drawn with `@ifloom/react`. List `inventoryUi` in the game's `plugins` to
- * have what the player carries drawn with a button that uses each thing, or
- * draw it yourself from `useInventory`.
+ * The inventory plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `inventoryUi` in the game's `plugins` to render the things the player holds, each with a button that uses it.
+ * To render them yourself, read `useInventory`.
  */
 import type { EntityRef, GameState, Holder, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
@@ -10,7 +10,7 @@ import { ChoiceButton, type InventoryProps, useGame, usePart } from '@ifloom/rea
 import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, usePlugin } from '@ifloom/react/kit'
 import { inventory, type InventoryThing, type InventoryView } from '../index.ts'
 
-/** The inventory plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The inventory plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const INVENTORY_WORDS = {
   drop: 'Drop',
 } as const
@@ -27,17 +27,17 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useInventory` returns: the inventory plugin's view, and its commands. */
+/** The inventory plugin's view with functions that send its commands, as `useInventory` returns it. */
 export type InventoryControls = InventoryView & {
-  /** Use one of a thing you hold: sends `inventory/use`, refused with its reason as the button says. */
+  /** Sends `inventory/use` for one of a thing the player holds. A refusal carries the same reason the button shows. */
   use: (ref: EntityRef) => Result<GameState>
-  /** Drop one of a thing you hold: sends `inventory/drop`. */
+  /** Sends `inventory/drop` for one of a thing the player holds. */
   drop: (ref: EntityRef) => Result<GameState>
-  /** Give one of a thing you hold to someone who can hold things: sends `inventory/give`. */
+  /** Sends `inventory/give`, which gives one of a thing the player holds to another holder. */
   give: (ref: EntityRef, to: Holder) => Result<GameState>
 }
 
-/** The inventory plugin's view with its commands, or null in a game without the plugin. `InventoryCard` is drawn from it. */
+/** Returns the inventory plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useInventory(): InventoryControls | null {
   const { view, send } = usePlugin(INVENTORY)
   if (!view) return null
@@ -90,18 +90,20 @@ function InventoryCardImpl({ className, title: titleText, drop: showDrop = false
 }
 
 /**
- * What you carry, with the inventory plugin's buttons: the things you hold,
- * each with a button that uses it when it's usable, greyed out with the
- * engine's reason when it can't be used now, and with `drop` a button that
- * drops one. It takes the same props as the core `Inventory`, and the
- * inventory UI draws it in that one's place. A thin default on `useInventory`.
+ * Renders the things the player holds from `view.plugins.inventory`, each usable one with a button. It replaces the
+ * core `Inventory`, and falls back to `view.held` without the plugin.
+ *
+ * It takes the core `Inventory`'s props.
+ *
+ * A button that can't be used now is disabled with the engine's reason, and the `drop` prop adds a button that drops
+ * one. A preset can style the parts `inventory`, `inventory-title`, `thing`, `thing-name`, `thing-count`, `thing-text`
+ * and `thing-drop`.
  */
 export const InventoryCard = overridable('InventoryCard', InventoryCardImpl)
 
 /**
- * The inventory plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: `InventoryCard` drawn wherever the core `Inventory` is,
- * in the side column and the `inventory` panel, and the inventory's words.
+ * The inventory plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders `InventoryCard` wherever
+ * the core `Inventory` goes, in the sidebar and the `inventory` panel, and adds the plugin's words.
  */
 export const inventoryUi: PluginUi = {
   ...INVENTORY,

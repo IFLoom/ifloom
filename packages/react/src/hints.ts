@@ -29,90 +29,111 @@
  */
 import type { Game, UiTarget } from '@ifloom/engine'
 
-/** The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own. */
+/**
+ * The names of the transitions the React UI's styles play. A game adds its own names in `ui.transitionNames` on the
+ * game, with CSS of its own.
+ */
 export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
 
-/** A transition by name: one of `TRANSITIONS`, or one the game adds. */
+/** The name of a transition, one of `TRANSITIONS` or one the game adds. */
 export type TransitionName = (typeof TRANSITIONS)[number] | (string & {})
 
-/** How something comes on screen (`in`) and goes off it (`out`), over `ms` milliseconds each. A name on its own means both. */
+/** A pair of transitions for a screen coming in and going out, the value of a `ui.transition` hint. A name on its own sets `in`. */
 export type Transition = {
-  /** How the new screen comes in. */
+  /** The transition the new screen comes in with. */
   in?: TransitionName
-  /** How the screen before goes out. */
+  /** The transition the screen before goes out with. */
   out?: TransitionName
-  /** How long each takes, in milliseconds. */
+  /** The length of each transition, in milliseconds. 300 if left out. */
   ms?: number
 }
 
-/** How a block of prose is revealed: `delay` milliseconds after the reveal before it (or the scene coming on), coming in with `as`. */
+/** The value of a block's `ui.reveal` hint, which holds the block back and then brings it in. */
 export type Reveal = {
-  /** Milliseconds to wait after the reveal before it, or after the scene comes on. */
+  /** The wait after the reveal before, or after the scene comes on, in milliseconds. 800 if left out. */
   delay?: number
-  /** How the block comes in. */
+  /** The transition the block comes in with. `'fade'` if left out. */
   as?: TransitionName
 }
 
-/** How the sidebar draws a stat: its number, a bar from `min` to `max`, or pips, one per point. */
+/** The value of a stat's `ui.display` hint, which renders it as its number, a bar from `min` to `max`, or pips, one per point. */
 export type StatDisplay = 'number' | 'bar' | 'pips'
 
 declare module '@ifloom/engine' {
   interface SceneUi {
-    /** How this scene, or this place's room, comes on screen and goes off. The game's `ui.transition` if left out. */
+    /** The transitions this scene, or this location's room, comes on screen and goes off with. The game's `ui.transition` if left out. */
     transition?: Transition | TransitionName
   }
   interface ChoiceUi {
-    /** How the screen this leads to comes in, whatever that screen says; with `out`, how this one goes. */
+    /** The transition the screen this leads to comes in with, over that screen's own. With `out`, it also sets how this screen goes. */
     transition?: Transition | TransitionName
   }
   interface BlockUi {
-    /** Reveal this block after the ones before it: `{ delay: 1200, as: 'slide-up' }`. 800 ms and `'fade'` if left out. */
+    /** The reveal that holds this block back until after the ones before it, such as `{ delay: 1200, as: 'slide-up' }`. */
     reveal?: Reveal
-    /** Draw the roll the last command made under this kv key here, before this block: `ui: { dice: 'skim' }`. */
+    /** The kv key of a roll the last command made, rendered as dice before this block, such as `ui: { dice: 'skim' }`. */
     dice?: string
-    /** Draw the running timer by this id here, after this block, as a `Countdown`: `ui: { timer: 'phone' }`. */
+    /** The id of a timer rendered as a `Countdown` after this block while it runs, such as `ui: { timer: 'phone' }`. */
     timer?: string
-    /** Set the block's picture at a slight angle, like a photo dropped on a table: `ui: { tilt: true }`. */
+    /** True to set the block's picture at a slight angle, like a photo dropped on a table, such as `ui: { tilt: true }`. */
     tilt?: boolean
-    /** On a section (`fold()` writes it): draw its beats as one part the player opens and shuts, under these words. */
+    /**
+     * The words a fold opens by. On a section, written by `fold()`, it renders the section's beats as one part the
+     * player opens and shuts.
+     */
     fold?: string
   }
   interface StatUi {
-    /** How the sidebar draws it. `'number'` if left out; pips suit a range of 20 or less. */
+    /** The way the sidebar renders the stat. `'number'` if left out, and pips need a range of 20 or less. */
     display?: StatDisplay
   }
   interface EntityUi {
-    /** A colour for their spoken lines, as a hue from 0 to 360. */
+    /** The colour of the entity's spoken lines, as a hue from 0 to 360. */
     hue?: number
   }
   interface InlineUi {
-    /** `[[ui:modal|words|key]]`: the words open a dialog showing the prose line `key`, titled `title` if given, else the words. */
+    /**
+     * The arguments of `[[ui:modal|words|key|title]]`, whose words open a dialog with the prose key's line. The
+     * dialog's title is `title`, else the words.
+     */
     modal: [key: string, title?: string]
-    /** `[[ui:image|words|path]]`: the words open the picture at `path` (resolved as `[[img:…]]` resolves it) in the viewer, described by `alt`. */
+    /**
+     * The arguments of `[[ui:image|words|path|alt]]`, whose words open the picture at `path` in the viewer. `path`
+     * resolves as `[[img:…]]` does.
+     */
     image: [path: string, alt?: string]
-    /** `[[ui:mail|body|From: Ava|Subject: Hello]]`: a letter or an email, its header lines as written, then the body. A paragraph of its own. */
+    /**
+     * The header lines of `[[ui:mail|body|From: Ava|Subject: Hello]]`, a letter or an email in a paragraph of its own.
+     * The body follows the header.
+     */
     mail: string[]
-    /** `[[ui:prop|words|sticky]]`: a note in the story's world, by its face (`sticky`, `clip` or `diary`). A paragraph of its own. */
+    /**
+     * The face of `[[ui:prop|words|sticky]]`, a note in the story's world in a paragraph of its own. The face is
+     * `sticky`, `clip` or `diary`.
+     */
     prop: [face?: 'sticky' | 'clip' | 'diary']
-    /** `[[ui:mono|words]]`: words in a typewriter face, such as a sign or a screen. */
+    /** The arguments of `[[ui:mono|words]]`, which takes none. It sets the words in a typewriter face, such as a sign or a screen. */
     mono: []
   }
   interface GameUi {
-    /** How every screen comes and goes when it says nothing itself. `'none'` if left out. */
+    /** The transitions every screen comes and goes with when it sets none itself. `'none'` if left out. */
     transition?: Transition | TransitionName
-    /** Transition names beyond `TRANSITIONS`, which the game draws with its own CSS. */
+    /** The game's transition names beyond `TRANSITIONS`, which its own CSS plays. */
     transitionNames?: string[]
     /**
-     * The game's ui settings the React UI honours itself, by the setting's id:
-     * `textSize`, a choice the page is sized by (`small`, `normal`, `large` or
-     * `larger`), and `images`, a toggle that leaves the story's pictures and
-     * videos out while it's off.
+     * The ids of the game's UI settings that the React UI acts on itself. `textSize` names a choice setting that sizes
+     * the page (`small`, `normal`, `large` or `larger`).
+     *
+     * `images` names a toggle setting that leaves the story's pictures and videos out while it's off.
      */
     settings?: { textSize?: string; images?: string }
   }
 }
 
-/** The text sizes the React UI's styles size the page for, from `ui.settings.textSize`. Another value needs CSS of the game's own. */
+/**
+ * The text sizes the React UI's styles size the page for, the values of the `ui.settings.textSize` setting. Another
+ * value needs CSS of the game's own.
+ */
 export const TEXT_SIZES = ['small', 'normal', 'large', 'larger'] as const
 
 /** How long a transition takes when nothing says, in milliseconds. */
@@ -127,31 +148,33 @@ export const DICE_ROLL_MS = 1000
 /** The most pips the sidebar draws; a stat with a wider range is drawn as a bar. */
 export const MAX_PIPS = 20
 
-/** What a hint's check is told: the game, what the hint is written on (and its id, where it has one), and the transition names the game has. */
+/** The context a {@link UiHint}'s check receives, with the game, the target the hint is on and the game's transition names. */
 export type HintCheckContext = {
   /** The loaded game, for a hint that names something in it. */
   game: Game
-  /** What the hint is written on: a scene, a choice, a block, a stat, an entity or the game. */
+  /** The sort of target the hint is on, such as a scene, a choice, a block, a stat, an entity or the game. */
   on: UiTarget
-  /** The id of what it's written on: a stat's, a scene's, a choice's, a kind's or an entity's reference. */
+  /** The target's id, such as a stat's, a scene's or a choice's id, or a kind's or an entity's reference. */
   id?: string
-  /** `TRANSITIONS` and the game's own `ui.transitionNames`. */
+  /** The transition names the game has, `TRANSITIONS` with the game's own `ui.transitionNames`. */
   transitions: ReadonlySet<string>
 }
 
 /**
- * A `ui` hint a UI reads, declared once: its name, where content writes it,
- * and what's wrong with a value (each problem worded as it follows the place,
- * `ui.timer "kettle" is not a timer the game has`). `checkUiHints` reports a
- * hint no declaration names for that place, and runs each one's check. A
- * plugin UI brings its own in `PluginUi.hints`.
+ * A `ui` hint a UI reads, declared once with its name, its targets and a check of its value. `checkUiHints` reports a
+ * hint that no declaration names for its target, and runs each declaration's check.
+ *
+ * A plugin UI declares its own in `PluginUi.hints`.
  */
 export type UiHint = {
-  /** The key content writes under `ui`. */
+  /** The hint's key under `ui`. */
   name: string
-  /** Where it's written. */
+  /** The sorts of target content can write the hint on. */
   on: readonly UiTarget[]
-  /** The problems with a value, if any. */
+  /**
+   * Returns the problems with a value, or nothing when it's fine. Word each problem to follow the place it's reported
+   * at, such as `ui.timer "kettle" is not a timer the game has`.
+   */
   check?: (value: unknown, cx: HintCheckContext) => string | readonly string[] | undefined
 }
 

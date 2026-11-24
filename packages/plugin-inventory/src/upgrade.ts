@@ -41,9 +41,10 @@ function itemsToThings(pack: RawPack): RawPack {
   return out as RawPack
 }
 
-/** The version of what content writes for this plugin. */
+/** The schema of the content this plugin reads, numbered by the engine's schema. */
 export const CONTENT_VERSION = 21
 
+/** The steps that carry this plugin's content forward, each keyed by the schema it upgrades from. */
 export const contentMigrations: Record<number, ContentStep> = {
   // 12 → 13: items are things, and using one is this plugin's command, on the thing it became.
   12: (pack, tools) =>
@@ -55,9 +56,10 @@ export const contentMigrations: Record<number, ContentStep> = {
   20: (pack, tools) => tools.effects(pack),
 }
 
-/** The version of this plugin's commands. */
+/** The version of this plugin's commands, which command logs record. */
 export const COMMAND_VERSION = 13
 
+/** The steps that carry this plugin's logged commands forward, each keyed by the version it upgrades from. */
 export const commandMigrations: Record<number, CommandStep> = {
   // 12 → 13: the engine's `use` command is this plugin's, on the thing the item became.
   12: (command) =>

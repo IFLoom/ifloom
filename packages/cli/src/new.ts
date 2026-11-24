@@ -8,30 +8,35 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, w
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+/** The templates `ifloom new` can start a game from. `novel`, `cafe` and `town` copy the examples, and `plugin` makes a plugin package. */
 export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel', 'cafe', 'town', 'plugin'] as const
+/** The name of a template in `TEMPLATES`. */
 export type TemplateName = (typeof TEMPLATES)[number]
 
-/** The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides. */
+/** The names of the React UI's theme presets, each a stylesheet at `@ifloom/react/themes/<name>.css`. */
 export const THEMES = ['paper', 'terminal', 'studio', 'storybook'] as const
+/** The name of a theme preset in `THEMES`. */
 export type ThemeName = (typeof THEMES)[number]
 
+/** Settings for `newGame`. Only `name` is required. */
 export type NewGameOptions = {
   /**
-   * The game's package name, which is also its folder's: `my-story`. For the
-   * `plugin` template it's the plugin's package name, such as
-   * `ifloom-plugin-weather`, and the plugin's id is the name without
-   * `ifloom-plugin-` or `plugin-` in front: `weather`.
+   * The game's package name, such as `my-story`, which is also its folder's name. For the `plugin` template it's the
+   * plugin's package name, such as `ifloom-plugin-weather`.
+   *
+   * The plugin's id is the name without `ifloom-plugin-` or `plugin-` in front, so `weather`.
    */
   name: string
-  /** What to start from. `react` if left out. */
+  /** The template the game starts from. `react` if left out. */
   template?: TemplateName
-  /** Where to put it. Left out, `games/<name>` in the IFLoom checkout, or a folder named `<name>` in the current folder anywhere else. */
+  /** The folder to make the game in. `games/<name>` in the IFLoom checkout if left out, else `<name>` in the current folder. */
   into?: string
   /**
-   * The React UI preset to start from. Left out, a `react` or `next` game gets one at
-   * random, so two new games don't start out looking alike, and a copied
-   * example keeps its own. `'none'` leaves the preset out, for the React UI's
-   * plain default look. The vanilla, vue and svelte templates have no React UI and ignore it.
+   * The React UI theme preset the game starts with. A `react` or `next` game gets one at random if left out, and a copied
+   * example keeps its own.
+   *
+   * `'none'` leaves the preset out, for the React UI's plain look. The `vanilla`, `vue` and `svelte` templates have no
+   * React UI and ignore it.
    */
   theme?: ThemeName | 'none'
 }
@@ -76,10 +81,16 @@ export const BASE_COMPILER_OPTIONS = {
 const BASE = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
 /** The game itself, the same in every template: `game.ts` assembles the content in `world/` and `story/`. */
 const GAME = ['src/game.ts', 'src/world/stats.ts', 'src/story/opening.ts']
-/** What the templates without React share: the game and the plain stylesheet. The clock for timers and minigames, and the keys, come from `@ifloom/browser`. */
+/**
+ * What the templates without React share: the game and the plain stylesheet. The clock for timers and minigames, and
+ * the keys, come from `@ifloom/browser`.
+ */
 const PLAIN = [...BASE, ...GAME, 'src/styles.css']
 
-/** Where each template's files come from, under the templates' folder or the examples'. Ours add the shared files; the examples bring their own. */
+/**
+ * Where each template's files come from, under the templates' folder or the examples'. Ours add the shared files; the
+ * examples bring their own.
+ */
 const SOURCES: Record<TemplateName, { dir: string; example?: true; shared: string[] }> = {
   // React, Vue and Svelte bring their own vite.config.ts, which adds the framework's plugin.
   react: { dir: 'react', shared: [...BASE, ...GAME] },
@@ -186,7 +197,12 @@ function standaloneTsconfig(dir: string): void {
   writeFileSync(path, `${JSON.stringify(tsconfig, null, 2)}\n`)
 }
 
-/** Make a new game. Returns its folder and the files written there. Installs nothing. */
+/**
+ * Makes a new game from a template, and returns its folder, the files written there and the theme it chose. It installs
+ * nothing.
+ *
+ * It throws when the name can't be a package name, the template or theme doesn't exist, or the folder isn't empty.
+ */
 export function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null } {
   const { name, template = 'react' } = options
   if (!VALID_NAME.test(name) || name.length > 214) {

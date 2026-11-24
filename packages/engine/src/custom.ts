@@ -21,42 +21,38 @@ import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type Quer
  */
 
 /**
- * What every function of a plugin's or the game's is handed besides the state,
- * whatever it is: the game, the plugins' answers and values, and seeded
- * draws. `PluginContext` is this and the rest.
+ * The context every plugin or game function gets beside the state, with the game, queries, values and seeded draws.
+ * `PluginContext` extends it.
  */
 export type CustomContext = {
-  /** The loaded game. */
+  /** The context's loaded game. */
   game: Game
-  /**
-   * Ask a plugin something by its full name: `query('places/here')`.
-   * Undefined when the game does not have that plugin.
-   */
+  /** The context's query function, which asks a plugin or the game by full name (`query('places/here')`). */
   query: Query
   /**
-   * A value by name, a plugin's (`messages/unread`) or the game's own, asked
-   * with `args`. Undefined when nobody has it.
+   * The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's,
+   * asked with `args`. It returns undefined when no plugin or game has that value.
    */
   value: (name: string, args?: PluginArgs) => string | number | undefined
   /**
-   * A whole number from 0 to `max - 1`, drawn from the save's seed, the turn
-   * and `name`: the same save and turn always draw the same.
+   * The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the
+   * turn and `name`. The same save and turn always draw the same number.
    */
   roll: (max: number, name: string) => number
 }
 
 /**
- * Ask a plugin or the game something by full name. A name declared in
- * `QueryRegistry` takes its arguments and answers its type; any other takes any
- * arguments, with the answer's type given: `query<number>('loyalty/stampsLeft')`.
- * Undefined when the game does not have it.
+ * A function that asks a plugin or the game a query by full name. It returns undefined when the game has no such query.
+ *
+ * A name declared in `QueryRegistry` takes its declared arguments and returns its declared answer. Any other name
+ * takes any arguments, and you give the answer's type, as in `query<number>('loyalty/stampsLeft')`.
  */
 export type Query = {
   <K extends keyof QueryRegistry>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
   <T = unknown>(name: string, args?: PluginArgs): T | undefined
 }
 
-/** The part of every context that needs no plugin, for this state. */
+/** Returns the part of every context that needs no plugin, for this state. */
 export function customContext(state: GameState, game: Game): CustomContext {
   return {
     game,
@@ -87,12 +83,12 @@ export {
   type ValueRef,
 } from './calls.ts'
 
-/** A condition by full name, a plugin's or the game's own (`game/…`), ready to ask. */
+/** Returns the condition with this full name, a plugin's or the game's own (`game/…`), or undefined when none has it. */
 export function customCondition(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => boolean) | undefined {
   return pluginCondition(game, name)
 }
 
-/** A value by full name, a plugin's or the game's own (`game/…`), ready to ask. */
+/** Returns the value with this full name, a plugin's or the game's own (`game/…`), or undefined when none has it. The game's phrases answer first. */
 export function customValue(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => string | number) | undefined {
   // The game's phrases answer as its values do, before `rules.values`: `{ value: 'game/outfit.verdict' }`.
   const parts = pluginName(name)
@@ -100,17 +96,16 @@ export function customValue(game: Game | undefined, name: string): ((state: Game
   return pluginValue(game, name)
 }
 
-/** Does the game or one of its plugins have an effect or a macro by this full name? */
+/** Returns true when the game or one of its plugins has an effect or a macro with this full name. */
 export function hasCustomEffect(game: Game | undefined, name: string): boolean {
   return Boolean(pluginEffect(game, name) ?? pluginMacro(game, name))
 }
 
 /**
- * Effects as the reducer takes them: a call to an effect nobody has (a
- * plugin the game doesn't have, a name the game never declared) is left
- * out, as it would do nothing; the content checker (`checkGame`) reports it
- * by name. Every other effect is kept as written, and a call runs in its
- * turn, on the state the effects before it left.
+ * Returns the effects ready for the reducer, without the calls no plugin or game has. The content checker
+ * (`checkGame`) reports each call it leaves out.
+ *
+ * Every other effect stays as written. A call runs in its turn, on the state the effects before it left.
  */
 export function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[] {
   return refs.filter((entry) => {
@@ -120,10 +115,11 @@ export function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[] {
 }
 
 /**
- * Effects with each macro, the game's or a plugin's, worked out against `state`:
- * what a button would do, before it runs, for prices, guards and locks to
- * see. Applying them works each one out in its turn instead, so what this
- * shows is read from the state before any of them apply.
+ * Returns the effects with each macro, the game's or a plugin's, worked out against `state`. Prices, guards and locks
+ * read them before a command runs.
+ *
+ * Applying the effects works each macro out in its turn instead, so this preview reads the state from before any of
+ * them apply.
  */
 export function previewEffects(state: GameState, game: Game, effects: readonly Effect[], depth = 0): Effect[] {
   const out: Effect[] = []

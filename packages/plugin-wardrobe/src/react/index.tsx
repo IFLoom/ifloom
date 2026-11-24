@@ -1,8 +1,8 @@
 /**
- * @ifloom/plugin-wardrobe/react: the wardrobe plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `wardrobeUi` in the game's
- * `plugins` to have what the player wears as the `wardrobe` panel, or draw
- * it yourself from `useWardrobe`.
+ * The wardrobe plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `wardrobeUi` in the game's `plugins` to render what the player wears as the `wardrobe` panel. To render it
+ * yourself, read `useWardrobe`.
  */
 import type { ComponentProps } from 'react'
 import type { EntityRef, GameState, RenderedChoice, Result } from '@ifloom/engine'
@@ -10,7 +10,7 @@ import { wardrobe, type WardrobeView } from '../index.ts'
 import { Section, usePart } from '@ifloom/react'
 import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
-/** The wardrobe plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The wardrobe plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const WARDROBE_WORDS = {
   nothingOn: 'Nothing',
   wardrobe: 'Wearing',
@@ -32,23 +32,23 @@ declare module '@ifloom/react' {
   }
 }
 
-/** A wardrobe slot as `useWardrobe` gives it: what's in it, and the view's buttons to take it off or put something else on. */
+/** A slot as `useWardrobe` returns it, with the thing in it and the buttons that take it off or put another thing on. */
 export type WardrobeSlotControls = WardrobeView['slots'][number] & {
-  /** The `wear` button of each spare thing for this slot, from the view's `spare`. */
+  /** The `wear` buttons of the spare things for this slot, from the view's `spare`. */
   wear: RenderedChoice[]
 }
 
-/** What `useWardrobe` returns: the wardrobe plugin's view, slot by slot with its buttons, and its commands. */
+/** The wardrobe plugin's view, slot by slot with its buttons, and functions that send its commands, as `useWardrobe` returns it. */
 export type WardrobeControls = Omit<WardrobeView, 'slots'> & {
-  /** Every slot, in order, with what is in it and its buttons. */
+  /** The game's slots in order, each with the thing in it and its buttons. */
   slots: WardrobeSlotControls[]
-  /** Put on a thing you hold, by its reference (`'clothing:scarf'`): sends `wardrobe/wear`. */
+  /** Sends `wardrobe/wear` for a thing the player holds, by its reference, such as `'clothing:scarf'`. */
   wear: (entity: EntityRef) => Result<GameState>
-  /** Empty a slot by its id: sends `wardrobe/takeOff`. */
+  /** Sends `wardrobe/takeOff`, which empties the slot with this id. */
   takeOff: (slot: string) => Result<GameState>
 }
 
-/** The wardrobe plugin's view with its buttons and commands, or null in a game without the plugin. `WardrobeCard` is drawn from it. */
+/** Returns the wardrobe plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useWardrobe(): WardrobeControls | null {
   const { view, send } = usePlugin(WARDROBE)
   if (!view) return null
@@ -94,17 +94,18 @@ function WardrobeCardImpl({ className, title: titleText }: { className?: string;
 }
 
 /**
- * What the player has on, slot by slot, with what else they could wear. Each
- * button is greyed out with the engine's own reason when it can't be done.
- * Draws nothing in a game without the wardrobe plugin. A thin default on
- * `useWardrobe`.
+ * Renders what the player has on from `view.plugins.wardrobe`, slot by slot, with the other things they could wear.
+ * It renders nothing without the plugin.
+ *
+ * A button that can't be used now is disabled with the engine's reason.
+ *
+ * A preset can style the parts `wardrobe`, `wardrobe-title`, `wardrobe-slot`, `wardrobe-slot-name` and `wardrobe-worn`.
  */
 export const WardrobeCard = overridable('WardrobeCard', WardrobeCardImpl)
 
 /**
- * A Wearing section for the side column: the `WardrobeCard`, folding in
- * place. `wardrobeUi` doesn't put it anywhere; place it in your layout's
- * `<Sidebar>` to keep what the player wears in view.
+ * Renders a Wearing section that folds, holding the `WardrobeCard`. `wardrobeUi` doesn't place it, so put it in your
+ * layout's `<Sidebar>` to keep what the player wears on screen.
  */
 export function WardrobeSection() {
   const { words } = usePlugin(WARDROBE)
@@ -116,11 +117,10 @@ export function WardrobeSection() {
 }
 
 /**
- * The wardrobe plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `wardrobe` panel with the `WardrobeCard`, opened by a
- * closet place's button or any `{ panel: 'wardrobe' }`, and the wardrobe's
- * words. It adds nothing to the side column; a layout can place
- * `WardrobeSection` there.
+ * The wardrobe plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `wardrobe` panel,
+ * which a closet's button or any `{ panel: 'wardrobe' }` opens, as a `WardrobeCard`, and adds the plugin's words.
+ *
+ * It adds nothing to the sidebar, where a layout can place `WardrobeSection`.
  */
 export const wardrobeUi: PluginUi = {
   ...WARDROBE,

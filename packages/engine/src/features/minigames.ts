@@ -15,138 +15,138 @@ import type { Game } from '../game.ts'
 import type { Condition, GameState } from '../types.ts'
 import { byId, defineFeature, listWords, mergedById, type FeatureCheckTools, type FeatureContext } from './feature.ts'
 
-/** A state a transition can go to at random: its id, or its id with a weight (1 if left out). */
+/** A state a transition can go to at random, as its id or as its id with a weight. The weight is 1 if left out. */
 export type MinigameTarget = string | { state: string; weight?: number }
 
-/** Where a transition goes, and what it does on the way. */
+/** A minigame transition, the state it goes to and the effects it runs on the way. With no `go` or `to` it stays in its state. */
 export type MinigameTransition = {
-  /** The state it goes to. */
+  /** The id of the state the transition goes to. */
   go?: string
-  /**
-   * A state drawn at random, by weight, when there is no `go`. Seeded by the
-   * save, so the same save draws the same states.
-   */
+  /** The states the transition draws one from at random, by weight, when there's no `go`. The draw is seeded by the save. */
   to?: MinigameTarget[]
   /**
-   * What it does before it moves: any effect, a `kv` one with
-   * `of: 'minigame'` or a turn among them. A transition with no `go` or `to` stays where it is.
+   * The effects the transition runs before it moves. Any effect works, such as a `kv` effect with `of: 'minigame'` or
+   * a `turn`.
    */
   effects?: EffectRef[]
 }
 
-/** One state of a minigame. */
+/** A state of a minigame, in its `states`. It can wait (`after`), listen to inputs (`on`), move on by itself (`always`) or end the minigame (`final`). */
 export type MinigameStateDef = {
-  /** What the player reads while the minigame is in this state, tokens filled. */
+  /** The words the player reads while the minigame is in this state, with tokens filled. */
   label?: string
   /**
-   * A timer. Once `ms` milliseconds of ticks have passed in this state, the
-   * transition is taken. Staying put (no `go` or `to`) starts the timer again.
-   * The same `tick` runs it down as runs the game's named timers, in the order
-   * they run out.
+   * The state's timer. Once `ms` milliseconds of ticks have passed in the state, the engine takes the transition, and
+   * one that stays put starts the timer again.
+   *
+   * The `tick` that runs down the game's named timers runs it down too, in the order they run out.
    */
   after?: { ms: number } & MinigameTransition
   /**
-   * What the inputs do here. The first entry for the input whose `when`
-   * holds is taken; an input with none is not live. `label` is the input's
-   * words for its button in this state, tokens filled, such as a quiz's
-   * answer: the first live entry with one gives it, and without one the
-   * button reads the `minigame.<input>` string, else the input's name.
+   * The state's inputs. For each input, the first entry whose `when` holds is taken, and an input with no such entry
+   * isn't live.
+   *
+   * `label` is the input's words for its button in this state, with tokens filled, such as a quiz's answer. The first
+   * live entry with one gives it. Without one the button reads the `minigame.<input>` string, else the input's name.
    */
   on?: ({ input: string; when?: Condition; label?: string } & MinigameTransition)[]
   /**
-   * Taken as soon as the state is entered: the first whose `when` holds. A
-   * state that only decides where to go next, such as a win or a loss.
+   * The state's automatic transitions, the first whose `when` holds taken on entering the state. Use them for a state
+   * that only decides where to go next, such as a win.
    */
   always?: ({ when?: Condition } & MinigameTransition)[]
   /**
-   * Entering this state ends the minigame. `copy` writes keys of the
-   * minigame's kv to the player's (`{ score: 'arrows.best' }`); then the
-   * minigame closes and `effects` apply.
+   * The state's ending. Entering the state ends the minigame.
+   *
+   * `copy` writes keys of the minigame's kv store to the player's (`{ score: 'arrows.best' }`). Then the minigame
+   * closes and `effects` run.
    */
   final?: { effects?: EffectRef[]; copy?: Record<string, string> }
 }
 
-/** A minigame: its states, the one it starts in, its kv store and the keys a UI maps to its inputs. */
+/** A minigame the game declares in `minigames`, a small state machine played with named inputs and timed by ticks. Every key it uses must be in its `kv`. */
 export type MinigameDef = {
+  /** The minigame's id, which the `minigame` effect and a scene's `minigame` name. */
   id: string
-  /** Its heading, what the UI calls it. */
+  /** The minigame's title. */
   title?: string
-  /** The state it starts in. */
+  /** The id of the state the minigame starts in. */
   start: string
   /**
-   * Its kv store and where each key starts, numbers all: `{ score: 0 }`.
-   * Content reads and writes them with `of: 'minigame'`, and a key it uses
-   * must be declared here.
+   * The minigame's kv store, with each key's starting number, such as `{ score: 0 }`. Content reads and writes the
+   * keys with `of: 'minigame'`.
    */
   kv?: Record<string, number>
   /**
-   * The keys a UI maps to each input, by input name: `{ up: ['ArrowUp', 'w'] }`.
-   * Key names as `KeyboardEvent.key` gives them. A UI picks its own if left out.
+   * The keys a UI maps to each input, by input name, such as `{ up: ['ArrowUp', 'w'] }`. Key names are those
+   * `KeyboardEvent.key` gives, and a UI picks its own if left out.
    */
   keys?: Record<string, string[]>
-  /** Its states, by name. See `MinigameStateDef`. */
+  /** The minigame's states, by name. */
   states: Record<string, MinigameStateDef>
 }
 
-/** The minigame being played. */
+/** The running minigame a save keeps, in `state.minigame`. Its states are read from content. */
 export type MinigameState = {
+  /** The minigame's id. */
   id: string
-  /** The state it is in. */
+  /** The name of the state the minigame is in. */
   state: string
-  /** Milliseconds of ticks since it entered that state. */
+  /** The milliseconds of ticks since the minigame entered that state. */
   elapsed: number
-  /** Its kv store, as play has left it. */
+  /** The minigame's kv store, as play has left it. */
   kv: Record<string, number>
-  /** How many transitions it has taken, for its random draws. */
+  /** The number of transitions the minigame has taken, part of its random draws' seed. */
   steps: number
 }
 
-/**
- * An input of the minigame being played, as a button: drawn as any other
- * button is, since it has what a `RenderedChoice` needs.
- */
+/** An input of the running minigame as the player sees it, in `view.minigame.inputs`. It has what a `RenderedChoice` needs, so a UI renders it as any button. */
 export type MinigameInput = {
-  /** The input's name, as the minigame's `on` names it: `'up'`. */
+  /** The input's name, as the minigame's `on` names it, such as `'up'`. */
   id: string
-  /** Its words: the `minigame.<input>` string (`Up`, `Space`), or its name with a capital. */
+  /** The input's label, from its `on` entry, else the `minigame.<input>` string (`Up`, `Space`), else its name with a capital. */
   label: string
-  /** What pressing it sends. */
+  /** The command pressing the input sends. */
   command: { type: 'minigame'; input: string }
 }
 
-/** The minigame being played, as the UI draws it. */
+/** The running minigame as the player sees it, in `view.minigame`. */
 export type MinigameView = {
+  /** The minigame's id. */
   id: string
-  /** The minigame's own title, or null. */
+  /** The minigame's title, or null. */
   title: string | null
-  /** The state it is in. */
+  /** The name of the state the minigame is in. */
   state: string
-  /** The state's words, from its `label`, or null. `view.scene.body` has them rendered. */
+  /** The state's `label`, with tokens filled, or null. `view.scene.body` has it rendered. */
   label: string | null
-  /** Milliseconds left on the state's timer, or null with no timer. */
+  /** The milliseconds left on the state's timer. Null when the state has no timer. */
   timeLeft: number | null
-  /** The timer's whole length, or null with no timer. */
+  /** The whole length of the state's timer in milliseconds. Null when the state has no timer. */
   timeTotal: number | null
-  /** The inputs that do something now, in the order the state lists them, as buttons. */
+  /** The inputs that are live now, in the order the state lists them. */
   inputs: MinigameInput[]
-  /** Its kv store now. */
+  /** The minigame's kv store now. */
   kv: Record<string, number>
-  /** The keys the game maps to each input, by input name. Empty if it maps none. */
+  /** The keys the game maps to each input, by input name. Empty when it maps none. */
   keys: Record<string, string[]>
 }
 
-/** What the minigames feature adds, as types. */
+/** The minigames feature's state, calls, content key, view and references, as types. */
 export type MinigamesShape = {
   state: {
     /** The minigame being played, or null. */
     minigame: MinigameState | null
   }
   effects: {
-    /** Start a minigame, in its `start` state. One already running is dropped. */
+    /** An effect that starts a minigame in its `start` state. A minigame already running is dropped. */
     minigame: { minigame: string }
   }
   commands: {
-    /** An input to the minigame being played, by name: `{ type: 'minigame', input: 'up' }`. */
+    /**
+     * A command that sends an input to the running minigame by name, such as `{ type: 'minigame', input: 'up' }`. The
+     * engine refuses it when the input isn't live.
+     */
     minigame: { type: 'minigame'; input: string }
   }
   game: {
@@ -154,7 +154,7 @@ export type MinigamesShape = {
     minigames?: MinigameDef[]
   }
   pack: {
-    /** Minigames. A later pack's replaces an earlier one's by id. */
+    /** The pack's minigames. A later pack's minigame replaces an earlier one with the same id. */
     minigames?: MinigameDef[]
   }
   view: {
@@ -163,22 +163,23 @@ export type MinigamesShape = {
   }
   lists: 'minigame'
   references: {
-    /** A minigame, by id. */
+    /** A reference to a minigame by id. */
     minigame: { minigame: string }
-    /** A key some minigame declares in its `kv`, as `{ kv, of: 'minigame' }` names it. */
+    /** A reference to a key some minigame declares in its `kv`, as `{ kv, of: 'minigame' }` names it. */
     minigameKv: { minigameKv: string }
   }
 }
 
-/** A scene's field that starts a minigame. */
+/** The scene field that starts a minigame. */
 export type MinigameSceneFields = {
-  /** A minigame that starts when the scene is entered. The scene shows again once it ends. */
+  /** The id of the minigame that starts when the scene is entered. The scene shows again once it ends. */
   minigame?: string
 }
 
 /** The most transitions one command takes, so a timer of a tiny `ms` or `always` going round in a circle can't hang the game. */
 const MOST_STEPS = 1000
 
+/** Returns the minigame the game declares with this id. Undefined when there's none. */
 export function minigameOf(game: Game, id: string): MinigameDef | undefined {
   return game.minigames?.find((entry) => entry.id === id)
 }
@@ -214,7 +215,7 @@ function drawTarget(state: GameState, to: readonly MinigameTarget[], cx: Feature
   return picked === undefined ? undefined : typeof picked === 'string' ? picked : picked.state
 }
 
-/** Start a minigame. Unknown ids do nothing; the content checker reports them. */
+/** Returns the state with a minigame started in its `start` state. An unknown id does nothing, and the content checker reports it. */
 export function startMinigame(state: GameState, game: Game, id: string, cx: FeatureContext): GameState {
   const def = minigameOf(game, id)
   if (!def) return state
@@ -272,9 +273,9 @@ function clockOf(state: GameState, game: Game) {
 }
 
 /**
- * How long until the running state's timer runs out, in milliseconds, or
- * undefined with no minigame or no timer. The `tick` command, which the timers
- * feature owns, asks this to run the minigame's clock beside the named timers.
+ * Returns the milliseconds until the running state's timer runs out. Undefined with no minigame or no timer.
+ *
+ * The timers feature's `tick` command reads it to run the minigame's clock beside the named timers.
  */
 export function minigameDue(state: GameState, game: Game): number | undefined {
   const running = state.minigame
@@ -282,13 +283,13 @@ export function minigameDue(state: GameState, game: Game): number | undefined {
   return running && timer ? Math.max(timer.ms - running.elapsed, 0) : undefined
 }
 
-/** The running minigame's clock moved on by `ms`, without taking its timer's transition. */
+/** Returns the state with the running minigame's clock moved on by `ms`. It doesn't take the timer's transition. */
 export function minigameAdvanced(state: GameState, ms: number): GameState {
   const running = state.minigame
   return running && ms > 0 ? { ...state, minigame: { ...running, elapsed: running.elapsed + ms } } : state
 }
 
-/** The running state's timer run out: its transition taken, as a tick that reaches it takes it. */
+/** Returns the state after the running state's timer runs out, with its transition taken as a tick that reaches it would. */
 export function minigameTimedOut(state: GameState, game: Game, cx: FeatureContext): GameState {
   const running = state.minigame
   const timer = clockOf(state, game)
@@ -297,9 +298,9 @@ export function minigameTimedOut(state: GameState, game: Game, cx: FeatureContex
 }
 
 /**
- * Which play of which minigame is running: its id and how many times it has
- * started, or undefined with none. A tick runs one play's clock: one that
- * starts part way through a tick starts its clock on the next.
+ * Returns the running play of a minigame as its id and the number of times it has started. Undefined when none runs.
+ *
+ * A tick runs one play's clock, so a minigame that starts part way through a tick starts its clock on the next.
  */
 export function minigamePlay(state: GameState): string | undefined {
   return state.minigame ? `${state.minigame.id}#${plays(state, state.minigame.id)}` : undefined
@@ -417,6 +418,7 @@ function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<stri
   }
 }
 
+/** The minigames feature, which runs minigames and refuses other commands while one runs, except `dismiss` and commands that ignore locks. */
 export const minigames = defineFeature<MinigamesShape>({
   name: 'minigames',
   state: {

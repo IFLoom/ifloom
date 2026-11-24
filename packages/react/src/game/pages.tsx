@@ -15,63 +15,63 @@ import { ModManager } from './mods.tsx'
 import { usePluginUis } from './plugins.tsx'
 import { uiSay, useWords } from './words.ts'
 
-/** A page by name: a built-in one, or the id of one in `PagesOptions.pages`. */
+/** The name of a page, either a built-in one or the id of one a game or a plugin UI adds. */
 export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 
-/** A page a game or plugin adds, with the title screen's button for it. */
+/** A page a game adds in `PagesOptions.pages`, with its button on the title screen. A plugin UI adds one as a `PluginPage`. */
 export type PageDef = {
-  /** The title screen's button for it. */
+  /** The label of the page's button on the title screen. */
   label: string
-  /** What it draws. `usePage().back()` leaves it. */
+  /** The component that renders the page. `usePage().back()` leaves it. */
   component: ComponentType
-  /** Whether the title screen offers it. On unless set false. */
+  /** True to show a button for the page on the title screen. True if left out. */
   showOnTitle?: boolean
 }
 
-/** A line of the credits, or a link. */
+/** One line of the credits page, as text or as a link with its label. */
 export type Credit = string | { label: string; href: string }
 
-/** A notice the player confirms once before the title screen. Every word of it is the game's. */
+/** A notice the player confirms once before the title screen, in `PagesOptions.gate`. The game writes every word of it. */
 export type GateOptions = {
   /** The gate's heading. */
   title: string
-  /** Paragraphs, split on blank lines. */
+  /** The gate's text, split into paragraphs on blank lines. */
   text: string
-  /** The button that moves on. */
+  /** The label of the button that confirms and goes on to the title screen. */
   confirm: string
-  /** A button that doesn't: it goes to `href` if given, otherwise it stays. */
+  /** The button that declines, with its label. It goes to `href` if given, and otherwise the gate stays. */
   decline?: { label: string; href?: string }
 }
 
-/** What the title screen and the pages around it show. */
+/** Settings for the title screen and the pages around the game, the `pages` option. Each is optional. */
 export type PagesOptions = {
-  /** A line under the title. */
+  /** The line under the title on the title screen. */
   subtitle?: string
-  /** A picture for the title screen, by its path. */
+  /** The path of the title screen's picture. */
   art?: string
-  /** Lines and links for the credits page. No Credits button without them. */
+  /** The credits page's lines and links. The title screen has no Credits button without them. */
   credits?: Credit[]
-  /** A notice shown before the title screen until the player confirms it. */
+  /** The notice shown before the title screen until the player confirms it. */
   gate?: GateOptions
-  /** Pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, goes over it. */
+  /** The pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, replaces it. */
   pages?: Record<string, PageDef>
 }
 
-/** Where the player is among the pages, and how to move. */
+/** The page the player is on among the pages around the game, with the functions that move between them. */
 export type PageState = {
-  /** False when the game was mounted without `pages`: the game is all there is. */
+  /** True while pages are on. It's false when the game mounted without `pages`, and then the page is always `game`. */
   enabled: boolean
   /** The page showing. */
   page: Page
-  /** The page under this one, which `back` returns to; null at the title, the gate or the game. */
+  /** The page under this one, which `back` returns to. It's null at the title screen, the gate and the game. */
   from: Page | null
-  /** Show a page. `title`, `game` and `gate` start afresh; any other goes on top of the one showing. */
+  /** Shows a page. `title`, `game` and `gate` start afresh, and any other goes on top of the one showing. */
   go: (page: Page) => void
-  /** Return to the page under this one, or the title screen if there is none. */
+  /** Returns to the page under this one, or to the title screen when there is none. */
   back: () => void
   /** The options the pages were set up with. */
   options: PagesOptions
-  /** Every page added to the built-in ones, by id: the plugin UIs' (`achievements`, say) and the game's own `pages` over them. */
+  /** Every page added to the built-in ones, by id, the plugin UIs' (such as `achievements`) with the game's own `pages` over them. */
   added: Readonly<Record<string, PageDef>>
 }
 
@@ -92,12 +92,18 @@ function useAddedPages(options: PagesOptions): Record<string, PageDef> {
   }, [plugins, runner, options.pages])
 }
 
-/** Where the player is among the pages. Outside pages (`pages` off), `enabled` is false and the page is always `game`. */
+/**
+ * Returns the page the player is on and the functions that move between pages. With `pages` off, `enabled` is false and
+ * the page is always `game`.
+ */
 export function usePage(): PageState {
   return useContext(PagesContext) ?? OFF
 }
 
-/** What the profile holds in a namespace, kept up to date as it changes. Undefined without a profile or before the first read. */
+/**
+ * Returns the value the profile holds in a namespace, and re-renders when it changes. It's undefined without a profile
+ * or before the first read.
+ */
 export function useProfile<T = unknown>(namespace: string): T | undefined {
   const { runner } = useGame()
   const profile = runner.profile
@@ -120,9 +126,10 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
 }
 
 /**
- * A setting's current value, as the runner's snapshot has it, kept up to date:
- * a play setting's from the game in play, a ui setting's from the profile.
- * Undefined for a setting the game doesn't declare.
+ * Returns a setting's value from the runner's snapshot, and re-renders when it changes. It's undefined for a setting
+ * the game doesn't declare.
+ *
+ * A play setting's value comes from the game in play, and a UI setting's from the profile.
  */
 export function useSetting(id: string): KvValue | undefined {
   return useGame().snapshot.settings[id]
@@ -165,9 +172,10 @@ export function PagesProvider({ options = NONE, children }: { options?: PagesOpt
 const NO_PAGES: PagesOptions = {}
 
 /**
- * The game, or with `pages` on, the pages around it: the game shows
- * only on the `game` page. Used inside a `GameProvider`; a layout's `Game`
- * uses it, so a layout needn't.
+ * Renders its children, the game, or with `pages` on, the pages around it, with the game on the `game` page only. It
+ * renders inside a `GameProvider`.
+ *
+ * A layout's `Game` region renders one, so a layout of your own needn't.
  */
 export function WithPages({ pages, children }: { pages?: boolean | PagesOptions; children: ReactNode }) {
   if (!pages) return <>{children}</>
@@ -206,12 +214,15 @@ function newest(slots: SaveMeta[]): SaveMeta | undefined {
   return slots.reduce<SaveMeta | undefined>((best, meta) => (!best || meta.savedAt > best.savedAt ? meta : best), undefined)
 }
 
-/** The attributes for a page's outer section, as every built-in page has: centred, as wide as `--width-reading`. `part` names it. */
+/**
+ * Returns the attributes for a page's outer section, centred and as wide as `--width-reading`, as every built-in page
+ * has. `part` names the part, `title-page` by default.
+ */
 export function usePageParts(className?: string, part: PartKey = 'title-page') {
   return usePart(part, 'mx-auto flex min-h-screen w-full max-w-(--width-reading) flex-col justify-center gap-6 p-6 font-body', className)
 }
 
-/** The page's Back button, the `page-back` part: `usePage().back()`. */
+/** Renders a page's Back button, the `page-back` part, which calls `usePage().back()`. */
 export function BackButton() {
   const words = useWords()
   const { back } = usePage()
@@ -223,7 +234,7 @@ export function BackButton() {
   )
 }
 
-/** A page's heading, as the built-in pages have: the `page-heading` part. A page a plugin or game adds uses it too. */
+/** Renders a page's heading, the `page-heading` part, as the built-in pages have. A page a plugin or a game adds uses it too. */
 export function PageHeading({ children }: { children: ReactNode }) {
   return <h1 {...usePart('page-heading', 'font-heading text-scene-title font-semibold')}>{children}</h1>
 }
@@ -303,11 +314,11 @@ function TitlePageImpl({ className }: { className?: string }) {
 }
 
 /**
- * The title screen: the game's title, the subtitle and art if given, and the
- * buttons Continue (the newest save), New game, New Game+ (once the game has
- * been finished, if it carries anything over), Load, Settings (if the game has
- * any), the pages the plugin UIs and the game add (the achievements plugin's
- * Achievements, say), and Credits (if given).
+ * Renders the title screen, with the game's title, the subtitle and art when given, and a button for each page. Its
+ * root is the `title-page` part.
+ *
+ * The buttons are Continue (the newest save), New game, New Game+ (once the game is finished, if it carries anything
+ * over), Load, Settings (if the game has any), each added page with `showOnTitle`, and Credits (if given).
  */
 export const TitlePage = overridable('TitlePage', TitlePageImpl)
 
@@ -411,13 +422,12 @@ function SettingsPageImpl({ className }: { className?: string }) {
 }
 
 /**
- * The settings page, drawn from `view.settings`: a checkbox for a toggle,
- * radio buttons for a choice, a slider for a range. Each change goes through
- * `runner.setSetting`: a ui setting is written to the profile, and a play
- * setting changes the game in play and is kept in the profile for the next
- * new game. A refusal is shown under the list. Each plugin UI's `settings`
- * follow, such as the unlocks plugin's code box, and with `mods`,
- * a Mods section holding the `ModManager`.
+ * Renders the settings page from `view.settings`, with a checkbox for a toggle, radio buttons for a choice and a slider
+ * for a range. Its root is the `settings-page` part.
+ *
+ * Each change goes through `runner.setSetting`, which writes a UI setting to the profile, and changes a play setting in
+ * the game in play and keeps it in the profile for the next new game. A refusal shows under the list. Each plugin UI's
+ * `settings` follow, such as the unlocks plugin's code box, and with `mods` on, a Mods section with the `ModManager`.
  */
 export const SettingsPage = overridable('SettingsPage', SettingsPageImpl)
 
@@ -479,7 +489,10 @@ function LoadPageImpl({ className }: { className?: string }) {
   )
 }
 
-/** The load page: every save, newest first, to load; any that can't be read, to delete; and importing a save file. Needs the runner made with `saves`. */
+/**
+ * Renders the load page, which lists every save newest first to load, any that can't be read to delete, and a button to
+ * import a save file. It needs a runner made with `saves`.
+ */
 export const LoadPage = overridable('LoadPage', LoadPageImpl)
 
 function CreditsPageImpl({ className }: { className?: string }) {
@@ -512,7 +525,7 @@ function CreditsPageImpl({ className }: { className?: string }) {
   )
 }
 
-/** The credits page: `PagesOptions.credits`, a line each, links opening in a new tab. */
+/** Renders the credits page from `PagesOptions.credits`, a line each. Its links open in a new tab. */
 export const CreditsPage = overridable('CreditsPage', CreditsPageImpl)
 
 function GatePageImpl({ className }: { className?: string }) {
@@ -563,9 +576,9 @@ function GatePageImpl({ className }: { className?: string }) {
 }
 
 /**
- * A notice the player confirms before the title screen, from
- * `PagesOptions.gate`. Confirming is remembered in the profile's `ui:gate`
- * namespace, so it shows once per device. Declining goes to its `href`, or
- * stays.
+ * Renders the gate from `PagesOptions.gate`, a notice the player confirms before the title screen. The profile's
+ * `ui:gate` namespace remembers the confirmation, so the gate shows once per device.
+ *
+ * Declining goes to the decline button's `href`, or leaves the gate where it is.
  */
 export const GatePage = overridable('GatePage', GatePageImpl)

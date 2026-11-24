@@ -3,92 +3,99 @@ import type { BlockUi, Ui } from './features/ui.ts'
 import type { EntityRef } from './entities.ts'
 import { STRINGS } from './strings.ts'
 
-/** How wide an `image` or `video` beat is drawn: `inline` in the column with the words, `wide` across it. */
+/** The width of an `image` or `video` beat, `inline` in the column with the words or `wide` across it. */
 export type BeatSize = 'inline' | 'wide'
 
 /**
- * A piece of a line of prose that holds inline markup, in order. `text` is
- * words to show as they are. `action` is an inline action, from
- * `[[act:id|words]]`: `text` is the words to draw as its link and `choice` is
- * the choice (or, in a room, the action) it presses, with its availability,
- * reason and price as the list would show them. `tip` is a tooltip, from
- * `[[tip:key|words]]`: `text` is the words shown and `tip` the prose line
- * `key`, filled in for this save.
+ * One piece of a paragraph that holds inline markup, in a beat's `spans`, in order. Each piece is told apart by its
+ * `type`.
  */
 export type InlineSpan =
+  /** Words shown unchanged. */
   | { type: 'text'; text: string }
+  /**
+   * An inline action, from `[[act:id|words]]`. `text` is the words rendered as its link, and `choice` is the choice (or,
+   * in the room, the action) it takes, with its availability, reason and price.
+   */
   | { type: 'action'; text: string; choice: RenderedChoice }
+  /** A tooltip, from `[[tip:key|words]]`. `text` is the words shown, and `tip` is the prose key's line filled for this save. */
   | { type: 'tip'; text: string; tip: string }
   /** Words to stress, from `**words**`. `text` is the words alone. */
   | { type: 'bold'; text: string }
   /** Words in italics, from `*words*`. `text` is the words alone. */
   | { type: 'italic'; text: string }
   /**
-   * A piece of a UI's own, from `[[ui:name|words|arg|…]]`, such as a popup
-   * or a picture to zoom. The engine gives it no meaning and carries it as
-   * written: `name` says which of the UI's components draws it, `text` is the
-   * words to show (what a screen reader, the backlog and the playtest read),
-   * and `args` are the parts after the words, as text, in order. A UI
-   * package types its names and arguments by augmenting `InlineUi`.
+   * A UI piece, from `[[ui:name|words|arg|…]]`, such as a popup or a picture to zoom. The engine gives it no meaning.
+   *
+   * `name` picks the UI's component that renders it, and `text` is the words to show, which a screen reader, the
+   * backlog and the playtest read. `args` are the parts after the words, as text, in order. A UI package types its
+   * names and arguments by augmenting `InlineUi`.
    */
   | { type: 'ui'; name: string; text: string; args: string[] }
 
 /**
- * One piece of a scene's body, as the UI draws it. Any beat can carry `ui`:
- * the presentation hints of the block it starts, as content wrote them.
+ * One piece of a rendered body, in `view.scene.beats`, told apart by its `type`. Any beat can carry `ui`, the ui hints
+ * of the block it starts.
  */
 export type SceneBeat =
   /**
-   * A paragraph. `spans` is there only when it holds inline actions,
-   * tooltips, bold or italics: the same words in pieces. `text` always has
-   * the words alone, without the markup, for a UI that draws text and
-   * nothing else, a screen reader, the backlog and the playtest.
+   * A paragraph. `text` has the words alone, without markup, and `spans` is set only when it holds inline markup.
+   *
+   * A UI that renders only text, a screen reader, the backlog and the playtest read `text`. `spans` holds inline
+   * actions, tooltips, bold, italics and UI pieces.
    */
   (
     | { type: 'text'; text: string; spans?: InlineSpan[] }
     /**
-     * A spoken line. `who` is `'player'` for the player's own line and
-     * `'character'` for anyone else's. `speaker` is the entity whose line it
-     * is, when it is written under an id that names one (`@ava: "…"`), and
-     * left out otherwise. `name` is who to show it under: the speaker's name
-     * as their entity has it, the player's name, or the label a `Name: "…"`
-     * line is written under; left out for a bare quote. `voice` is the track
-     * of it read aloud, from `[[voice:id]]` at the end of the line. `spans`
-     * as a text beat has them.
+     * A spoken line. `who` is `'player'` for the player's own line and `'character'` for anyone else's, and `speaker` is
+     * the entity when the line's id names one (`@ava: "…"`).
+     *
+     * `name` is the name to show, the speaker entity's, the player's, or the label of a `Name: "…"` line, and is left out
+     * for a bare quote. `voice` is the track of the line read aloud, from `[[voice:id]]` at its end, and `spans` are as
+     * a text beat's.
      */
     | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; name?: string; text: string; voice?: string; spans?: InlineSpan[] }
+    /** A picture, from `[[img:…]]` or `[[wide:…]]`, with `src` through `artSrc`. */
     | { type: 'image'; src: string; alt?: string; size: BeatSize }
     /**
-     * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
-     * flags say otherwise: it plays by itself, loops, has no sound and plays inline.
+     * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Unless its flags say otherwise, it plays by itself, loops,
+     * has no sound and sits inline, like a GIF.
      */
     | {
+        /** The beat's type. */
         type: 'video'
+        /** The video's file, through `artSrc`. */
         src: string
-        /** A still shown before it plays. */
+        /** The still shown before the video plays. */
         poster?: string
+        /** The video's alternative text, for a screen reader. */
         alt?: string
+        /** The video's width. */
         size: BeatSize
+        /** The video's autoplay mark, true unless it shows controls. */
         autoplay: boolean
+        /** The video's loop mark, true unless its flags ask to play once. */
         loop: boolean
+        /** The video's muted mark, true unless its flags ask for sound. */
         muted: boolean
+        /** The video's controls mark, true when its flags ask for the player's controls. */
         controls: boolean
       }
-    /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
+    /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. A UI renders nothing for it. */
     | { type: 'sound'; track: string }
     /**
-     * A pick the player made earlier in this visit of a flowing scene, where
-     * the decision was: `label` is the choice's words. What follows is what
-     * the pick brought. A UI may draw it, restyle it or leave it out.
+     * A past choice in this visit of a flowing scene, where its decision was, with `label` the choice's words. The beats
+     * after it are what the choice brought. A UI may render it, restyle it or leave it out.
      */
     | { type: 'chose'; label: string }
   ) & {
-    /** The hints of the block this beat starts, as written; left out with none. See `BlockUi`. */
+    /** The ui hints of the block this beat starts. Left out when it has none. See `BlockUi`. */
     ui?: Ui<BlockUi>
     /**
-     * The hints of the section this beat sits in (a `{ blocks }` block with
-     * `ui`, such as `fold()` writes), on every beat it makes, so a UI can draw
-     * the section as one. Left out outside one.
+     * The ui hints of the section this beat sits in, a `{ blocks }` block with `ui` such as `fold()` writes. Left out
+     * outside a section.
+     *
+     * Every beat of the section carries them, so a UI can render the section as one.
      */
     section?: Ui<BlockUi>
   }
@@ -102,19 +109,20 @@ export type SceneBeat =
  */
 const ART_ROOT = 'art/'
 
-/** Files drawn as video rather than as a picture. An animated `.webp` or `.gif` is a picture. */
+/** The file extensions rendered as video rather than as a picture. An animated `.webp` or `.gif` is a picture. */
 const VIDEO = /\.(mp4|webm)$/i
 
-/** Whether a file is a picture or a video, by its extension. */
+/** Returns `'video'` for a file with a video extension (`.mp4`, `.webm`), else `'image'`. */
 export function mediaType(src: string): 'image' | 'video' {
   return VIDEO.test(src) ? 'video' : 'image'
 }
 
 /**
- * The one place a picture's or a video's path is resolved, from the game's
- * `art/` folder: `'photo/ava.svg'` and `'art/photo/ava.svg'` are both
- * `'art/photo/ava.svg'`. A bare name is a `.jpg`, or an `.mp4` when `type` is
- * `'video'`. A URL (`https:`, `data:`, `//host/…`) is left as it is.
+ * Returns a picture's or video's path in the game's `art/` folder, relative to the page. A URL (`https:`, `data:`,
+ * `//host/…`) is returned unchanged.
+ *
+ * `'photo/ava.svg'` and `'art/photo/ava.svg'` both give `'art/photo/ava.svg'`. A name with no extension gets `.jpg`, or
+ * `.mp4` when `type` is `'video'`.
  */
 export function artSrc(path: string, type: 'image' | 'video' = 'image'): string {
   if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(path)) return path
@@ -125,33 +133,33 @@ export function artSrc(path: string, type: 'image' | 'video' = 'image'): string 
   return `${ART_ROOT}${trimmed}${type === 'video' ? '.mp4' : '.jpg'}`
 }
 
-/** A video's flags as markup and data write them. Each one changes a default. */
+/** The flags a video's markup or `{ media }` block can set, each changing one default. */
 export type VideoFlags = {
-  /** Show the player's controls. It then waits to be started instead of playing by itself. */
+  /** The controls flag, which shows the player's controls, so the video waits to be started instead of playing by itself. */
   controls?: boolean
-  /** Play once instead of looping. */
+  /** The once flag, which plays the video once instead of looping. */
   once?: boolean
-  /** Play with sound instead of muted. */
+  /** The sound flag, which plays the video with sound instead of muted. */
   sound?: boolean
-  /** A still to show before it plays, as a path like any picture's. */
+  /** The still shown before the video plays, as a path like any picture's. */
   poster?: string
 }
 
-/** How a video plays, worked out from its flags. */
+/** A video's playback settings as the player sees them, worked out from its `VideoFlags`. */
 export type VideoView = {
-  /** Start playing as soon as it's shown: true unless it has controls. */
+  /** The video's autoplay mark, which starts it as soon as it is shown. True unless it shows controls. */
   autoplay: boolean
-  /** Play it again when it ends. */
+  /** The video's loop mark, which plays it again when it ends. True unless its flags ask to play once. */
   loop: boolean
-  /** Without sound: true unless its flags ask for sound. */
+  /** The video's muted mark. True unless its flags ask for sound. */
   muted: boolean
-  /** Show the player's play, pause and volume controls. */
+  /** The video's controls mark, which shows the player's play, pause and volume controls. */
   controls: boolean
-  /** A still to show before it plays, through `artSrc`. */
+  /** The still shown before the video plays, through `artSrc`. */
   poster?: string
 }
 
-/** The flags on a video, with the defaults filled in: autoplay, loop, muted, no controls. */
+/** Returns a video's playback settings from its flags. With no flags it autoplays, loops and is muted, with no controls. */
 export function videoView(flags: VideoFlags): VideoView {
   const controls = Boolean(flags.controls)
   return {
@@ -163,27 +171,31 @@ export function videoView(flags: VideoFlags): VideoView {
   }
 }
 
-/** Picture and video markup on a block of its own: `[[img:door|A blue door]]`. */
+/** The pattern of picture and video markup on a line of its own, such as `[[img:door|A blue door]]`. */
 export const MEDIA_MARKUP = /\[\[(img|wide|video|widevideo):([^\]|]+)((?:\|[^\]|]*)*)\]\]/
 
 const VIDEO_FLAGS = ['controls', 'once', 'sound'] as const
 
-/** Picture or video markup's parts after the path, read. Internal; the checks use it too. */
+/** Returns the parts of picture or video markup after the path, read into a pool, tags, flags and alternative text. Internal. */
 export function mediaParts(
   path: string,
   rest: string,
 ): {
-  /** The pool, for `@pool`; undefined for a file. */
+  /** The markup's pool, for `@pool`, or undefined for a file. */
   pool?: string
+  /** The markup's file path, or the pool's name. */
   path: string
+  /** The tags the pool's pick should have. */
   tags: string[]
+  /** The markup's video flags. */
   flags: VideoFlags
   /** The video flags written, by name, for the checks. */
   videoFlags: string[]
+  /** The markup's alternative text. */
   alt?: string
-  /** Every part that is not a flag after the first: the checks report them. */
+  /** The parts after the first that are not flags, which the checks report. */
   extraAlts: string[]
-  /** `name=value` parts with a name that is not a flag. */
+  /** The `name=value` parts whose name is not a flag. */
   unknown: string[]
 } {
   const parts = rest
@@ -247,9 +259,10 @@ function quoteOnly(block: string): string | null {
 }
 
 /**
- * Who a spoken line under `@id` is: the player's own or someone else's, the
- * entity it is when the id names one, and the name to show. Given the id as
- * written. See `lineSpeakers` for the engine's.
+ * A function that returns the speaker of a line written under `@id`, given the id. It returns whether the line is the
+ * player's, the entity the id names, and the name to show.
+ *
+ * `lineSpeakers` returns the engine's.
  */
 export type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string }
 
@@ -257,7 +270,7 @@ export type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speak
 const byId: SpeakerFinder = (id) => (id === 'you' || id === 'player' ? { who: 'player', name: STRINGS.you } : { who: 'character', name: id })
 
 /**
- * A spoken line under an id: `@ava: "…"`, `@character:ava: "…"`, `@you: "…"`.
+ * The pattern of a spoken line under an id, such as `@ava: "…"`, `@character:ava: "…"` or `@you: "…"`.
  * The id is letters, digits, `-`, `_` and `.`, with a kind and `:` in front if it's a full reference.
  */
 const BY_ID = /^@([A-Za-z0-9_-][A-Za-z0-9_.-]*(?::[A-Za-z0-9_-][A-Za-z0-9_.-]*)?):\s*"([\s\S]+)"$/
@@ -265,7 +278,7 @@ const BY_ID = /^@([A-Za-z0-9_-][A-Za-z0-9_.-]*(?::[A-Za-z0-9_-][A-Za-z0-9_.-]*)?
 /** A spoken line under a label as written: `Name: "…"`, the label letters (in any alphabet), spaces, `'` and `-`. */
 const NAMED = /^(\p{L}[\p{L}\p{M}' -]*):\s*"([\s\S]+)"$/u
 
-/** The ids spoken lines in `text` are written under, `@ava: "…"`, in order: what the checker looks up. */
+/** Returns the ids the spoken lines in `text` are written under (`@ava: "…"`), in order, for the content checker. */
 export function spokenIds(text: string): string[] {
   return paragraphsOf(text).flatMap((paragraph) => {
     const line = paragraph.replace(/\s*\[\[voice:[^\]]+\]\]$/, '').match(BY_ID)
@@ -288,51 +301,50 @@ function spoken(block: string, lastSay: 'character' | 'player' | null, find: Spe
 }
 
 /**
- * Inline actions, tooltips and a UI's inline pieces, as written:
- * `[[act:id]]`, `[[act:id|words]]`, `[[tip:key|words]]` and
- * `[[ui:name|words|arg|…]]`. Groups: the tag, the id, key or name, then
- * everything after the first `|` (for `ui`, the words and the arguments).
+ * The pattern of inline actions, tooltips and UI pieces, `[[act:id]]`, `[[act:id|words]]`, `[[tip:key|words]]` and
+ * `[[ui:name|words|arg|…]]`. Its groups are the tag, the id, key or name, and the text after the first `|`.
  */
 export const INLINE_MARKUP = /\[\[(act|tip|ui):([^\]|]*)(?:\|([^\]]*))?\]\]/g
 
 /**
- * A UI piece's name, as `[[ui:name|…]]` writes it: an id (letters, digits,
- * `-` and `_`, in parts joined by `.`), with a plugin's name and `/` in front
- * when a plugin's UI draws it (`shop/price-card`).
+ * The pattern of a UI piece's name in `[[ui:name|…]]`, an id of letters, digits, `-` and `_` in parts joined by `.`.
+ * A plugin's piece has the plugin's name and `/` in front (`shop/price-card`).
  */
 export const UI_NAME = /^(?:[A-Za-z0-9_-]+\/)?[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/
 
-/** `[[ui:…]]` read: its name, its words and its arguments, each trimmed. Internal; the checks use it too. */
+/** Returns a `[[ui:…]]` piece's name, words and arguments, each trimmed. Internal. */
 export function uiParts(name: string, rest: string | undefined): { name: string; text: string | undefined; args: string[] } {
   const parts = rest === undefined ? [] : rest.split('|').map((part) => part.trim())
   return { name: name.trim(), text: parts[0], args: parts.slice(1) }
 }
 
-/** A piece of a line, as `inlineMarkup` reads it: words, or an inline action, tooltip, bold or italics as written. */
+/**
+ * One piece of a line of prose as `inlineMarkup` reads it, told apart by its `type`. Each marked piece keeps its
+ * source in `markup`.
+ */
 export type InlinePart =
+  /** Words with no markup. */
   | { type: 'text'; text: string }
-  /** `[[act:id]]`, with the words to show if it gives them. */
+  /** An inline action, `[[act:id]]`, with the words to show when it gives them. */
   | { type: 'act'; id: string; text?: string; markup: string }
-  /** `[[tip:key|words]]`. */
+  /** A tooltip, `[[tip:key|words]]`, with its prose key and words. */
   | { type: 'tip'; key: string; text: string; markup: string }
-  /** `[[ui:name|words|arg|…]]`: `args` are the parts after the words. */
+  /** A UI piece, `[[ui:name|words|arg|…]]`, with `args` the parts after the words. */
   | { type: 'ui'; name: string; text: string; args: string[]; markup: string }
-  /** `**words**`: `text` is the words alone. */
+  /** Bold words, `**words**`, with `text` the words alone. */
   | { type: 'bold'; text: string; markup: string }
-  /** `*words*`: `text` is the words alone. */
+  /** Italic words, `*words*`, with `text` the words alone. */
   | { type: 'italic'; text: string; markup: string }
 
 type Stars = { stars: number; from: number; to: number; opens: boolean; closes: boolean }
 type Token = { chars: string } | Stars
 
 /**
- * Words cut at their `**bold**` and `*italic*`, with `\*` read as a star
- * shown as it is. As in Markdown, a star opens only when a space doesn't
- * follow it and closes only when a space doesn't come before it, so `5 * 3`
- * stays as written. Stars left
- * as written because they open and never close, come three or more in a row
- * or sit inside other styled words are listed in `problems`, for the content
- * checker. Internal; `inlineMarkup` and the checks use it.
+ * Returns words cut at their `**bold**` and `*italic*`, with the problems found for the content checker. Internal.
+ *
+ * A `\*` is a star shown unchanged. As in Markdown, a star opens only when a space doesn't follow it and closes only
+ * when a space doesn't come before it, so `5 * 3` stays as written. Stars that never close, come three or more in a
+ * row or sit inside other styled words stay as written and are listed in `problems`.
  */
 export function emphasis(text: string): { parts: InlinePart[]; problems: string[] } {
   const tokens: Token[] = []
@@ -396,13 +408,13 @@ export function emphasis(text: string): { parts: InlinePart[]; problems: string[
 }
 
 /**
- * A line of prose cut at its inline markup (`[[act:…]]`, `[[tip:…]]`,
- * `[[ui:…]]`, `**bold**`, `*italic*`), or null when it has none. Markup with
- * no id or key, a tooltip or UI piece with no words, a UI piece whose name
- * isn't an id or with an empty argument, or stars that don't close are left
- * in the words as written, so they show on screen; the content checker
- * reports them. A `\*` is a star shown as it is. Bold and italics inside the
- * words of inline markup, or around it, are not read.
+ * Returns a line of prose cut at its inline markup (`[[act:…]]`, `[[tip:…]]`, `[[ui:…]]`, `**bold**`, `*italic*`).
+ * Returns null when it has none.
+ *
+ * Broken markup stays in the words as written, so it shows on screen, and the content checker reports it. Broken
+ * markup is markup with no id or key, a tooltip or UI piece with no words, a UI piece whose name isn't an id or that
+ * has an empty argument, or stars that don't close. A `\*` is a star shown unchanged, and bold and italics inside or
+ * around inline markup are not read.
  */
 export function inlineMarkup(text: string): InlinePart[] | null {
   if (!text.includes('[[act:') && !text.includes('[[tip:') && !text.includes('[[ui:') && !text.includes('*')) return null
@@ -443,12 +455,11 @@ export function inlineMarkup(text: string): InlinePart[] | null {
 }
 
 /**
- * Text and spoken beats with their bold, italics and UI pieces drawn: `spans`
- * with `bold`, `italic` and `ui` pieces, and `text` with the words alone. For
- * beats that don't go through a scene's view, such as a message's or a
- * post's. Inline actions and tooltips stay in the words as written, because
- * only the view knows the choices and the prose. A beat with none of these is
- * left as it is.
+ * Returns text and spoken beats with their bold, italics and UI pieces read into `spans`, and `text` with the words
+ * alone. A beat with none of these is returned unchanged.
+ *
+ * Use it for beats rendered outside a scene's view, such as a message's or a post's. Inline actions and tooltips stay
+ * in the words as written, since only the view has the choices and the prose.
  */
 export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   return beats.map((beat) => {
@@ -497,9 +508,8 @@ function paragraphsOf(body: string): string[] {
 }
 
 /**
- * A piece of a body before it is cut into beats: markup with the hints of
- * the block that wrote it, or a beat already made, such as a spoken line a
- * `say` block wrote. Internal: how a data scene's render hands its body to the screen.
+ * A piece of a rendered body before it is cut into beats, markup with its block's ui hints or a finished beat such as
+ * a `say` block's spoken line. Internal.
  */
 export type BodyPart = { text: string; ui?: Ui<BlockUi>; section?: Ui<BlockUi> } | { beat: SceneBeat }
 
@@ -529,10 +539,10 @@ function beatsOfParagraph(block: string, last: { say: 'character' | 'player' | n
 }
 
 /**
- * The beats of a body's parts, in order: each markup part cut into
- * paragraphs and read, its hints on the first beat it made, and each beat
- * part as it is. A bare quote answers the spoken line before it, across
- * parts. Internal; `parseBeats` reads a whole body this way.
+ * Returns the beats of a body's parts in order, with the index each part's beats start at. Internal.
+ *
+ * Each markup part is cut into paragraphs and read, with its hints on its first beat, and each beat part is kept
+ * unchanged. A bare quote answers the spoken line before it, across parts.
  */
 export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = byId): { beats: SceneBeat[]; starts: number[] } {
   const beats: SceneBeat[] = []
@@ -553,8 +563,8 @@ export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = b
 }
 
 /**
- * A body's beats, in order. `find` says who a line under `@id` is; left out,
- * `@you` and `@player` are the player's.
+ * Returns a body's beats, in order. `find` names the speaker of a line under `@id`, and without it `@you` and `@player`
+ * are the player's.
  */
 export function parseBeats(body: string, find?: SpeakerFinder): SceneBeat[] {
   return beatsOfParts([{ text: body }], find).beats

@@ -8,30 +8,30 @@ import type { CarryOver } from '../game.ts'
 import type { Condition } from '../types.ts'
 import { defineFeature, lastWins, once, together } from './feature.ts'
 
-/** What the ending feature adds, as types. */
+/** The ending feature's content keys, as types. */
 export type EndingShape = {
   game: {
-    /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
+    /** The game's rules for a New Game+, the parts of the last game a new one keeps. `startingState`'s `carry` applies them. */
     carryOver?: CarryOver
     /**
-     * When the game counts as finished. The runner records the first time it
-     * holds in the profile's `core:finished`, so a title screen can offer New Game+.
+     * The game's condition for being finished. The runner records the first time it
+     * holds in the profile's `core:finished`, so a title page can offer New Game+.
      */
     finished?: Condition
   }
   pack: {
     /**
-     * When the game counts as finished. The runner records the first time it
-     * holds in the profile's `core:finished`, so a title screen can offer New
-     * Game+. A pack's replaces the content's.
+     * The pack's condition for the game being finished. It replaces the content's, and the runner records the
+     * first time it holds in the profile's `core:finished`.
      */
     finished?: Condition
-    /** What a New Game+ carries over from the game before. A pack's replaces the content's, whole. */
+    /** The pack's rules for a New Game+. They replace the content's `carryOver` whole. */
     carryOver?: CarryOver
   }
   lists: 'finished' | 'carryOver'
 }
 
+/** The ending feature, which reads `finished` and `carryOver`. */
 export const ending = defineFeature<EndingShape>({
   name: 'ending',
   pack: together(

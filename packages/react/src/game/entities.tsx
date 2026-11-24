@@ -61,9 +61,9 @@ function EntityTableImpl({ kinds, className }: { kinds?: string[]; className?: s
 }
 
 /**
- * The things the game keeps several of (`view.entities`): a table per kind,
- * one row each, with its picture and description when it has them and the
- * stats the player can see on it. Only the kinds given, or every listed kind;
- * nothing at all when they are all empty.
+ * Renders the listed entities in `view.entities` as a table per kind, one row each, with the entity's picture,
+ * description and stats. It renders nothing when every kind is empty.
+ *
+ * `kinds` limits it to the kinds given by id, and every listed kind shows if left out.
  */
 export const EntityTable = overridable('EntityTable', EntityTableImpl)

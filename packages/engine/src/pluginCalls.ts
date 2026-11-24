@@ -23,65 +23,66 @@ import type { Amount, KvValue, Range } from './types.ts'
 import type { ContentReferences, PluginEntry, PluginProblem } from './plugin.ts'
 
 /**
- * One argument of a call: what content writes for it (`In`), what the
- * implementation is handed (`Out`, read from whatever content wrote), whether
- * it may be left out, what the checker says of a value of the wrong shape, and
- * what a value names. Made with `arg`.
+ * One argument of a plugin's call, made with `arg`. `In` is the type content writes, and `Out` the type the
+ * implementation gets, read from whatever content wrote.
+ *
+ * It also says whether content may leave it out, how the checker describes the right shape, and what a value names.
  */
 export type Arg<In = unknown, Out = In, Optional extends boolean = boolean> = {
-  /** What a value must be, for the checker's problem: `'text'`, `'a number'`. */
+  /** The shape a value must have, in the checker's words, such as `'text'` or `'a number'`. */
   readonly kind: string
-  /** May content leave it out? */
+  /** True when content may leave the argument out. */
   readonly isOptional: Optional
-  /** Content's value is words a player reads, which a translation can replace. */
+  /** The argument's word shape, set when its value is words a player reads that a translation can replace. */
   readonly words?: WordPart
-  /** What the implementation is handed for content's value, whatever content wrote. */
+  /** Returns the value the implementation gets for content's value, whatever content wrote. */
   read(value: unknown): Out
-  /** Is content's value of the right shape? Asked only of a value content wrote. */
+  /** Returns true when content's value has the right shape. The checker asks it only of a value content wrote. */
   fits(value: unknown): boolean
-  /** What a value names, for the checker: a place, an entry, a `{ problem }`. */
+  /** Returns the references a value makes for the checker, such as a location, an entry or a `{ problem }`. */
   refs(value: Out, game: Game): readonly Reference[]
   /**
-   * The same argument, which content may leave out: the implementation is
-   * handed `undefined` then, or `fallback` when one is given.
+   * Returns the same argument, which content may leave out. The implementation then gets `undefined`, or `fallback`
+   * when one is given.
    */
   optional(): Arg<In, Out | undefined, true>
   optional<F extends Out>(fallback: F): Arg<In, Out, true>
   /**
-   * The same argument, naming these references too: `arg.string().naming(placeRefs)`.
-   * Inside `defineCalls`, give an inline function its return type,
-   * `(id): Reference[] => [...]`, or the registries built from the calls refer
-   * to themselves.
+   * Returns the same argument, making these references too, as in `arg.string().naming(placeRefs)`.
+   *
+   * Inside `defineCalls`, give an inline function its return type, `(id): Reference[] => [...]`, or the registries built
+   * from the calls refer to themselves.
    */
   naming(refs: (value: Exclude<Out, undefined>, game: Game) => readonly Reference[]): Arg<In, Out, Optional>
   /**
-   * The same argument, with a rule of the plugin's own about its value: what
-   * is wrong with it, in the checker's words, or undefined when nothing is.
+   * Returns the same argument with a rule of the plugin's own about its value. The rule returns the problem in the
+   * checker's words, or undefined when there is none.
+   *
    * `arg.number().rule((n) => (n >= 1 ? undefined : 'count must be 1 or more'))`.
    */
   rule(problem: (value: Exclude<Out, undefined>) => string | undefined): Arg<In, Out, Optional>
-  /** Phantom: what content writes. Never set. */
+  /** The type content writes, for type inference only. It is never set. */
   readonly _in?: In
 }
 
-/** What one call takes: its arguments by name. `{}` for a call with none, written `true`. */
+/** The arguments one call takes, by name. It is `{}` for a call with none, which content writes as `true`. */
 export type ArgShape = Readonly<Record<string, Arg<any, any, boolean>>>
 
-/** What content writes for an argument. */
+/** The type content writes for an {@link Arg}. */
 export type ArgIn<A> = A extends Arg<infer In, any, any> ? In : never
-/** What the implementation is handed for an argument. */
+/** The type the implementation gets for an {@link Arg}. */
 export type ArgOut<A> = A extends Arg<any, infer Out, any> ? Out : never
 
 type Flatten<T> = { [K in keyof T]: T[K] } & {}
 type RequiredKeys<S> = { [K in keyof S]: S[K] extends Arg<any, any, true> ? never : K }[keyof S]
 type OptionalKeys<S> = { [K in keyof S]: S[K] extends Arg<any, any, true> ? K : never }[keyof S]
 
-/** The arguments content writes for a call of this shape, as an object. */
+/** The arguments content writes for a call of an {@link ArgShape}, as an object. */
 export type ArgsIn<S extends ArgShape> = Flatten<{ [K in RequiredKeys<S>]: ArgIn<S[K]> } & { [K in OptionalKeys<S>]?: ArgIn<S[K]> }>
 
 /**
- * What content writes as a call's value: its arguments; `true` for a call
- * with none (or `{}`); and either for a call whose arguments may all be left out.
+ * The value content writes for a call of an {@link ArgShape}. It is the arguments, `true` or `{}` for a call with none,
+ * and either for a call whose arguments may all be left out.
  */
 export type WrittenAs<S extends ArgShape> = [keyof S] extends [never]
   ? true | Record<string, never>
@@ -89,27 +90,30 @@ export type WrittenAs<S extends ArgShape> = [keyof S] extends [never]
     ? ArgsIn<S> | true
     : ArgsIn<S>
 
-/** What the implementation of a call of this shape is handed: every argument, read. */
+/** The arguments the implementation of a call of an {@link ArgShape} gets, every one read. */
 export type ArgsOut<S extends ArgShape> = Flatten<{ [K in keyof S]: ArgOut<S[K]> }>
 
-/** What a plugin's calls take, by table and name. */
+/** The arguments a plugin's calls take, by table and name, as `defineCalls` is given them. */
 export type CallShapes = {
+  /** The arguments of each of the plugin's conditions, by name. */
   conditions?: Readonly<Record<string, ArgShape>>
+  /** The arguments of each of the plugin's effects, by name. */
   effects?: Readonly<Record<string, ArgShape>>
+  /** The arguments of each of the plugin's commands, by name. */
   commands?: Readonly<Record<string, ArgShape>>
 }
 
-/** A call's writer: its arguments in, the call in short out, `{ 'places/at': { location } }`. */
+/** A function that writes one call in the short form from its arguments, such as `{ 'places/at': { location } }`. */
 export type CallWriter<Name extends string, S extends ArgShape> = ([RequiredKeys<S>] extends [never]
   ? (args?: ArgsIn<S>) => { [N in Name]: WrittenAs<S> }
   : (args: ArgsIn<S>) => { [N in Name]: WrittenAs<S> }) & {
-  /** The call's full name: `'places/at'`. */
+  /** The call's full name, such as `'places/at'`. */
   readonly call: Name
-  /** What it takes. */
+  /** The call's {@link ArgShape}. */
   readonly args: S
   /**
-   * Arguments as content wrote them, read as the implementation is handed
-   * them: for a guard or a price that looks at a list of effects, say.
+   * Returns arguments as content wrote them, read as the implementation gets them. A guard or a price that looks at a
+   * list of effects uses it.
    */
   read(args: unknown): ArgsOut<S>
 }
@@ -119,22 +123,29 @@ type Table<D extends CallShapes, T extends keyof CallShapes> = NonNullable<D[T]>
 type Writers<Id extends string, T> = { readonly [K in keyof T & string]: T[K] extends ArgShape ? CallWriter<`${Id}/${K}`, T[K]> : never }
 
 /**
- * A plugin's calls, as `defineCalls` declares them: its id, what each call
- * takes, and a writer for each, by table: `calls.conditions.at({ location })`.
- * Give it to `definePlugin` as `calls`, and derive the registries from it.
+ * A plugin's calls as `defineCalls` declares them, with a {@link CallWriter} for each, by table, such as
+ * `calls.conditions.at({ location })`. Give it to `definePlugin` as `calls`, and derive the registries from it.
  */
 export type PluginCalls<Id extends string = string, D extends CallShapes = CallShapes> = {
+  /** The plugin's id. */
   readonly id: Id
+  /** The writers of the plugin's conditions, by name. */
   readonly conditions: Writers<Id, Table<D, 'conditions'>>
+  /** The writers of the plugin's effects, by name. */
   readonly effects: Writers<Id, Table<D, 'effects'>>
+  /** The writers of the plugin's commands, by name. */
   readonly commands: Writers<Id, Table<D, 'commands'>>
 }
 
-/** What a plugin's calls' declaration says, by table, for any plugin. */
+/** Any plugin's {@link PluginCalls}, with each call's full name and arguments, by table. */
 export type AnyCalls = {
+  /** The plugin's id. */
   readonly id: string
+  /** The plugin's conditions, by name. */
   readonly conditions: Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>
+  /** The plugin's effects, by name. */
   readonly effects: Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>
+  /** The plugin's commands, by name. */
   readonly commands: Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>
 }
 
@@ -146,7 +157,7 @@ type RegistryOf<C, T extends keyof CallShapes> =
     : never
 
 /**
- * What a plugin's conditions take, by full name, for its `ConditionRegistry`:
+ * The arguments a plugin's conditions take, by full name, for its `ConditionRegistry`. Extend the registry from it.
  *
  * ```ts
  * declare module '@ifloom/engine' {
@@ -155,17 +166,19 @@ type RegistryOf<C, T extends keyof CallShapes> =
  * ```
  */
 export type ConditionsOf<C> = RegistryOf<C, 'conditions'>
-/** What a plugin's effects take, by full name, for its `EffectRegistry`. As `ConditionsOf`. */
+/** The arguments a plugin's effects take, by full name, for its `EffectRegistry`. Use it as `ConditionsOf` is used. */
 export type EffectsOf<C> = RegistryOf<C, 'effects'>
-/** What a plugin's commands take, by full name, for its `CommandRegistry`. As `ConditionsOf`. */
+/** The arguments a plugin's commands take, by full name, for its `CommandRegistry`. Use it as `ConditionsOf` is used. */
 export type CommandsOf<C> = RegistryOf<C, 'commands'>
 
-/** What the implementation of each call in a table is handed, by name. */
+/** The arguments the implementation of each call in a table gets, by name. */
 export type CallArgs<C, T extends keyof CallShapes> = { [K in keyof ShapesOf<C, T>]: ShapesOf<C, T>[K] extends ArgShape ? ArgsOut<ShapesOf<C, T>[K]> : never }
 
 /**
- * Declare a plugin's calls once: each condition, effect and command by name,
- * with what it takes, built from `arg`.
+ * Returns the {@link PluginCalls} declaration of a plugin's conditions, effects and commands, each by name with its
+ * arguments built from `arg`.
+ *
+ * A plugin calls it once, and its helpers, the content checker and its registries read that one declaration.
  *
  * ```ts
  * const CALLS = defineCalls('places', {
@@ -174,13 +187,12 @@ export type CallArgs<C, T extends keyof CallShapes> = { [K in keyof ShapesOf<C, 
  * })
  * ```
  *
- * Give it to `definePlugin` as `calls`, so each implementation is handed its
- * arguments typed and read; build the helpers from its writers
- * (`CALLS.conditions.at({ location })`); and extend the registries from it
- * (`ConditionsOf<typeof CALLS>`), so content is checked against the same
- * declaration. The content checker reports an argument content left out, one
- * of the wrong shape and one the call doesn't take, and resolves what each
- * names.
+ * Give it to `definePlugin` as `calls`, so each implementation gets its arguments typed and read. Build the helpers
+ * from its writers (`CALLS.conditions.at({ location })`), and extend the registries from it
+ * (`ConditionsOf<typeof CALLS>`), so content is checked against the same declaration.
+ *
+ * The content checker reports an argument content left out, one of the wrong shape and one the call doesn't take, and
+ * resolves the references each makes.
  */
 export function defineCalls<Id extends string, const D extends CallShapes>(id: Id, shapes: D): PluginCalls<Id, D> {
   const writers = (table: keyof CallShapes) =>
@@ -197,20 +209,20 @@ export function defineCalls<Id extends string, const D extends CallShapes>(id: I
 /** Does every argument of this shape let content leave it out? */
 const optionalOnly = (shape: ArgShape) => Object.values(shape).every((one) => one.isOptional)
 
-/** The shape a declared call takes, if the calls declare it. */
+/** Returns the {@link ArgShape} of a declared call, or undefined when the calls don't declare it. */
 export function callShape(calls: AnyCalls | undefined, table: keyof CallShapes, name: string): ArgShape | undefined {
   const writers = calls?.[table]
   return writers && Object.hasOwn(writers, name) ? writers[name].args : undefined
 }
 
-/** The names a plugin's calls declare in one table. */
+/** Returns the names a plugin's calls declare in one table. */
 export function callNames(calls: AnyCalls | undefined, table: keyof CallShapes): string[] {
   return Object.keys(calls?.[table] ?? {})
 }
 
 const isArgs = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/** Content's arguments for a call of this shape, as its implementation is handed them: each declared argument, read. */
+/** Returns content's arguments for a call of a shape as its implementation gets them, each declared argument read. */
 export function readArgs(shape: ArgShape, args: unknown): Record<string, unknown> {
   const given = isArgs(args) ? args : {}
   const out: Record<string, unknown> = {}
@@ -219,9 +231,8 @@ export function readArgs(shape: ArgShape, args: unknown): Record<string, unknown
 }
 
 /**
- * What the checker says of content's arguments for a call of this shape: an
- * argument it needs and left out, one of the wrong shape, one the call
- * doesn't take; then what each argument names.
+ * Returns the checker's references for content's arguments to a call of a shape. They report an argument left out,
+ * one of the wrong shape and one the call doesn't take, then the references each argument makes.
  */
 export function argReferences(shape: ArgShape, args: unknown, game: Game, call: string): Reference[] {
   const given = isArgs(args) ? args : {}
@@ -251,7 +262,7 @@ export function argReferences(shape: ArgShape, args: unknown, game: Game, call: 
   return out
 }
 
-/** The first argument content wrote for a call of this shape that doesn't fit it, with what it must be; undefined when they all do. */
+/** Returns the first argument content wrote for a call of a shape that doesn't fit, with the shape it must have, or undefined when all fit. */
 export function unfitArg(shape: ArgShape, args: unknown): { arg: string; kind: string } | undefined {
   const given = isArgs(args) ? args : {}
   for (const [key, one] of Object.entries(shape)) {
@@ -261,7 +272,7 @@ export function unfitArg(shape: ArgShape, args: unknown): { arg: string; kind: s
   return undefined
 }
 
-/** The words in a call's arguments, as a translation reaches them: `{ text: true }`. Undefined when it has none. */
+/** Returns the word shape of a call's arguments, such as `{ text: true }`, or undefined when it has no words. */
 export function argWords(shape: ArgShape): WordShape | undefined {
   const words = Object.entries(shape).filter(([, one]) => one.words !== undefined)
   return words.length ? (Object.fromEntries(words.map(([key, one]) => [key, one.words!])) as WordShape) : undefined
@@ -319,24 +330,24 @@ const isAmount = (value: unknown) => typeof value === 'number' || typeof value =
 const isKv = (value: unknown) => typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
 
 /**
- * The arguments a call can take, for `defineCalls`. Each reads what content
- * wrote into what the implementation is handed, whatever it was (a missing
- * text is `''`, a list of one is a list); the checker reports a value of the
- * wrong shape. `.optional()` lets content leave one out, `.optional(1)` with
- * what the implementation is handed then; `.naming(fn)` adds what a value
- * names, for the checker: `arg.string().naming((id) => [{ scene: id }])`.
+ * The makers of the {@link Arg}s a call can take, for `defineCalls`. Each reads content's value into the value the
+ * implementation gets, whatever content wrote, and the checker reports a value of the wrong shape.
+ *
+ * A missing text reads as `''`, and a single value as a list of one. `.optional()` lets content leave an argument out,
+ * `.optional(1)` with the value the implementation then gets. `.naming(fn)` adds the references a value makes, as in
+ * `arg.string().naming((id) => [{ scene: id }])`.
  */
 export const arg = {
-  /** Text: `'cafe'`. Read as text; `''` when missing. */
+  /** Returns a text argument, such as `'cafe'`. It reads as `''` when missing. */
   string: (): Arg<string, string, false> =>
     makeArg({ kind: 'text', fits: (value) => typeof value === 'string', read: (value) => (value === undefined || value === null ? '' : String(value)) }, false),
-  /** Words a player reads, which a translation can replace: a post's text. */
+  /** Returns a text argument of words a player reads, such as a post's text, which a translation can replace. */
   words: (): Arg<string, string, false> =>
     makeArg(
       { kind: 'text', words: true, fits: (value) => typeof value === 'string', read: (value) => (value === undefined || value === null ? '' : String(value)) },
       false,
     ),
-  /** A number: `2`. Read as a number; `0` when missing or not one. */
+  /** Returns a number argument, such as `2`. It reads as `0` when missing or not a number. */
   number: (): Arg<number, number, false> =>
     makeArg(
       {
@@ -346,10 +357,10 @@ export const arg = {
       },
       false,
     ),
-  /** True or false. */
+  /** Returns a true or false argument. It reads as false unless content wrote `true`. */
   boolean: (): Arg<boolean, boolean, false> =>
     makeArg({ kind: 'true or false', fits: (value) => typeof value === 'boolean', read: (value) => value === true }, false),
-  /** One text or a list of them, `'cafe'` or `['cafe', 'park']`, handed as a list. */
+  /** Returns an argument of one text or a list, `'cafe'` or `['cafe', 'park']`, which the implementation gets as a list. */
   strings: (): Arg<string | readonly string[], string[], false> =>
     makeArg(
       {
@@ -359,7 +370,7 @@ export const arg = {
       },
       false,
     ),
-  /** One number or a list of them, handed as a list. */
+  /** Returns an argument of one number or a list, which the implementation gets as a list. */
   numbers: (): Arg<number | readonly number[], number[], false> =>
     makeArg(
       {
@@ -369,7 +380,7 @@ export const arg = {
       },
       false,
     ),
-  /** An entity, by reference: `'food:bun'`. Named to the checker, which must find it, carrying `trait` when one is given. */
+  /** Returns an entity reference argument, such as `'food:bun'`. The checker must find the entity, carrying `trait` when one is given. */
   entity: (trait?: string): Arg<EntityRef, EntityRef, false> =>
     makeArg(
       {
@@ -380,7 +391,7 @@ export const arg = {
       },
       false,
     ),
-  /** Who has things: `'player'`, `'you'` or a unique entity. Named to the checker. */
+  /** Returns a holder argument, `'player'`, `'you'` or a unique entity. The checker must find the holder. */
   holder: (): Arg<Holder, Holder, false> =>
     makeArg(
       {
@@ -391,13 +402,13 @@ export const arg = {
       },
       false,
     ),
-  /** A kv value: true or false, a number or text. */
+  /** Returns a kv value argument, true or false, a number or text. */
   kv: (): Arg<KvValue, KvValue, false> =>
     makeArg({ kind: 'true or false, a number or text', fits: isKv, read: (value) => (isKv(value) ? value : String(value ?? '')) }, false),
-  /** An `Amount`, worked out when it's read: read it with `amountOf`. Named to the checker. */
+  /** Returns an `Amount` argument, worked out when the implementation reads it with `amountOf`. The checker resolves the references it makes. */
   amount: (): Arg<Amount, Amount, false> =>
     makeArg({ kind: 'an amount', fits: isAmount, read: (value) => (isAmount(value) ? value : 0) as Amount, refs: (value) => [{ amount: value }] }, false),
-  /** A range, `{ gte: 2 }`, as an argument of its own: `stacks: { gte: 2 }`. Its bounds are amounts, named to the checker. */
+  /** Returns a range argument, such as `stacks: { gte: 2 }`. Its bounds are amounts, and the checker resolves the references they make. */
   range: (): Arg<Range, Range, false> =>
     makeArg(
       {
@@ -413,8 +424,8 @@ export const arg = {
       false,
     ),
   /**
-   * An entry of one of the plugin's data lists, by id: `arg.entry(DATA.jobs)`.
-   * Named to the checker, which reports one the list doesn't have.
+   * Returns an argument naming an entry of one of the plugin's data lists by id, as in `arg.entry(DATA.jobs)`. The
+   * checker reports an id the list doesn't have.
    */
   entry: (list: DataList<any>): Arg<string, string, false> =>
     makeArg(
@@ -426,7 +437,7 @@ export const arg = {
       },
       false,
     ),
-  /** One entry of a data list or several, handed as a list. As `entry`. */
+  /** Returns an argument naming one entry of a data list or several, which the implementation gets as a list. The checker reports each as `entry` does. */
   entries: (list: DataList<any>): Arg<string | readonly string[], string[], false> =>
     makeArg(
       {
@@ -438,8 +449,9 @@ export const arg = {
       false,
     ),
   /**
-   * A range's bounds as the call's own arguments, `{ job: 'cafe', gte: 3 }`:
-   * spread them into a shape, `{ job: arg.entry(DATA.jobs), ...arg.bounds }`.
+   * The optional `gte`, `gt`, `lte` and `lt` arguments of a range, as the call's own arguments (`{ job: 'cafe', gte: 3 }`).
+   * Spread them into a shape, as in `{ job: arg.entry(DATA.jobs), ...arg.bounds }`.
+   *
    * The core checks a call's bounds itself.
    */
   get bounds() {
@@ -450,59 +462,60 @@ export const arg = {
 }
 
 /**
- * One list of a plugin's data, declared: `list<JobDef>({ noun: 'job', words:
- * { name: true } })`. The type of an entry is the type argument.
+ * One list of a plugin's data as `list` declares it, such as `list<JobDef>({ noun: 'job', words: { name: true } })`. The
+ * type argument is an entry's type.
  */
 export type ListSpec<T extends { id: string } = PluginEntry> = {
-  /** What one entry is called in a problem: `unknown job "cafe"`. */
+  /** The noun a problem calls one entry by, as in `unknown job "cafe"`. */
   noun: string
-  /** Which fields of an entry are words a player reads, for a translation's `words` table. See `WordShape`. */
+  /** The fields of an entry that are words a player reads, for a translation's `words` table. See `WordShape`. */
   words?: WordShape
-  /** Phantom: an entry's type. Never set. */
+  /** An entry's type, for type inference only. It is never set. */
   readonly _entry?: T
 }
 
-/** Declare one of a plugin's data lists, for `defineData`: the entry's type, its noun and its words. */
+/** Returns the {@link ListSpec} of one of a plugin's data lists, for `defineData`, with the entry's type, its noun and its words. */
 export function list<T extends { id: string }>(spec: { noun: string; words?: WordShape }): ListSpec<T> {
   return spec
 }
 
 /**
- * One of a plugin's data lists, as `defineData` declares it: where it is
- * (`data.<plugin>.<list>`), its noun and words, and its lookups.
+ * One of a plugin's data lists as `defineData` declares it, kept at `data.<plugin>.<list>`, with its noun, its words and
+ * its lookups.
  */
 export type DataList<T extends { id: string } = PluginEntry> = {
-  /** The plugin it is the data of. */
+  /** The id of the plugin whose data the list is. */
   readonly plugin: string
-  /** Its name in the plugin's data: `'jobs'` for `data.jobs.jobs`. */
+  /** The list's name in the plugin's data, such as `'jobs'` for `data.jobs.jobs`. */
   readonly list: string
-  /** What one entry is called in a problem. */
+  /** The noun a problem calls one entry by. */
   readonly noun: string
-  /** Which fields of an entry are words. */
+  /** The fields of an entry that are words a player reads. */
   readonly words?: WordShape
-  /** Every entry the game has, in order: each an object with an id; anything else in the list is left out. */
+  /** Returns the game's entries in order. An entry that isn't an object with an id is left out. */
   all(game: Game): T[]
-  /** One entry by id, which may be anything content wrote; undefined when the game has none. */
+  /** Returns one entry by id, or undefined when the game has none. The id may be anything content wrote. */
   get(game: Game, id: unknown): T | undefined
-  /** The reference to one entry by id, for the checker: `unknown job "cafe"` when the game has none. */
+  /** Returns the reference to one entry by id, which the checker reports as `unknown job "cafe"` when the game has none. */
   ref(id: string): Reference
-  /** What each entry names, for `references.content`, each at `<list> <id>`. */
+  /** Returns the references each entry makes, for `references.content`, each reported at `<list> <id>`. */
   content(game: Game, refs: (entry: T) => readonly Reference[]): ContentReferences[]
-  /** A problem with one entry, for `check`, at `<list> <id>`. */
+  /** Returns a problem with one entry, for `check`, reported at `<list> <id>`. */
   problem(id: string, what: string): PluginProblem
 }
 
 type EntryOf<L> = L extends ListSpec<infer T> ? T : PluginEntry
 
-/** A plugin's data lists, as `defineData` declares them, by name. Give them to `definePlugin` as `data`. */
+/** A plugin's {@link DataList}s as `defineData` declares them, by name. Give them to `definePlugin` as `data`. */
 export type PluginData<L extends Readonly<Record<string, ListSpec<any>>> = Readonly<Record<string, ListSpec<any>>>> = {
   readonly [K in keyof L & string]: DataList<EntryOf<L[K]>>
 }
 
 /**
- * Declare a plugin's data lists once: each list of its pack `data` by name,
- * with its entry's type, the noun a problem names an entry by, and which
- * fields are words.
+ * Returns the {@link PluginData} declaration of a plugin's data lists, each by name with its entry's type, its noun and
+ * its word fields.
+ *
+ * A plugin calls it once, and its lookups, the content checker and the words table read that one declaration.
  *
  * ```ts
  * const DATA = defineData('jobs', { jobs: list<JobDef>({ noun: 'job', words: { name: true } }) })
@@ -511,8 +524,7 @@ export type PluginData<L extends Readonly<Record<string, ListSpec<any>>> = Reado
  * arg.entry(DATA.jobs)        // an argument naming a job, checked
  * ```
  *
- * Give it to `definePlugin` as `data`, and the loader reaches each list's
- * words for a translation.
+ * Give it to `definePlugin` as `data`, so the loader reaches each list's words for a translation.
  */
 export function defineData<const L extends Readonly<Record<string, ListSpec<any>>>>(plugin: string, lists: L): PluginData<L> {
   const out: Record<string, DataList> = {}

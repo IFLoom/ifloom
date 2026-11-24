@@ -31,115 +31,123 @@ import type { OpenPanel } from './features/panels.ts'
 import { commandOf, previewEffects } from './custom.ts'
 
 /**
- * What pressing a button will spend, shown on it before it is pressed. Only
- * costs: what a choice *pays* stays off the label, because a payout printed on
- * a line tells the player which line is the right one.
+ * The cost of a choice or action, shown on its button before the player presses it. It lists costs only, since a payout
+ * printed on a choice tells the player which one is right.
  */
 export type Price = {
-  /** Stats it spends, in the order the button lists them, written for the player. */
+  /** The stats the price spends, in the order the button lists them, each with its amount and its words in `text`. */
   stats?: { id: string; amount: number; text: string }[]
-  /** What plugins say it costs, in their words: "until evening". */
+  /** The plugins' words for what else it costs, such as "until evening". */
   notes?: string[]
   /**
-   * The whole price as one line for the player: each stat's `text`, then the
-   * notes, joined by the `priceSeparator` string (`2 coins · until evening`).
+   * The whole price as one line for the player, such as `2 coins · until evening`. It joins each stat's `text`, then the
+   * notes, with the `priceSeparator` string.
    */
   text: string
 }
 
+/**
+ * A choice or action ready to render as a button, in `view.scene.choices`, `view.actions` or a plugin's view. A UI sends
+ * its `command` when the player presses it.
+ */
 export type RenderedChoice = {
+  /** The choice's or action's id. */
   id: string
+  /** The button's label, with tokens filled. */
   label: string
-  /** What pressing it costs, worked out for this state, with its words in `text`. Left out when it's free. */
+  /** The button's price for this state, with its words in `text`. Left out when it's free. */
   price?: Price
-  /** Why it can't be pressed now, as the player reads it. Left out when it can. */
+  /** The reason the player can't press the button now, in the player's words. Left out when they can. */
   disabled?: string
-  /** The choice's or button's tags, for a UI to style or filter it by. */
+  /** The choice's or action's tags, for a UI to style or filter it by. */
   tags?: string[]
-  /** A warning that it can't be undone, for the UI to show on it. */
+  /** The warning that the choice or action can't be undone, for a UI to show on its button. */
   irreversible?: string
-  /** The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. */
+  /** The choice's or action's `ui` hints, unchanged from content. Left out with none, and typed by `ChoiceUi`. */
   ui?: Ui<ChoiceUi>
   /**
-   * Pressable, but the game would rather you didn't, and says why: a plugin
-   * guard's soft refusal: running past dawn, say. The reducer refuses it all the
-   * same, so a UI shows the warning and offers something else.
+   * The reason a plugin's guard gives for refusing the button softly, such as running past dawn. The player can press
+   * it, but the reducer refuses it, so a UI shows the warning instead.
    */
   warning?: string
-  /** What to send when the player presses it: `runner.apply(choice.command)`. */
+  /** The command a UI sends when the player presses the button, as `runner.apply(choice.command)`. */
   command: Command
 }
 
-/** A choice or a button on a screen: as the view shows it, and what pressing it would apply. */
+/** A choice or action on a {@link Screen}, with the effects pressing its button would apply. The view leaves the effects out. */
 export type ScreenChoice = RenderedChoice & {
-  /** What it would apply, as `effectsOf` says: a choice's effects, an action's cost and effects. */
+  /** The effects pressing the button would apply, such as a choice's effects or an action's cost and effects. */
   effects: Effect[]
 }
 
-/** The scene on a screen, or the room when none is open, without its choices and picture. */
+/** The scene on a {@link Screen}, or the room when none is open, without its choices and picture. */
 export type ScreenScene = {
   /** The open scene's id, or null for the room. */
   id: string | null
   /**
-   * Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>`
-   * while a minigame is played, `room:<id>` for a plugin's room scene (a
-   * place, by its id), and `room` with none. It changes when the screen does, and only then.
+   * The screen's key, which changes when the screen does and only then.
+   *
+   * It is `scene:<id>` while a scene is open, `minigame:<id>` while a minigame is played, `room:<id>` for a plugin's
+   * room scene and `room` without one.
    */
   key: string
-  /** The heading: the scene's title, or the room's. */
+  /** The screen's title, the scene's or the room's. */
   title: string
-  /** The words as content wrote them, markup and all. Draw `beats`, which is this parsed. */
+  /** The body as markup text. A UI renders `beats`, which are this text parsed. */
   body: string
-  /** The body parsed into paragraphs, speech, pictures and past picks, ready to draw. See `SceneBeat`. */
+  /** The body parsed into beats, such as paragraphs, speech, pictures and past choices, ready to render. */
   beats: SceneBeat[]
   /**
-   * The first of `beats` the flow's last step brought, from its `chose` on:
-   * what a pick, a jump or a minigame or panel done with added, so a UI can
-   * animate only that. 0 when the visit has taken no step, and for the room.
+   * The index of the first beat the flow's last step added, from its `chose` beat on, so a UI can animate only those.
+   * It's 0 for the room and before the visit's first step.
    */
   fresh: number
-  /** The scene's tags, for the UI to style it by. */
+  /** The scene's tags, for a UI to style it by. */
   tags: string[]
-  /** Who is speaking: the scene's `speaker`, as their entity is. Null with none, or one that names no entity. */
+  /** The scene's `speaker`, read from their entity. Null without one, or when it names no entity. */
   speaker: SpeakerView | null
-  /** The big picture to draw with the scene: the speaker's, else null. */
+  /** The speaker's picture to show with the scene, or null without one. */
   image: string | null
-  /** The scene's presentation hints (the room scene's, when no scene is open), as written; left out with none. See `SceneUi`. */
+  /** The scene's `ui` hints, or the room scene's when no scene is open, unchanged from content. Left out with none, and typed by `SceneUi`. */
   ui?: Ui<SceneUi>
 }
 
-/** One state's screen. See `screen`. */
+/** One state rendered once by `screen`, with what each choice would apply, the pool picks and the audio tracks. */
 export type Screen = {
-  /** The open scene as rendered, or the room when none is open. A minigame being played is drawn over either: see `view.minigame`. */
+  /**
+   * The open scene as rendered, or the room when none is open. While a minigame is played, the minigame's key, title
+   * and words replace theirs, without their `ui`.
+   *
+   * `view.minigame` holds the running minigame's state.
+   */
   scene: ScreenScene
-  /** The open scene's visible choices, each with its effects, availability and price. Empty for the room, and while a minigame is played. */
+  /** The open scene's visible choices, each with its effects, availability and price. It is empty for the room and while a minigame is played. */
   choices: ScreenChoice[]
   /**
-   * The room's buttons while no scene is open and no lock stops everything: the `actions` providers' (the game's
-   * rules' first, then each plugin's), then the game's own `actions`.
+   * The room's actions while no scene is open and no lock stops everything. The `actions` providers' come first (the
+   * game's rules', then each plugin's), then the game's own `actions`.
    */
   actions: ScreenChoice[]
   /** The open scene's layered picture and its hotspots, or null. */
   picture: PictureView | null
-  /** Every plugin's view, by plugin id. */
+  /** The plugins' views, by plugin id. */
   plugins: Record<string, unknown>
   /** The pool picks this screen made that the save doesn't hold yet, by pick key. The reducer records them. */
   picks: Record<string, string>
   /**
-   * What should be playing, as `view.audio` has it, and `tracks`: the track
-   * each background channel resolved to (null for silence), which the reducer
-   * records as started.
+   * The audio that should be playing, as in `view.audio`, with `tracks` added. `tracks` gives the track each background
+   * channel resolved to (null for silence), and the reducer records them as started.
    */
   audio: AudioView & { tracks: Record<string, string | null> }
 }
 
 /**
- * What a screen or a view is drawn with besides the state. `profile` is what
- * the player's profile holds, by namespace: each plugin's view is handed its
- * own as `context.profile`. The runner passes it; without it, no view sees
- * the profile.
+ * Settings for `screen` and `view` besides the state. Without `profile`, no plugin's view reads the profile.
  */
-export type ViewOptions = { profile?: Readonly<Record<string, unknown>> }
+export type ViewOptions = {
+  /** The player's profile, by namespace. Each plugin's view reads its own namespace as `context.profile`, and the runner passes this. */
+  profile?: Readonly<Record<string, unknown>>
+}
 
 /** The words of the first of these that holds, or undefined. */
 function blockedReason(state: GameState, game: Game, blocked: readonly Blocked[] | undefined): string | undefined {
@@ -151,13 +159,12 @@ function blockedReason(state: GameState, game: Game, blocked: readonly Blocked[]
 type Drawing = { rendered: Rendering; picks: Record<string, string> }
 
 /**
- * One state, drawn once: the open scene (or the room), its choices with their
- * effects, availability and price, the room's buttons, the picture, the plugins'
- * views, and the pool picks and audio they imply. The open scene is rendered
- * once, and every choice's availability and effects come from that one render.
+ * Returns the {@link Screen} for a state, the open scene or the room rendered once. Use it when you need what `view`
+ * leaves out, such as each choice's effects.
  *
- * `view` formats a screen for a UI. Use `screen` when you need what `view`
- * leaves out: what each choice would apply, or the picks and tracks.
+ * The screen holds the choices, actions, picture, plugins' views, pool picks and audio of that one render.
+ *
+ * Every choice's availability and effects come from that one render of the scene. `view` formats a screen for a UI.
  */
 export function screen(state: GameState, game: Game, options: ViewOptions = {}): Screen {
   const picks: Record<string, string> = {}
@@ -260,10 +267,11 @@ function beatsOf(
 }
 
 /**
- * The panel open over the story, as `view.panel` shows it: one the `panel`
- * effect opened, else the open scene's own, else null. For a plugin's view
- * that shows what its own panel holds, filtered by what it was opened with,
- * as the jobs plugin's `panel` is the jobs on the open board.
+ * Returns the panel open over the story, as in `view.panel`. It is the one the `panel` effect opened, else the open
+ * scene's own, else null.
+ *
+ * A plugin's view uses it to show what its own panel holds, filtered by the panel's `with`, as the jobs plugin lists the
+ * jobs on the open board.
  */
 export function panelOf(state: GameState, game: Game): OpenPanel | null {
   if (state.panel) return state.panel
@@ -272,14 +280,13 @@ export function panelOf(state: GameState, game: Game): OpenPanel | null {
 }
 
 /**
- * A picture as the UI draws it: the layers whose `when` holds, each with its
- * file (a pool's pick, kept per owner and layer as `picture:<index>`), and the
- * hotspots on them. A hotspot tied to a layer that isn't shown is left out. A
- * `choice` hotspot takes that choice's command and availability from
- * `choices`, the scene's rendered choices, and is left out when the choice is
- * not on offer; a `command` hotspot is worked out as any action's button is.
- * Exported for plugins that draw a picture of their own: a place's. A plugin's
- * `view` passes its context's `picks`, so the reducer records the layers' picks.
+ * Returns the {@link PictureView} of a picture, with its layers whose `when` holds and their hotspots, or null without
+ * a picture. A plugin calls it to render a picture of its own.
+ *
+ * Each layer's file can be a pool's pick, kept per owner and layer as `picture:<index>`. A hotspot tied to a layer that
+ * isn't shown is left out. A `choice` hotspot takes that choice's command and availability from `choices`, the scene's
+ * rendered choices, and is left out when the choice is not on offer. A `command` hotspot is rendered as any action is.
+ * A plugin's `view` passes its context's `picks`, so the reducer records the layers' picks.
  */
 export function pictureView(
   state: GameState,
@@ -372,12 +379,12 @@ function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoi
 }
 
 /**
- * An action as a button: its label, its price, and why it is greyed out, if it
- * is. Availability comes from `whyNot`, so the button and the reducer always
- * agree. What a room's buttons are made with, for plugins that show actions
- * somewhere else, such as an app on a device. `owner` is the plugin whose
- * action it is, so one with a cost or effects is done as `'<owner>/<id>'`
- * (see `Plugin.action`); left out, it is one of the game's.
+ * Returns an action as a {@link RenderedChoice}, with its label, its price and the reason it's refused now, if any. A
+ * plugin calls it to offer actions outside the room, such as in a device's app.
+ *
+ * Availability comes from `whyNot`, so the button and the reducer always agree. `owner` is the id of the plugin whose
+ * action it is, so one with a cost or effects runs as `'<owner>/<id>'` (see `Plugin.action`). Left out, the action is the
+ * game's.
  */
 export function renderAction(state: GameState, game: Game, action: ActionDef, owner?: string): RenderedChoice {
   return actionButton(state, game, asAction(state, game, action, owner), rendering(state, game))
@@ -431,11 +438,11 @@ function priced(state: GameState, game: Game, cost: { stats?: Record<string, num
 }
 
 /**
- * A price as the view shows one: the stats spent above 0, each worded as a
- * stat's value is, in the order given, then `notes`, plugins' words for
- * what else it costs, with the whole as one line in `text`. Null when it
- * costs nothing. What a plugin's view uses for a price of its own, such as
- * what a shift pays or a vendor's full price.
+ * Returns the {@link Price} of some stats and notes, or null when it costs nothing. A plugin's view calls it for a
+ * price of its own, such as a vendor's full price.
+ *
+ * It lists each stat spent above 0 in the order given, worded as the stat's value is, then the `notes`, and joins them
+ * into one line in `text`.
  */
 export function priceView(game: Game, stats: Readonly<Record<string, number>>, notes: readonly string[] = []): Price | null {
   const spent = Object.entries(stats)
@@ -547,7 +554,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   }
 }
 
-/** A screen's choice as the view shows it: without its effects. */
+/** Returns a screen's choice as the view shows it, without its effects. */
 export function renderedChoice({ effects: _effects, ...choice }: ScreenChoice): RenderedChoice {
   return choice
 }
@@ -605,14 +612,14 @@ function inlineBeats(
   return { beats: drawn, offered: used.size ? offered.filter((choice) => !used.has(choice.id)) : offered }
 }
 
-/** The choices and buttons a scene's or a room's prose holds inline, in the order they come. */
+/** Returns the choices and actions that a scene's or a room's beats hold inline, in the order they come. */
 export function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[] {
   return beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans.flatMap((span) => (span.type === 'action' ? [span.choice] : [])) : []))
 }
 
 /**
- * Beats as the backlog keeps them: an inline action is history there, so it
- * becomes its words and nothing can press it. Tooltips, UI pieces, bold and italics stay.
+ * Returns beats as the backlog keeps them, with each inline action turned into its words so nothing can press it.
+ * Tooltips, UI pieces, bold and italics stay.
  */
 export function pastBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   return beats.map((beat) => {

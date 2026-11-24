@@ -74,16 +74,16 @@ export const UI_STRINGS = {
   unread: 'Unread',
 } as const
 
+/** The key of one of the React UI's own words, such as `'stats'` or `'newGame'`. */
 export type UiStringKey = keyof typeof UI_STRINGS
 
 /**
- * A table of words in English by key, as a plugin's React UI declares its own
- * (`{ buy: 'Buy' }`). A game rewords any of them the same way as the UI's,
- * with `ui.<key>` in its strings.
+ * A table of words in English by key, such as a plugin UI's `{ buy: 'Buy' }`. A game rewords any of them with
+ * `ui.<key>` in its strings, as it rewords the UI's own.
  */
 export type Words = Readonly<Record<string, string>>
 
-/** How a component says a word: by its key, with `{name}` filled from `vars`. */
+/** A function that returns a word by its key, with each `{name}` in it filled from `vars`. */
 export type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string | number>) => string
 
 /**
@@ -99,8 +99,8 @@ export function uiSay(game: Game, key: string, vars: Record<string, string | num
 }
 
 /**
- * `uiSay` for the game in context. Given a plugin UI's own `words`, it says
- * those keys too, and the UI's own.
+ * Returns a {@link Say} for the running game's UI words, each the game's `ui.<key>` string over the English. Given a
+ * plugin UI's own `words`, it returns those keys too.
  */
 export function useWords(): Say
 export function useWords<W extends Words>(words: W): Say<(keyof W & string) | UiStringKey>

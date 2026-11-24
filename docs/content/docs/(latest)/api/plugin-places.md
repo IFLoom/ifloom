@@ -14,7 +14,7 @@ Generated from the source of `@ifloom/plugin-places` and `@ifloom/plugin-places/
 
 Type. Explained in [Places](/docs/plugins/places#arrival).
 
-What happens as the player walks into a place: effects, while `when` holds.
+The effects that run as the player walks into a location by an exit, in a `Place`'s `arrive`.
 
 ```ts shape
 import type { Arrival } from '@ifloom/plugin-places'
@@ -24,14 +24,20 @@ type Arrival = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | The condition that must hold for the effects to run. They always run if left out. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) |  |  | The effects that run on arrival. |
+
 ### ExitView
 
 Type. Explained in [Places](/docs/plugins/places#exitview).
 
-One way out of the current place, as the UI draws it: a button like any
-other (`RenderedChoice`), whose `label` is the place's name, `disabled` why
-it can't be taken now, `warning` a plugin's soft refusal, and `price` what
-going costs. Send `command` to take it. The rest describes where it leads.
+An exit from the location the player is at as the player sees it, in `view.plugins.places.exits`. It is a
+`RenderedChoice` labelled with the destination's name, so its `command` takes the exit.
+
+Its `disabled` gives the reason the exit is refused, `warning` a plugin's soft refusal and `price` the cost of
+going. The other fields describe the destination.
 
 ```ts shape
 import type { ExitView } from '@ifloom/plugin-places'
@@ -48,16 +54,16 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `tags` | `string[]` |  |  | The choice's or button's tags, for a UI to style or filter it by. The place's tags, its entity's. |
-| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The place's entity: `'location:park'`. |
-| `description` | `string \| null` |  |  | The place's line under its name, its entity's `description`; null with none. |
-| `image` | `string \| null` |  |  | The place's picture's path, its entity's `image` through `artSrc`; null with none. |
+| `tags` | `string[]` |  |  | The choice's or action's tags, for a UI to style or filter it by. The destination's tags. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The destination's entity reference, such as `'location:park'`. |
+| `description` | `string \| null` |  |  | The destination's `description`, the line under its name, or null when it has none. |
+| `image` | `string \| null` |  |  | The path of the destination's picture, its `image` through `artSrc`, or null when it has none. |
 
 ### LOCATION
 
 Const. Explained in [Places](/docs/plugins/places#helpers).
 
-The kind the plugin brings for its places, so each can hold things: `'location:park'`.
+The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique, so each location can hold things.
 
 ```ts shape
 import { LOCATION } from '@ifloom/plugin-places'
@@ -68,9 +74,8 @@ const LOCATION: 'location'
 
 Function. Explained in [Places](/docs/plugins/places#helpers).
 
-The `places/location` trait of a place, named by its id (`'park'`) or its
-reference: one content declares, or one made in play, read through what
-it was made `like`. Undefined for anything else.
+Returns the `places/location` trait of a location, named by its id (`'park'`) or reference, read through the
+entity it was made `like`. Returns undefined for anything that isn't a location.
 
 ```ts shape
 import { locationOf } from '@ifloom/plugin-places'
@@ -83,9 +88,8 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Function. Explained in [Places](/docs/plugins/places#helpers).
 
-Every place in the game now, as references: every entity with the
-`places/location` trait, the ones content declares in its order, then
-those made in play.
+Returns the references of every location in the game now, each entity with the `places/location` trait. Those
+content declares come first in its order, then those made in play.
 
 ```ts shape
 import { locationsOf } from '@ifloom/plugin-places'
@@ -98,7 +102,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Places](/docs/plugins/places#lyingview).
 
-A thing lying where the player is, as the UI draws it.
+A thing lying at the location the player is at as the player sees it, in `view.plugins.places.things`.
 
 ```ts shape
 import type { LyingView } from '@ifloom/plugin-places'
@@ -113,19 +117,18 @@ type LyingView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | How content names it: `'item:paper'`. |
-| `name` | `string` |  |  |  |
-| `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
-| `count` | `number` |  |  | How many lie here. |
-| `pickUp` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that picks one up. Send its `command`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The thing's entity reference, such as `'note:paper'`. |
+| `name` | `string` |  |  | The thing's name. |
+| `image` | `string \| null` |  |  | The path of the thing's picture through `artSrc`, or null when it has none. |
+| `count` | `number` |  |  | The number of this thing lying here. |
+| `pickUp` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that picks one up. Its `command` is the one to send. |
 
 ### Place
 
 Type.
 
-What the `places/location` trait holds: what makes an entity a place the
-player can be in. The place's name, its `description` (a word or two under the
-name: "Home", "Café"), its `image` and its `tags` are the entity's.
+The data of the `places/location` trait, which makes an entity a location the player can be at. The location's
+name, `description`, `image` and `tags` are the entity's.
 
 ```ts shape
 import type { Place, Arrival } from '@ifloom/plugin-places'
@@ -144,24 +147,22 @@ type Place = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `parent` | `string` | yes |  | The place it is inside: a room's building. `places/within` follows it. |
-| `exits` | `readonly string[]` |  |  | The places one step away. |
-| `picture` | [`PictureDef`](/docs/api/engine#picturedef) | yes |  | A layered picture with hotspots, drawn where the UI draws the room. A hotspot here sends a `command`; a place has no choices. |
-| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Travel here is refused while one of these holds, with its reason: a door shut for the night, a gate shut until a quest is done. With `hide`, the exit is left off the screen instead of greyed out. |
-| `body` | [`Block[]`](/docs/api/engine#block) |  |  | What the player reads here while no scene is open: prose blocks, as a data scene's body. |
-| `actions` | [`ActionDef[]`](/docs/api/engine#actiondef) | yes |  | What there is to do here, offered as buttons. |
-| `audio` | `Record<string, string \| null>` | yes |  | What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`. Null silences a channel. An open scene's audio and an `audio` effect's win over it. |
-| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
-| `arrive` | [`Arrival`](#arrival) | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
+| `parent` | `string` | yes |  | The id of the location this one is inside, such as the building a shop is in. `places/within` follows it. |
+| `exits` | `readonly string[]` |  |  | The ids of the locations one step away. |
+| `picture` | [`PictureDef`](/docs/api/engine#picturedef) | yes |  | The location's layered picture with hotspots, rendered with the room. A hotspot here sends a `command`, since a location has no choices. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | The reasons travel here is refused, such as a door shut for the night. With `hide`, the exit is left out of the view instead of disabled. |
+| `body` | [`Block[]`](/docs/api/engine#block) |  |  | The location's body, the blocks the player reads here while no scene is open. |
+| `actions` | [`ActionDef[]`](/docs/api/engine#actiondef) | yes |  | The location's actions, offered as buttons in the room. |
+| `audio` | `Record<string, string \| null>` | yes |  | The audio that plays while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. Null silences a channel, and an open scene's audio and an `audio` effect's override it. |
+| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | The room's presentation hints while no scene is open, carried to `view.scene.ui` as a scene's are, such as the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
+| `arrive` | [`Arrival`](#arrival) | yes |  | The effects that run after the player walks in by an exit, such as someone catching them on the way in. A `places/move` doesn't run them. |
 
 ### PlaceDef
 
 Type. Explained in [Places](/docs/plugins/places#placedef).
 
-What `places.location()` takes: an entity's fields (its `of` is `'location'` if
-left out; its `description` is the line under the place's name, its `image` its
-picture) and the `places/location` trait's, side by side. `ui` is the
-trait's: the room's hints, as a scene's.
+A location the game declares in `entities` with `places.location()`. It has an entity's fields and the
+`places/location` trait's side by side, and its `ui` is the trait's room hints.
 
 ```ts shape
 import type { PlaceDef, Arrival } from '@ifloom/plugin-places'
@@ -184,23 +185,23 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `parent` | `string` | yes |  | The place it is inside: a room's building. `places/within` follows it. |
-| `exits` | `readonly string[]` |  |  | The places one step away. |
-| `picture` | [`PictureDef`](/docs/api/engine#picturedef) | yes |  | A layered picture with hotspots, drawn where the UI draws the room. A hotspot here sends a `command`; a place has no choices. |
-| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Travel here is refused while one of these holds, with its reason: a door shut for the night, a gate shut until a quest is done. With `hide`, the exit is left off the screen instead of greyed out. |
-| `body` | [`Block[]`](/docs/api/engine#block) |  |  | What the player reads here while no scene is open: prose blocks, as a data scene's body. |
-| `actions` | [`ActionDef[]`](/docs/api/engine#actiondef) | yes |  | What there is to do here, offered as buttons. |
-| `audio` | `Record<string, string \| null>` | yes |  | What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`. Null silences a channel. An open scene's audio and an `audio` effect's win over it. |
-| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
-| `arrive` | [`Arrival`](#arrival) | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
-| `of` | `string` | yes |  | Its kind: the plugin's own, `location`, if left out. |
+| `parent` | `string` | yes |  | The id of the location this one is inside, such as the building a shop is in. `places/within` follows it. |
+| `exits` | `readonly string[]` |  |  | The ids of the locations one step away. |
+| `picture` | [`PictureDef`](/docs/api/engine#picturedef) | yes |  | The location's layered picture with hotspots, rendered with the room. A hotspot here sends a `command`, since a location has no choices. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | The reasons travel here is refused, such as a door shut for the night. With `hide`, the exit is left out of the view instead of disabled. |
+| `body` | [`Block[]`](/docs/api/engine#block) |  |  | The location's body, the blocks the player reads here while no scene is open. |
+| `actions` | [`ActionDef[]`](/docs/api/engine#actiondef) | yes |  | The location's actions, offered as buttons in the room. |
+| `audio` | `Record<string, string \| null>` | yes |  | The audio that plays while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. Null silences a channel, and an open scene's audio and an `audio` effect's override it. |
+| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | The room's presentation hints while no scene is open, carried to `view.scene.ui` as a scene's are, such as the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
+| `arrive` | [`Arrival`](#arrival) | yes |  | The effects that run after the player walks in by an exit, such as someone catching them on the way in. A `places/move` doesn't run them. |
+| `of` | `string` | yes |  | The location's kind. The plugin's own kind, `location`, if left out. |
 
 ### places
 
 Function. Explained in [Places](/docs/plugins/places#places).
 
-The plugin, with its helpers on it: `places()` makes the plugin for the
-game's `plugins`, and content is written with `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
+The places plugin's factory, with its helpers as properties. `places(options)` returns the plugin for the game's
+`plugins`, and content calls helpers such as `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
 
 ```ts shape
 import { places } from '@ifloom/plugin-places'
@@ -211,20 +212,22 @@ Uses: [`PlacesOptions`](#placesoptions), [`DefinedPlugin`](/docs/api/engine-plug
 
 | Helper | Signature | Description |
 |---|---|---|
-| `places.location` | `(def:` [`PlaceDef`](#placedef)`):` [`EntityDef`](/docs/api/engine#entitydef) |  |
-| `places.locationRef` | `(id: string):` [`EntityRef`](/docs/api/engine#entityref) |  |
-| `places.pickUp` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
-| `places.go` | `(id: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
-| `places.at` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
-| `places.within` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
-| `places.away` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
-| `places.move` | `(place: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
-| `places.onlyAt` | `(places: string[], reason?:` [`Reason`](/docs/api/engine#reason)`, options?: { hide?: boolean }):` [`Blocked`](/docs/api/engine#blocked) |  |
-| `places.where` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`): string \| null` |  |
+| `places.location` | `(def:` [`PlaceDef`](#placedef)`):` [`EntityDef`](/docs/api/engine#entitydef) | Returns a location for content's `entities`, an entity with the `places/location` trait, from the entity's fields and the trait's. |
+| `places.locationRef` | `(id: string):` [`EntityRef`](/docs/api/engine#entityref) | Returns the entity reference of a location; a bare id is one of the `location` kind. |
+| `places.pickUp` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `places/pickUp` command, which picks up one of a thing lying where the player is. |
+| `places.go` | `(id: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `places/go` command, which walks to a location by an exit. |
+| `places.at` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `places/at` condition, which holds while the player is at any of these locations. |
+| `places.within` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `places/within` condition, which holds while the player is at any of these locations or anywhere inside one. |
+| `places.away` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `places/away` condition, which holds while the player is at none of these locations or at no location. |
+| `places.move` | `(place: string):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `places/move` effect, which puts the player at the location at once, closing any scene. |
+| `places.onlyAt` | `(places: string[], reason?:` [`Reason`](/docs/api/engine#reason)`, options?: { hide?: boolean }):` [`Blocked`](/docs/api/engine#blocked) | Returns a `blocked` entry that refuses anywhere but these locations, with `reason` or the `places/notHere` string. |
+| `places.where` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`): string \| null` | Returns the id of the location the player is at, from the `places/here` query, or null. |
 
 ### PlacesOptions
 
 Type. Explained in [Places](/docs/plugins/places#placesoptions).
+
+Settings for `places()`.
 
 ```ts shape
 import type { PlacesOptions } from '@ifloom/plugin-places'
@@ -235,13 +238,13 @@ type PlacesOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `start` | `string` | yes |  | Where a new game starts. Nowhere — no place at all — if left out. |
+| `start` | `string` | yes |  | The id of the location a new game starts at. The player is at no location if left out. |
 
 ### PlacesState
 
 Type. Explained in [Places](/docs/plugins/places#placesstate).
 
-The plugin's state: where the player is, by the place's id (its whole reference for a place of another kind), or null.
+The location a save keeps for the player. Locations themselves are read from content.
 
 ```ts shape
 import type { PlacesState } from '@ifloom/plugin-places'
@@ -250,11 +253,15 @@ type PlacesState = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `at` | `string \| null` |  |  | The id of the location the player is at, its full reference for a location of another kind, or null when at none. |
+
 ### PlacesView
 
 Type. Explained in [Places](/docs/plugins/places#placesview).
 
-What the UI reads at `view.plugins.places`.
+The player's location, its exits and the things lying there as the player sees them, in `view.plugins.places`.
 
 ```ts shape
 import type { PlacesView } from '@ifloom/plugin-places'
@@ -267,15 +274,15 @@ type PlacesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `location` | [`PlaceView`](#placeview) `\| null` |  |  | Where the player is; null when nowhere. |
-| `exits` | [`ExitView[]`](#exitview) |  |  | The exits, in the order the place lists them; none while a scene is open or a lock holds everything. |
-| `things` | [`LyingView[]`](#lyingview) |  |  | What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. |
+| `location` | [`PlaceView`](#placeview) `\| null` |  |  | The location the player is at, or null when at none. |
+| `exits` | [`ExitView[]`](#exitview) |  |  | The location's exits in the order it lists them. It is empty while a scene is open or a lock holds everything. |
+| `things` | [`LyingView[]`](#lyingview) |  |  | The things the location holds, such as a thing the player dropped. It is empty while a scene is open or a lock holds everything. |
 
 ### PlaceView
 
 Type. Explained in [Places](/docs/plugins/places#placeview).
 
-Where the player is, as the UI draws it.
+The location the player is at as the player sees it, in `view.plugins.places.location`.
 
 ```ts shape
 import type { PlaceView } from '@ifloom/plugin-places'
@@ -292,13 +299,13 @@ type PlaceView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | The place's id, as `go` names it. |
-| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | Its entity: `'location:park'`. |
-| `name` | `string` |  |  |  |
-| `description` | `string \| null` |  |  | The line under its name, its entity's `description`; null with none. |
-| `tags` | `string[]` |  |  | Its entity's tags, for the UI to style it by. |
-| `image` | `string \| null` |  |  | Its picture's path, its entity's `image` through `artSrc`; null with none. |
-| `picture` | [`PictureView`](/docs/api/engine#pictureview) `\| null` |  |  | The place's picture as the engine's `pictureView` draws it, or null when it has none. Its hotspots are left out while a scene is open or a lock holds everything, as the exits are. |
+| `id` | `string` |  |  | The location's id, as `places.go` names it. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The location's entity reference, such as `'location:park'`. |
+| `name` | `string` |  |  | The location's name. |
+| `description` | `string \| null` |  |  | The location's `description`, the line under its name, or null when it has none. |
+| `tags` | `string[]` |  |  | The location's tags, which a UI can style it by. |
+| `image` | `string \| null` |  |  | The path of the location's picture, its `image` through `artSrc`, or null when it has none. |
+| `picture` | [`PictureView`](/docs/api/engine#pictureview) `\| null` |  |  | The location's layered picture, rendered by the engine's `pictureView`, or null when it has none. Its hotspots are left out while a scene is open or a lock holds everything, as the exits are. |
 
 ## @ifloom/plugin-places/react
 
@@ -310,7 +317,8 @@ type PlaceView = {
 
 Const. Explained in [Places](/docs/plugins/places#exits).
 
-The exits from where the player is, each a button, greyed out with its reason. Nothing without the places plugin. A thin default on `usePlaces`.
+Renders the exits from `view.plugins.places.exits`, each a button that is disabled with its reason when refused. It
+renders nothing without the places plugin, and a preset can style the parts `exits` and `exit`.
 
 ```ts shape
 import { Exits } from '@ifloom/plugin-places/react'
@@ -321,9 +329,11 @@ const Exits: ComponentType<{ className?: string; }>
 
 Const. Explained in [Places](/docs/plugins/places#locationcard).
 
-Where the player is: the place's name and the line under it (its `description`), with its layered picture above them,
-hotspots and all, and what lies there with a button to pick each up. The
-exits are `Exits`. A thin default on `usePlaces`.
+Renders the player's location from `view.plugins.places.location`, its name and `description` under its layered
+picture, with the things lying there and a button to pick each up. `Exits` renders the exits.
+
+A preset can style the parts `location`, `location-name`, `location-text`, `location-things`, `location-thing`,
+`location-thing-name` and `location-thing-pick`.
 
 ```ts shape
 import { LocationCard } from '@ifloom/plugin-places/react'
@@ -334,7 +344,7 @@ const LocationCard: ComponentType<object>
 
 Type.
 
-What `usePlaces` returns: the places plugin's view, how to take an exit, and how to pick up what lies here.
+The places plugin's view with functions that take an exit and pick up a thing, as `usePlaces` returns it.
 
 ```ts shape
 import type { PlacesControls } from '@ifloom/plugin-places/react'
@@ -349,19 +359,18 @@ type PlacesControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `location` | [`PlaceView`](#placeview) `\| null` |  |  | Where the player is; null when nowhere. |
-| `exits` | [`ExitView[]`](#exitview) |  |  | The exits, in the order the place lists them; none while a scene is open or a lock holds everything. |
-| `things` | [`LyingView[]`](#lyingview) |  |  | What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. |
-| `go` | `(exit: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. |
-| `pickUp` | `(thing:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Pick up one of a thing lying here, by its reference (`'item:paper'`): sends its `pickUp` command. |
+| `location` | [`PlaceView`](#placeview) `\| null` |  |  | The location the player is at, or null when at none. |
+| `exits` | [`ExitView[]`](#exitview) |  |  | The location's exits in the order it lists them. It is empty while a scene is open or a lock holds everything. |
+| `things` | [`LyingView[]`](#lyingview) |  |  | The things the location holds, such as a thing the player dropped. It is empty while a scene is open or a lock holds everything. |
+| `go` | `(exit: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends the command of the exit to the location with this id. The engine refuses it, as any command, when the exit is disabled or missing. |
+| `pickUp` | `(thing:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends the `pickUp` command for one of the thing lying here with this reference, such as `'note:paper'`. |
 
 ### placesUi
 
 Const. Explained in [Places](/docs/plugins/places#placesui).
 
-The places plugin's React UI, for `plugins` on `mountGame` or
-`GameProvider`: the `LocationCard` and the `Exits` in the story, before
-the room's actions.
+The places plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `LocationCard` and
+the `Exits` in the room, before the room's actions.
 
 ```ts shape
 import { placesUi } from '@ifloom/plugin-places/react'
@@ -374,7 +383,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 Function. Explained in [Places](/docs/plugins/places#useplaces).
 
-The places plugin's view with a way to travel, or null in a game without the plugin. `LocationCard` is drawn from it.
+Returns the places plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes.
 
 ```ts shape
 import { usePlaces } from '@ifloom/plugin-places/react'

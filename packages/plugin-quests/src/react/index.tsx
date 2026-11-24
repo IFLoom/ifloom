@@ -1,9 +1,8 @@
 /**
- * @ifloom/plugin-quests/react: the quests plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `questsUi` in the game's
- * `plugins` to have the quest log in the side column, behind a button with
- * the count of news, and as the `quests` panel; or draw it yourself from
- * `useQuests`.
+ * The quests plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `questsUi` in the game's `plugins` to render the quest log behind a sidebar button with the count of news,
+ * and as the `quests` panel. To render it yourself, read `useQuests`.
  */
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
@@ -11,10 +10,13 @@ import { quests, type QuestsView } from '../index.ts'
 import { Section, usePart } from '@ifloom/react'
 import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
-/** The quests plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The quests plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const QUESTS_WORDS = {
+  /** The badge on a quest that has changed since the player last looked. */
   questNew: 'New',
+  /** The count of a quest's stages done, with `{stage}` and `{stages}`. */
   questStage: '{stage} of {stages}',
+  /** The title of the quest log and its section. */
   quests: 'Quests',
 } as const
 
@@ -38,13 +40,13 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useQuests` returns: the quests plugin's view, with its buttons, and a command to track a quest of your choosing. */
+/** The quests plugin's view with a function that tracks any quest, as `useQuests` returns it. */
 export type QuestsControls = QuestsView & {
-  /** Track a quest by id, or track none with `null`: sends `quests/track`. Each quest's `track` button does it for that quest. */
+  /** Sends `quests/track` for the quest with this id, or stops tracking with `null`. Each quest's `track` button does the same for that quest. */
   track: (id: string | null) => Result<GameState>
 }
 
-/** The quests plugin's view with its buttons and commands, or null in a game without the plugin. `QuestLog` is drawn from it. */
+/** Returns the quests plugin's view and track command from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useQuests(): QuestsControls | null {
   const { view, send } = usePlugin(QUESTS)
   if (!view) return null
@@ -121,13 +123,15 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
 }
 
 /**
- * The quest list: active quests with the hint for what to do next, then the
- * finished ones. `title` is what the game calls it — a journal, a to-do list.
- * A thin default on `useQuests`.
+ * Renders the quest log from `view.plugins.quests`, the active quests with their hints and track buttons, then the
+ * finished ones. `title` sets the heading, such as "Journal", and `title={false}` leaves it off.
+ *
+ * A preset can style the parts `quests`, `quests-title`, `quest`, `quest-title`, `quest-summary`, `quest-hint`,
+ * `quest-stage`, `quests-done` and `quest-done`.
  */
 export const QuestLog = overridable('QuestLog', QuestLogImpl)
 
-/** The default layout's Quests section: a button with the count of news that opens the `QuestLog` in a dialog. */
+/** Renders the default layout's Quests section, a button with the count of news from `view.plugins.quests.updates` that opens the `QuestLog` in a dialog. */
 export function QuestsSection() {
   const { words } = usePlugin(QUESTS)
   const news = useQuests()?.updates
@@ -139,10 +143,8 @@ export function QuestsSection() {
 }
 
 /**
- * The quests plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: a Quests section in the side column that opens the
- * `QuestLog` in a dialog, with the count of news on its button; the `quests`
- * panel; and the quests' words.
+ * The quests plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `QuestsSection` to the
+ * sidebar, renders the `quests` panel as a `QuestLog`, and adds the plugin's words.
  */
 export const questsUi: PluginUi = {
   ...QUESTS,

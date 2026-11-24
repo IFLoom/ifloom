@@ -1,21 +1,20 @@
 import type { Runner } from '@ifloom/engine'
 
-/** How `startClock` ticks. */
+/** Settings for `startClock`. Each is optional. */
 export type ClockOptions = {
-  /** How often to tick while anything counts down, in milliseconds. 100 if left out. */
+  /** The clock's interval between ticks while a timer or a minigame counts down, in milliseconds. 100 if left out. */
   every?: number
 }
 
 /**
- * The clock the game's timers need, which the engine doesn't keep. While
- * anything counts down (a timer in `view.timers`, or the timer of the
- * minigame being played) and the page is visible, it sends a `tick` with the
- * real time since the last one, about every 100 ms. Time while the page is
- * hidden is dropped: the tick on hiding sends what passed until then, and the
- * clock starts afresh on showing, so a timer waits for the player. A timer a
- * command has just started, or a minigame state just entered, counts from
- * that command, not from the last tick. Returns the way to stop it. Start one
- * per runner.
+ * Starts the clock that runs down the game's timers, and returns a function that stops it. The engine keeps no clock,
+ * so start one per runner.
+ *
+ * While a timer in `view.timers` or the running minigame's timer counts down and the page is visible, the clock sends
+ * a `tick` command with the real time since the last one, every 100 ms by default. It drops the time the page spends
+ * hidden, so a timer waits for the player. It sends the time up to the moment the page hides, then starts afresh when
+ * the page shows again. A timer that the last command started, or a minigame state it entered, counts from that
+ * command rather than from the last tick.
  */
 export function startClock(runner: Runner, options: ClockOptions = {}): () => void {
   const every = options.every ?? 100

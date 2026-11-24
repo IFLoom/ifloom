@@ -25,192 +25,209 @@ import type { Reference } from '../references.ts'
 import type { Amount, Command, Condition, Effect, GameState, KvValue, StartOptions } from '../types.ts'
 import type { WordPart, WordWalk } from '../words.ts'
 
-/** The core's helpers a feature can call. The core hands one to every hook that needs it. */
+/** The core's helpers a feature calls, passed to every feature function that needs them. They match the engine's exported functions of the same names. */
 export type FeatureContext = {
-  /** Whether a condition holds, as `holds` says. */
+  /** Returns true when a condition holds, as `holds` does. */
   holds: (state: GameState, game: Game, condition: Condition | undefined) => boolean
-  /** Apply effects; while `ending` is true, a `turn` effect does nothing. */
+  /** Applies effects and returns the next state. While `ending` is true, a `turn` effect does nothing. */
   runEffects: (state: GameState, game: Game, effects: readonly Effect[], ending: boolean) => GameState
-  /** Every `onTurn` hook, the game's then each plugin's, as a turn ends: `before` is the state the turn ended on. */
+  /** Runs every `onTurn` hook, the game's then each plugin's, as a turn ends. `before` is the state the turn ended on. */
   turnHooks: (state: GameState, game: Game, before: GameState) => GameState
-  /** Every `onTurnDone` hook, the game's then each plugin's, once the `onTurn` hooks have run. */
+  /** Runs every `onTurnDone` hook, the game's then each plugin's, once the `onTurn` hooks have run. */
   turnDoneHooks: (state: GameState, game: Game, before: GameState) => GameState
-  /** Every `onStat` hook, the game's then each plugin's, on a stat of the player's that just changed. */
+  /** Runs every `onStat` hook, the game's then each plugin's, for a player's stat that just changed. */
   statHooks: (before: GameState, after: GameState, stat: string, by: number, game: Game) => GameState
-  /** What a command would apply, worked out before it runs, as `effectsOf` says. */
+  /** Returns the effects a command would apply, worked out before it runs, as `effectsOf` does. */
   effectsOf: (state: GameState, game: Game, command: Command) => Effect[]
-  /** Effects as content writes them (custom calls among them) as the effects they stand for. */
+  /** Returns written effects, custom calls among them, as the effects they stand for. */
   buildEffects: (game: Game, refs: readonly EffectRef[]) => Effect[]
-  /** One of `items` drawn by weight, seeded by `parts`; undefined when there are none. See `weighted`. */
+  /** Returns one of `items` drawn by weight and seeded by `parts`, as `weighted` does. Undefined when there are none. */
   weighted: <T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]) => T | undefined
-  /** A whole number from 0 to `max - 1`, seeded by `parts`. See `draw`. */
+  /** Returns a whole number from 0 to `max - 1`, seeded by `parts`, as `draw` does. */
   draw: (max: number, ...parts: (string | number)[]) => number
-  /** A custom value by name, the game's or a plugin's. */
+  /** Returns the game's or a plugin's value function by name. Undefined when nobody declares it. */
   customValue: (game: Game | undefined, name: string) => ((state: GameState, args?: Record<string, unknown>) => string | number) | undefined
-  /** An `Amount` worked out in this state, as `amountOf` does. */
+  /** Returns an `Amount` worked out in this state, as `amountOf` does. */
   amount: (state: GameState, game: Game, amount: Amount) => number
-  /** A line with its prose tokens filled in for this save, as `fillTokens` does. */
+  /** Returns a line with its prose tokens filled in for this save, as `fillTokens` does. */
   fillTokens: (state: GameState, game: Game, text: string) => string
-  /** What the plugins' `statModifiers` change about the player's stats right now. */
+  /** Returns the plugins' `statModifiers` on the player's stats now. */
   statModifiers: (state: GameState, game: Game) => readonly StatModifier[]
-  /** What the plugins put on background channels, by channel. */
+  /** Returns the tracks the plugins put on background channels, by channel. */
   pluginAudio: (game: Game, state: GameState) => Record<string, string | null>
-  /** An action by the id the `action` command names it by: the game's, or a plugin's as `'<plugin>/<id>'`, in this state. */
+  /** Returns the action the `action` command names by this id in this state, the game's or a plugin's as `'<plugin>/<id>'`. */
   actionOf: (state: GameState, game: Game, id: string) => ActionDef | undefined
-  /** The scene with this id, as content declares it, as `sceneOf` gives it. */
+  /** Returns the scene the game declares with this id, as `sceneOf` does. */
   sceneOf: (game: Game, id: string) => DataScene | undefined
-  /** A scene rendered in this state, for a caller with no screen, such as a probe. */
+  /** Returns a scene rendered in this state, for a caller with no screen, such as a probe. */
   renderScene: (state: GameState, game: Game, scene: DataScene) => RenderedScene
 }
 
-/** A feature's context while effects apply: `ending` while a turn is ending. */
+/** A feature's context while effects apply. `ending` is true while a turn is ending. */
 export type EffectContext = FeatureContext & { ending: boolean }
 
 /**
- * The open scene, rendered at most once however many questions are asked about
- * one state: `scene()` renders it the first time and hands back the same view
- * after. `screen` makes one and shares it between every choice.
+ * The open scene, rendered at most once however many questions one state is asked. `scene()` renders it the first
+ * time and returns the same rendering after.
+ *
+ * `screen` makes one and shares it between every choice.
  */
-export type Rendering = { scene: () => RenderedScene | undefined }
+export type Rendering = {
+  /** Returns the open scene rendered, the same rendering each time. Undefined when no scene is open. */
+  scene: () => RenderedScene | undefined
+}
 
 /**
- * A feature's context while a command is asked about or run: the open scene,
- * rendered once, and another command asked about, worked out and run with that
- * same rendering, for a choice that sends one.
+ * A feature's context while a command is asked about or run. It adds the open scene, rendered once, and ways to ask
+ * about and run another command with the same rendering, for a choice that sends one.
  */
 export type CommandContext = FeatureContext & {
+  /** The open scene, rendered once for this command. */
   rendered: Rendering
-  /** Why another command would be refused in this state, as `whyNot` says. */
+  /** Returns the reason another command would be refused in this state, as `whyNot` does. */
   whyNotCommand: (state: GameState, game: Game, command: Command) => string | undefined
-  /** What another command would apply in this state, as `effectsOf` says. */
+  /** Returns the effects another command would apply in this state, as `effectsOf` does. */
   effectsOfCommand: (state: GameState, game: Game, command: Command) => Effect[]
-  /** Run another command in this state as the reducer runs one it allows, without the steps after a command. */
+  /** Runs another command in this state as the reducer runs one it allows, without the steps after a command. */
   runCommand: (state: GameState, game: Game, command: Command) => GameState
 }
 
-/** One field of the state: what a new game has, and what a loaded state that lacks it gets. */
+/** A field of the state a feature declares, with its value in a new game and in a loaded state that lacks it. */
 export type StateField<T> = {
-  /** A new game's value. `undefined` leaves the field out. */
+  /** Returns the field's value in a new game. `undefined` leaves the field out. */
   start: (game: Game, options: StartOptions) => T
   /**
-   * What a loaded state gets when the field is missing (or null), after the
-   * engine's own steps and before the plugins' and the game's. Left out, the
-   * field is never filled: a step or a fill rule owns it.
+   * Returns the field's value for a loaded state that lacks it (or has null). It runs after the engine's own steps
+   * and before the plugins' and the game's.
+   *
+   * Left out, the field is never filled, and a step or a fill rule owns it.
    */
   load?: () => T
-  /** Whether a loaded value can be kept. Default: it is there and not null. */
+  /** Returns true when a loaded value can be kept. A value that is there and not null is kept if left out. */
   keeps?: (value: unknown) => boolean
 }
 
-/** A kind of condition: whether it holds, why, and what it names. */
+/** A feature's kind of condition, with how it holds, how it explains itself and what it names. */
 export type ConditionEntry<C> = {
+  /** Returns true when the condition holds in this state. */
   holds: (state: GameState, condition: C, game: Game, cx: FeatureContext) => boolean
-  /** One line for `explain`: what it read, what it wanted. */
+  /** Returns one line for `explain`, the value the condition read and the value it wanted. */
   explain: (state: GameState, condition: C, game: Game, cx: FeatureContext) => string
-  /** What it names, for the content checker. Nested conditions come back as `{ when }`. */
+  /** Returns the references the condition makes, for the content checker. Nested conditions come back as `{ when }`. */
   references: (condition: C) => Reference[]
 }
 
-/** A kind of effect: what it does, and what it names. */
+/** A feature's kind of effect, with how it applies and what it names. */
 export type EffectEntry<E> = {
+  /** Returns the state with the effect applied. */
   apply: (state: GameState, effect: E, game: Game, cx: EffectContext) => GameState
+  /** Returns the references the effect makes, for the content checker. */
   references: (effect: E) => Reference[]
 }
 
-/** A type of command: why not, what it does, what it would apply, and what it names. */
+/** A feature's type of command, with its refusal, how it runs, the effects it would apply and what it names. */
 export type CommandEntry<C> = {
-  /** Why it can't be done now, as the player reads it; undefined if it can. Asked after locks and guards. */
+  /** Returns the reason the player reads when the command can't be done now. Undefined when it can, and it's asked after locks and guards. */
   whyNot: (state: GameState, command: C, game: Game, cx: CommandContext) => string | undefined
+  /** Returns the state after the command runs. */
   run: (state: GameState, command: C, game: Game, cx: CommandContext) => GameState
-  /** What running it would apply, for locks, guards and prices to see. None if left out. */
+  /** Returns the effects running the command would apply, for locks, guards and prices to see. None if left out. */
   effectsOf?: (state: GameState, command: C, game: Game, cx: CommandContext) => Effect[]
-  /** Whether no lock or plugin guard stops it. False if left out. */
+  /** Returns true when no lock or plugin guard stops the command. False if left out. */
   ignoresLocks?: (command: C, game: Game) => boolean
-  /** The stats it spends, by id, for its button's price. None if left out. */
+  /** Returns the stats the command spends, by id, for its button's price. None if left out. */
   spends?: (command: C, game: Game, state: GameState, cx: FeatureContext) => Record<string, number> | undefined
+  /** Returns the references the command makes, for the content checker. */
   references: (command: C) => Reference[]
 }
 
-/** What `fromScreen` and a view piece read: the pool picks a screen made, and the track each background channel resolved to. */
+/** The parts of a screen a feature's `fromScreen` and view read, the pool picks it made and the track each background channel resolved to. */
 export type ShownScreen = {
+  /** The pool picks the screen made, by pick key. */
   picks: Record<string, string>
+  /** The track each background channel resolved to. */
   audio: { tracks: Record<string, string | null> }
 }
 
-/** An entry in one of a feature's lists, for `loadGame` to name the pack a problem came from. Undefined is the game itself. */
+/** An entry in one of a feature's lists, which `loadGame` uses to name the pack a problem came from. Undefined is the game itself. */
 export type FeatureSource = { list: string; id?: string } | undefined
 
-/** What the content checker lends a feature's `check`. */
+/** The content checker's tools a feature's `check` uses. */
 export type FeatureCheckTools = {
-  /** Report a problem at `where`. */
+  /** Reports a problem at `where`. */
   problem: (source: FeatureSource, where: string, what: string) => void
-  /** Report everything these references name that the game doesn't have, at `where`. */
+  /** Reports every reference that names something the game doesn't have, at `where`. */
   check: (source: FeatureSource, where: string, refs: readonly Reference[]) => void
-  /** Record a file the game names, as the page asks for it. */
+  /** Records a file the game names, by the path the page asks for. */
   file: (where: string, type: 'picture' | 'video' | 'audio', path: string | null) => void
-  /** Report each id that is in one list twice, once: `two settings share this id`. A loaded game can't have these. */
+  /** Reports each id that appears twice in one list, once, as `two settings share this id`. A loaded game can't have these. */
   twice: (list: string, plural: string, ids: readonly string[]) => void
 }
 
-/** One load's merge of a feature's pack key: the base game's first, then each pack's in order. */
+/** A feature's merge of its pack keys for one load. The game's own entries go first, then each pack's in order. */
 export type PackMerge<G, P> = {
-  /** What the base game declares itself, before any pack. */
+  /** Adds the entries the game declares itself, before any pack. */
   base: (game: G) => void
   /**
-   * A plugin's own content (`Plugin.content`), merged before the game's
-   * content and packs. Left out, it is merged as a pack is, with `add`.
+   * Adds a plugin's own content (`Plugin.content`), before the game's content and packs. Left out, the plugin's
+   * content merges as a pack does, with `add`.
    */
   plugin?: (content: P, plugin: string) => void
-  /** One pack's, laid over what came before. */
+  /** Adds one pack's entries over those before. */
   add: (pack: P, from: string) => void
-  /** Write the merged result onto the game. */
+  /** Writes the merged result onto the game. */
   finish: (game: Game) => void
-  /** The pack an entry in one of the feature's lists came from; undefined for the base. */
+  /** Returns the pack an entry in one of the feature's lists came from. Undefined for the game itself. */
   from: (list: string, id: string | undefined) => string | undefined
 }
 
-/** Where an after-command step runs: before the plugins' `onCommand` hooks, or after them. */
+/** The place an after-command step runs, before the plugins' `onCommand` hooks or after them. */
 export type AfterSlot = 'beforePlugins' | 'afterPlugins'
 
-/** A state to render every scene against, for the content checker: `checkGame`'s `probes`. */
-export type FeatureProbe = { name: string; state: GameState }
+/** A state the content checker renders every scene against, one of `checkGame`'s `probes`. */
+export type FeatureProbe = {
+  /** The probe's name, used in the problems it finds. */
+  name: string
+  /** The state the scenes are rendered against. */
+  state: GameState
+}
 
-/** What the content checker lends a feature's resolvers. */
+/** The content checker's tools a feature's resolvers use. */
 export type ResolveTools = {
-  /** What these references name that the game doesn't have, worded for `where`: how a reference that holds more is looked inside. */
+  /** Returns the problems with these references, worded for `where`. A reference that holds others is looked inside. */
   resolve: (refs: readonly Reference[], where: string) => string[]
-  /** Record a file the game names, as the page asks for it. */
+  /** Records a file the game names, by the path the page asks for. */
   file: (where: string, type: 'picture' | 'video' | 'audio', path: string | null) => void
-  /** Report something at `where` that may be wrong in play but isn't a problem: a warning, which fails no check. */
+  /** Reports a warning at `where`, something that may go wrong in play. A warning fails no check. */
   warn: (where: string, what: string) => void
 }
 
-/** How a feature resolves the references it declares, by the key that tells each apart: what the game lacks, worded as a problem. */
+/** A feature's resolvers, one for each reference it declares, by the key that tells it apart. Each returns the game's lacks, worded as problems. */
 export type Resolvers<R> = { [K in keyof R]-?: (ref: R[K], where: string) => string[] }
 
-/** The kinds of things a feature declares, as types. Each key is optional. */
+/** The types a feature declares for each part it adds. Each key is optional. */
 export type FeatureShape = {
-  /** Its fields of the state. */
+  /** The feature's fields of the state. */
   state?: object
-  /** Its conditions, by kind key: `{ setting: { setting: string } }`. */
+  /** The feature's conditions, by key, such as `{ setting: { setting: string } }`. */
   conditions?: object
-  /** Its effects, by kind. */
+  /** The feature's effects, by key. */
   effects?: object
-  /** Its commands, by type. */
+  /** The feature's commands, by type. */
   commands?: object
-  /** Its fields of the game. */
+  /** The feature's fields of the game. */
   game?: object
-  /** Its fields of a pack. */
+  /** The feature's fields of a pack. */
   pack?: object
-  /** Its fields of the view. */
+  /** The feature's fields of the view. */
   view?: object
-  /** Its kinds of `Reference`, by the key that tells each apart: `{ timer: { timer: string } }`. Its `resolve` answers for each. */
+  /** The feature's kinds of `Reference`, by the key that tells each apart, such as `{ timer: { timer: string } }`. Its `resolve` answers for each. */
   references?: object
-  /** Its lists, as problems name them: `'setting'`. */
+  /** The feature's lists, as its problems name them, such as `'setting'`. */
   lists?: string
-  /** What `MigrationTools.fill` fills for it, by name: `'settings'`. */
+  /** The name `MigrationTools.fill` fills the feature's part by, such as `'settings'`. */
   fill?: string
-  /** The keys of its `pack` only a pack holds, never the game's content: `'patches'`. */
+  /** The keys of the feature's `pack` that only a pack holds, never the game's content, such as `'patches'`. */
   packOnly?: string
 }
 
@@ -220,8 +237,8 @@ type Part<T extends FeatureShape, K extends keyof FeatureShape> = T[K] extends o
 export type FieldsOf<S> = { [K in keyof S]-?: StateField<S[K]> }
 
 /**
- * A feature as `defineFeature` takes it. What its shape declares, it must
- * answer for: a feature with references has a `resolve`.
+ * A feature as `defineFeature` takes it. It must answer for what its shape declares, so a feature with references
+ * has a `resolve`.
  */
 export type FeatureSpec<T extends FeatureShape> = FeatureParts<T> &
   (keyof Part<T, 'references'> extends never ? unknown : { resolve: (game: Game, tools: ResolveTools) => Resolvers<Part<T, 'references'>> }) &
@@ -232,52 +249,48 @@ type PackSpec<T extends FeatureShape> = { merge: (problem: (from: string, where:
 
 type PackOnly<T extends FeatureShape> = T extends { packOnly: infer P } ? P : never
 
-/** What each of a feature's pack keys holds, every key said, so a new key can't go unchecked or untranslated. */
+/** The content rules for each of a feature's pack keys. Every key must have one, so a new key can't go unchecked or untranslated. */
 export type ContentKeys<T extends FeatureShape> = {
   [K in keyof Part<T, 'pack'>]-?: ContentKey<NonNullable<Part<T, 'pack'>[K]>> & (K extends PackOnly<T> ? { packOnly: true } : { packOnly?: undefined })
 }
 
 /**
- * What one pack key holds, beside how it merges: what a piece of content
- * declares under it, for the report of one thing declared twice across a
- * game's content, and the words in it a translation can give other words for.
+ * The content rules for one pack key, beside how it merges. They list the entries a piece of content declares under
+ * it, for the report of one entry declared twice, and the words a translation can replace.
  */
 export type ContentKey<V> = {
   /**
-   * What one piece of content declares under it, each worded as the report
-   * names it: `scene "cafe.counter"`. Null for a key whose entries add up
-   * across files, such as `saveable`, so declares nothing twice.
+   * Returns the entries one piece of content declares under the key, each worded as the report names it, such as
+   * `scene "cafe.counter"`. Null for a key whose entries add up across files, such as `saveable`.
    */
   declares: ((value: V) => readonly string[]) | null
   /**
-   * The fields of the merged game under it that a player reads, walked into
-   * `walk`, as `translatableFields` lists them. Null for a key with none a
-   * translation gives, or whose words another key's walk covers.
+   * Walks the fields under the key that a player reads in the merged game, as `translatableFields` lists them. Null
+   * for a key with no words a translation gives, or whose words another key's walk covers.
    */
   words: ((game: Game, walk: WordWalk) => void) | null
-  /** Only a pack holds it, never the game's content, as `patches`. */
+  /** The pack-only mark, true for a key only a pack holds, never the game's content, such as `patches`. */
   packOnly?: true
 }
 
-/** What a list by id declares: each entry, by its noun and id, `stat "energy"`. */
+/** Returns a `declares` function for a list by id, naming each entry by its noun and id, such as `stat "energy"`. */
 export const byId =
   (noun: string) =>
   (list: readonly { id: string }[]): string[] =>
     list.map((entry) => `${noun} "${entry.id}"`)
 
-/** What a record declares: each key, by its noun, `kv "phase"`. */
+/** Returns a `declares` function for a record, naming each key by its noun, such as `kv "phase"`. */
 export const byKey =
   (noun: string) =>
   (record: object): string[] =>
     Object.keys(record).map((key) => `${noun} "${key}"`)
 
-/** What a key that holds one value declares: the key, by its noun. */
+/** Returns a `declares` function for a key that holds one value, naming the key by its noun. */
 export const once = (noun: string) => (): string[] => [noun]
 
 /**
- * The words of each entry of one of the game's lists, by the shape of its
- * words, under `<noun>.<id>.<field>`: `action.wait.label`. `noun` is the list
- * as the feature's problems name it.
+ * Returns a `words` function for one of the game's lists, walking each entry's words by `shape` under
+ * `<noun>.<id>.<field>`, such as `action.wait.label`. `noun` is the list as the feature's problems name it.
  */
 export const listWords =
   (list: keyof Game, noun: string, shape: WordPart) =>
@@ -349,48 +362,63 @@ type FeatureParts<T extends FeatureShape> = {
   runner?: RunnerHooks
 }
 
-/** A feature's part in a runner. The runner names no feature: it asks these, in the features' order. */
+/** A feature's part in a runner. The runner names no feature and calls these in the features' order. */
 export type RunnerHooks = {
-  /** After a command took. `remember` queues a write to the profile; only a runner with a profile calls this. */
+  /** Runs after a command took. `remember` queues a write to the profile, and only a runner with a profile calls this. */
   afterCommand?: (command: Command, remember: (write: (profile: Profile) => Promise<unknown>) => void) => void
-  /** Why the runner can't save this state now: `save` is refused with it, and an autosave waits for the next one due. Undefined when it can. */
+  /**
+   * Returns the reason the runner can't save this state now. The runner refuses `save` with it, and an autosave waits
+   * for the next one due. Undefined when it can save.
+   */
   refusesSave?: (state: GameState, game: Game, cx: FeatureContext) => string | undefined
-  /** The player's settings as a runner keeps them. One feature gives it. */
+  /** The player's settings as a runner keeps them. Only one feature gives them. */
   settings?: PlayerSettings
 }
 
-/** How a setting changes in a runner: sent as `command` (the game in play keeps it), written to the profile as `stored`, or refused, with why. */
+/**
+ * The outcome of changing a setting in a runner. It's sent as a `command` when the game in play keeps it, written to
+ * the profile as `stored`, or `refused` with the reason.
+ */
 export type SettingChange = { command: Command } | { stored: KvValue } | { refused: string }
 
 /**
- * The player's settings as a runner keeps them: some in the game in play,
- * some only in the profile, under `namespace`. The runner reads and writes
- * the profile; this says what the values are and how one changes.
+ * The player's settings as a runner keeps them, some in the game in play and some only in the profile under
+ * `namespace`. The runner reads and writes the profile, and these functions give the values and how one changes.
  */
 export type PlayerSettings = {
   /** The profile namespace the player's settings are kept under. */
   namespace: string
-  /** Every setting's value now: from `state` for one the game in play keeps, else from `stored` (the profile's, or nothing without one), else its default. */
+  /**
+   * Returns every setting's value now. A setting the game in play keeps reads `state`, others read `stored` (the
+   * profile's, or nothing without one), and either falls back to its default.
+   */
   values: (game: Game, state: GameState, stored: Record<string, unknown> | undefined) => Record<string, KvValue>
-  /** The values that come from `stored` alone, so a runner tells listeners when a write to the profile changes one. */
+  /** Returns the values that come from `stored` alone, so a runner tells listeners when a write to the profile changes one. */
   fromStored: (game: Game, stored: Record<string, unknown> | undefined) => Record<string, KvValue>
-  /** How changing setting `id` to `to` goes. `profile` says whether the runner has a profile to keep it in. */
+  /** Returns the outcome of changing setting `id` to `to`. `profile` is true when the runner has a profile to keep it in. */
   change: (game: Game, id: string, to: KvValue, profile: boolean) => SettingChange
 }
 
-/** A feature as the registry holds it: every table there, empty if it declares none. */
+/** A feature as the registry holds it, with every table present and empty when the feature declares none. */
 export type Feature<T extends FeatureShape> = FeatureSpec<T> & {
+  /** The names of the features this one needs. */
   requires: readonly string[]
+  /** The feature's state fields. */
   state: FieldsOf<Part<T, 'state'>>
+  /** The feature's conditions, by key. */
   conditions: { [K in keyof Part<T, 'conditions'>]: ConditionEntry<Part<T, 'conditions'>[K]> }
+  /** The feature's effects, by key. */
   effects: { [K in keyof Part<T, 'effects'>]: EffectEntry<Part<T, 'effects'>[K]> }
+  /** The feature's commands, by type. */
   commands: { [K in keyof Part<T, 'commands'>]: CommandEntry<Part<T, 'commands'>[K]> }
+  /** The lists the feature's problems name. */
   lists: readonly (T['lists'] & string)[]
 }
 
 /**
- * Declare a core feature. Internal: core features are part of the engine,
- * and a game or a plugin adds to the engine with `definePlugin` instead.
+ * Returns a core feature, with every table filled in. It's internal, since a game or a plugin adds to the engine
+ * with `definePlugin` instead.
+ *
  * Name its shape (`T`) so every table is checked against its kinds.
  */
 export function defineFeature<T extends FeatureShape>(spec: FeatureSpec<T>): Feature<T> {
@@ -406,10 +434,11 @@ export function defineFeature<T extends FeatureShape>(spec: FeatureSpec<T>): Fea
 }
 
 /**
- * A pack key merged by id: a later pack's entry replaces an earlier one's in
- * its place, and a new one goes at the end. `base` reads what the base game
- * declares itself, when the base can declare any. `key` is the id it merges
- * by: `id` if left out.
+ * Returns the merge for a pack key whose entries have ids. A later pack's entry replaces an earlier one in its place,
+ * and a new one goes at the end.
+ *
+ * `read.base` reads what the game declares itself, when it can declare any. `key` returns the id entries merge by,
+ * their `id` if left out.
  */
 export function mergedById<G, P, T>(
   read: { base?: (game: G) => readonly T[] | undefined; pack: (pack: P) => readonly T[] | undefined },
@@ -439,9 +468,8 @@ export function mergedById<G, P, T>(
 }
 
 /**
- * A pack key that holds one value, such as the scene a game opens on: a
- * later pack's replaces an earlier one's whole. `list` names it for the
- * problems it is pinned on.
+ * Returns the merge for a pack key that holds one value, such as the scene a game opens on. A later pack's value
+ * replaces an earlier one whole, and `list` names the key in problems.
  */
 export function lastWins<G, P, T>(list: string, read: (pack: P) => T | undefined, write: (game: Game, value: T) => void): { merge: () => PackMerge<G, P> } {
   return {
@@ -463,9 +491,8 @@ export function lastWins<G, P, T>(list: string, read: (pack: P) => T | undefined
 }
 
 /**
- * A pack key that is a record: each key a later pack gives replaces an
- * earlier one's, and the rest are kept. `list` names it for the problems it
- * is pinned on.
+ * Returns the merge for a pack key that is a record. Each key a later pack gives replaces an earlier one's and the
+ * rest stay, and `list` names the key in problems.
  */
 export function mergedByKey<G, P, T>(
   list: string,
@@ -490,9 +517,10 @@ export function mergedByKey<G, P, T>(
 }
 
 /**
- * A pack key that is a list with no ids, such as `saveable`: each pack's
- * entries go after the ones before. `list` names it for the problems it is pinned on. An entry with an `id` replaces an earlier
- * one with that id, in its place, so a pack can change one it didn't write.
+ * Returns the merge for a pack key that is a list without required ids, such as `saveable`. Each pack's entries go
+ * after those before, and `list` names the key in problems.
+ *
+ * An entry with an `id` replaces an earlier one with that id in its place, so a pack can change one it didn't write.
  */
 export function appended<G, P, T extends { id?: string }>(
   list: string,
@@ -528,7 +556,7 @@ export function appended<G, P, T extends { id?: string }>(
   }
 }
 
-/** Several pack keys of one feature, merged as one: each part merges its own key. */
+/** Returns one merge for several pack keys of one feature. Each part merges its own key. */
 export function together<G, P>(
   ...parts: { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<G, P> }[]
 ): { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<G, P> } {

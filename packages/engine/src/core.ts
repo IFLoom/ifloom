@@ -41,7 +41,7 @@ import type { CommandEntry, ConditionEntry, EffectEntry } from './features/featu
 
 let context: FeatureContext | undefined
 
-/** The core's helpers, as features are lent them. */
+/** Returns the core's helpers that features get as `cx`, built the first time they are asked for. */
 export function featureContext(): FeatureContext {
   return (context ??= {
     holds,
@@ -66,7 +66,7 @@ export function featureContext(): FeatureContext {
 
 let effectContexts: [EffectContext, EffectContext] | undefined
 
-/** The context an effect applies with: `ending` while a turn is ending. */
+/** Returns the context an effect applies with. `ending` is true while a turn is ending. */
 export function effectContext(ending: boolean): EffectContext {
   effectContexts ??= [
     { ...featureContext(), ending: false },
@@ -75,7 +75,7 @@ export function effectContext(ending: boolean): EffectContext {
   return effectContexts[ending ? 1 : 0]
 }
 
-/** The context a command is asked about and run with: the open scene, rendered once. */
+/** Returns the context a command is checked and run with, which renders the open scene once. */
 export function commandContext(rendered: Rendering): CommandContext {
   return {
     ...featureContext(),
@@ -164,8 +164,8 @@ const callEffect: EffectEntry<Effect> = {
 }
 
 /**
- * Thrown by `newGame`'s run, from wherever it runs (on its own, or sent by a
- * choice), and caught by `apply`, which makes the new game. Internal.
+ * The error the `newGame` command throws from wherever it runs, on its own or sent by a choice. `apply` catches it and
+ * makes the new game. Internal.
  */
 export class StartOver extends Error {
   constructor() {
@@ -209,14 +209,16 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
 }
 
 /**
- * Every kind of condition, effect and command, by its key: the core's and the
- * features'. Typed complete, so a kind with no entry fails to compile here.
+ * The tables of every kind of condition, effect and command, the core's and the features', by key. Internal.
+ *
+ * They are typed complete, so a kind with no entry fails to compile here.
  */
 export const TABLES = withCore<CoreConditions, CoreEffects, CoreCommands>({ conditions, effects, commands })
 
 // No kind is both the core's and a feature's. Each line is `true` only while that is so.
 // Each Extract is `never` while that holds, which is the point; the type-aware lint reads it as a redundant union.
 /* oxlint-disable typescript/no-redundant-type-constituents, typescript/no-duplicate-type-constituents */
+/** A compile-time check that no kind is both the core's and a feature's. Internal. */
 export const coreAndFeaturesApart: [
   | Extract<keyof CoreConditions, keyof FeatureConditions>
   | Extract<keyof CoreEffects, keyof FeatureEffects>
@@ -226,42 +228,42 @@ export const coreAndFeaturesApart: [
   : false = true
 /* oxlint-enable typescript/no-redundant-type-constituents, typescript/no-duplicate-type-constituents */
 
-/** Every kind of condition, by the key that tells it apart. */
+/** The keys of every kind of condition. */
 export const CONDITION_KEYS = Object.keys(TABLES.conditions) as ConditionKey[]
-/** Every key that tells an effect apart. */
+/** The keys of every effect. */
 export const EFFECT_KEYS = Object.keys(TABLES.effects) as EffectKey[]
-/** Every type of command. */
+/** The types of every command. */
 export const COMMAND_TYPES = Object.keys(TABLES.commands) as CoreCommandType[]
 type CoreCommandType = keyof CoreCommands | keyof FeatureCommands
 
 /**
- * The kind keys a condition has: one for a well-formed one, none or several
- * for one the checker reports. A call in short (`{ 'quests/done': … }`) has none.
+ * Returns the kind keys a condition has, one for a well-formed condition and none or several for one the checker
+ * reports. A call in the short form (`{ 'quests/done': … }`) has none.
  */
 export function conditionKeys(condition: Condition): ConditionKey[] {
   return Object.keys(condition).filter((key): key is ConditionKey => Object.hasOwn(TABLES.conditions, key))
 }
 
-/** The entry for a condition's one kind, or a call's, or undefined for a condition with neither or several kinds. */
+/** Returns the table entry for a condition's one kind, or a call's. Returns undefined for a condition with no kind or several. */
 export function conditionEntry(condition: Condition): ConditionEntry<Condition> | undefined {
   const kinds = conditionKeys(condition)
   if (kinds.length === 1) return TABLES.conditions[kinds[0]] as ConditionEntry<Condition>
   return !kinds.length && customCall(condition) ? callCondition : undefined
 }
 
-/** The keys an effect has that tell effects apart: one for a well-formed one, none for a call in short, several for one the checker reports. */
+/** Returns the keys an effect has that tell effects apart, one for a well-formed effect and none for a call in the short form. */
 export function effectKeys(effect: object): EffectKey[] {
   return Object.keys(effect).filter((key): key is EffectKey => Object.hasOwn(TABLES.effects, key))
 }
 
-/** The entry for an effect's one key, or a call's, or undefined for an effect with neither or several keys. */
+/** Returns the table entry for an effect's one key, or a call's. Returns undefined for an effect with no key or several. */
 export function effectEntry(effect: Effect): EffectEntry<Effect> | undefined {
   const keys = effectKeys(effect)
   if (keys.length === 1) return TABLES.effects[keys[0]] as EffectEntry<Effect>
   return !keys.length && customCall(effect) ? callEffect : undefined
 }
 
-/** The entry for a command's type, or undefined for a type the engine doesn't have. */
+/** Returns the table entry for a command's type, or undefined for a type the engine doesn't have. */
 export function commandEntry(command: { type: string }): CommandEntry<Command> | undefined {
   return Object.hasOwn(TABLES.commands, command.type) ? (TABLES.commands[command.type as CoreCommandType] as CommandEntry<Command>) : undefined
 }

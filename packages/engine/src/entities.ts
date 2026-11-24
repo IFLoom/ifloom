@@ -7,9 +7,8 @@ import type { EntityUi, Ui } from './features/ui.ts'
 import type { WordShape } from './words.ts'
 
 /**
- * The traits plugins give meaning to, by trait id, with the data each one
- * takes. Empty here: a plugin adds its own by augmenting it, which types
- * `declaredTrait` and the `traits` an entity, a kind or content writes.
+ * The registry of the traits plugins declare, by trait id, with the data each takes. A plugin augments it to type
+ * `declaredTrait` and the `traits` field of entities, kinds and `traits` tables.
  *
  * ```ts
  * declare module '@ifloom/engine' {
@@ -22,190 +21,194 @@ import type { WordShape } from './words.ts'
 // oxlint-disable-next-line typescript/no-empty-interface, typescript/no-empty-object-type -- plugins augment it; a type alias can't be
 export interface TraitRegistry {}
 
-/** The data a trait takes: what `TraitRegistry` says for an id a plugin declared, and `unknown` for any other. */
+/** The data trait `K` takes, as `TraitRegistry` declares it, or `unknown` for an undeclared id. */
 export type TraitData<K extends string> = K extends keyof TraitRegistry ? TraitRegistry[K] : unknown
 
 /**
- * A trait's data on the entities that have it, by trait id and then entity:
- * `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. In
- * content, rows that give an entity a trait, over what it declares itself;
- * on a loaded game, every entity's traits, worked out.
+ * A table of trait data by trait id and then entity, such as `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`.
+ *
+ * In content, its rows give entities a trait over the entity's own. On a loaded game, it holds every entity's traits,
+ * worked out.
  */
 export type TraitTable = { [K in keyof TraitRegistry]?: Record<EntityRef, TraitRegistry[K]> } & Record<string, Record<EntityRef, unknown>>
 
-/** What a trait's `check` is handed beside the data: the game, and the entity the data is on. */
-export type TraitTools = { game: Game; ref: EntityRef }
+/** The tools a trait's `check` and `references` get beside the data. */
+export type TraitTools = {
+  /** The loaded game. */
+  game: Game
+  /** The entity the data is on. */
+  ref: EntityRef
+}
 
 /**
- * A trait a plugin declares, in its `traits`: a named piece of data entities
- * carry, which the plugin gives meaning. Its id is the plugin's own id, `/`
- * and a name. The game declares its own in `rules.traits`, with ids that
- * have no `/`. Name `K` to have the data typed, as `TraitRegistry` says for it:
+ * A trait a plugin declares in its `traits`, a named piece of data entities carry that the plugin gives meaning. The
+ * game declares its own in `rules.traits`, with ids that have no `/`.
+ *
+ * Name `K` to type the data as `TraitRegistry` declares it, as in
  * `const washable: TraitDef<'laundry/washable'> = { id: 'laundry/washable', ... }`.
  */
 export type TraitDef<K extends string = string, S = unknown> = {
+  /** The trait's id, the plugin's id, `/` and a name, such as `'laundry/washable'`. */
   id: K
-  /** What is wrong with the data on one entity, by a rule of the plugin's own: `['a slot needs a name']`. Asked by the content checker. */
+  /** Returns the problems with the data on one entity by the plugin's own rules, such as `['a slot needs a name']`. The content checker calls it. */
   check?(data: TraitData<K>, tools: TraitTools): readonly string[]
   /**
-   * What the data names, for the content checker to resolve: a slot, a scene,
-   * a prose key. `tools.ref` is the entity it is on, for a condition in the
-   * data that names it as `'$'`.
+   * Returns the references the trait's data makes, such as a slot, a scene or a prose key, for the content checker to
+   * resolve.
+   *
+   * `tools.ref` is the entity the data is on, for a condition that names it as `'$'`.
    */
   references?(data: TraitData<K>, tools: TraitTools): readonly Reference[]
   /**
-   * Which fields of the data are words a player reads, for a translation's
-   * `words` table: `{ closed: true, body: 'blocks' }`. Each is keyed
-   * `entity.<ref>.traits.<id>.<field>`, or under the kind for a kind's default. See `WordShape`.
+   * The fields of the data a player reads, for a translation's words table, such as `{ closed: true, body: 'blocks' }`.
+   * Each is keyed `entity.<ref>.traits.<id>.<field>`, or under the kind for a kind's default. See `WordShape`.
    */
   words?: WordShape
   /**
-   * For the rare trait that keeps state of its own on each entity, such as
-   * the uses left in a torch: where it starts, from the entity's data. Read
-   * with `traitState` and written with `setTraitState`; the save keeps it
-   * only once it is written.
+   * The trait's own state on each entity, such as the uses left in a torch, with `start` giving its value from the
+   * data. The save keeps it only once play writes it.
+   *
+   * Read it with `traitState` and write it with `setTraitState`.
    */
   state?: { start(data: TraitData<K>): S }
 }
 
 /**
- * A kind of thing the game keeps several of, each with its own stats and
- * kv keys: the staff of a café, the dishes on its menu, the rooms of a
- * house. A stat declared with `of: 'staff'` belongs to every member of staff
- * rather than to the player.
+ * A kind of entity the game declares in `kinds`, such as the staff of a café or the dishes on its menu. Each entity of
+ * the kind has its own stats and kv keys.
+ *
+ * So a stat declared with `of: 'staff'` belongs to each member of staff, not to the player.
  */
 export type KindDef = {
+  /** The kind's id, the part before the `:` in each of its entity references. */
   id: string
-  /** What the player reads for one: "Member of staff". */
+  /** The kind's label for one entity, as the player reads it, such as "Member of staff". */
   label: string
-  /** For more than one: "Staff". The label if left out. */
+  /** The kind's label for more than one, such as "Staff". The `label` if left out. */
   plural?: string
-  /** Each one is one particular thing, such as a person, rather than a sort of thing, such as a dish. */
+  /**
+   * The kind's unique mark. True when each entity is one particular thing that can hold others, such as a person, and
+   * false when its things stack, such as dishes.
+   */
   unique?: boolean
   /**
-   * Whether the view lists the kind's entities: `true`, `false`, or a
-   * condition asked for each, with `'$'` as that one. A game's own kinds are
-   * listed if left out; a plugin's are not, unless the plugin says.
+   * The kind's listing rule for the view, `true`, `false` or a condition asked of each entity with `'$'` as it. A
+   * game's kinds are listed if left out, and a plugin's are not.
    */
   listed?: boolean | Condition
-  /** Words every one of the kind has, before its own `tags`. */
+  /** The tags every entity of the kind has, before its own `tags`. */
   tags?: string[]
   /**
-   * Named conditions asked for each listed entity, with `'$'` as that one,
-   * for the view's `flags`: `{ met: { 'cast/met': { character: '$' } } }`.
+   * The kind's flags, named conditions asked of each listed entity with `'$'` as it, such as
+   * `{ met: { 'cast/met': { character: '$' } } }`. The view answers them in each entity's `flags`.
    */
   flags?: Record<string, Condition>
   /**
-   * Traits every one of the kind has, by trait id: defaults its entities
-   * start from. Where an entity gives the same trait, an object here is laid
-   * under the entity's, field by field; anything else is replaced whole.
+   * The default traits of every entity of the kind, by trait id. An entity's own object for a trait is laid over this
+   * one field by field, and any other value replaces it whole.
    */
   traits?: { [K in keyof TraitRegistry]?: Partial<TraitRegistry[K]> } & Record<string, unknown>
-  /** Presentation hints for the UI, for every one of the kind, under each entity's own. See `EntityUi`. */
+  /** The ui hints of every entity of the kind, under each entity's own. See `EntityUi`. */
   ui?: Ui<EntityUi>
 }
 
-/** One thing of a kind, as content declares it: there from the start of the game. */
+/** An entity the game declares in `entities`, there from the start of the game. Its id is unique within its kind. */
 export type EntityDef = {
-  /** Unique within its kind. */
+  /** The entity's id, unique within its kind. */
   id: string
-  /** Its kind's id. */
+  /** The id of the entity's kind. */
   of: string
-  /** What the player reads: "Ana". Prose tokens are filled in when it is read. */
+  /** The entity's name, as the player reads it, such as "Ana". The engine fills its tokens when it reads it. */
   name: string
-  /** A line or two about it, tokens filled in as for the name. */
+  /** The entity's description, a line or two the player reads, with its tokens filled as the name's are. */
   description?: string
-  /** Its picture, through `artSrc`. */
+  /** The entity's picture, a path in the game's `art/` folder or a URL, read through `artSrc`. */
   image?: string
-  /** Words a UI or a plugin can sort or pick it by, after its kind's. */
+  /** The entity's tags, after its kind's, which a UI or a plugin can sort or filter it by. */
   tags?: string[]
-  /** Whether the view lists it, asked with `'$'` as it. Always, if left out. */
+  /** The entity's visibility condition, asked with `'$'` as it, which narrows its kind's `listed`. Always visible if left out. */
   visible?: Condition
-  /** Where its stats start, where they differ from each stat's `start`. */
+  /** The entity's starting stats, where they differ from each stat's `start`. */
   stats?: Record<string, number>
-  /** Its kv keys at the start. */
+  /** The entity's starting kv keys. */
   kv?: Record<string, KvValue>
   /**
-   * Who holds it at the start: a holder (`'player'`, or a unique entity such
-   * as `'character:ava'`) for one, or how many each holds:
-   * `{ player: 2, 'place:larder': 6 }`. Held by nobody if left out.
+   * The entity's starting holder, such as `'player'` or a unique entity like `'character:ava'`, or a count for each
+   * holder (`{ player: 2, 'place:larder': 6 }`). Held by no one if left out.
    */
   at?: Placement
   /**
-   * Its traits, by trait id: `{ 'laundry/washable': { temp: 30 } }`.
-   * Over its kind's, and under a row for it in content's `traits` table. An
-   * object is laid over its kind's field by field, so it gives only the
-   * fields that differ.
+   * The entity's traits, by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. They go over its kind's and
+   * under a content `traits` row for the entity, and an object merges with its kind's field by field.
    */
   traits?: { [K in keyof TraitRegistry]?: Partial<TraitRegistry[K]> } & Record<string, unknown>
-  /** Presentation hints for the UI, laid over its kind's field by field, carried to the view as written. See `EntityUi`. */
+  /** The entity's ui hints, laid over its kind's field by field and carried to the view. See `EntityUi`. */
   ui?: Ui<EntityUi>
 }
 
 /**
- * What play has changed about one entity, as the save keeps it. A declared
- * entity has no record until something changes it, and reads the rest from
- * its declaration; one created in play keeps the name it was given.
+ * The state a save keeps for one entity, only the fields play changed. A declared entity has no record until play
+ * changes it, and reads every other field from content.
  */
 export type EntityState = {
-  /** The name it was created with. A declared entity's name is read from content. */
+  /** The name the entity was made with in play. A declared entity's name is read from content. */
   name?: string
-  /** The description it was created with, as written. */
+  /** The description the entity was made with in play. */
   description?: string
-  /** The picture it was created with, as written. */
+  /** The picture the entity was made with in play. */
   image?: string
   /**
-   * The entity it was created like: what it doesn't have itself (its name,
-   * description, picture, tags, stats, kv and traits) is read from that one.
+   * The entity the entity was made like. The fields it doesn't have itself (name, description, picture, tags, stats,
+   * kv and traits) are read from that one.
    */
   like?: EntityRef
-  /** Tags it was created with, after its kind's and its `like`'s. */
+  /** The tags the entity was made with, after its kind's and its `like`'s. */
   tags?: string[]
-  /** Trait data it was created with, by trait id, over its `like`'s or its kind's. Its traits' state is in `traits`. */
+  /** The trait data the entity was made with, by trait id, over its `like`'s or its kind's. Its traits' state is in `traits`. */
   traitData?: Record<string, unknown>
-  /** Stats changed in play, by id. Others read from the declaration, then the stat's `start`. */
+  /** The entity's stats changed in play, by id. Others are read from its definition, then from the stat's `start`. */
   stats?: Stats
-  /** kv keys set in play. Others read from the declaration. */
+  /** The entity's kv keys set in play. Others are read from its definition. */
   kv?: Record<string, KvValue>
-  /** The state of its traits that keep one, by trait id, once play changed it. See `traitState`. */
+  /** The state of the entity's traits that keep one, by trait id, once play changed it. See `traitState`. */
   traits?: Record<string, unknown>
 }
 
 /**
- * Which entity, as content names it: `'staff:ana'`, its kind and its id, so
- * a bare id or a typo with no `:` fails to compile where a reference is
- * wanted. Inside an `each` or a `count`'s `where`, content writes `'$'` for
- * the one being looked at, in fields typed as plain strings.
+ * A reference to an entity, its kind and its id joined by `:`, such as `'staff:ana'`. A bare id or a typo with no `:`
+ * fails to compile where a reference is wanted.
+ *
+ * Inside an `each` or a `count`'s `where`, content writes `'$'` for the entity being looked at, in fields typed as
+ * plain strings.
  */
 export type EntityRef = `${string}:${string}`
 
 /**
- * Who holds things: `'player'`, a unique entity (`'character:ava'`), or
- * `'you'`, whoever the player is playing now (the player, unless a `you`
- * effect switched to a protagonist).
+ * A holder of things, `'player'`, a unique entity (`'character:ava'`) or `'you'`. `'you'` is whoever the player is
+ * playing now, the player unless a `you` effect switched to a protagonist.
  */
 export type Holder = EntityRef | typeof PLAYER | typeof YOU
 
-/** Where a thing is placed: one holder for one of it, or how many each holder has. */
+/** A thing's placement, one holder for one of it or a count for each holder. */
 export type Placement = Holder | Partial<Record<Holder, number>>
 
-/** The player as a holder: what is theirs whoever they are playing. */
+/** The holder id of the player, whose things stay theirs whoever they are playing. */
 export const PLAYER = 'player'
 
-/** Whoever the player is playing now: the protagonist the `you` effect last chose, or the player. */
+/** The holder id of whoever the player is playing now, the protagonist the `you` effect last chose or else the player. */
 export const YOU = 'you'
 
-/** The current entity inside `each` and `where`. */
+/** The reference content writes for the current entity inside an `each` or a `count`'s `where`. */
 export const CURRENT = '$'
 
 /** The kind a bare speaker id is read as first: the cast's. */
 const SPEAKER_KIND = 'character'
 
 /**
- * The entity a speaker id names, if it names one: a reference as written
- * (`'character:ava'`, `'you'` for whoever the player is playing), or a bare id
- * as `character:<id>`, else the one entity the game declares with that id.
- * Undefined when it names none. A phrase's arguments are read this way too.
+ * Returns the entity a speaker id names, or undefined when it names none. A phrase's arguments are read the same way.
+ *
+ * A reference (`'character:ava'`, or `'you'` for whoever the player is playing) names itself. A bare id names
+ * `character:<id>`, else the one entity the game declares with that id.
  */
 export function speakerRef(state: GameState, game: Game, id: string): EntityRef | undefined {
   if (id === YOU) {
@@ -221,38 +224,37 @@ export function speakerRef(state: GameState, game: Game, id: string): EntityRef 
   return hasEntity(state, game, only) ? only : undefined
 }
 
-/** Split `'staff:ana'` into its kind and id; undefined if it is not one. Takes any string, as content writes them. */
+/** Returns an entity reference such as `'staff:ana'` split into its kind and id, or undefined when the string isn't one. */
 export function parseRef(ref: string): { kind: string; id: string } | undefined {
   const at = ref.indexOf(':')
   if (at <= 0 || at === ref.length - 1) return undefined
   return { kind: ref.slice(0, at), id: ref.slice(at + 1) }
 }
 
-/** A kind the game or one of its plugins declares: a game that isn't loaded yet has its plugins' kinds only on them. */
+/** Returns the kind with this id from the game or its plugins, or undefined when none declares it. It also reads a game not yet loaded. */
 export function kindOf(game: Pick<Game, 'kinds' | 'plugins'>, id: string): KindDef | undefined {
   return game?.kinds?.find((kind) => kind.id === id) ?? game?.plugins?.flatMap((plugin) => plugin.content?.kinds ?? []).find((kind) => kind.id === id)
 }
 
-/** Whether an entity's kind is `unique`: each one is one particular thing, which can hold others. */
+/** Returns true when the entity's kind is `unique`, so each entity is one particular thing that can hold others. */
 export function isUnique(game: Pick<Game, 'kinds' | 'plugins'>, ref: string): boolean {
   const kind = parseRef(ref)?.kind
   return kind !== undefined && kindOf(game, kind)?.unique === true
 }
 
-/** Who `'you'` is now: the protagonist the `you` effect chose, or `'player'` when none was. */
+/** Returns the holder `'you'` stands for now, the protagonist the `you` effect chose or else `'player'`. */
 export function protagonist(state: GameState): Holder {
   return state.you ?? PLAYER
 }
 
-/** A holder as content writes it, made real: `'you'` is the protagonist, or the player. */
+/** Returns the holder a holder id stands for now, so `'you'` becomes the protagonist or the player. Any other id is returned unchanged. */
 export function resolveHolder(state: GameState, holder: string): string {
   return holder === YOU ? protagonist(state) : holder
 }
 
 /**
- * Whose stat or kv key an `of` names: an entity's reference, or undefined
- * for the player's. `'you'` is the protagonist, or the player when there is
- * none; `'player'` is the player.
+ * Returns the entity whose stat or kv key an `of` names, or undefined for the player's. `'you'` is the protagonist, or
+ * the player when there is none.
  */
 export function ownerOf(state: GameState, of: string | undefined): EntityRef | undefined {
   const who = of === undefined ? PLAYER : of === YOU ? protagonist(state) : of
@@ -279,20 +281,20 @@ function declared(game: Game | undefined): Declared {
   return found
 }
 
-/** The declaration of an entity the game has, if it declares it. */
+/** Returns the entity's definition from content, or undefined when the game doesn't declare it. */
 export function entityDef(game: Game | undefined, ref: string): EntityDef | undefined {
   return declared(game).byRef.get(ref)
 }
 
-/** The record the save keeps for an entity, if any. */
+/** Returns the record the save keeps for an entity, or undefined when it keeps none. */
 function recordOf(state: GameState, ref: string): EntityState | undefined {
   const parts = parseRef(ref)
   return parts ? state.entities?.[parts.kind]?.[parts.id] : undefined
 }
 
 /**
- * Whether an entity is in the game: one created in play while the save keeps
- * its record, one declared unless it was removed.
+ * Returns true when an entity is in the game. A declared entity is in until it is removed, and one made in play is in
+ * while the save keeps its record.
  */
 export function hasEntity(state: GameState, game: Game | undefined, ref: string): boolean {
   if (recordOf(state, ref)) return true
@@ -300,8 +302,8 @@ export function hasEntity(state: GameState, game: Game | undefined, ref: string)
 }
 
 /**
- * What play has changed about an entity: the save's record of it, `{}` for
- * a declared one nothing has changed. Undefined when it isn't in the game.
+ * Returns the save's record of an entity, or `{}` for a declared one play hasn't changed. Returns undefined when the
+ * entity isn't in the game.
  */
 export function entityOf(state: GameState, game: Game, ref: string): EntityState | undefined {
   if (!hasEntity(state, game, ref)) return undefined
@@ -309,9 +311,8 @@ export function entityOf(state: GameState, game: Game, ref: string): EntityState
 }
 
 /**
- * Every entity of a kind in the game, as references: the declared ones in
- * the order content gives them, then the ones created in play, in the order
- * they came.
+ * Returns every entity of a kind in the game, as references. Declared ones come first in content order, then those
+ * made in play in the order they were made.
  */
 export function entitiesOf(state: GameState, game: Game, kind: string): EntityRef[] {
   const removed = state.removed ?? []
@@ -333,9 +334,8 @@ function likeOf(state: GameState, ref: string, depth: number): EntityRef | undef
 }
 
 /**
- * An entity's kept stat, as play left it, else as the one it was created
- * `like` reads it, else as its declaration starts it. Undefined when none has
- * it: the stat's `start` then.
+ * Returns an entity's kept stat as play left it, else as its `like` reads it, else as its definition starts it.
+ * Returns undefined when none has it, so the stat's `start` applies.
  */
 export function entityStat(state: GameState, game: Game | undefined, ref: string, stat: string): number | undefined {
   return entityStatThrough(state, game, ref, stat, 0)
@@ -349,8 +349,8 @@ function entityStatThrough(state: GameState, game: Game | undefined, ref: string
 }
 
 /**
- * An entity's kv store as it reads: the keys of the one it was created
- * `like`, then its declaration's, with what play set laid over them.
+ * Returns an entity's kv store, the keys of its `like` and then its definition's, with the keys play set laid over
+ * them.
  */
 export function entityKv(state: GameState, game: Game, ref: string): Record<string, KvValue> {
   return entityKvThrough(state, game, ref, 0)
@@ -361,7 +361,7 @@ function entityKvThrough(state: GameState, game: Game | undefined, ref: string, 
   return { ...(like !== undefined ? entityKvThrough(state, game, like, depth + 1) : undefined), ...entityDef(game, ref)?.kv, ...recordOf(state, ref)?.kv }
 }
 
-/** An entity's tags: its kind's, then those of the one it was created `like`, then its own, each once. */
+/** Returns an entity's tags, its kind's, then its `like`'s, then its own, each once. */
 export function entityTags(state: GameState, game: Game, ref: string): string[] {
   return entityTagsThrough(state, game, ref, 0)
 }
@@ -379,9 +379,10 @@ function entityTagsThrough(state: GameState, game: Game, ref: string, depth: num
 }
 
 /**
- * An entity's name or description as written, before its tokens are filled:
- * what it was created with, then what the one it was created `like`
- * has, then its declaration's. `entityName` and `entityDescription` fill them.
+ * Returns an entity's name or description before its tokens are filled. It reads the one the entity was made with,
+ * then its `like`'s, then its definition's.
+ *
+ * `entityName` and `entityDescription` return them filled.
  */
 export function entityText(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'description'): string | undefined {
   return textThrough(state, game, ref, field, 0)
@@ -394,7 +395,7 @@ function textThrough(state: GameState, game: Game | undefined, ref: string, fiel
   return (like !== undefined ? textThrough(state, game, like, field, depth + 1) : undefined) ?? entityDef(game, ref)?.[field]
 }
 
-/** An entity's picture as written (before `artSrc`): the one it was created with, its declaration's, else that of the one it was created `like`. */
+/** Returns an entity's picture before `artSrc`, the one it was made with, else its definition's, else its `like`'s. */
 export function entityImage(state: GameState, game: Game, ref: string): string | undefined {
   return entityImageThrough(state, game, ref, 0)
 }
@@ -405,9 +406,8 @@ function entityImageThrough(state: GameState, game: Game | undefined, ref: strin
 }
 
 /**
- * An entity's presentation hints: its kind's, with those of the one it was
- * created `like` over them, then its own declaration's, field by field.
- * Undefined when none has any. The engine carries them to the view as written.
+ * Returns an entity's ui hints, its kind's with its `like`'s and then its definition's laid over them field by field.
+ * Returns undefined when none has any.
  */
 export function entityUi(state: GameState, game: Game, ref: string): Ui<EntityUi> | undefined {
   const kind = parseRef(ref)?.kind
@@ -423,19 +423,27 @@ function entityUiThrough(state: GameState, game: Game | undefined, ref: string, 
   return under && own ? { ...under, ...own } : (own ?? under)
 }
 
-/** What an entity is created with: a name or a `like` to read it from, and its own tags, traits, stats and kv. */
+/** The fields an entity is made with in play, a name or a `like` to read it from, and its own tags, traits, stats and kv. */
 export type CreatedFields = {
+  /** The new entity's name. */
   name?: string
+  /** The new entity's description. */
   description?: string
+  /** The new entity's picture. */
   image?: string
+  /** The entity the new one is made like, which it reads its other fields from. */
   like?: EntityRef
+  /** The new entity's own tags. */
   tags?: string[]
+  /** The new entity's own trait data, by trait id. */
   traits?: Record<string, unknown>
+  /** The new entity's starting stats, by id. */
   stats?: Record<string, number>
+  /** The new entity's starting kv keys. */
   kv?: Record<string, KvValue>
 }
 
-/** A new record for an entity created in play: what it was given, and nothing it reads through its `like`. */
+/** Returns the save's record for an entity made in play, with the fields it was given and none it reads through its `like`. */
 export function createdRecord(given: CreatedFields): EntityState {
   const record: EntityState = {}
   if (given.name !== undefined) record.name = given.name
@@ -449,7 +457,7 @@ export function createdRecord(given: CreatedFields): EntityState {
   return record
 }
 
-/** The state with one entity's record replaced. A record for an entity not there adds it, after the rest of its kind. */
+/** Returns the state with one entity's record replaced. A record for an entity not yet there is added after the rest of its kind. */
 export function writeEntity(state: GameState, ref: string, next: EntityState): GameState {
   const parts = parseRef(ref)
   if (!parts) return state
@@ -459,7 +467,7 @@ export function writeEntity(state: GameState, ref: string, next: EntityState): G
   }
 }
 
-/** The state without the record of one entity. */
+/** Returns the state without the record of one entity. */
 export function dropRecord(state: GameState, ref: string): GameState {
   const parts = parseRef(ref)
   if (!parts || !state.entities?.[parts.kind]?.[parts.id]) return state
@@ -469,9 +477,10 @@ export function dropRecord(state: GameState, ref: string): GameState {
 }
 
 /**
- * What is wrong with naming this stat on this owner, for the loader: a
- * kind's stat with no `of`, the player's stat with one, or another kind's.
- * `ref` may be `'kind:*'`, standing for any one of the kind.
+ * Returns the problem with naming this stat on this owner, or undefined when there is none. The problems are a kind's
+ * stat with no `of`, the player's stat with one, or another kind's stat.
+ *
+ * `ref` may be `'kind:*'`, standing for any entity of the kind.
  */
 export function statOwnerProblem(owner: string | undefined, stat: string, ref: string | undefined): string | undefined {
   // Whoever is played: the player or a protagonist of any kind, so either owner can be meant.
@@ -483,13 +492,13 @@ export function statOwnerProblem(owner: string | undefined, stat: string, ref: s
   return kind !== undefined && kind !== owner ? `stat "${stat}" belongs to ${owner}, not ${kind}` : undefined
 }
 
-/** The kind an `of` names, as a reference, when it names one rather than `'$'`. */
+/** Returns the kind reference an `of` makes, for the content checker, or an empty list when `of` is missing or `'$'`. */
 export function ofKind(ref: string | undefined): Reference[] {
   const parts = ref === undefined ? undefined : parseRef(ref)
   return parts ? [{ kind: parts.kind }] : []
 }
 
-/** Any one of a kind, for checking content written with `'$'` before it runs. */
+/** Returns a stand-in reference for any entity of a kind, for checking content written with `'$'` before it runs. */
 export function anyOf(kind: string): EntityRef {
   return `${kind}:*`
 }
@@ -511,12 +520,12 @@ function namesOne(node: object, key: string): boolean {
 }
 
 /**
- * Put a real reference where content wrote `'$'`: in every `of`, `entity`,
- * `at` and `like` of a condition or an effect list, a `remove`, `move` or
- * `you` effect's target, a `move`'s `from` and `to`, and anywhere in a
- * plugin's or the game's call's arguments or what a `create` is made `with`
- * (`{ 'cast/met': { character: '$' } }`). A nested `each`'s effects and a
- * nested `count`'s `where` are left alone: their `'$'` is their own.
+ * Returns a condition or effects with `ref` in place of each `'$'`. A nested `each`'s effects and a nested `count`'s
+ * `where` keep their own `'$'`.
+ *
+ * It replaces `'$'` in every `of`, `entity`, `at` and `like`, in a `remove`, `move` or `you` effect's target, in a
+ * `move`'s `from` and `to`, and anywhere in a call's arguments or a `create`'s `with`
+ * (`{ 'cast/met': { character: '$' } }`).
  */
 export function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | undefined>(value: T, ref: EntityRef): T {
   const walk = (node: unknown, inArgs: boolean): unknown => {
@@ -546,7 +555,7 @@ function layTrait(under: unknown, over: unknown): unknown {
   return isRecord(under) && isRecord(over) ? { ...under, ...over } : over
 }
 
-/** What a game's traits are worked out from: its kinds, its entities and its `traits` table. */
+/** The parts of a game its traits are worked out from, its kinds, its entities and its `traits` table. */
 export type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
 
 /** A kind's default for a trait, for an entity of that kind. */
@@ -558,12 +567,11 @@ function kindTrait(game: TraitSource, ref: string, id: string): unknown {
 const traitCache = new WeakMap<object, Record<string, Record<EntityRef, unknown>>>()
 
 /**
- * Every trait on every entity that has it, by trait id and then entity: a
- * row in the `traits` table, or else the entity's own, laid over its kind's
- * default. Declared entities first, in content order, then table rows for
- * entities nobody declares, which the checker reports. Working it out again
- * from its own result gives the same, so a loaded game, whose `traits`
- * already holds it, reads the same through here.
+ * Returns every trait on every entity that has it, by trait id and then entity. Each is a `traits` table row, or else
+ * the entity's own, laid over its kind's default.
+ *
+ * Declared entities come first in content order, then table rows for entities no one declares, which the checker
+ * reports. Working it out again from its own result gives the same, so a loaded game reads the same through here.
  */
 export function resolveTraits(game: TraitSource): Record<string, Record<EntityRef, unknown>> {
   let out = traitCache.get(game)
@@ -594,12 +602,11 @@ export function resolveTraits(game: TraitSource): Record<string, Record<EntityRe
 }
 
 /**
- * The data of one trait on one entity, as content declares it, typed as
- * `TraitRegistry` says for the id; undefined when it doesn't have it. A row in
- * content's `traits` table wins, then the entity's own `traits`, each laid
- * over its kind's default. It reads content only, for a check or anything
- * else with no state: an entity created in play has its kind's here, and
- * `traitOf` adds what it was created with. It doesn't ask whether the
+ * Returns the data of one trait on one entity from content alone, typed by `TraitRegistry`, or undefined when it lacks
+ * the trait. Use it for a check, or anywhere with no state.
+ *
+ * A row in a content `traits` table wins, then the entity's own `traits`, each laid over its kind's default. An entity
+ * made in play gets its kind's default here, and `traitOf` adds the data it was made with. It doesn't ask whether the
  * entity is still in the game.
  */
 export function declaredTrait<K extends string>(game: TraitSource, ref: string, id: K): TraitData<K> | undefined {
@@ -609,11 +616,10 @@ export function declaredTrait<K extends string>(game: TraitSource, ref: string, 
 }
 
 /**
- * The data of one trait on one entity as play reads it, typed as
- * `TraitRegistry` says for the id: `declaredTrait` for a declared entity;
- * for one created in play, the trait data it was created with laid over that
- * of the one it was created `like` (or else its kind's default). Undefined
- * when it doesn't have the trait.
+ * Returns the data of one trait on one entity in play, typed by `TraitRegistry`, or undefined when it lacks the trait.
+ *
+ * A declared entity reads as `declaredTrait` does. An entity made in play reads the trait data it was made with, laid
+ * over its `like`'s, or else over its kind's default.
  */
 export function traitOf<K extends string>(state: GameState, game: Game, ref: string, id: K): TraitData<K> | undefined {
   return traitThrough(state, game, ref, id, 0) as TraitData<K> | undefined
@@ -628,16 +634,15 @@ function traitThrough(state: GameState, game: Game | undefined, ref: string, id:
   return layTrait(under, record.traitData?.[id])
 }
 
-/** Every declared entity that has a trait, as references, in content order: content only, as `declaredTrait` reads. */
+/** Returns every declared entity that has a trait, as references in content order. It reads content alone, as `declaredTrait` does. */
 export function declaredWithTrait(game: TraitSource, id: string): EntityRef[] {
   const declaredRefs = declared(game as Game).byRef
   return Object.keys(resolveTraits(game)[id] ?? {}).filter((ref) => declaredRefs.has(ref)) as EntityRef[]
 }
 
 /**
- * Every entity in the game that has a trait, as references, as play reads
- * it: declared ones not removed, in content order, then those created in
- * play (with their kind's trait, their `like`'s or their own).
+ * Returns every entity in the game that has a trait, as references. Declared ones not removed come first in content
+ * order, then those made in play with their kind's, their `like`'s or their own trait.
  */
 export function withTrait(state: GameState, game: Game, id: string): EntityRef[] {
   const declaredRefs = declared(game).byRef
@@ -646,9 +651,8 @@ export function withTrait(state: GameState, game: Game, id: string): EntityRef[]
 }
 
 /**
- * Every entity in the game, as references: the declared ones in content
- * order (but those removed), then those created in play, kind by kind in the
- * order each kind first had one, each kind's in the order they came.
+ * Returns every entity in the game, as references. Declared ones not removed come first in content order, then those
+ * made in play, kind by kind in the order each kind first had one.
  */
 export function everyEntity(state: GameState, game: Game | undefined): EntityRef[] {
   const removed = new Set(state.removed ?? [])
@@ -661,7 +665,7 @@ export function everyEntity(state: GameState, game: Game | undefined): EntityRef
   return [...first, ...created]
 }
 
-/** The trait declared by this id, if any: a plugin's of the game, or the game's own in its `rules.traits` for an id with no `/`. */
+/** Returns the trait with this id, a plugin's or, for an id with no `/`, the game's own in `rules.traits`. Returns undefined when none declares it. */
 export function traitDef(game: Pick<Game, 'plugins' | 'rules'> | undefined, id: string): TraitDef<string, unknown> | undefined {
   const at = id.indexOf('/')
   if (at < 0) return game?.rules?.traits?.find((trait) => trait.id === id)
@@ -671,9 +675,10 @@ export function traitDef(game: Pick<Game, 'plugins' | 'rules'> | undefined, id: 
 }
 
 /**
- * The state one entity keeps for one of its traits: what play last wrote,
- * or else where the trait's `state.start` says it starts. Undefined when the
- * entity isn't in the game, lacks the trait, or the trait keeps no state.
+ * Returns the state one entity keeps for one of its traits, the value play last wrote or else the trait's
+ * `state.start`.
+ *
+ * It returns undefined when the entity isn't in the game, lacks the trait, or the trait keeps no state.
  */
 export function traitState<S = unknown>(state: GameState, game: Game, ref: string, id: string): S | undefined {
   if (!hasEntity(state, game, ref)) return undefined
@@ -684,7 +689,7 @@ export function traitState<S = unknown>(state: GameState, game: Game, ref: strin
   return traitDef(game, id)?.state?.start(data) as S | undefined
 }
 
-/** The state with one entity's state for one trait replaced. An entity not in the game is left alone. */
+/** Returns the state with one entity's state for one trait replaced. The state is unchanged for an entity not in the game. */
 export function setTraitState(state: GameState, game: Game, ref: string, id: string, next: unknown): GameState {
   if (!hasEntity(state, game, ref)) return state
   const record = recordOf(state, ref) ?? {}

@@ -23,60 +23,62 @@ export type { AutosaveOptions } from './runner/saves.ts'
 export type { BacklogEntry, BacklogOptions } from './runner/backlog.ts'
 export type { HistoryOptions } from './runner/history.ts'
 
+/**
+ * Settings for `createRunner`. Undo, the backlog, saving, autosave and the profile are each off when left out.
+ */
 export type RunnerOptions = {
-  /** Where `save`, `load` and autosave write. Needed for any of them. */
+  /** The save store that `save`, `load` and autosave write to. Without it, `save` and `load` refuse and autosave does nothing. */
   saves?: Saves
-  /** Keep states for undo and redo: `true` for 50 steps back, or a `HistoryOptions`. Off if left out. */
+  /** The undo and redo settings, `true` for 50 steps back or a {@link HistoryOptions}. Undo is off if left out. */
   history?: HistoryOptions | boolean
-  /** Keep what was shown, scene by scene, for a backlog screen: `true` for 200 entries, or a `BacklogOptions`. Off if left out. */
+  /** The backlog settings, `true` for 200 entries or a {@link BacklogOptions}. The backlog is off if left out. */
   backlog?: BacklogOptions | boolean
-  /** Save to a slot of its own (`'auto'`) after every command, or when the scene or the turn changes. Needs `saves`. Off if left out. */
+  /** The autosave policy, which writes a slot of its own (`'auto'`) as the game goes on. It needs `saves`, and autosave is off if left out. */
   autosave?: AutosaveOptions
-  /** The clock for time played. `Date.now` if left out; tests pass their own. */
+  /** The clock that times play, in milliseconds. `Date.now` if left out, and tests pass their own. */
   now?: () => number
   /**
-   * Told the error when the driver fails: an autosave, `save`, `load`, any
-   * call through `runner.saves` or `runner.profile`, the first listing of the
-   * saves, or a profile write. Later writes still run; without this, a
-   * failure is dropped.
+   * The function the runner tells each error a save driver or the profile throws. Without it, the runner drops the error.
+   *
+   * It hears about an autosave, `save`, `load`, any call through `runner.saves` or `runner.profile`, the first listing of
+   * the saves and a profile write. The writes queued after a failed one still run.
    */
   onSaveError?: (error: unknown) => void
   /**
-   * What outlives a save: settings, `finished`, plugins' namespaces. Without
-   * one, nothing is written there, and a `ui` setting can't be changed.
+   * The profile that keeps what outlives a save, such as settings, `finished` and plugins' namespaces. Without one, the
+   * runner writes nothing there and refuses to change a `ui` setting.
    */
   profile?: Profile
 }
 
 /**
- * Everything needed to play a game back exactly: the state it started from and
- * every command since. The engine is deterministic, so `replay` gives the same
- * state every time — a bug report a developer can step through, or two
- * versions of a game played the same way and compared.
+ * A record of play, the state it started from and every command since. The engine is deterministic, so `replay` gives
+ * the same state from it every time.
+ *
+ * A log makes a bug report a developer can step through, or plays two versions of a game the same way to compare them.
  */
 export type CommandLog = {
-  /** The game's id, so a log isn't played against another game. */
+  /** The id of the game the log was played in, so it isn't played against another game. */
   game: string
-  /** The state the commands were applied to, in order. */
+  /** The state the log's first command was applied to. */
   start: GameState
-  /** Every command applied, in order, refused ones included. */
+  /** The log's commands, oldest first, refused ones included. */
   commands: Command[]
   /**
-   * The engine's `SCHEMA` the commands were written in. A log from before
-   * logs kept it has none, and is read as the oldest.
+   * The engine's `SCHEMA` the log's commands were written in. A log without one is read as the oldest schema.
    */
   schema?: number
-  /** Each plugin's `commandVersion` the commands were written in, by plugin id. */
+  /** The `commandVersion` of each plugin the log's commands were written in, by plugin id. */
   plugins?: Record<string, number>
 }
 
 /**
- * Play a command log back against a game. Its start comes in through
- * `loadState`, and its commands are carried forward from the versions the
- * log records, by the engine's command steps and each plugin's
- * `commandMigrations`, so a log from an older engine, plugin or game still
- * plays; the reason comes back when it can't. Commands that are refused are
- * skipped, as they were then.
+ * Returns the state a {@link CommandLog} ends in, played back against a game. A log that can't be read, such as one from
+ * a newer engine, gives the reason.
+ *
+ * The log's start comes in through `loadState`. The engine's command steps and each plugin's `commandMigrations` carry
+ * its commands forward from the versions the log records, so a log from an older engine, plugin or game still plays.
+ * A command that is refused is skipped, as it was when it was played.
  */
 export function replay(game: Game, log: CommandLog): Result<GameState> {
   const upgrade = commandUpgrade(game.plugins ?? [], { schema: log.schema, plugins: log.plugins })
@@ -89,185 +91,189 @@ export function replay(game: Game, log: CommandLog): Result<GameState> {
 }
 
 /**
- * What a helper started beside the runner reports, by its id, for a UI to
- * draw: `startUnlocks` from `@ifloom/plugin-unlocks` reports `unlocks`. A
- * helper types its own by augmenting this, as a plugin types its view in
- * `ViewRegistry`.
+ * The registry of helper reports, by helper id, that a helper augments to type its own. It is empty until a helper
+ * augments it, as `startUnlocks` from `@ifloom/plugin-unlocks` does for `unlocks`.
+ *
+ * A helper types its report here as a plugin types its view in `ViewRegistry`.
  */
 export interface HelperRegistry {}
 
-/** What the helpers report, by id: typed for each helper that declares itself in `HelperRegistry`. */
+/** The helpers' reports, by helper id. Each report a helper declares in {@link HelperRegistry} is typed, and the rest are `unknown`. */
 export type HelpersIn = { readonly [K in keyof HelperRegistry]?: HelperRegistry[K] } & Readonly<Record<string, unknown>>
 
 /**
- * Everything a UI draws from the runner, in one value: the view, the
- * settings, the backlog, whether undo and redo would do anything, the saves
- * and what the helpers report. `runner.snapshot()` gives it, and
- * `runner.subscribe` hands each new one to its listeners. It is a new object
- * whenever any part of it changes, and the same object until then, so a UI
- * that keeps it whole (Vue's `shallowRef`, React's `useSyncExternalStore`, a
- * Svelte store) draws again exactly when something changed.
+ * One value with all a UI renders from the runner, including the view, the settings, the backlog and the saves. It's a
+ * new object whenever a part changes, and the same object until then.
+ *
+ * `runner.snapshot()` returns it, and `runner.subscribe` passes each new one to its listeners. A UI that keeps it whole
+ * (Vue's `shallowRef`, React's `useSyncExternalStore`, a Svelte store) renders again exactly when something changed.
  */
 export type RunnerSnapshot = {
-  /** The state in play, as `runner.state`. */
+  /** The state in play, the same as `runner.state`. */
   readonly state: GameState
-  /** What a UI draws for that state, as `runner.view()`. */
+  /** The view of the state in play, the same as `runner.view()`. */
   readonly view: View
   /**
-   * Every setting the game declares, by id, with its value now. A `play`
-   * setting's comes from the game in play; a `ui` setting's from the
-   * profile, or its default until the profile has been read (`settled`) or
-   * without one. Stored values that no longer fit are read as the default.
+   * The value of each setting the game declares, by setting id. A stored value that no longer fits its setting reads as
+   * the default.
+   *
+   * A `play` setting's value comes from the game in play. A `ui` setting's value comes from the profile, or is its
+   * default without a profile or until the profile has been read (`settled`).
    */
   readonly settings: Readonly<Record<string, KvValue>>
-  /** What was shown, oldest first. Empty unless the backlog is on. */
+  /** The backlog's entries, oldest first. It is empty unless the backlog is on. */
   readonly backlog: readonly BacklogEntry[]
-  /** Whether `undo` would do anything. */
+  /** True when `undo` has a step to go back to. */
   readonly canUndo: boolean
-  /** Whether `redo` would do anything. */
+  /** True when `redo` has a step to go forward to. */
   readonly canRedo: boolean
   /**
-   * Every save in the runner's `saves`, as `saves.list()` gives them: newest
-   * first, then any that can't be read. Read once when the runner starts
-   * (`settled` waits for it), then kept up to date as the runner saves and
-   * as `runner.saves` writes and removes. Empty without `saves`.
+   * The saves in the runner's `saves`, newest first, then any that can't be read. It is empty without `saves`.
+   *
+   * The runner lists them once when it starts (`settled` waits for it). It keeps the list up to date as it saves and as
+   * `runner.saves` writes and removes.
    */
   readonly saves: readonly SaveListing[]
-  /** What the helpers started beside the runner report, by id, such as `unlocks`. See `setHelper`. */
+  /** The reports of the helpers started beside the runner, by helper id, such as `unlocks`. A helper sets its report with `setHelper`. */
   readonly helpers: HelpersIn
   /**
-   * The choice or button that led to the screen on show, as it was offered:
-   * its `id`, its `command` and its `ui` hints as written, so a UI can play
-   * the transition a choice asks for. Set when a command the runner runs
-   * changes the screen (`view.scene.key`), from the choices, inline actions
-   * and buttons of the view it was sent from, and kept while the screen
-   * stays. Null when nothing pressed led here: a tick, a command sent by
-   * hand, an undo, a redo, a load or a new game.
+   * The choice or action that led to the screen on show, as it was offered. A UI reads its `ui` hints to play the
+   * transition it asks for.
+   *
+   * The runner sets it when a command it runs changes the screen (`view.scene.key`), from the choices, inline actions
+   * and actions of the view the command was sent from, and keeps it while the screen stays. It is null after a tick, a
+   * command no choice or action offered, an undo, a redo, a load or a new game.
    */
   readonly pressed: RenderedChoice | null
   /**
-   * Whether the state on show came from a command the runner just ran, rather
-   * than an undo, a redo, a load or a new game. A UI animates what the
-   * player just did only while it's true, such as the dice of `view.rolls`.
+   * True when the state on show came from a command the runner just ran, and false after an undo, a redo, a load or a
+   * new game.
+   *
+   * A UI animates what the player just did, such as the dice of `view.rolls`, only while it's true.
    */
   readonly fresh: boolean
 }
 
 /**
- * The one object a UI drives, as `createRunner` (or `browserRunner` from `@ifloom/browser`) gives it.
- * Anything that can fail in a way a UI should expect (a refused command, an
- * empty slot, a setting with no profile to keep it) answers with a `Result`
- * and never throws.
+ * The object a UI drives a game through, returned by `createRunner` or by `browserRunner` from `@ifloom/browser`. A call
+ * that can fail in a way a UI should expect answers with a `Result` and never throws.
+ *
+ * A refused command, an empty slot and a setting with no profile to keep it are such failures.
  */
 export interface Runner {
   /** The game this runner plays. */
   readonly game: Game
-  /** The current state. */
+  /** The state in play. */
   readonly state: GameState
   /**
-   * What a UI draws for the current state. Built once per state: asked again
-   * for the same state, it hands back the same object, so a UI, the audio
-   * player and the backlog can all read it without building it again.
-   * Each plugin's view is shown its own profile namespace. When one of
-   * those changes, the view becomes a new object with that plugin's view
-   * built again, and listeners are told, though the state is the same.
+   * Returns the view of the state in play. It returns the same object for the same state, so a UI, the audio player and
+   * the backlog can all read it.
+   *
+   * Each plugin's view reads that plugin's profile namespace. When a namespace changes, the runner builds that plugin's
+   * view again into a new view object and tells listeners, though the state is the same.
    */
   view(): View
   /**
-   * Run a command: the new state, or why it was refused (the state is then
-   * left as it was). A `tick` is logged like any command, but undo steps
-   * over it, it adds nothing to the backlog, and it autosaves only when it
-   * changes the scene or the turn (for those policies). A `newGame`, sent
-   * on its own or by a choice, starts a new game as `newGame()` does,
-   * with the profile's play settings as last read.
+   * Runs a command and returns the next state. A refused command leaves the state as it was and returns the reason.
+   *
+   * The runner logs a `tick` like any command, but undo steps over it, it adds nothing to the backlog, and it autosaves
+   * only when it changes the scene or the turn. A `newGame`, sent on its own or by a choice, starts a new game as
+   * `newGame()` does, with the profile's play settings as last read.
    */
   apply(ref: CommandRef): Result<GameState>
-  /** Step back one command. False when there is nothing to undo. */
+  /** Steps back one command. Returns false when there is nothing to undo. */
   undo(): boolean
-  /** Step forward again after an undo. False when there is nothing to redo. */
+  /** Steps forward one command after an undo. Returns false when there is nothing to redo. */
   redo(): boolean
-  /** The start state and every command since, for `replay`. */
+  /** Returns the {@link CommandLog} of this game, its start state and every command since, for `replay`. */
   log(): CommandLog
-  /** Time played, in milliseconds, counting from any save loaded. */
+  /** Returns the time played, in milliseconds. It counts on from the time a loaded save recorded. */
   played(): number
   /**
-   * The saves this runner writes to, for a menu that reads, exports or
-   * imports them. Undefined without `saves`. What it writes and removes
-   * shows in the snapshot's `saves`. Like the store, it never rejects: when
-   * the driver fails, each call answers why and tells `onSaveError`.
+   * The save store this runner writes to, for a menu that reads, exports or imports saves. It is undefined without
+   * `saves`.
+   *
+   * Its writes and removals show in the snapshot's `saves`. Like the store, it never rejects. When the driver fails, each
+   * call answers why and tells `onSaveError`.
    */
   readonly saves: Saves | undefined
-  /** Whether the game turned on undo, and the backlog: what a menu should offer. */
+  /** The features a menu should offer, `undo` true when history is on and `backlog` true when the backlog is on. */
   readonly offers: { undo: boolean; backlog: boolean }
   /**
-   * Save to a slot now: what the save says about itself, or why it wasn't
-   * written (no `saves`, the game's `saveable` refuses it now, or the driver
-   * failed). `view().saving` says beforehand whether it would be refused.
+   * Saves the state in play to a slot and returns the save's {@link SaveMeta}. It fails with the reason when there are no
+   * `saves`, the game's `saveable` refuses saving now, or the driver fails.
+   *
+   * `view().saving` says beforehand whether a save would be refused.
    */
   save(slot: string, name?: string): Promise<Result<SaveMeta>>
   /**
-   * Put a save in play that did not come from a slot, one the player
-   * imported from a file (`saves.importText`), as `load` would.
+   * Puts a save in play that did not come from a slot, such as one the player imported from a file
+   * (`saves.importText`). It starts a fresh history, backlog and log, as `load` does.
    */
   restore(loaded: LoadedSave): void
   /**
-   * Load a slot: the state, a fresh history, backlog and log from it, and
-   * the time played it recorded. A failure says why: no `saves`, an empty
-   * slot, a save this game can't read, or the driver failed (told to
-   * `onSaveError` too).
+   * Loads a slot into play and returns the save. The runner starts a fresh history, backlog and log from it, and the
+   * time played it recorded.
+   *
+   * It fails with the reason when there are no `saves`, the slot is empty, this game can't read the save, or the driver
+   * fails. A driver's failure is told to `onSaveError` too.
    */
   load(slot: string): Promise<Result<LoadedSave>>
   /**
-   * Settles when every autosave and profile write so far has been written,
-   * and the profile first read for the settings and the plugins' views.
+   * Returns a promise that settles once every autosave and profile write so far is written. It also waits for the first
+   * listing of the saves and the first read of the profile.
    */
   settled(): Promise<void>
   /**
-   * The profile this runner writes settings and `finished` to, for a UI's own
-   * namespaces. Undefined without `profile`. It never rejects: a read the
-   * driver fails answers undefined, and a write it fails is dropped, each
-   * told to `onSaveError`.
+   * The profile this runner writes settings and `finished` to, which a UI can use for namespaces of its own. It is
+   * undefined without `profile`.
+   *
+   * It never rejects. A read the driver fails answers undefined, and a write it fails is dropped, each told to
+   * `onSaveError`.
    */
   readonly profile: Profile | undefined
   /**
-   * Change a setting of either kind, checked against its declaration. A
-   * `play` setting is sent as the `setting` command, so it changes the game
-   * in play, and the profile keeps it for the next new game. A `ui` setting
-   * is written to the profile only, and needs one. Listeners are told.
-   * The value set, or why it was refused.
+   * Changes a setting of either kind and returns the value set. A value its declaration refuses, or a `ui` setting
+   * without a profile, fails with the reason.
+   *
+   * The runner sends a `play` setting as the `setting` command, so it changes the game in play, and the profile keeps it
+   * for the next new game. It writes a `ui` setting to the profile only. Listeners are told either way.
    */
   setSetting(id: string, to: KvValue): Result<KvValue>
   /**
-   * Start a new game in place: fresh history, backlog and log, no time
-   * played. Play settings not given are the player's: the profile's, or
-   * without one the game in play's. The seed is random unless given. For
-   * New Game+, pass `carry: runner.state`.
+   * Starts a new game in place and returns its first state. The history, backlog, log and time played start fresh.
+   *
+   * Play settings not given are the player's, from the profile, or from the game in play without one. The seed is random
+   * unless given. For New Game+, pass `carry: runner.state`.
    */
   newGame(start?: StartOptions): Promise<GameState>
   /**
-   * Everything a UI draws, in one value: see `RunnerSnapshot`. The same
-   * object comes back until any part of it changes.
+   * Returns the {@link RunnerSnapshot}, one value with all a UI renders. The same object comes back until any part of it
+   * changes.
    */
   snapshot(): RunnerSnapshot
   /**
-   * Hear about every new snapshot: a change of state, of a setting, of what
-   * the view shows of the profile, of the saves, or of what a helper reports.
-   * Each listener is handed the new snapshot. Returns the way to stop.
+   * Calls a listener with each new snapshot and returns a function that stops it.
+   *
+   * A new snapshot comes with a change of state, of a setting, of the profile a view reads, of the saves, or of a
+   * helper's report.
    */
   subscribe(listener: (snapshot: RunnerSnapshot) => void): () => void
   /**
-   * Report what a helper started beside the runner is doing, under its id,
-   * in the snapshot's `helpers`: `startUnlocks` reports whether a code is
-   * being checked. Undefined takes it out. Listeners are told when it changes.
+   * Sets a helper's report under its id in the snapshot's `helpers`, and tells listeners when it changes. Undefined
+   * removes the report.
+   *
+   * `startUnlocks` reports this way whether it is checking a code.
    */
   setHelper<K extends string>(id: K, value: (K extends keyof HelperRegistry ? HelperRegistry[K] : unknown) | undefined): void
 }
 
 /**
- * The one object a UI drives. It wraps `apply` with what every game's UI
- * would otherwise build for itself — undo and redo, a backlog, a command log,
- * saving, loading and autosave — and tells listeners when the state changes.
- * Everything but the command log is off unless the game turns it on.
+ * Returns a {@link Runner} that plays a game from a start state. Undo, the backlog, saving, autosave and the profile are
+ * off unless {@link RunnerOptions} turns them on.
+ *
+ * The runner wraps `apply` with undo and redo, a backlog, a command log, saving, loading and autosave, and tells
+ * listeners when the state changes.
  */
 export function createRunner(game: Game, start: GameState, options: RunnerOptions = {}): Runner {
   const now = options.now ?? Date.now

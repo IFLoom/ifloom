@@ -2,27 +2,24 @@ import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
 
 /**
- * What outlives a save: the player's settings, whether they have finished the
- * game, and whatever plugins keep (achievements, say). One JSON object of
- * namespaces, kept at `<game id>.profile` in a save driver.
+ * The player's record that outlives a save, such as settings, whether they have finished the game, and plugins' records
+ * like achievements. It is one JSON object of namespaces, kept at `<game id>.profile` in a save driver.
  *
- * The engine uses two namespaces: `core:settings` (every setting's stored
- * value, by id) and `core:finished` (`{ at }`, when the game was first
- * finished). A UI uses `ui:` names (the React gate is `ui:gate`). A plugin
- * uses its own bare id, which can't hold a `:`, so the prefixes are reserved.
+ * The engine uses two namespaces, `core:settings` (each setting's stored value, by id) and `core:finished` (`{ at }`,
+ * when the game was first finished). A UI uses `ui:` names, such as the React UI's gate, `ui:gate`. A plugin uses its
+ * own bare id, which can't hold a `:`, so the prefixes are reserved.
  */
 export type Profile = {
-  /** What a namespace holds, or undefined if nothing does. */
+  /** Returns the value a namespace holds, or undefined if it holds none. */
   get: <T = unknown>(namespace: string) => Promise<T | undefined>
-  /** Store a value in a namespace. Undefined clears it. */
+  /** Stores a value in a namespace. Undefined clears it. */
   set: (namespace: string, value: unknown) => Promise<void>
   /**
-   * Change a namespace from what it holds now, with no other write in
-   * between. Return undefined (or the same value) to leave it. Resolves to
-   * what it holds afterwards.
+   * Changes a namespace from the value it holds now, with no other write in between, and returns the value it holds
+   * afterwards. Return undefined, or the same value, from `change` to leave it.
    */
   update: <T = unknown>(namespace: string, change: (current: T | undefined) => T | undefined) => Promise<T | undefined>
-  /** Hear about every write, with the namespace and its new value. Returns the way to stop. */
+  /** Calls a listener with the namespace and new value of every write, and returns a function that stops it. */
   subscribe: (listener: (namespace: string, value: unknown) => void) => () => void
 }
 
@@ -46,9 +43,10 @@ function renamed(data: Record<string, unknown>): Record<string, unknown> | undef
 }
 
 /**
- * A game's profile, kept wherever its driver keeps things. Reads and writes
- * run one at a time, in order. Only the game's `id` is read, so a profile can
- * be opened before the game is built: `profile({ id: 'small-town' }, driver)`.
+ * Returns the {@link Profile} of a game, kept by a driver. Reads and writes run one at a time, in order.
+ *
+ * It reads only the game's `id`, so a profile can be opened before the game is built, as in
+ * `profile({ id: 'small-town' }, driver)`.
  */
 export function profile(game: Pick<Game, 'id'>, driver: SaveDriver): Profile {
   const key = `${game.id}.profile`

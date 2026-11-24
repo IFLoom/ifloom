@@ -6,48 +6,53 @@ import type { GameState, Range } from '../types.ts'
 import { defineFeature, type FeatureContext } from './feature.ts'
 import { amountBounds, inRange, rangeWith, wanted } from '../range.ts'
 
-/** What the turns feature adds, as types. */
+/** The turns feature's state, calls and view, as types. */
 export type TurnsShape = {
   state: {
     /**
-     * How many turns have passed: the engine's one clock. What a turn is belongs
-     * to the game — a day, an hour, a week, a chapter — and everything the engine
-     * dates (`seen`, `fired`, notices) is dated in turns.
+     * The number of turns that have passed, the engine's one clock. It starts at 0.
+     *
+     * The game decides how long a turn is (a day, an hour, a week or a chapter). The engine dates `seen`, `fired`
+     * and notices in turns.
      */
     turn: number
   }
   conditions: {
     /**
-     * How many turns have passed, in a range. It names nothing, so the range
-     * is its value. Turn 0 is the first, so `{ turn: { gte: 3 } }` is the fourth on.
+     * A condition that holds while the number of turns passed is in the range. Turn 0 is the first, so
+     * `{ turn: { gte: 3 } }` holds from the fourth turn on.
      */
     turn: { turn: Range }
   }
   effects: {
-    /** End the turn, `{ turn: true }`, or several times, `{ turn: { by: 3 } }`: the game's turn rules run each time. */
+    /**
+     * An effect that ends the turn once, `{ turn: true }`, or several times, `{ turn: { by: 3 } }`. The game's turn
+     * hooks run each time.
+     */
     turn: { turn: true | { by: number } }
   }
   view: {
-    /** How many turns have passed: 0 on the first. */
+    /** The number of turns that have passed, 0 on the first. */
     turn: number
   }
 }
 
 /**
- * The end of a turn: the counter moves on, `resets` are put back, then every
- * `onTurn` hook and then every `onTurnDone` hook, the game's first in each,
- * so an `onTurnDone` sees what the `onTurn` hooks did (the calendar's new
- * day, say). `before` is the state the turn ended on, which every one of
- * them is handed as `context.before`. What
- * runs here runs with `ending` set, so a `turn` effect among it (applied by
- * the game's hook or a plugin's through its context) does nothing: a turn
- * ending inside a turn's end would end the turn again, and again.
+ * Returns the state after one turn ends. `before` is the state the turn ended on, which every hook gets as
+ * `context.before`.
+ *
+ * @remarks
+ * The engine adds one to `turn`, puts back the game's `resets`, then runs every `onTurn` hook and then every
+ * `onTurnDone` hook, the game's first in each. So an `onTurnDone` hook sees what the `onTurn` hooks did (the
+ * calendar's new day, say). The hooks run with `ending` set, so a `turn` effect inside them does nothing, since
+ * it would end the turn again without stopping.
  */
 export function endTurn(state: GameState, game: Game, cx: FeatureContext, before: GameState = state): GameState {
   const begun = { ...state, turn: state.turn + 1, kv: { ...state.kv, ...game.resets } }
   return cx.turnDoneHooks(cx.turnHooks(begun, game, before), game, before)
 }
 
+/** The turns feature, which counts turns and ends them. */
 export const turns = defineFeature<TurnsShape>({
   name: 'turns',
   state: {

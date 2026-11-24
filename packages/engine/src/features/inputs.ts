@@ -9,80 +9,86 @@ import type { Condition, KvValue, GameState } from '../types.ts'
 import { byId, defineFeature, listWords, mergedById, type FeatureContext } from './feature.ts'
 
 /**
- * Something the player types or picks, written to a kv key: a name for a
- * pet, the time an alarm goes off, a note. The engine checks the value against
- * the declaration, so a UI can't put anything else in.
+ * An input the game declares in `inputs`, a field the player fills in, such as a pet's name. The `input` command writes
+ * its value to a kv key and refuses one the declaration doesn't allow.
  */
 export type InputDef = {
+  /** The input's id, which the `input` command names. */
   id: string
-  /** What the field is called. */
+  /** The input's label, the name of the field the player fills in. */
   label: string
-  /** What the player enters: `text` (typed words), `number` or `choice` (one of `options`). */
+  /** The input's type, `text` (typed words), `number` or `choice` (one of `options`). */
   type: 'text' | 'number' | 'choice'
-  /** The kv key it writes. The input's id if left out. */
+  /** The kv key the input writes. The input's id if left out. */
   key?: string
-  /** Only on offer while this holds. */
+  /** The input's condition. The input is on offer only while it holds. */
   when?: Condition
-  /** Text: the most characters, after trimming. 40 if left out. */
+  /** The most characters a `text` input takes, after trimming. 40 if left out. */
   maxLength?: number
-  /** Number: the range, inclusive. */
+  /** The lowest number a `number` input takes, included. No bound if left out. */
   min?: number
-  /** Number: the highest it takes. */
+  /** The highest number a `number` input takes, included. No bound if left out. */
   max?: number
-  /** Choice: the values on offer, with what the player reads for each. */
+  /** The values a `choice` input offers, each with the label the player reads. */
   options?: { value: KvValue; label: string }[]
 }
 
+/** An input as the player sees it, in `view.inputs`. Only inputs whose `when` holds are listed. */
 export type InputView = {
+  /** The input's id, which the `input` command names. */
   id: string
+  /** The input's label, the name of the field. */
   label: string
-  /** What the player enters: `text`, `number` or `choice`. */
+  /** The input's type, `text`, `number` or `choice`. */
   type: InputDef['type']
-  /** Text: the most characters it takes, after trimming (40 unless the input says). Null for a number or a choice. */
+  /** The most characters a `text` input takes, after trimming, 40 unless the input sets it. Null for a number or a choice. */
   maxLength: number | null
-  /** Number: the lowest it takes, or null with no bound (and for text or a choice). */
+  /** The lowest number the input takes. Null with no bound, and for text or a choice. */
   min: number | null
-  /** Number: the highest it takes, or null with no bound (and for text or a choice). */
+  /** The highest number the input takes. Null with no bound, and for text or a choice. */
   max: number | null
-  /** Choice: the values on offer, with what the player reads for each. Empty for text or a number. */
+  /** The values a `choice` input offers, each with its label. Empty for text or a number. */
   options: { value: KvValue; label: string }[]
-  /** What its key holds now, if anything. */
+  /** The value the input's kv key holds now. Null when it's unset. */
   value: KvValue | null
 }
 
-/** What the inputs feature adds, as types. */
+/** The inputs feature's command, content key, view and reference, as types. */
 export type InputsShape = {
   commands: {
-    /** Write what the player typed or picked, `to` that value. A button leaves `to` out and the UI asks. */
+    /** A command that writes the value `to` to the input's kv key. A button leaves `to` out, and the UI asks the player for it. */
     input: { type: 'input'; id: string; to?: KvValue }
   }
   game: {
-    /** What the player can type or pick, and the kv key each one writes. */
+    /** The game's inputs, the fields the player fills in, each writing a kv key. */
     inputs?: InputDef[]
   }
   pack: {
+    /** The pack's inputs, merged by id over the content's. */
     inputs?: InputDef[]
   }
   view: {
-    /** The inputs on offer now, in the order the game declares them, with the value each holds. */
+    /** The inputs on offer now, in the order the game declares them, each with its value. */
     inputs: InputView[]
   }
   lists: 'input'
   references: {
+    /** A reference to an input by id. */
     input: { input: string }
   }
 }
 
+/** Returns the input the game declares with this id. Undefined when there's none. */
 export function inputOf(game: Game, id: string): InputDef | undefined {
   return game.inputs?.find((entry) => entry.id === id)
 }
 
-/** The value as it will be written: text trimmed. */
+/** Returns the value the `input` command writes for an input. Text is trimmed, and other values are kept as they are. */
 export function inputValue(input: InputDef, value: KvValue): KvValue {
   return input.type === 'text' && typeof value === 'string' ? value.trim() : value
 }
 
-/** Why this value can't be entered, as the player reads it; undefined if it can. */
+/** Returns the reason the player reads when this value can't be entered now. Undefined when it can. */
 export function inputRefusal(state: GameState, game: Game, id: string, value: KvValue | undefined, cx: FeatureContext): string | undefined {
   const input = inputOf(game, id)
   if (!input) return stringOf(game, 'noSuchInput')
@@ -107,6 +113,7 @@ export function inputRefusal(state: GameState, game: Game, id: string, value: Kv
   }
 }
 
+/** The inputs feature, which checks the player's values and writes them to the kv store. */
 export const inputs = defineFeature<InputsShape>({
   name: 'inputs',
   commands: {

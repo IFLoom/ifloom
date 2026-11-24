@@ -7,46 +7,55 @@ import { dismiss, notify, type Notice } from '../notices.ts'
 import { artSrc } from '../sceneBody.ts'
 import { defineFeature } from './feature.ts'
 
+/** A notice as the player sees it, in `view.notices.unseen`. */
 export type NoticeView = {
+  /** The notice's id, which the `dismiss` command takes. */
   id: string
-  /** A short line, as written. */
+  /** The notice's short line, kept as written. */
   title: string
-  /** The notice's words, tokens filled in; empty if it has none. */
+  /** The notice's longer words, with their tokens filled in. Empty if it has none. */
   text: string
-  /** Its picture's path, through `artSrc`; null with none. */
+  /** The notice's picture, as a path through `artSrc`. Null if it has none. */
   image: string | null
-  /** What it's about, for badges: `'messages'`. Null with none. */
+  /** The notice's subject, for grouping badges, such as `'messages'`. Null if it has none. */
   tag: string | null
-  /** The turn it was raised. */
+  /** The turn the notice was raised on. */
   turn: number
 }
 
+/** The notices as the player sees them, in `view.notices`. Only notices the player hasn't dismissed are listed. */
 export type NoticesView = {
-  /** Not yet dismissed, newest first. */
+  /** The notices the player hasn't dismissed, newest first. */
   unseen: NoticeView[]
-  /** How many unseen notices each tag has: badges. Untagged ones count under `''`. */
+  /** The number of unseen notices for each tag, for badges. Untagged notices count under `''`. */
   byTag: Record<string, number>
 }
 
-/** What the notices feature adds, as types. */
+/** The notices feature's state, calls and view, as types. */
 export type NoticesShape = {
   state: {
-    /** What the game has told the player outside scenes, oldest first. */
+    /** The notices the game has raised, oldest first. The state keeps the last 50. */
     notices: Notice[]
   }
   effects: {
-    /** Tell the player something outside a scene: `{ notify: 'A note under your door', text: 'It says the bins go out on Tuesday.' }`. Tokens in `text` are filled as it is shown. */
+    /**
+     * An effect that raises a notice outside a scene, such as
+     * `{ notify: 'A note under your door', text: 'It says the bins go out on Tuesday.' }`. The view fills the tokens in
+     * `text`, and an `id` already used replaces that notice.
+     */
     notify: { notify: string; text?: string; image?: string; tag?: string; id?: string }
   }
   commands: {
-    /** Mark one notice seen, or every one. */
+    /** A command that marks the notice `id` seen, or every notice when `id` is left out. */
     dismiss: { type: 'dismiss'; id?: string }
   }
   view: {
+    /** The notices the player hasn't dismissed, with a count for each tag. */
     notices: NoticesView
   }
 }
 
+/** The notices feature, which raises and dismisses notices. */
 export const notices = defineFeature<NoticesShape>({
   name: 'notices',
   state: {

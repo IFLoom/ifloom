@@ -15,59 +15,62 @@ import type { Reference } from '../references.ts'
 import type { Amount, GameState } from '../types.ts'
 import { defineFeature } from './feature.ts'
 
-/** Dice as content writes them: notation (`'2d6+1'`, `'1d20'`, `'d100'`) or a count of dice and their sides. */
+/** Dice a `roll` effect throws, in notation (`'2d6+1'`, `'1d20'`, `'d100'`) or as a count of dice and their sides. A count of 1 if left out. */
 export type Dice = string | { count?: number; sides: number }
 
-/** One roll, as it was made: the faces each die showed, what was added, the total, and the outcome against a target. */
+/** A roll the `roll` effect made, with the face each die showed, the total and the outcome against a target. `view.rolls` lists the last command's. */
 export type Roll = {
-  /** The kv key the total was stored under. */
+  /** The kv key the roll stored its total under. */
   key: string
-  /** The dice thrown, as notation without what is added: `'2d6'`. */
+  /** The dice thrown, in notation without the added number, such as `'2d6'`. */
   dice: string
   /** The face each die showed, in order. */
   faces: number[]
-  /** Everything added to the faces: the notation's own `+1` and the effect's `plus`. 0 when nothing was. */
+  /** The number added to the faces, the notation's own `+1` and the effect's `plus` together. 0 when nothing was added. */
   plus: number
-  /** The faces added up, plus `plus`. */
+  /** The roll's total, the faces added up plus `plus`. */
   total: number
-  /** The target the total had to reach, when the effect gave one. */
+  /** The target the total had to reach. Left out when the effect gave none. */
   against?: number
-  /** Whether the total reached `against`; there only with a target. */
+  /** The roll's outcome, true when the total reached `against`. Left out when there's no target. */
   passed?: boolean
-  /** `'max'` when every die showed its highest face, `'min'` when every die showed 1. */
+  /** The roll's critical mark, `'max'` when every die showed its highest face and `'min'` when every die showed 1. */
   critical?: 'max' | 'min'
 }
 
-/** The rolls a save has made: how many in all, the last command's, and the latest under each key. */
+/** The rolls a save keeps, with the count of rolls made, the last command's rolls and the latest roll under each key. */
 export type RollsState = {
-  /** How many rolls this save has made: part of each new roll's seed. */
+  /** The number of rolls this save has made. It's part of each new roll's seed. */
   made: number
   /** The rolls the last command made, in order. */
   last: Roll[]
-  /** The latest roll under each key, for the `roll` condition. */
+  /** The latest roll under each key, which the `roll` condition reads. */
   latest: Record<string, Roll>
 }
 
-/** What the rolls feature adds, as types. */
+/** The rolls feature's state, calls, view and reference, as types. */
 export type RollsShape = {
   state: {
+    /** The rolls this save has made. */
     rolls: RollsState
   }
   conditions: {
     /**
-     * The latest roll under a key. Bare, it asks whether one was made; with
-     * `passed`, whether it reached (or missed) its target; with `critical`,
-     * whether every die showed its highest or lowest face (`true` for either):
-     * `{ roll: 'skim', passed: true }`. Read the total itself with `{ kv: 'skim', gte: 8 }`.
+     * A condition on the latest roll under a key, such as `{ roll: 'skim', passed: true }`. With nothing else, it
+     * holds once a roll was made under the key.
+     *
+     * With `passed`, it holds when the roll reached (or missed) its target. With `critical`, it holds when every die
+     * showed its highest or lowest face, and `true` takes either. Read the total itself with `{ kv: 'skim', gte: 8 }`.
      */
     roll: { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
   }
   effects: {
     /**
-     * Throw dice and keep the total in the kv store under `key`. `dice` is
-     * notation (`'2d6+1'`) or `{ count, sides }`; `plus` adds an `Amount`,
-     * such as a stat's value (`{ stat: 'strength' }`); with `against`, also
-     * an `Amount`, the roll passes when the total reaches it.
+     * An effect that throws dice and keeps the total in the kv store under the key `roll`. The dice are seeded, so a
+     * replay makes the same rolls.
+     *
+     * `dice` is notation (`'2d6+1'`) or `{ count, sides }`. `plus` adds an `Amount`, such as a stat's value
+     * (`{ stat: 'strength' }`). With `against`, also an `Amount`, the roll passes when the total reaches it.
      */
     roll: { roll: string; dice: Dice; plus?: Amount; against?: Amount }
   }
@@ -76,7 +79,7 @@ export type RollsShape = {
     rolls: Roll[]
   }
   references: {
-    /** A roll effect's dice and key, which must be well formed. */
+    /** A reference to a `roll` effect's dice and key, which the checker holds to being well formed. */
     dice: { dice: unknown; key?: unknown }
   }
 }
@@ -88,7 +91,7 @@ const MOST_DICE = 100
 /** A key a prose token `{{key}}` can show. */
 const KEY = /^[A-Za-z_][A-Za-z0-9_]*$/
 
-/** Dice read into their count, sides and what the notation adds, or what is wrong with them. */
+/** Returns dice read into their count, their sides and the number the notation adds. Badly formed dice give `{ problem }` with the reason. */
 export function readDice(dice: unknown): { count: number; sides: number; plus: number } | { problem: string } {
   let count: number
   let sides: number
@@ -128,6 +131,7 @@ function described(roll: Roll | undefined): string {
   return `${roll.total} on ${roll.dice}${outcome}${critical}`
 }
 
+/** The rolls feature, which throws seeded dice and records each roll. */
 export const rolls = defineFeature<RollsShape>({
   name: 'rolls',
   requires: ['kv', 'stats'],

@@ -1,10 +1,9 @@
 /**
- * @ifloom/engine: what you write a game with and run it by, from one import.
+ * The main entry of `@ifloom/engine`, with the types and functions you write and run a game with.
  *
- * Grouped as the docs are: the game you declare, the state it runs on, the
- * logic that moves it, the systems built in, and the view a UI draws. What
- * you write a plugin with is in `@ifloom/engine/plugin`, and helpers for
- * tests in `@ifloom/engine/testing`.
+ * The exports follow the docs' order: the game you declare, the state it runs on, the logic that changes it, the
+ * built-in systems and the view a UI renders. The plugin API is at `@ifloom/engine/plugin`, and test helpers are at
+ * `@ifloom/engine/testing`.
  */
 
 // The game: what you declare

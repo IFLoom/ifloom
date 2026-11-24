@@ -11,22 +11,19 @@ import { commandOf, previewEffects, type CommandRef } from './custom.ts'
 export type { Rendering } from './features/feature.ts'
 
 /**
- * Why the player cannot do this right now, or undefined if they can.
+ * Returns the reason the player can't send this command now, or undefined when they can.
  *
- * The one place availability is decided. The reducer refuses a command with
- * this line, and the view greys its button out with the same line — so a
- * button and the rule behind it cannot disagree, and a refusal is always a
- * sentence the player can be shown.
+ * The reducer refuses a command with this reason, and the view greys out its button with the same words. So a button
+ * and the rule behind it can't disagree, and every refusal is a sentence the player can read.
  *
- * Checked in the order the player would notice: a lock first (what the
- * features refuse before anything else), the plugins' guards, then a command
- * the game handles itself, then what the command needs.
+ * The engine checks in the order the player would notice: the core's refusals such as a lock first, then the plugins'
+ * guards, then the command's own needs.
  */
 export function whyNot(state: GameState, game: Game, command: CommandRef): string | undefined {
   return whyNotIn(rendering(state, game), state, game, commandOf(command))
 }
 
-/** A rendering of this state's open scene, done when first asked for. `picks` collects a data scene's new pool picks. */
+/** Returns a rendering of this state's open scene, made the first time it is asked for. `picks` collects the scene's new pool picks. */
 export function rendering(state: GameState, game: Game, picks?: Record<string, string>): Rendering {
   let done = false
   let view: RenderedScene | undefined
@@ -43,8 +40,8 @@ export function rendering(state: GameState, game: Game, picks?: Record<string, s
 }
 
 /**
- * `whyNot`, asking `rendered` for the open scene instead of rendering it.
- * `effects` saves working the command's effects out again when the caller has them.
+ * Returns the reason the player can't send this command now, as {@link whyNot} does, reading the open scene from
+ * `rendered`. Pass `effects` when you already have the command's effects.
  */
 export function whyNotIn(rendered: Rendering, state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined {
   const exempt = ignoresLocks(game, command)
@@ -67,45 +64,45 @@ export function whyNotIn(rendered: Rendering, state: GameState, game: Game, comm
 }
 
 /**
- * Commands no lock or plugin guard stops, as their type's entry says: a
- * setting, which is a menu's business rather than the story's, and a plugin
- * command that says it ignores locks.
+ * Returns true when no lock or plugin guard can stop this command. A setting is one, since it changes the menu rather
+ * than the story, and so is a plugin command that declares it ignores locks.
  */
 export function ignoresLocks(game: Game, command: Command): boolean {
   return commandEntry(command)?.ignoresLocks?.(command, game) ?? false
 }
 
 /**
- * What a command would apply, worked out before it runs, for plugins' guards
- * and prices and locks by effect to look at: an action's cost (as stat
- * effects) then its effects, a choice's effects, a plugin
- * command's `effectsOf`. Anything else applies nothing that can be known ahead.
+ * Returns the effects a command would apply, worked out before it runs. Plugins' guards and prices, and locks on an
+ * effect, read them.
+ *
+ * An action gives its cost as stat effects, then its effects. A choice gives its effects, and a plugin command gives
+ * its `effectsOf`. Any other command gives none.
  */
 export function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[] {
   return effectsIn(rendering(state, game), state, game, commandOf(command))
 }
 
 /**
- * `effectsOf`, asking `rendered` for the open scene instead of rendering it.
- * The game's own custom effects among them are worked out against `state`
- * (`previewEffects`), so a price or a guard sees what they would do.
+ * Returns the effects a command would apply, as {@link effectsOf} does, reading the open scene from `rendered`.
+ * The game's own `game/…` effects among them are worked out against `state`, so a price or a guard sees what they
+ * would do.
  */
 export function effectsIn(rendered: Rendering, state: GameState, game: Game, command: Command): Effect[] {
   return previewEffects(state, game, commandEntry(command)?.effectsOf?.(state, command, game, commandContext(rendered)) ?? [])
 }
 
 /**
- * A warning on a command that can still be pressed: a plugin guard's soft
- * refusal. Not a reason it cannot be done — a UI shows it and offers something
- * else, as a calendar offers bed before dawn — so it is kept apart from
- * `whyNot`; the reducer still refuses the command with it. `effects` saves
- * working them out again when the caller has them.
+ * Returns a plugin guard's soft refusal of a command, or undefined when there is none. Pass `effects` when you already
+ * have the command's effects.
+ *
+ * A UI shows the warning and offers another way, as the calendar offers bed before dawn, so `whyNot` leaves it out.
+ * The reducer still refuses the command with it.
  */
 export function warningOf(state: GameState, game: Game, command: CommandRef, effects?: readonly Effect[]): string | undefined {
   return warningIn(rendering(state, game), state, game, commandOf(command), effects)
 }
 
-/** `warningOf`, asking `rendered` for the open scene instead of rendering it. */
+/** Returns a plugin guard's soft refusal of a command, as {@link warningOf} does, reading the open scene from `rendered`. */
 export function warningIn(rendered: Rendering, state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined {
   if (!pluginsWatch(game)) return undefined
   if (ignoresLocks(game, command)) return undefined

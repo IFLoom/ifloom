@@ -6,71 +6,72 @@ import { KeysProvider } from './keys.tsx'
 import { useTicking } from './timers.tsx'
 
 /**
- * A game's own component for a scene panel, an app's panel section or a panel
- * content opens (`{ panel }`): it gets the data the game's custom panel
- * returned, or what the panel was opened with.
+ * A component that renders a panel, for a scene's panel, an app's panel section or the `panel` effect. Its `data`
+ * prop is the data the game's own panel returned, else the panel's `with`.
  */
 export type PanelComponent = ComponentType<{ data: unknown }>
 
 /**
- * What an inline piece of the prose gets, from `[[ui:name|words|arg|…]]`: its
- * `name`, the `text` to show and the `args` after the words, typed by what
- * `InlineUi` declares for that name.
+ * The props a UI piece's component gets from `[[ui:name|words|arg|…]]` in prose. The `args` are typed by the name's
+ * entry in the engine's `InlineUi`.
  */
 export type InlineProps<N extends string = string> = {
-  /** The piece's name, as `[[ui:name|…]]` wrote it. */
+  /** The UI piece's name, from `[[ui:name|…]]`. */
   name: N
-  /** Its words, the second part. */
+  /** The UI piece's words, its second part, which the component shows. */
   text: string
-  /** The parts after its words, typed by the name's entry in `InlineUi`. */
+  /** The UI piece's parts after its words, typed by the name's entry in `InlineUi`. */
   args: InlineUiArgs<N>
 }
 
-/** A component that draws an inline piece of the prose named `N`. */
+/** A component that renders the UI piece named `N` in prose. */
 export type InlineComponent<N extends string = string> = ComponentType<InlineProps<N>>
 
 /**
- * A game's own inline pieces by name, for `[[ui:name|…]]` in its prose. A
- * name `InlineUi` declares gets its arguments typed; any other name takes them
- * as text.
+ * A game's or a plugin UI's components for UI pieces in prose, by name. A name the engine's `InlineUi` declares gets its
+ * arguments typed, and any other name takes them as text.
  */
 export type InlineComponents = { [N in keyof InlineUi]?: InlineComponent<N> } & { [name: string]: ComponentType<InlineProps<never>> | undefined }
 
-/** Draws another plugin's view inside an app: a messages channel, a feed. Gets the plugin's slice of the view and the section's `with`. */
+/**
+ * A component that renders another plugin's view as a section of a device's app, such as a messages channel or a feed.
+ * It gets the plugin's slice of the view and the section's `with`.
+ */
 export type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string, unknown> }>
 
-/** The game's mods, for the mod manager: the store, what the loader said about them, and how to start over with a change. */
+/** The game's mods for the mod manager, with the store, the loader's problems and the function that applies a change. */
 export type ModsOption = {
-  /**
-   * Where the player's mods are kept: `mods(game.id, driver)` from `@ifloom/engine`, over the same driver as the saves.
-   */
+  /** The store that keeps the player's mods, `mods(game.id, driver)` from `@ifloom/engine` over the same driver as the saves. */
   store: Mods
-  /** The loader's problems, as `describeProblem` writes them; the ones starting `mod:<id> ` are shown under that mod. */
+  /** The loader's problems, each worded by `describeProblem`. The mod manager shows a problem starting `mod:<id> ` under that mod. */
   problems?: string[]
-  /** Build the game again with the mods as they now are — usually `() => location.reload()`. */
+  /** The function that builds the game again with the mods as they now are, such as `() => location.reload()`. */
   onChange?: () => void
 }
 
+/** The running game that `useGame` returns, with the runner, its snapshot, the view and `send`. */
 export type GameContextValue = {
   /** The runner the game was mounted with. */
   runner: Runner
-  /** The mods option the game was mounted with, for the mods page; undefined for a game without mods. */
+  /** The mods option the game was mounted with, for the mods page. It's undefined for a game without mods. */
   mods?: ModsOption
-  /** Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. */
+  /** The runner's snapshot, `runner.snapshot()`, with the view, settings, backlog, undo, saves and helpers. */
   snapshot: RunnerSnapshot
-  /** The view, as `snapshot.view`. */
+  /** The view, the same as `snapshot.view`. */
   view: View
   /**
-   * Run a command, a plain one or a plugin's in short as its helpers write it
-   * (`shop.buy('counter', 'food:bun')`). Returns what `runner.apply` returned,
-   * so a caller can show a refusal.
+   * Sends a command and returns the runner's result, so a caller can show a refusal. The command is a core one or a
+   * plugin's as its helpers write it, such as `shop.buy('counter', 'food:bun')`.
    */
   send: (command: CommandRef) => Result<GameState>
-  /** The panels the UI draws by name: the plugin UIs' with the game's own over them. */
+  /** The game's own panels by name, as `GameProviderProps.panels` gave them. The plugin UIs' panels aren't included. */
   panels: Record<string, PanelComponent>
-  /** The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. */
+  /**
+   * The components for UI pieces that the plugin UIs and the game add, by name, the game's over the plugins'. The
+   * built-in ones aren't included.
+   */
   inline: InlineComponents
-  /** The renderers for plugin sections in apps, by plugin id: the plugin UIs' with the game's own over them. */
+  /** The components for plugin sections in apps, by plugin id, the plugin UIs' with the game's own over them. */
   sections: Record<string, PluginSectionComponent>
   /** The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. */
   plugins: readonly PluginUi[]
@@ -78,41 +79,44 @@ export type GameContextValue = {
 
 const GameContext = createContext<GameContextValue | null>(null)
 
+/** The props of `GameProvider`, the runner and the plugin UIs with the game's own panels, UI pieces, sections and mods. */
 export type GameProviderProps = UiOptions & {
-  /** The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. */
+  /** The runner to render and send commands to, such as `browserRunner(game)` or `createRunner(game)`. */
   runner: Runner
   /**
-   * The plugin UIs to draw, each from a plugin's `/react` subpath, such as
-   * `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the
-   * rest apply, and the default layout places what they bring, in this
-   * order. One for a plugin the game doesn't have does nothing. Leave a
-   * plugin out to draw it yourself.
+   * The plugin UIs to use, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`.
+   * The default layout places their components in this order.
+   *
+   * One for a plugin the game doesn't have does nothing. Leave a plugin out to render it yourself.
    */
   plugins?: readonly PluginUi[]
-  /** The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. */
+  /**
+   * The game's own panels, by the name its scenes, apps and `panel` effects give. One here replaces a plugin UI's panel
+   * of the same name.
+   */
   panels?: Record<string, PanelComponent>
   /**
-   * The game's own components for `[[ui:name|words|arg|…]]` in its prose, by
-   * name. One here goes over a built-in one of the same name (`modal`,
-   * `image`); a name nothing draws shows its words.
+   * The game's own components for `[[ui:name|words|arg|…]]` in its prose, by name. One here replaces a built-in one of
+   * the same name, such as `modal` or `image`.
+   *
+   * A name no component renders shows its words.
    */
   inline?: InlineComponents
-  /** Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). */
+  /** The game's components for plugin sections in apps, by plugin id. They replace the plugin UIs', such as the messages and feed UIs'. */
   sections?: Record<string, PluginSectionComponent>
-  /** Mods the player can add, turn off or remove. Leave out for a game without mods. */
+  /** The mods the player can add, turn off or remove. Leave it out for a game without mods. */
   mods?: ModsOption
+  /** The UI to render inside the provider. */
   children: ReactNode
 }
 
-/**
- * Connects the UI to a runner: every component under it reads the runner's
- * snapshot (the view, settings, backlog, undo, saves and helpers) and sends
- * commands through `useGame`. It draws again when the runner hands a new
- * snapshot, and only then.
- */
 const NONE = {}
 const NO_PLUGINS: readonly PluginUi[] = []
 
+/**
+ * Renders its children connected to a runner, so every component under it reads the runner's snapshot and sends
+ * commands through `useGame`. It re-renders when the runner has a new snapshot, and only then.
+ */
 export function GameProvider({
   runner,
   plugins: given = NO_PLUGINS,
@@ -167,7 +171,10 @@ export function useGameIfAny(): GameContextValue | null {
   return useContext(GameContext)
 }
 
-/** The runner, its snapshot, the current view and `send`. Only inside a `GameProvider`. */
+/**
+ * Returns the running game, with the runner, its snapshot, the view and `send`. It throws outside a `GameProvider`, and
+ * re-renders with each new snapshot.
+ */
 export function useGame(): GameContextValue {
   const value = useContext(GameContext)
   if (!value) throw new Error('useGame is used outside a GameProvider.')

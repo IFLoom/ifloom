@@ -1,13 +1,10 @@
 /**
- * @ifloom/plugin-quests — what the player is doing, how far they have got, and
- * the hint for what comes next.
+ * The quests plugin, which tracks the player's quests, the stages done and the hint for the next stage.
  *
- * A quest's stages are done by conditions on the game state — the same data
- * that gates the content — so a quest can't drift from the story it describes.
- * Progress is kept once it is made: a stage that was done stays done.
+ * Conditions on the game state mark each stage done, the same conditions that gate the content, so a quest can't
+ * drift from the story it describes. The plugin never takes progress back, so a stage that was done stays done.
  *
- * The engine word is *quest*. What the player sees it called — a journal, a
- * diary, a to-do list — is the game's choice.
+ * The code's word is quest. The game decides what the player sees it called, such as a journal or a to-do list.
  */
 import { holds, stringOf, type CommandRef, type Condition, type EffectRef, type Game, type GameState, type RenderedChoice } from '@ifloom/engine'
 import {
@@ -25,88 +22,90 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** One step of a quest. */
+/** A stage the game declares in a {@link QuestDef}'s `stages`. The stage is done the first time its `done` holds after the stages before it. */
 export type QuestStage = {
+  /** The stage's id, unique within its quest. */
   id: string
-  /** What the player reads while this is the stage they are on. */
+  /** The stage's hint, which the player reads while on this stage. */
   hint: string
-  /** The stage is done the first time this holds, once the stages before it are. */
+  /** The condition that marks the stage done, the first time it holds once the stages before it are done. */
   done: Condition
 }
 
+/** A quest the game declares in `data.quests.quests`. It needs at least one stage. */
 export type QuestDef = {
+  /** The quest's id. */
   id: string
-  /** What the player reads: "Find your feet". */
+  /** The quest's name, such as "Find your feet". */
   name: string
-  /** A line or two about it, for the quest list. */
+  /** The quest's line or two for the quest list. */
   description?: string
-  /** The storyline it belongs to, for a UI that groups quests by person. */
+  /** The id of the storyline the quest belongs to, for a UI that groups quests by storyline. */
   storyline?: string
-  /**
-   * It starts the first time this holds. Leave it out to start the quest only
-   * with the `quests/start` effect.
-   */
+  /** The condition that starts the quest the first time it holds. Without it, only the `quests/start` effect starts the quest. */
   starts?: Condition
-  /** Left out of the count of quests still to find until it starts. */
+  /** True to leave the quest out of the count of quests to find until it starts. */
   secret?: boolean
-  /** In order. The quest is done when the last one is. */
+  /** The quest's stages, in order. The quest is done when the last stage is. */
   stages: QuestStage[]
 }
 
-/** What the plugin keeps in a save. */
+/** The quests a save keeps for the player, their progress, tracking and news. Quests themselves are read from content. */
 export type QuestsState = {
-  /** Quests started, with the turn each one started. */
+  /** The turn each started quest started on, by quest id. */
   started: Record<string, number>
-  /** How many of each started quest's stages are done. */
+  /** The number of stages done in each started quest, by quest id. */
   reached: Record<string, number>
-  /** Quests finished, with the turn. */
+  /** The turn each finished quest finished on, by quest id. */
   done: Record<string, number>
-  /** The quest the player has pinned, if any. */
+  /** The id of the quest the player tracks, or null. */
   tracked: string | null
-  /** How far each quest had got when the player last looked at it: stages done, plus one once finished. */
+  /** Each quest's progress when the player last looked at it, by quest id. It counts the stages done, plus one once the quest is finished. */
   seen: Record<string, number>
 }
 
-/** A quest as the UI shows it. */
+/** A started quest as the player sees it, in `view.plugins.quests.active` and `done`. */
 export type QuestEntry = {
+  /** The quest's id. */
   id: string
+  /** The quest's name. */
   name: string
-  /** A line about it; `''` with none. */
+  /** The quest's description, or `''` when it has none. */
   description: string
-  /** The storyline it belongs to, for a UI that groups quests by person, or null. */
+  /** The id of the quest's storyline, for a UI that groups quests by storyline, or null. */
   storyline: string | null
-  /** The hint for the stage the player is on; empty once the quest is done. */
+  /** The hint for the stage the player is on, or `''` once the quest is done. */
   hint: string
-  /** Stages done, and how many there are. */
+  /** The number of the quest's stages done. */
   stage: number
-  /** How many stages it has. */
+  /** The number of the quest's stages. */
   stages: number
-  /** The turn it started. */
+  /** The turn the quest started on. */
   startedOn: number
-  /** The turn it was done, or null while it isn't. */
+  /** The turn the quest was done on, or null while it isn't. */
   doneOn: number | null
-  /** Whether it's the quest the player tracks. */
+  /** True when the player tracks this quest. */
   tracked: boolean
-  /** Started or moved on since the player last looked. */
+  /** True when the quest has started or moved on since the player last looked. */
   updated: boolean
   /**
-   * The button that tracks it, or stops tracking it once it's tracked
-   * (labelled with the `quests/track` or `quests/untrack` string), or null
-   * once the quest is done.
+   * The button that tracks the quest, or stops tracking it once tracked, or null once the quest is done. Its label is
+   * the `quests/track` or `quests/untrack` string.
    */
   track: RenderedChoice | null
 }
 
+/** The quests as the player sees them, in `view.plugins.quests`. */
 export type QuestsView = {
-  /** Started and not finished; the tracked one first, then newest first. */
+  /** The quests started and not finished, the tracked one first and then the newest first. */
   active: QuestEntry[]
-  /** Finished, most recent first. */
+  /** The finished quests, the most recent first. */
   done: QuestEntry[]
-  /** Quests not started yet, secret ones left out. */
+  /** The number of quests not started yet, secret ones left out. */
   toFind: number
-  /** How many quests have news the player has not looked at: a badge. */
+  /** The number of quests with news the player hasn't looked at, for a badge. */
   updates: number
-  /** The button that marks every quest's news seen (the `quests/allSeen` string, `Mark all seen`), or null while there is none. */
+  /** The button that marks every quest's news seen, labelled with the `quests/allSeen` string (`Mark all seen`), or null while there is none. */
   seen: RenderedChoice | null
 }
 
@@ -156,20 +155,23 @@ function emptyState(): QuestsState {
   return { started: {}, reached: {}, done: {}, tracked: null, seen: {} }
 }
 
-/** The game's quests: `data.quests.quests`, from its content and packs. */
+/** Returns the game's quests, from `data.quests.quests` in its content and packs. */
 export function questsOf(game: Game): QuestDef[] {
   return DATA.quests.all(game)
 }
 
-/** One of the game's quests, by id. */
+/** Returns the quest with this id, or undefined when the game has none. */
 export function questOf(game: Game, id: string): QuestDef | undefined {
   return DATA.quests.get(game, id)
 }
 
 /**
- * Bring the record up to date with the game state: start what should start,
- * move each quest on through every stage that is done, in order, and mark the
- * ones that are finished. Nothing is ever taken back.
+ * Returns the quests record brought up to date with the game state. It never takes progress back.
+ *
+ * @remarks
+ * It starts each quest whose `starts` holds, moves each started quest through every stage that is done, in order, and
+ * marks finished quests done. A finished quest stops being tracked. A quest condition asked during this pass reads the
+ * record as it stands so far.
  */
 export function advance(record: QuestsState, state: GameState, game: Game): QuestsState {
   // A quest can start or move on when another one has: its conditions then ask
@@ -281,10 +283,7 @@ function questsView(record: QuestsState, game: Game, state: GameState): QuestsVi
   }
 }
 
-/**
- * The plugin. Add it to the game's `plugins`, and put quests in the content's
- * `data.quests.quests`.
- */
+/** Returns the quests plugin for the game's `plugins`. The game declares its quests in `data.quests.quests`. */
 function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
   return definePlugin<QuestsState, QuestsView, typeof CALLS>({
     id: ID,
@@ -380,28 +379,34 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
   })
 }
 
-/** A condition: the quest is started and not finished. */
+/** Returns the `quests/active` condition, which holds while the quest is started and not finished. */
 const questActive = (quest: string): Condition => CALLS.conditions.active({ quest })
-/** A condition: the quest is finished. */
+/** Returns the `quests/done` condition, which holds once the quest is finished. */
 const questDone = (quest: string): Condition => CALLS.conditions.done({ quest })
-/** A condition: this stage of the quest is done. */
+/** Returns the `quests/reached` condition, which holds once this stage of the quest is done. */
 const questReached = (quest: string, stage: string): Condition => CALLS.conditions.reached({ quest, stage })
-/** An effect: start the quest now. */
+/** Returns the `quests/start` effect, which starts the quest now if it hasn't started. */
 const startQuest = (quest: string): EffectRef => CALLS.effects.start({ quest })
-/** A command: pin this quest, or unpin with no argument. */
+/** Returns the `quests/track` command, which tracks the quest, or stops tracking with no argument. */
 const trackQuest = (quest?: string): CommandRef => CALLS.commands.track(quest === undefined ? undefined : { id: quest })
-/** A command: the player has looked at this quest, or at all of them. */
+/** Returns the `quests/seen` command, which marks the quest's news seen, or every quest's with no argument. */
 const seeQuests = (quest?: string): CommandRef => CALLS.commands.seen(quest === undefined ? undefined : { id: quest })
 
 /**
- * The plugin, with its helpers on it: `quests()` makes the plugin for the
- * game's `plugins`, and content is written with `quests.done('bread')`.
+ * The quests plugin's factory, with its helpers as properties. `quests()` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `quests.done('bread')`.
  */
 export const quests = Object.assign(questsPlugin, {
+  /** Returns the `quests/active` condition, which holds while the quest is started and not finished. */
   active: questActive,
+  /** Returns the `quests/done` condition, which holds once the quest is finished. */
   done: questDone,
+  /** Returns the `quests/reached` condition, which holds once this stage of the quest is done. */
   reached: questReached,
+  /** Returns the `quests/start` effect, which starts the quest now if it hasn't started. */
   start: startQuest,
+  /** Returns the `quests/track` command, which tracks the quest, or stops tracking with no argument. */
   track: trackQuest,
+  /** Returns the `quests/seen` command, which marks the quest's news seen, or every quest's with no argument. */
   seen: seeQuests,
 })

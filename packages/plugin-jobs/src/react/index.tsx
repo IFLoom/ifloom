@@ -1,7 +1,7 @@
 /**
- * @ifloom/plugin-jobs/react: the jobs plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `jobsUi` in the game's `plugins`
- * to have the `jobs` panel drawn as a job board, or draw it yourself from
+ * The jobs plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `jobsUi` in the game's `plugins` to render the `jobs` panel as a job board. To render it yourself, read
  * `useJobs`.
  */
 import type { ComponentProps } from 'react'
@@ -10,20 +10,33 @@ import { jobs, type JobView, type JobsView } from '../index.ts'
 import { ChoiceButton, usePart } from '@ifloom/react'
 import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
-/** The jobs plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The jobs plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const JOBS_WORDS = {
+  /** The label of the button that applies for a job. */
   applyJob: 'Apply',
+  /** The badge on a job the player was fired from. */
   jobFired: 'Let go',
+  /** The count of shifts missed, with `{n}`. */
   jobMissed: 'Missed: {n}',
+  /** The line that names the next rank, with its `{title}` and the `{n}` shifts still to work. */
   jobNextRank: 'Next: {title}, after {n} more shifts',
+  /** The line that names the next rank, with its `{title}`, when one shift is still to work. */
   jobNextRankOne: 'Next: {title}, after 1 more shift',
+  /** The line that names the next rank, with its `{title}`, when no more shifts are needed. */
   jobNextRankSoon: 'Next: {title}',
+  /** The line that gives a shift's pay, with `{pay}`. */
   jobPay: 'Pays {pay} a shift',
+  /** The count of shifts worked, with `{n}`. */
   jobShifts: 'Shifts worked: {n}',
+  /** The title of the job board. */
   jobs: 'Jobs',
+  /** The line that gives the next shift, `{n}` days ahead. */
   shiftInDays: 'Next shift: in {n} days',
+  /** The line that gives the next shift as today. */
   shiftToday: 'Next shift: today',
+  /** The line that gives the next shift as tomorrow. */
   shiftTomorrow: 'Next shift: tomorrow',
+  /** The label of the button that works a shift. */
   workShift: 'Work a shift',
 } as const
 
@@ -51,19 +64,19 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useJobs` returns: the jobs plugin's view, the jobs held, and its commands. */
+/** The jobs plugin's view with the jobs held and functions that send its commands, as `useJobs` returns it. */
 export type JobsControls = JobsView & {
   /** The jobs the player holds, in the order the game declares them. */
   held: JobView[]
-  /** Apply for a job: sends `jobs/apply`, refused with the reason its `apply` button gives. */
+  /** Sends `jobs/apply` for the job. A refusal carries the same reason its `apply` button shows. */
   apply: (job: string) => Result<GameState>
-  /** Work a shift: sends `jobs/work`. */
+  /** Sends `jobs/work`, which works a shift at the job. */
   work: (job: string) => Result<GameState>
-  /** Leave a job: sends `jobs/quit`. The player can apply again. */
+  /** Sends `jobs/quit`, which leaves the job. The player can apply again. */
   quit: (job: string) => Result<GameState>
 }
 
-/** The jobs plugin's view with its commands, or null in a game without the plugin. `JobBoard` is drawn from it. */
+/** Returns the jobs plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useJobs(): JobsControls | null {
   const { view, send } = usePlugin(JOBS)
   if (!view) return null
@@ -147,13 +160,13 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
 }
 
 /**
- * The job board: every job, with its rank once held, what a shift pays, the
- * next shift, how far to the next rank and the shifts worked and missed. A
- * job not held has an Apply button, greyed out with what's missing; a job held
- * has Work a shift, with the shift's cost and why it can't be worked now, and
- * Quit. A job the player was fired from says so. `jobs` shows only those
- * jobs, by id, as a newspaper's ads would; `title={false}` leaves the heading
- * off, as the `jobs` panel does under its dialog's title. A thin default on `useJobs`.
+ * Renders the job board from `view.plugins.jobs.jobs`, each job with its rank, pay, next shift, promotion and record.
+ * The `jobs` prop shows only those jobs by id, and `title={false}` leaves the heading off.
+ *
+ * A job not held has an Apply button, and a job held has Work a shift and Quit. A disabled button shows the engine's
+ * reason, and a job the player was fired from says so. A preset can style the parts `jobs`, `jobs-title`, `job`,
+ * `job-title`, `job-rank`, `job-fired`, `job-text`, `job-details`, `job-pay`, `job-shift`, `job-next`, `job-record`
+ * and `job-actions`.
  */
 export const JobBoard = overridable('JobBoard', JobBoardImpl)
 
@@ -164,10 +177,10 @@ function JobsPanel() {
 }
 
 /**
- * The jobs plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `jobs` panel, which `jobs.open()` opens, drawn as the
- * `JobBoard` (only the jobs it was opened with, if any), and the jobs' words.
- * It puts nothing in the layout by itself: content opens the board.
+ * The jobs plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `jobs` panel, which
+ * `jobs.open()` opens, as a `JobBoard` of the jobs it was opened with, and adds the plugin's words.
+ *
+ * It adds nothing to the layout, so the board shows only when content opens it.
  */
 export const jobsUi: PluginUi = {
   ...JOBS,

@@ -1,8 +1,8 @@
 /**
- * @ifloom/plugin-messages/react: the messages plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `messagesUi` in the game's
- * `plugins` to have a channel drawn where an app shows one, or draw it
- * yourself from `useMessages`.
+ * The messages plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `messagesUi` in the game's `plugins` to render a channel wherever a device's app shows one. To render it
+ * yourself, read `useMessages`.
  */
 import { useEffect, useState, type ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
@@ -10,10 +10,13 @@ import { messages, type MessagesView, type ThreadView } from '../index.ts'
 import { Beat, ChoiceList, Picture, usePart } from '@ifloom/react'
 import { buttonVariants, cn, Icon, overridable, type Override, pluginKit, type PluginUi, usePlugin } from '@ifloom/react/kit'
 
-/** The messages plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The messages plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const MESSAGES_WORDS = {
+  /** The line a section shows while it has no conversations. */
   noMessages: 'No messages yet.',
+  /** The label screen readers read for a typing bubble, with the sender's `{name}`. */
   typing: '{name} is typing',
+  /** The last line a conversation shows while its next message is on its way. */
   typingShort: 'typing…',
 } as const
 
@@ -45,13 +48,16 @@ declare module '@ifloom/react' {
 
 type SectionProps = { data: unknown; with: Record<string, unknown> }
 
-/** What `useMessages` returns: the messages plugin's view, and its command. A reply is a `RenderedChoice`-shaped button: send its `command`. */
+/**
+ * The messages plugin's view with a function that sends its read command, as `useMessages` returns it. Each reply is a
+ * `RenderedChoice` whose `command` sends it.
+ */
 export type MessagesControls = MessagesView & {
-  /** Mark a channel's messages read: sends `messages/read`. */
+  /** Sends `messages/read`, which marks the channel's messages read. */
   read: (channel: string) => Result<GameState>
 }
 
-/** The messages plugin's view with its command, or null in a game without the plugin. `MessagesSection` is drawn from it. */
+/** Returns the messages plugin's view and read command from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useMessages(): MessagesControls | null {
   const { view, send } = usePlugin(MESSAGES)
   if (!view) return null
@@ -191,25 +197,22 @@ function MessagesSectionImpl({ with: options }: SectionProps) {
 }
 
 /**
- * A messages channel in an app, drawn as a phone draws one. First the
- * conversation list (`conversations`), newest first: each thread a
- * `conversation` button with the sender's portrait, their name, the last
- * line (or that they're typing) and an unread dot, with a button to mark the
- * channel read. With nothing in it yet, the `messages-empty` line. A tap opens
- * the thread, with a back button (`thread-back`): its messages, the reply
- * sent and the replies on offer, and a typing bubble while a message with
- * `after` is on its way. An open thread is marked read. Each bubble is a
- * `'bubble'` part, `data-from="them"` or `data-from="player"`; the typing one
- * also has `data-typing`. A message's words are drawn as beats through
- * `Beat`, so pictures and clips in it show as they do in a scene. A thin
- * default on `useMessages`.
+ * Renders one messages channel from `view.plugins.messages.channels` as a device's app section, in the style of a
+ * phone. It shows the list of threads first, and opening a thread shows its messages and marks it read.
+ *
+ * Each thread in the list (`conversations`) is a `conversation` button with the sender's portrait, name, last line and
+ * an unread dot, under a button that marks the channel read. An empty channel shows the `messages-empty` line. An
+ * open thread has a back button (`thread-back`), its messages, the reply sent, the replies on offer, and a typing
+ * bubble while a message with `after` waits.
+ *
+ * Each message is a `bubble` part with `data-from="them"` or `data-from="player"`, and the typing bubble also has
+ * `data-typing`. A message's beats render through `Beat`, so its pictures and videos show as they do in a scene.
  */
 export const MessagesSection = overridable('MessagesSection', MessagesSectionImpl)
 
 /**
- * The messages plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: a `MessagesSection` wherever a device's app shows a
- * messages channel, and the messages' words.
+ * The messages plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders a `MessagesSection`
+ * wherever a device's app has a `messages` section, and adds the plugin's words.
  */
 export const messagesUi: PluginUi = {
   ...MESSAGES,

@@ -22,11 +22,11 @@ function ChangeImpl({ change }: { change: ChangeView }) {
 }
 
 /**
- * One stat the last command moved, as a `change` part: its signed text in the
- * stat's format (`change-text`), then the change's `name` when the view
- * gives one (`change-label`): an entity's name, or the stat's label when its
- * format doesn't say what it is. It carries `data-stat`, `data-of` for an
- * entity's stat and `data-dir="up"` or `"down"`.
+ * Renders one stat change from `view.changes` as a `change` part, its signed text in the stat's format (`change-text`)
+ * and then the change's `name` (`change-label`) when the view gives one.
+ *
+ * The name is an entity's name, or the stat's label when its format doesn't say what it is. The part carries
+ * `data-stat`, `data-of` for an entity's stat and `data-dir="up"` or `"down"`.
  */
 export const ChangeItem = overridable('ChangeItem', ChangeImpl)
 
@@ -45,8 +45,7 @@ function ChangesImpl({ className }: { className?: string }) {
 }
 
 /**
- * The stats the last command moved (`view.changes`), as a `changes` list of
- * `ChangeItem`s. Draws nothing when nothing moved. Not in the default layout:
- * place it in yours, after `<Scene />` for feedback under the story.
+ * Renders the stats the last command changed, `view.changes`, as a `changes` list of `ChangeItem`s, and nothing when
+ * none changed. The default layout leaves it out, so place it in yours, such as after `<Scene />`.
  */
 export const Changes = overridable('Changes', ChangesImpl)

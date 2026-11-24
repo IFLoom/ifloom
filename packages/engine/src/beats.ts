@@ -1,8 +1,6 @@
 /**
- * Blocks drawn as beats for something that isn't a scene on screen: a
- * message, a post, an app's words, a minigame's label. What a plugin's
- * `context.beats` does. And a prose line by key as beats, for a UI that
- * shows one away from the scene.
+ * Blocks rendered as beats away from the open scene, for a message, a post, an app's words or a minigame's label.
+ * A plugin's `context.beats` calls it, and a UI renders a prose key's line the same way.
  */
 import type { Game } from './game.ts'
 import type { GameState } from './types.ts'
@@ -11,10 +9,11 @@ import { beatsOfParts, parseBeats, styledBeats, type SceneBeat } from './sceneBo
 import { lineSpeakers } from './speakers.ts'
 
 /**
- * Blocks as beats, drawn as a scene's body is: the blocks whose `when`
- * holds, their words filled in for this save, variants drawn and pools
- * picked under `id`, spoken lines with their speakers. New pool picks go in
- * `picks`, for the reducer to record.
+ * Returns `blocks` rendered as beats, the way a scene's body is rendered. New pool picks go in `picks`, for the
+ * reducer to record.
+ *
+ * It keeps the blocks whose `when` holds, fills their words for this save, draws variants and pools under `id`,
+ * and names each spoken line's speaker.
  */
 export function blockBeats(state: GameState, game: Game, blocks: readonly Block[], id: string, picks?: Record<string, string>): SceneBeat[] {
   const rendered = renderScene({ id, body: [...blocks], choices: [] }, state, defaultRuntime(game), picks)
@@ -22,11 +21,12 @@ export function blockBeats(state: GameState, game: Game, blocks: readonly Block[
 }
 
 /**
- * The prose line `key` as beats, formatted as a scene's body is: its tokens
- * filled for this save, cut into paragraphs and spoken lines, each speaker
- * named from their entity, and its inline markup (bold, italics, UI pieces)
- * in `spans`. For a UI that shows a line by key away from the scene, such as
- * a dialog an inline piece opens. Null when the game has no line by that key.
+ * Returns the prose key's line rendered as beats, the way a scene's body is rendered. Returns null when the game has
+ * no line by that key.
+ *
+ * The engine fills its tokens for this save, cuts it into paragraphs and spoken lines, names each speaker from their
+ * entity and puts its inline markup (bold, italics, UI pieces) in `spans`. A UI calls it to show a line away from
+ * the scene, such as in a dialog an inline piece opens.
  */
 export function proseBeats(state: GameState, game: Game, key: string): SceneBeat[] | null {
   const line = game.prose?.line(key, state)

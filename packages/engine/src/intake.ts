@@ -1,9 +1,8 @@
 /**
- * The state intake: every way a `GameState` comes into play. A new game is
- * built by `startingState`; anything else (a save, a command log's start, a
- * state a test wrote by hand) comes in through `loadState`, which carries it
- * forward and fills it in. Each field of the state declares its new-game value
- * and its load default once, in `FIELDS`, and both paths read that table.
+ * The state intake, the two ways a `GameState` comes into play. `startingState` makes a new game, and `loadState`
+ * carries forward and fills in any other state, such as a save, a command log's start or a state a test wrote.
+ *
+ * Each field of the state declares its new-game value and its load default once, in `FIELDS`, and both paths read it.
  */
 import { fail, ok, type Result } from './result.ts'
 import { stringOf } from './strings.ts'
@@ -25,11 +24,11 @@ export type { StartOptions } from './types.ts'
 type Field<K extends keyof GameState> = StateField<GameState[K]>
 
 /**
- * Every field of `GameState`: the core's, declared here, and each feature's,
- * declared in its `state`. A new field is declared once: its new-game value
- * and, for a field an older save won't have, its load default. Old saves
- * then load without a step in `STEPS`; a step is only needed to reshape what
- * a save already has.
+ * The table of every `GameState` field's new-game value and load default, the core's here and each feature's from its
+ * `state`. Internal.
+ *
+ * A field an older save won't have declares a load default, so old saves load without a step in `STEPS`. A step is
+ * needed only to reshape a field a save already has.
  */
 export const FIELDS: { [K in keyof GameState]-?: Field<K> } = {
   version: { start: () => SAVE_VERSION },
@@ -57,9 +56,10 @@ function carried(state: GameState, game: Game, from: GameState, options: StartOp
 }
 
 /**
- * A new game: every field at its start value, with a New Game+'s carried
- * values laid over, then what features work out from the whole state (what
- * the opening screen starts playing).
+ * Returns the state of a new game, with every field at its start value. With `carry`, the New Game+'s carried values
+ * go over it.
+ *
+ * Features then work out the fields that read the whole state, such as the audio the opening screen starts playing.
  */
 export function startingState(game: Game, options: StartOptions = {}): GameState {
   const fresh: Record<string, unknown> = {}
@@ -394,20 +394,22 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
 }
 
 /**
- * What `MigrationTools.fill` can fill, each named by the feature that fills
- * it: the player's stats (start values), kv keys (the content's starting kv
- * and the keys it resets each turn) and play settings (defaults).
+ * A part of the state `MigrationTools.fill` can fill, named by the feature that fills it.
+ *
+ * The parts are the player's stats (start values), kv keys (the content's starting kv and per-turn resets) and play
+ * settings (defaults).
  */
 export type FillPart = FeatureFill
 
-/** What a step of `rules.migrations` is given besides the state. */
+/** The tools a step of `rules.migrations` or a plugin's `migrations` gets beside the state. */
 export type MigrationTools = {
-  /** The game the save is loading into, for a step that needs its content: which entity an old id now names, say. */
+  /** The game the save is loading into, for a step that reads its content, such as the entity an old id now names. */
   game: Game
   /**
-   * The state this step was given, with what the game declares and the save
-   * lacks filled in: the parts asked for, or every part if left out. Nothing
-   * is filled unless a step calls this. See `FillPart`.
+   * Returns the state the step was given, with the values the game declares and the save lacks filled in. It fills the
+   * parts asked for, or every part if left out.
+   *
+   * A migration fills nothing unless its step calls this. See `FillPart`.
    */
   fill: (parts?: FillPart[]) => GameState
 }
@@ -457,10 +459,11 @@ function fillGame(state: GameState, game: Game): GameState {
 }
 
 /**
- * A state from anywhere (a save, a command log, a test) made ready to play in
- * this game, or the reason it can't be, through `say`. In order: the engine's
- * own steps and each field's load default, the plugins' migrations, the
- * game's migrations, then what the game declares and the save lacks.
+ * Returns a state from a save, a command log or a test made ready to play in this game. Returns a failed `Result`
+ * with a reason the player can read when it can't be.
+ *
+ * It runs the engine's own steps and each field's load default, then the plugins' migrations, then the game's
+ * migrations, and last fills in the values the game declares and the save lacks.
  */
 export function loadState(raw: unknown, game: Game): Result<GameState> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail(stringOf(game, 'notASave'))

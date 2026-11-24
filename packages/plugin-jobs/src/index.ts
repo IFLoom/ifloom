@@ -1,16 +1,12 @@
 /**
- * @ifloom/plugin-jobs: jobs the player applies for, works shifts at, is
- * promoted in and can be fired from.
+ * The jobs plugin, which adds jobs the player applies for, works shifts at, is promoted in and can be fired from.
  *
- * A shift costs stats (energy, say) and time on the calendar, and pays a
- * wage in a spendable stat. A job can have a ladder of ranks, each paying
- * more, reached by shifts worked and conditions. Missing shifts, or a
- * condition such as a low performance stat, gets the player fired.
+ * A shift costs stats (such as energy) and time on the calendar, and pays a wage in a spendable stat. A job can have a
+ * ladder of ranks, each reached by shifts worked and conditions. Missing shifts, or a condition such as a low
+ * performance stat, gets the player fired.
  *
- * It works with the calendar when the game has it: shifts fall on the
- * calendar's weekdays and periods. Without it, a shift can be worked once a
- * turn. A shift is refused while one of its `blocked` entries holds, such as
- * `places.onlyAt(['cafe'])` for a workplace on the map.
+ * With the calendar, shifts fall on the job's weekdays and periods. Without it, the player can work one shift a turn.
+ * A shift is refused while one of its `blocked` entries holds, such as `places.onlyAt(['cafe'])` for a workplace.
  */
 import {
   holds,
@@ -51,111 +47,128 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** What working one shift takes. */
+/** A job's shift, which the game declares in a {@link JobDef}'s `shift`. It sets what one shift costs, takes and does. */
 export type ShiftDef = {
   /**
-   * Why a shift is refused: the first entry whose `when` holds gives its
-   * reason. A workplace is one, with the places plugin:
-   * `places.onlyAt(['cafe'], { string: 'jobs/notHere' })`, which never holds
-   * without it.
+   * The reasons a shift is refused. The first entry whose `when` holds gives its reason.
+   *
+   * A workplace is one entry, such as `places.onlyAt(['cafe'], { string: 'jobs/notHere' })`, which never holds
+   * without the places plugin.
    */
   blocked?: Blocked[]
-  /** Stats it spends, by id: `{ energy: 30 }`. Checked before the shift, like an action's cost. */
+  /** The stats a shift spends, by id, such as `{ energy: 30 }`. The plugin refuses the shift while the player has too little, as for an action's cost. */
   cost?: Record<string, number>
-  /** How many of the calendar's periods it takes. None if left out, or without the calendar. */
+  /** The number of the calendar's periods a shift takes. None if left out, or without the calendar. */
   passes?: number
-  /** More effects, applied after the cost and before the pay: a performance stat going up, say. */
+  /** The shift's other effects, which run after the cost and the time and before the pay, such as raising a performance stat. */
   effects?: EffectRef[]
 }
 
-/** One step on a job's ladder. */
+/** A rank on a job's ladder, which the game declares in a {@link JobDef}'s `ranks`. The player starts at the first. */
 export type RankDef = {
+  /** The rank's id, unique within its job. */
   id: string
-  /** What the player reads: "Barista". */
+  /** The rank's name, such as "Barista". */
   name: string
-  /** What a shift pays at this rank, by stat: `{ coins: 18 }`. */
+  /** The pay for a shift at this rank, by stat, such as `{ coins: 18 }`. */
   pay: Record<string, number>
-  /** What it takes to be promoted to it. The first rank, where the player starts, needs nothing. */
+  /**
+   * The rank's requirements for a promotion, a number of shifts worked and a condition. The first rank, where the
+   * player starts, can't have any.
+   */
   requires?: { shifts?: number; when?: Condition }
 }
 
-/** What gets the player fired. */
+/** The rules that get the player fired from a job, which the game declares in a {@link JobDef}'s `fire`. */
 export type FireDef = {
-  /** Fired after missing this many shifts in all. */
+  /** The number of missed shifts, in all, that gets the player fired. At least 1. */
   missed?: number
-  /** Fired as soon as this holds after a command: a performance stat too low, say. */
+  /** The condition that gets the player fired as soon as it holds after a command, such as a performance stat too low. */
   when?: Condition
 }
 
-/** A job in the game's content: one entry of `data.jobs.jobs`, the plugin's list of jobs. */
+/** A job the game declares in `data.jobs.jobs`. It needs at least one rank. */
 export type JobDef = {
+  /** The job's id. */
   id: string
-  /** What the player reads: "Weekend help". */
+  /** The job's name, such as "Weekend help". */
   name: string
-  /** A line or two about it, for the job board. */
+  /** The job's line or two for the job board. */
   description?: string
-  /** Why an application is refused: the first entry whose `when` holds gives its reason. */
+  /** The reasons an application is refused. The first entry whose `when` holds gives its reason. */
   blocked?: Blocked[]
-  /** The weekdays it has shifts on, with the calendar plugin, from 0. Every day if left out. */
+  /** The weekdays the job has shifts on, from 0, read with the calendar plugin. Every day if left out. */
   days?: number[]
-  /** The periods a shift can start in, with the calendar plugin. Any if left out. */
+  /** The calendar periods a shift can start in. Any period if left out. */
   hours?: string[]
-  /** What a shift costs, pays and takes. See `ShiftDef`. */
+  /** The job's shift, its cost, time and effects. */
   shift: ShiftDef
-  /** The ladder, lowest first. The player is hired at the first. */
+  /** The job's ladder of ranks, lowest first. The player is hired at the first. */
   ranks: RankDef[]
-  /** When the player is fired for missing shifts. Never, if left out. */
+  /** The rules that get the player fired. The player is never fired if left out. */
   fire?: FireDef
 }
 
-/** A job the player holds, as the save keeps it. */
+/** The record a save keeps for a job the player holds, in {@link JobsState}'s `held`. The job's definition is read from content. */
 export type HeldJob = {
-  /** Which rank, from 0. */
+  /** The index of the rank the player holds, from 0. */
   rank: number
-  /** Shifts worked in all. */
+  /** The number of shifts the player has worked at the job. */
   shifts: number
-  /** Shifts missed in all. */
+  /** The number of shifts the player has missed at the job. */
   missed: number
-  /** The day they were hired: the calendar's day, or the turn without one. */
+  /** The day the player was hired, the calendar's day or the turn without the calendar. */
   hiredOn: number
-  /** The day of the last shift worked, or null. */
+  /** The day of the last shift worked, or null before the first. */
   lastWorked: number | null
 }
 
-/** What the plugin keeps in a save. */
+/** The jobs a save keeps for the player, held and fired. Jobs themselves are read from content. */
 export type JobsState = {
-  /** The jobs the player holds, by id. */
+  /** The jobs the player holds, by job id. */
   held: Record<string, HeldJob>
-  /** Jobs the player was fired from, with the day. They can't apply again. */
+  /** The day the player was fired from each job, by job id. The player can't apply for these again. */
   fired: Record<string, number>
 }
 
-/** A rank as the UI shows it. */
-export type RankView = { id: string; name: string; pay: Price | null }
-
-/** A job as the UI shows it. */
-export type JobView = {
+/** A rank as the player sees it, in a {@link JobView}'s `rank` and `next`. */
+export type RankView = {
+  /** The rank's id. */
   id: string
+  /** The rank's name. */
   name: string
-  /** A line or two about it; `''` with none. */
-  description: string
-  /** Whether the player holds it now. */
-  hired: boolean
-  /** The day the player was fired, or null. */
-  firedOn: number | null
-  /** The rank held, or null when not hired. */
-  rank: RankView | null
-  /** The next rank up, and how many more shifts it needs (0 when shifts aren't what's missing), or null at the top or when not hired. */
-  next: (RankView & { shiftsToGo: number }) | null
-  /** What a shift pays now: the rank's pay, or the first rank's for a job not held. */
+  /** The pay for a shift at this rank, or null when it pays nothing. */
   pay: Price | null
-  /** Shifts worked in all. */
+}
+
+/** A job as the player sees it, in `view.plugins.jobs.jobs`. */
+export type JobView = {
+  /** The job's id. */
+  id: string
+  /** The job's name. */
+  name: string
+  /** The job's description, or `''` when it has none. */
+  description: string
+  /** True while the player holds the job. */
+  hired: boolean
+  /** The day the player was fired from the job, or null. */
+  firedOn: number | null
+  /** The rank the player holds, or null when not hired. */
+  rank: RankView | null
+  /**
+   * The next rank up with the number of shifts still needed for it, or null at the top or when not hired.
+   * `shiftsToGo` is 0 when only the rank's condition is missing.
+   */
+  next: (RankView & { shiftsToGo: number }) | null
+  /** The pay for a shift now, the held rank's or the first rank's for a job not held. */
+  pay: Price | null
+  /** The number of shifts the player has worked at the job. */
   shifts: number
-  /** Shifts missed in all. */
+  /** The number of shifts the player has missed at the job. */
   missed: number
-  /** The next day with a shift: `inDays` 0 for today. Null when not hired or nothing is due in the next two weeks. */
+  /** The next day with a shift, with `inDays` 0 for today. Null when not hired or when no shift falls in the next two weeks. */
   nextShift: { day: number; inDays: number } | null
-  /** The button that applies, or null once hired or fired. Its `disabled` says what's missing. */
+  /** The button that applies, or null once hired or fired. Its `disabled` gives the reason an application is refused. */
   apply: RenderedChoice | null
   /** The button that works a shift, or null when not hired. Its `price` is the shift's cost. */
   work: RenderedChoice | null
@@ -163,13 +176,13 @@ export type JobView = {
   quit: RenderedChoice | null
 }
 
+/** The jobs as the player sees them, in `view.plugins.jobs`. */
 export type JobsView = {
-  /** Every job, in the order the game declares them. */
+  /** The game's jobs, in the order the game declares them. */
   jobs: JobView[]
   /**
-   * The jobs on the open job board, the `jobs` panel: only those its
-   * `with.job` lists, or every job when it lists none. Null while no job
-   * board is open. What a UI draws in the panel, already filtered.
+   * The jobs on the open `jobs` panel, or null while it's closed. It holds only the jobs the panel's `with.job` names,
+   * or every job when it names none.
    */
   panel: JobView[] | null
 }
@@ -232,12 +245,12 @@ function emptyState(): JobsState {
   return { held: {}, fired: {} }
 }
 
-/** The game's jobs: `data.jobs.jobs`, from its content and packs. */
+/** Returns the game's jobs, from `data.jobs.jobs` in its content and packs. */
 export function jobsOf(game: Game): JobDef[] {
   return DATA.jobs.all(game)
 }
 
-/** One of the game's jobs, by id. */
+/** Returns the job with this id, or undefined when the game has none. */
 export function jobOf(game: Game, id: string): JobDef | undefined {
   return DATA.jobs.get(game, id)
 }
@@ -420,10 +433,7 @@ function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView
   return { jobs, panel: board }
 }
 
-/**
- * The plugin. Add it to the game's `plugins`, and put jobs in the content's
- * `data.jobs.jobs`.
- */
+/** Returns the jobs plugin for the game's `plugins`. The game declares its jobs in `data.jobs.jobs`. */
 function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
   return definePlugin<JobsState, JobsView, typeof CALLS>({
     id: ID,
@@ -587,43 +597,52 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
 }
 
 /**
- * An effect: open the job board in the `jobs` panel, with only `jobs` on it
- * if given (a newspaper's ads, a café's notice), as `with: { job: [...] }`. From a place's action, a
- * person's, an item's `use`, an app or a choice; the UI draws it.
+ * Returns the effect that opens the job board in the `jobs` panel. With `jobs`, the board shows only those, as for a
+ * newspaper's ads or a café's notice.
  */
 const openJobs = (jobs?: string[]): Effect => (jobs === undefined ? { panel: PANEL } : { panel: PANEL, with: { job: jobs } })
-/** A command: apply for the job. */
+/** Returns the `jobs/apply` command, which applies for the job. */
 const applyFor = (job: string): CommandRef => CALLS.commands.apply({ id: job })
-/** A command: work a shift at the job. */
+/** Returns the `jobs/work` command, which works a shift at the job. */
 const work = (job: string): CommandRef => CALLS.commands.work({ id: job })
-/** A command: leave the job. */
+/** Returns the `jobs/quit` command, which leaves the job. */
 const quit = (job: string): CommandRef => CALLS.commands.quit({ id: job })
-/** An effect: hire the player now, asking no requirements. */
+/** Returns the `jobs/hire` effect, which hires the player now without checking the job's `blocked`. */
 const hire = (job: string): EffectRef => CALLS.effects.hire({ job })
-/** An effect: fire the player from the job now. */
+/** Returns the `jobs/fire` effect, which fires the player from the job now, with a notice. */
 const fire = (job: string): EffectRef => CALLS.effects.fire({ job })
-/** A condition: the player holds the job, at this rank if given. */
+/** Returns the `jobs/hired` condition, which holds while the player holds the job, at `rank` if given. */
 const hasJob = (job: string, rank?: string): Condition => CALLS.conditions.hired(rank === undefined ? { job } : { job, rank })
-/** A condition: the player was fired from the job. */
+/** Returns the `jobs/fired` condition, which holds once the player has been fired from the job. */
 const wasFired = (job: string): Condition => CALLS.conditions.fired({ job })
-/** A condition: shifts worked at a job the player holds, in this range. */
+/** Returns the `jobs/shifts` condition, which holds while the shifts worked at a held job fall in the range. */
 const shiftsWorked = (job: string, range: Range): Condition => CALLS.conditions.shifts({ job, ...range })
-/** A shift at `job` was worked today; any job held, without one. */
+/** Returns the `jobs/worked` condition, which holds once the player has worked a shift today, at `job` or at any job. */
 const workedToday = (job?: string): Condition => CALLS.conditions.worked(job === undefined ? undefined : { job })
 
 /**
- * The plugin, with its helpers on it: `jobs()` makes the plugin for the
- * game's `plugins`, and content is written with `jobs.apply('cafe')` and `jobs.fire('cafe')`.
+ * The jobs plugin's factory, with its helpers as properties. `jobs()` returns the plugin for the game's `plugins`,
+ * and content calls helpers such as `jobs.apply('cafe')` and `jobs.fire('cafe')`.
  */
 export const jobs = Object.assign(jobsPlugin, {
+  /** Returns the effect that opens the job board in the `jobs` panel, showing only `jobs` if given. */
   open: openJobs,
+  /** Returns the `jobs/apply` command, which applies for the job. */
   apply: applyFor,
+  /** Returns the `jobs/work` command, which works a shift at the job. */
   work,
+  /** Returns the `jobs/quit` command, which leaves the job. */
   quit,
+  /** Returns the `jobs/hire` effect, which hires the player now without checking the job's `blocked`. */
   hire,
+  /** Returns the `jobs/fire` effect, which fires the player from the job now, with a notice. */
   fire,
+  /** Returns the `jobs/hired` condition, which holds while the player holds the job, at `rank` if given. */
   hired: hasJob,
+  /** Returns the `jobs/fired` condition, which holds once the player has been fired from the job. */
   fired: wasFired,
+  /** Returns the `jobs/shifts` condition, which holds while the shifts worked at a held job fall in the range. */
   shifts: shiftsWorked,
+  /** Returns the `jobs/worked` condition, which holds once the player has worked a shift today, at `job` or at any job. */
   worked: workedToday,
 })

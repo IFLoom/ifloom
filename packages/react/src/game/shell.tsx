@@ -6,24 +6,25 @@ import { GameProvider, useGame, type GameProviderProps } from './context.tsx'
 import { DefaultLayout } from './layout.tsx'
 import { WithPages, type PagesOptions } from './pages.tsx'
 
+/** The props of `GameShell`, the {@link GameProviderProps} without `children`, with a layout, pages and sound. */
 export type GameShellProps = Omit<GameProviderProps, 'children'> & {
   /**
-   * The page, as a component: a `Game` with a `Sidebar`, a `Story` and the
-   * rest, as in your `src/layout.tsx`, or any component of your own, since
-   * `useGame()` and every built-in component work in it. `DefaultLayout` if
-   * left out.
+   * The layout, the page as a component, such as a `Game` with a `Sidebar` and a `Story` in your `src/layout.tsx`.
+   * `DefaultLayout` if left out.
+   *
+   * Any component of your own works, since `useGame()` and every built-in component work inside it.
    */
   layout?: ComponentType
   /**
-   * The title screen and the pages around the game: `true`, or what they show.
-   * Off if left out, and the game starts straight away. With them on, the
-   * layout is drawn on the `game` page.
+   * The title screen and the pages around the game, `true` or the {@link PagesOptions} for them. Off if left out, and
+   * the game starts straight away.
+   *
+   * With pages on, the layout renders on the `game` page.
    */
   pages?: boolean | PagesOptions
   /**
-   * Sound, through `@ifloom/audio`. It starts on its own when the game lists
-   * any tracks in `game.audio`; `false` turns it off, and an object is passed
-   * to `startAudio` as its options.
+   * The game's sound through `@ifloom/audio`, which starts when the game declares any audio. `false` turns it off, and
+   * an object goes to `startAudio` as its options.
    */
   audio?: false | AudioOptions
 }
@@ -44,12 +45,11 @@ function Sound({ audio }: { audio?: false | AudioOptions }) {
 }
 
 /**
- * The whole React UI, and the one root every entry draws (`mountGame` draws
- * it too): the game's provider (the snapshot, the UI options, the keys and
- * the clock), the game's sound, its text size, the pages if `pages` is on,
- * and the layout, `DefaultLayout` unless you give your own. Every part a
- * layout uses is exported on its own, so a game can build another page
- * entirely.
+ * Renders the whole React UI for a runner, the root that `mountGame` renders too. It renders the layout,
+ * `DefaultLayout` unless you give your own, inside the game's provider.
+ *
+ * It also plays the game's sound, sets its text size and, with `pages` on, renders the pages around the game. Every
+ * part a layout uses is exported on its own, so a game can build another page entirely.
  */
 export function GameShell({ layout: Layout = DefaultLayout, pages, audio, ...provider }: GameShellProps) {
   return (

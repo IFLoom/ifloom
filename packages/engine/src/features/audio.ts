@@ -10,167 +10,174 @@ import type { GameState } from '../types.ts'
 import { defineFeature, type FeatureContext } from './feature.ts'
 import { settingAffects, settingOf } from './settings.ts'
 
-/** A sound file the game ships, by id in `game.audio.tracks`. */
+/** A track the game declares in `audio.tracks`, a sound file it ships. It plays on the `'sfx'` channel unless `channel` says otherwise. */
 export type TrackDef = {
-  /** The file, relative to the game's public folder: `'audio/cafe.ogg'`. See `audioSrc`. */
+  /** The track's file, under the game's `audio/` folder, such as `'audio/cafe.ogg'`. `audioSrc` turns it into a path. */
   src: string
   /**
-   * The channel it plays on. A `sound` effect and `[[sound:id]]` play it
-   * there; a background channel can only be given a track whose channel is a
-   * background one. `'sfx'` if left out.
+   * The channel the track plays on. `'sfx'` if left out.
+   *
+   * A `sound` effect and `[[sound:id]]` play it there, and a background channel takes only a track whose channel is a
+   * background one.
    */
   channel?: string
-  /** Whether it repeats while it is on a background channel. True if left out. */
+  /** The track's loop mark, true to repeat it while it's on a background channel. True if left out. */
   loop?: boolean
-  /** Its own volume, from 0 to 1. 1 if left out. */
+  /** The track's own volume, from 0 to 1. 1 if left out. */
   volume?: number
 }
 
-/** Several background tracks played one after another, by id in `game.audio.tracks`. */
+/** A playlist the game declares in `audio.tracks`, background tracks played one after another. Its order is `'loop'` if left out. */
 export type PlaylistDef = {
   /**
-   * Track ids, each on a background channel. In a shuffled playlist a track
-   * can carry a weight, `{ track: 'rain', weight: 3 }`, and is then more
-   * likely to come early in the order. A plain id has weight 1.
+   * The playlist's track ids, each on a background channel. In a shuffled playlist a track can carry a weight,
+   * `{ track: 'rain', weight: 3 }`, which makes it likely to come earlier.
+   *
+   * A plain id has weight 1.
    */
   playlist: (string | { track: string; weight?: number })[]
   /**
-   * `'inOrder'` plays the list once, `'loop'` plays it over and over, and
-   * `'shuffle'` plays it over and over in an order drawn from the save's seed.
-   * With weights, the shuffle draws the first track by weight, then the next
-   * from those left, and so on, so a heavier track tends to play sooner.
-   * `'loop'` if left out.
+   * The playlist's order. `'inOrder'` plays the list once, `'loop'` plays it over and over, and `'shuffle'` plays it
+   * over and over in an order drawn from the save's seed. `'loop'` if left out.
+   *
+   * With weights, the shuffle draws the first track by weight, then the next from those left, and so on, so a heavier
+   * track tends to play sooner.
    */
   order?: 'inOrder' | 'loop' | 'shuffle'
 }
 
-/** How a channel behaves. */
+/**
+ * An audio channel the game declares in `audio.channels`, merged over the default channels. It sets whether its
+ * sounds replace each other or overlap, and how they fade.
+ */
 export type ChannelDef = {
-  /** Background channels play one thing until it changes; cue channels play each sound once, overlapping. */
+  /** The channel's mode. A `background` channel plays one thing until it changes, and a `cue` channel plays each sound once, overlapping. */
   mode: 'background' | 'cue'
-  /** Milliseconds to fade from one track to the next. Background only; 1000 for music, 600 for ambience. */
+  /** The milliseconds a background channel takes to fade from one track to the next. 1000 for `music`, 600 for `ambience` and 1000 for others. */
   crossfade?: number
-  /** A ui setting (a range) that sets this channel's volume. */
+  /** The id of the ui setting, a range, that sets the channel's volume. */
   volume?: string
-  /** Off unless declared: quieten this channel to `to` (0 to 1) while any of `under` is playing. */
+  /** The channel's ducking, quietening it to `to` (0 to 1) while any channel in `under` plays. No ducking if left out. */
   duck?: { under: string[]; to: number }
 }
 
-/** The game's sounds, the channels they play on and the settings that set their volume. */
+/** The audio the game declares in `audio`, its tracks, the channels they play on and the settings that set their volume. */
 export type GameAudio = {
-  /** Every track and playlist, by id: a file with its volume, or a list of tracks to play in turn. */
+  /** The game's tracks and playlists, by id, each a file with its volume or a list of tracks to play in turn. */
   tracks: Record<string, TrackDef | PlaylistDef>
-  /** Merged over the defaults: `music` and `ambience` (background), `sfx` and `voice` (cue). */
+  /** The game's channels, merged over the defaults, `music` and `ambience` (background) and `sfx` and `voice` (cue). */
   channels?: Record<string, ChannelDef>
-  /** A ui setting (a toggle) that mutes everything while it is on: a "Mute" box. */
+  /** The id of the ui setting, a toggle, that mutes everything while it's on, such as a "Mute" box. */
   mute?: string
-  /** A ui setting (a toggle) that plays sound only while it is on: a "Sound" box, the other way round from `mute`. */
+  /** The id of the ui setting, a toggle, that plays sound only while it's on, such as a "Sound" box. It's the reverse of `mute`. */
   sound?: string
-  /** What each background channel plays when nothing else says, by channel. */
+  /** The track each background channel plays when nothing else sets one, by channel. */
   default?: Record<string, string>
 }
 
-/** What a save keeps about audio, at `state.audio`. */
+/** The audio a save keeps, in `state.audio`. The tracks and channels themselves are read from content. */
 export type AudioState = {
-  /** What effects have put on background channels. Null is silence; a channel not here is the effects' to leave alone. */
+  /**
+   * The tracks `audio` effects have put on background channels, by channel. Null is silence, and a channel missing
+   * here is left to the scene, the plugins and the defaults.
+   */
   channels: Record<string, string | null>
-  /** The last few `sound` effects, oldest first, each with its place in the running count. */
+  /** The last 20 `sound` effects, oldest first, each with its number in the running count. */
   cues: { seq: number; track: string }[]
-  /** How many `sound` effects there have been. */
+  /** The number of `sound` effects there have been. */
   seq: number
-  /** How many times a scene has been entered, all scenes together. Each showing's sounds get keys of their own. */
+  /** The number of times a scene has been entered, all scenes together. Each visit's sounds get keys of their own from it. */
   shown: number
-  /** What each background channel is playing and the turn it started, for a shuffled playlist's draw. */
+  /** The track each background channel is playing and the turn it started, for a shuffled playlist's draw. */
   started: Record<string, { track: string; turn: number }>
 }
 
-/** One channel as a player needs it. */
+/** An audio channel as the audio player needs it, in `view.audio.channels`. */
 export type AudioChannelView = {
-  /** `background` plays a track or playlist until told otherwise; `cue` plays one-shot sounds, listed in `cues`. */
+  /** The channel's mode. `background` plays a track or playlist until it changes, and `cue` plays one-shot sounds, listed in `cues`. */
   mode: 'background' | 'cue'
-  /** The track or playlist playing; null for silence, and always null on a cue channel. */
+  /** The id of the track or playlist playing. Null for silence, and always null on a cue channel. */
   track: string | null
-  /** The file to play, through `audioSrc`; a playlist's first. Null for silence. */
+  /** The file to play, through `audioSrc`, a playlist's first. Null for silence. */
   src: string | null
-  /** Whether it repeats. A playlist repeats as a whole unless its order is `'inOrder'`. */
+  /** The channel's loop mark, true when the track repeats. A playlist repeats as a whole unless its order is `'inOrder'`. */
   loop: boolean
-  /** The track's own volume, 0 to 1; a playlist's first track's. Multiply by the setting's value. */
+  /** The track's own volume, from 0 to 1, or a playlist's first track's. The player multiplies it by the volume setting's value. */
   volume: number
-  /** The ui setting that sets this channel's volume, or null for none. */
+  /** The id of the ui setting that sets the channel's volume. Null when there's none. */
   volumeSetting: string | null
-  /** Milliseconds to fade between tracks. 0 on a cue channel. */
+  /** The milliseconds to fade between tracks. 0 on a cue channel. */
   crossfade: number
-  /** Quieten this channel to `to` (0 to 1) while any channel in `under` plays; null when it doesn't duck. */
+  /** The channel's ducking, quietening it to `to` (0 to 1) while any channel in `under` plays. Null when it doesn't duck. */
   duck: { under: string[]; to: number } | null
-  /** A playlist's files, volumes and order, already shuffled when it shuffles. */
+  /** The playlist's tracks, files, volumes and order, already shuffled when it shuffles. Left out for a single track. */
   playlist?: { tracks: string[]; srcs: string[]; volumes: number[]; order: 'inOrder' | 'loop' | 'shuffle' }
 }
 
-/** A one-shot sound that is due. Play each key once. */
+/** A one-shot sound that is due, in `view.audio.cues`. The audio player plays each key once. */
 export type AudioCue = {
-  /** The same for the same sound in the same showing, across view calls and reloads. */
+  /** The cue's key, the same for the same sound in the same visit across view calls and reloads. */
   key: string
-  /** The cue channel it plays on: `sfx` or `voice` unless the game declares others. */
+  /** The cue channel the sound plays on, `sfx` or `voice` unless the game declares others. */
   channel: string
-  /** The track's id in `game.audio.tracks`. */
+  /** The track's id in `audio.tracks`. */
   track: string
   /** The file to play, through `audioSrc`. */
   src: string
-  /** The track's own volume, 0 to 1. Multiply by the channel's volume setting. */
+  /** The track's own volume, from 0 to 1. The player multiplies it by the channel's volume setting. */
   volume: number
 }
 
-/** What the audio feature adds, as types. */
+/** The audio feature's state, effects, content key, view and references, as types. */
 export type AudioShape = {
   state: {
-    /** What effects have put on the audio channels, the last few sounds, and the count of scenes entered. */
+    /** The audio a save keeps, the tracks effects put on channels, the last sounds and the count of scenes entered. */
     audio: AudioState
   }
   effects: {
     /**
-     * Put a background channel `to` a track, kept in the save: `{ audio: 'music', to: 'calm' }`.
-     * `to: null` silences the channel; leaving `to` out hands it back to the place or the game's default.
+     * An effect that puts a background channel `to` a track, kept in the save, such as `{ audio: 'music', to: 'calm' }`.
+     * `to: null` silences the channel, and leaving `to` out returns it to the scene, the plugins or the default.
      */
     audio: { audio: string; to?: string | null }
-    /** Play a sound once, on its track's channel. */
+    /** An effect that plays a track once, on the track's channel. */
     sound: { sound: string }
   }
   game: {
-    /** The game's sounds and channels. No audio if left out. */
+    /** The game's tracks and channels. No audio if left out. */
     audio?: GameAudio
   }
   pack: {
     /**
-     * Sounds, channels and defaults over the game's own. A later pack's track
-     * or channel replaces an earlier one's by id; its `mute` and `default`
-     * entries win too.
+     * The pack's tracks, channels and defaults, over the content's. A later pack's track or channel replaces an
+     * earlier one with the same id, and its `mute`, `sound` and `default` entries win too.
      */
     audio?: Partial<GameAudio>
   }
   view: {
-    /** What should be playing on each channel, and the sounds that are due. Empty when the game has no audio. */
+    /** The audio each channel should play and the sounds that are due. Empty when the game has no audio. */
     audio: AudioView
   }
   lists: 'track' | 'channel' | 'audio'
   references: {
-    /** Background audio: a track (or silence) on a channel. */
+    /** A reference to background audio, a track (or silence) on a channel. */
     channel: { channel: string; track: string | null | undefined }
-    /** A track played once. */
+    /** A reference to a track played once. */
     sound: { sound: string }
-    /** A sound file, through `audioSrc`. */
+    /** A reference to a sound file, through `audioSrc`. */
     audio: { audio: string }
   }
 }
 
-/** What `view.audio` holds. */
+/** The audio as the audio player needs it, in `view.audio`. It's empty when the game has no audio. */
 export type AudioView = {
-  /** Every channel, resolved: the open scene's choice, then an effect's, then a plugin's, then the game's default. */
+  /** Every channel with its track resolved, from the open scene, then an effect, then a plugin, then the game's default. */
   channels: Record<string, AudioChannelView>
-  /** Sounds from `sound` effects and the open scene's sound and voice beats, in order. */
+  /** The sounds that are due, from `sound` effects and the open scene's sound and voice beats, in order. */
   cues: AudioCue[]
-  /** The ui setting that mutes everything while on, or null for none. */
+  /** The id of the ui setting that mutes everything while it's on. Null when there's none. */
   muteSetting: string | null
-  /** The ui setting that mutes everything while off, or null for none. */
+  /** The id of the ui setting that mutes everything while it's off. Null when there's none. */
   soundSetting: string | null
 }
 
@@ -187,8 +194,9 @@ const DEFAULT_CHANNELS: Record<string, ChannelDef> = {
 }
 
 /**
- * Where a sound file is, relative to the page. Like `artSrc`: relative, never
- * rooted at `/`, under `audio/`, and a bare name is an `.ogg`.
+ * Returns a sound file's path relative to the page, under `audio/`. A bare name gets `.ogg`.
+ *
+ * Like `artSrc`, the path is relative and never starts with `/`.
  */
 export function audioSrc(path: string): string {
   const trimmed = path.replace(/^\/?audio\//, '').replace(/^\//, '')
@@ -196,14 +204,14 @@ export function audioSrc(path: string): string {
   return `${AUDIO_ROOT}${trimmed}.ogg`
 }
 
-/** The game's channels: the four defaults with the game's own merged over them, field by field. */
+/** Returns the game's channels, the four defaults with the game's own merged over them field by field. */
 export function audioChannels(game: Game): Record<string, ChannelDef> {
   const out: Record<string, ChannelDef> = { ...DEFAULT_CHANNELS }
   for (const [id, def] of Object.entries(game.audio?.channels ?? {})) out[id] = { ...out[id], ...def }
   return out
 }
 
-/** A save's audio before anything has happened. */
+/** Returns a save's audio before anything has played. */
 export function emptyAudio(): AudioState {
   return { channels: {}, cues: [], seq: 0, shown: 0, started: {} }
 }
@@ -221,14 +229,14 @@ function channelOf(def: TrackDef): string {
   return def.channel ?? 'sfx'
 }
 
-/** A `sound` effect, remembered. */
+/** Returns the state with a `sound` effect recorded as a cue. The save keeps the last 20. */
 export function soundCue(state: GameState, track: string): GameState {
   const audio = state.audio ?? emptyAudio()
   const seq = audio.seq + 1
   return { ...state, audio: { ...audio, seq, cues: [...audio.cues, { seq, track }].slice(-CUES_KEPT) } }
 }
 
-/** An `audio` effect: a track or silence on a background channel, or the channel handed back when `track` is left out. */
+/** Returns the state with a track or silence put on a background channel. Leaving `track` out removes the channel's override. */
 export function setChannel(state: GameState, channel: string, track: string | null | undefined): GameState {
   const audio = state.audio ?? emptyAudio()
   const channels = { ...audio.channels }
@@ -237,7 +245,7 @@ export function setChannel(state: GameState, channel: string, track: string | nu
   return { ...state, audio: { ...audio, channels } }
 }
 
-/** One more scene entered: its sounds get keys of their own. */
+/** Returns the state with one more scene entered counted, so that visit's sounds get keys of their own. */
 export function sceneShown(state: GameState): GameState {
   const audio = state.audio ?? emptyAudio()
   return { ...state, audio: { ...audio, shown: audio.shown + 1 } }
@@ -267,19 +275,19 @@ function resolve(state: GameState, game: Game, scene: Record<string, string | nu
 }
 
 /**
- * The track each background channel should play, worked out from the state:
- * `scene` is what the open scene puts on its channels, when the caller has
- * rendered it. Empty when the game has no audio.
+ * Returns the track each background channel should play in this state. `scene` is what the open scene puts on its
+ * channels, when the caller has rendered it, and the result is empty when the game has no audio.
  */
 export function audioTracks(state: GameState, game: Game, scene: Record<string, string | null> | undefined, cx: FeatureContext): Record<string, string | null> {
   return game.audio ? resolve(state, game, scene, cx) : {}
 }
 
 /**
- * Record what each background channel has started playing, and when. Called
- * after every command with what `screen` resolved (`screen.audio.tracks`), so
- * a shuffled playlist draws its order from the turn it started, and replays
- * exactly. Without `tracks`, they are worked out from the open scene's `audio`.
+ * Returns the state with the track each background channel started playing, and the turn it started. The reducer
+ * calls it after every command with `screen.audio.tracks`.
+ *
+ * A shuffled playlist draws its order from the turn it started, so it replays exactly. Without `tracks`, the tracks
+ * are worked out from the open scene's `audio`.
  */
 export function noteStarted(state: GameState, game: Game, tracks: Record<string, string | null> | undefined, cx: FeatureContext): GameState {
   if (!game.audio) return state
@@ -378,9 +386,9 @@ function channelView(state: GameState, game: Game, id: string, def: ChannelDef, 
 }
 
 /**
- * `view.audio`: every channel resolved, and the sounds that are due. `tracks`
- * is what `audioTracks` resolved; `beats` the open scene's beats, whose sound
- * and voice beats become cues, or null when no scene is open.
+ * Returns `view.audio`, every channel resolved and the sounds that are due. `tracks` is what `audioTracks` returned.
+ *
+ * `beats` are the open scene's beats, whose sound and voice beats become cues, or null when no scene is open.
  */
 export function audioView(
   state: GameState,
@@ -414,7 +422,7 @@ export function audioView(
 
 // Checks, used by the content checker (check.ts).
 
-/** What is wrong with putting these tracks on these background channels: a scene's `audio`, a place's, the game's default. */
+/** Returns the problems with putting these tracks on these background channels, as a scene's `audio`, a location's or the game's default does. */
 export function placementProblems(game: Game, audio: Record<string, string | null | undefined>): string[] {
   const channels = audioChannels(game)
   const out: string[] = []
@@ -432,7 +440,7 @@ export function placementProblems(game: Game, audio: Record<string, string | nul
   return out
 }
 
-/** What is wrong with playing this track once, as a `sound` effect or `[[sound:id]]` does. */
+/** Returns the problems with playing this track once, as a `sound` effect or `[[sound:id]]` does. Empty when there are none. */
 export function cueProblems(game: Game, track: string): string[] {
   const entry = trackOf(game, track)
   if (!entry) return [`unknown track "${track}"`]
@@ -443,12 +451,12 @@ export function cueProblems(game: Game, track: string): string[] {
   return []
 }
 
-/** What `[[sound:id]]` and `[[voice:id]]` in this prose name that the game doesn't have. */
+/** Returns the problems with the `[[sound:id]]` and `[[voice:id]]` markup in this prose, such as a track the game doesn't have. */
 export function markupProblems(game: Game, text: string): string[] {
   return [...text.matchAll(/\[\[(?:sound|voice):([^\]]+)\]\]/g)].flatMap((match) => cueProblems(game, match[1].trim()))
 }
 
-/** What is wrong with `game.audio` itself, each with where: `track calm`, `channel music`, `audio`. */
+/** Returns the problems with the game's `audio` itself, each with where it is, such as `track calm`, `channel music` or `audio`. */
 export function manifestProblems(game: Game): { where: string; what: string }[] {
   const audio = game.audio
   if (!audio) return []
@@ -496,6 +504,7 @@ export function manifestProblems(game: Game): { where: string; what: string }[] 
   return out
 }
 
+/** The audio feature, which keeps the channels and cues a save needs and renders `view.audio`. */
 export const audio = defineFeature<AudioShape>({
   name: 'audio',
   // A channel's volume and the mute and sound switches are ui settings.

@@ -15,9 +15,10 @@ const renamed = (args: unknown, names: Record<string, string>): unknown =>
 /** The commands whose one target became `id` at schema 6. */
 const COMMANDS_6: Record<string, Record<string, string>> = { 'messages/read': { thread: 'id' } }
 
-/** The version of what content writes for this plugin. */
+/** The schema of the content this plugin reads, numbered by the engine's schema. */
 export const CONTENT_VERSION = 25
 
+/** The steps that carry this plugin's content forward, each keyed by the schema it upgrades from. */
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (pack, tools) =>
@@ -50,9 +51,10 @@ export const contentMigrations: Record<number, ContentStep> = {
   },
 }
 
-/** The version of this plugin's commands. */
+/** The version of this plugin's commands, which command logs record. */
 export const COMMAND_VERSION = 6
 
+/** The steps that carry this plugin's logged commands forward, each keyed by the version it upgrades from. */
 export const commandMigrations: Record<number, CommandStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (command) =>

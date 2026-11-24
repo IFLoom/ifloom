@@ -8,35 +8,41 @@ import type { StorylineDef } from '../game.ts'
 import type { StorylineState } from '../types.ts'
 import { byId, defineFeature, listWords, mergedById } from './feature.ts'
 
-/** What the storylines feature adds, as types. */
+/** The storylines feature's state, calls and content key, as types. */
 export type StorylinesShape = {
   state: {
+    /** The storylines a save keeps, by id, each with its kv store and the turn it stays closed until. */
     storylines: Record<string, StorylineState>
   }
   conditions: {
     /**
-     * A storyline is open (`open: true`, the default): not closed, or closed
-     * until a turn that has come. With `open: false`, that it is closed for now.
+     * A condition that holds while a storyline is open. With `open: false` it holds while the storyline is closed.
+     *
+     * A storyline is open when nothing closed it, or when the turn it was closed until has come. `open` is true if
+     * left out.
      */
     storyline: { storyline: string; open?: boolean }
   }
   effects: {
-    /** Close a storyline for some turns. */
+    /** An effect that closes a storyline for `turns` turns. Its kv store keeps its values while it's closed. */
     closeStoryline: { closeStoryline: string; turns: number }
   }
   game: {
-    /** Threads of story with their own kv store, closed for a while when they need a rest. None if left out. */
+    /** The game's storylines, threads of story each with its own kv store, which a `closeStoryline` effect rests for some turns. None if left out. */
     storylines?: StorylineDef[]
   }
   pack: {
+    /** The pack's storylines, merged by id over the content's. */
     storylines?: StorylineDef[]
   }
   lists: 'storyline'
   references: {
+    /** A reference to a storyline by id. */
     storyline: { storyline: string }
   }
 }
 
+/** The storylines feature, which keeps each storyline's kv store and closes storylines for some turns. */
 export const storylines = defineFeature<StorylinesShape>({
   name: 'storylines',
   state: {

@@ -1,8 +1,8 @@
 /**
- * @ifloom/plugin-statuses/react: the statuses plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `statusesUi` in the game's
- * `plugins` to have the statuses under the stats, and as the `statuses`
- * panel; or draw them yourself from `useStatuses`.
+ * The statuses plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `statusesUi` in the game's `plugins` to render the active statuses under the stats and as the `statuses`
+ * panel. To render them yourself, read `useStatuses`.
  */
 import type { ComponentProps } from 'react'
 import { statOf, stringOf } from '@ifloom/engine'
@@ -10,13 +10,19 @@ import type { StatusesView } from '../index.ts'
 import { useGame, usePart } from '@ifloom/react'
 import { overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
-/** The statuses plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The statuses plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const STATUSES_WORDS = {
+  /** The line for a modifier that adds to a stat, with the signed `{n}` and the `{stat}`. */
   modifierAdd: '{n} {stat}',
+  /** The line for a modifier that multiplies a stat, with `{n}` and the `{stat}`. */
   modifierMultiply: '×{n} {stat}',
+  /** The badge on a status with more than one stack, with `{n}`. */
   statusStacks: '×{n}',
+  /** The title of the status list. */
   statuses: 'Statuses',
+  /** The line on a status with one turn left. */
   turnLeft: '1 turn left',
+  /** The line on a status with `{n}` turns left. */
   turnsLeft: '{n} turns left',
 } as const
 
@@ -39,7 +45,7 @@ declare module '@ifloom/react' {
   }
 }
 
-/** The statuses plugin's view: the active statuses, each with its turns left and what it does to the stats, or null in a game without the plugin. `StatusList` is drawn from it. */
+/** Returns the statuses plugin's view from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function useStatuses(): StatusesView | null {
   return usePlugin(STATUSES).view ?? null
 }
@@ -88,17 +94,17 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
 }
 
 /**
- * The statuses active now: each with its name, its stacks, the turns left on
- * its longest stack, its description and what it does to the stats. Nothing while
- * none is active, or in a game without the plugin. A thin default on
- * `useStatuses`.
+ * Renders the active statuses from `view.plugins.statuses.active`, each with its name, stacks, turns left,
+ * description and changes to the stats. It renders nothing while no status is active or without the plugin.
+ *
+ * A preset can style the parts `statuses`, `statuses-title`, `status`, `status-label`, `status-stacks`,
+ * `status-turns`, `status-summary` and `status-modifiers`.
  */
 export const StatusList = overridable('StatusList', StatusListImpl)
 
 /**
- * The statuses plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `StatusList` under the stats in the side column, the
- * `statuses` panel, and the statuses' words.
+ * The statuses plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `StatusList` under
+ * the stats in the sidebar and as the `statuses` panel, and adds the plugin's words.
  */
 export const statusesUi: PluginUi = {
   ...STATUSES,

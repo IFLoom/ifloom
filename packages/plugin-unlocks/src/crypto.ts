@@ -26,10 +26,10 @@ function webCrypto(): Crypto & { subtle: Subtle } {
   return found as Crypto & { subtle: Subtle }
 }
 
-/** PBKDF2's rounds when an unlock doesn't say: slow enough that guessing codes one by one takes a long time. */
+/** The number of PBKDF2 rounds for an unlock without its own `iterations`. It makes guessing codes one by one take a long time. */
 export const ITERATIONS = 600_000
 
-/** UTF-8 bytes of a string, without the DOM's `TextEncoder`. */
+/** Returns the UTF-8 bytes of a string, without the DOM's `TextEncoder`. */
 export function utf8(text: string): Uint8Array {
   const out: number[] = []
   for (const char of text) {
@@ -42,7 +42,7 @@ export function utf8(text: string): Uint8Array {
   return new Uint8Array(out)
 }
 
-/** A string from UTF-8 bytes. */
+/** Returns the string that UTF-8 bytes encode. */
 export function fromUtf8(bytes: Uint8Array): string {
   let out = ''
   for (let at = 0; at < bytes.length;) {
@@ -56,10 +56,12 @@ export function fromUtf8(bytes: Uint8Array): string {
   return out
 }
 
+/** Returns bytes as lowercase hex, two digits per byte. */
 export function toHex(bytes: Uint8Array): string {
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
+/** Returns the bytes that a hex string encodes, skipping anything that isn't a pair of hex digits. */
 export function fromHex(hex: string): Uint8Array {
   const pairs = hex.match(/[0-9a-f]{2}/gi) ?? []
   return new Uint8Array(pairs.map((pair) => parseInt(pair, 16)))
@@ -67,6 +69,7 @@ export function fromHex(hex: string): Uint8Array {
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
+/** Returns bytes as base64, padded with `=`. */
 export function toBase64(bytes: Uint8Array): string {
   let out = ''
   for (let at = 0; at < bytes.length; at += 3) {
@@ -79,7 +82,7 @@ export function toBase64(bytes: Uint8Array): string {
   return out
 }
 
-/** Bytes from base64; undefined if it isn't base64. */
+/** Returns the bytes that a base64 string encodes, or undefined when it isn't base64. */
 export function fromBase64(text: string): Uint8Array | undefined {
   const clean = text.replace(/=+$/, '')
   if (/[^A-Za-z0-9+/]/.test(clean) || clean.length % 4 === 1) return undefined
@@ -98,8 +101,8 @@ export function fromBase64(text: string): Uint8Array | undefined {
 }
 
 /**
- * A code as it is checked: Unicode-normalised, with spaces and hyphens taken
- * out, in capitals. So `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
+ * Returns a code in the form the plugin checks, Unicode-normalised, without spaces or hyphens, in capitals. So
+ * `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
  */
 export function normaliseCode(code: string): string {
   return code
@@ -108,12 +111,12 @@ export function normaliseCode(code: string): string {
     .toUpperCase()
 }
 
-/** What a code is salted with: the game, the unlock and the unlock's own `salt`, so one code hashes differently in each. */
+/** Returns the salt for a code, made from the game's id, the unlock's id and the unlock's own `salt`, so one code hashes differently in each. */
 export function saltOf(game: string, unlock: string, salt?: string): string {
   return `ifloom-unlock:${game}:${unlock}${salt ? `:${salt}` : ''}`
 }
 
-/** The 32-byte proof a code makes for one unlock: the slow step. */
+/** Returns the 32-byte proof a code makes for one unlock. This is the slow step. */
 export async function proofOf(code: string, salt: string, iterations: number): Promise<Uint8Array> {
   const { subtle } = webCrypto()
   const key = await subtle.importKey('raw', utf8(normaliseCode(code)), 'PBKDF2', false, ['deriveBits'])
@@ -126,7 +129,7 @@ async function expand(proof: Uint8Array, label: string): Promise<Uint8Array> {
   return new Uint8Array(await subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: utf8(label) }, key, 256))
 }
 
-/** The public hash of a proof, in hex: what an unlock's `hash` holds. */
+/** Returns the public hash of a proof, in hex, the value an unlock's `hash` holds. */
 export async function hashOfProof(proof: Uint8Array): Promise<string> {
   return toHex(await expand(proof, 'ifloom-unlock-hash'))
 }
@@ -136,7 +139,7 @@ async function contentKey(proof: Uint8Array, use: 'encrypt' | 'decrypt'): Promis
   return subtle.importKey('raw', await expand(proof, 'ifloom-unlock-content'), 'AES-GCM', false, [use])
 }
 
-/** Encrypt text under a proof's content key with AES-GCM, binding `bound` (the game and unlock) to it. */
+/** Returns text encrypted under a proof's content key with AES-GCM, with `bound` (the game and unlock) bound to it. */
 export async function seal(proof: Uint8Array, text: string, bound: string): Promise<{ iv: string; data: string }> {
   const crypto = webCrypto()
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -144,7 +147,7 @@ export async function seal(proof: Uint8Array, text: string, bound: string): Prom
   return { iv: toBase64(iv), data: toBase64(new Uint8Array(data)) }
 }
 
-/** Decrypt what `seal` made; undefined if the proof is wrong or the data was changed. */
+/** Returns the text `seal` encrypted, or undefined when the proof is wrong or the data was changed. */
 export async function unseal(proof: Uint8Array, sealed: { iv: string; data: string }, bound: string): Promise<string | undefined> {
   const iv = fromBase64(sealed.iv)
   const data = fromBase64(sealed.data)

@@ -16,59 +16,68 @@ import { declaredTrait, declaredWithTrait, entityOf, parseRef, traitOf, withTrai
 import { arg, type Arg } from './pluginCalls.ts'
 
 /**
- * What a trait kind's definer takes: an entity's fields (its `of` is the
- * kind's if left out) and the trait's, side by side. A field both have, such
- * as a place's `ui`, is the trait's.
+ * The definition a {@link TraitKind}'s `define` takes, with an entity's fields and the trait's side by side. A field
+ * both have, such as a location's `ui`, goes to the trait.
  */
-export type TraitEntityDef<K extends string> = Omit<EntityDef, 'of' | keyof TraitData<K>> & TraitData<K> & { of?: string }
+export type TraitEntityDef<K extends string> = Omit<EntityDef, 'of' | keyof TraitData<K>> &
+  TraitData<K> & {
+    /** The entity's kind, the trait kind's `kind` if left out. */
+    of?: string
+  }
 
-/** What `defineTraitKind` takes. */
+/** Settings for `defineTraitKind`. */
 export type TraitKindSpec<K extends string> = {
-  /** The kind a bare id names: `'location'`, so `'park'` is `'location:park'`. */
+  /** The kind a bare id names, such as `'location'`, so `'park'` is `'location:park'`. */
   kind: string
-  /** The trait that makes an entity one: `'places/location'`. */
+  /** The id of the trait that makes an entity one of these, such as `'places/location'`. */
   trait: K
   /**
-   * Every field of the trait, as `{ exits: true, body: true, … }`: what the
-   * definer puts in the trait rather than on the entity. Typed complete, so a
-   * field added to the trait can't be left out.
+   * The trait's fields, as `{ exits: true, body: true, … }`, which `define` puts in the trait rather than on the entity.
+   * The type requires every field, so a field added to the trait can't be left out.
    */
   fields: { readonly [F in keyof Required<TraitData<K>>]: true }
 }
 
-/** A kind of entity a plugin's trait makes, as `defineTraitKind` declares it. */
+/**
+ * A kind of entity a plugin's trait makes, as `defineTraitKind` declares it, such as the places plugin's locations.
+ *
+ * It reads a bare id as an entity of its kind and gives the lookups, the definer and the checked arguments.
+ */
 export type TraitKind<K extends string> = {
   /** The kind a bare id names. */
   readonly kind: string
-  /** The trait that makes an entity one. */
+  /** The id of the trait that makes an entity one of these. */
   readonly trait: K
-  /** The entity an id names: a bare id is one of the kind (`'park'` is `'location:park'`), a reference is as written. */
+  /** Returns the entity reference an id names. A bare id is one of the kind (`'park'` is `'location:park'`), and a reference stays as written. */
   ref(id: string): EntityRef
-  /** How the plugin names one back: its bare id for one of the kind, else its whole reference. */
+  /** Returns the id the plugin names an entity by, its bare id for one of the kind, else its whole reference. */
   id(ref: string): string
-  /** Every entity in the game now with the trait, as references: those content declares, in its order, then those made in play. */
+  /** Returns every entity in the game now with the trait, those content declares in its order, then those made in play. */
   all(state: GameState, game: Game): EntityRef[]
-  /** The trait of the entity an id or reference names, read through what it was made `like`; undefined for one that isn't in the game or has no trait. */
+  /**
+   * Returns the trait of the entity an id or reference names, read through the entity it was made `like`. Undefined for
+   * an entity that isn't in the game or has no trait.
+   */
   get(state: GameState, game: Game, id: string | null | undefined): TraitData<K> | undefined
-  /** Every entity content declares with the trait, in its order: for a check, which has no state. */
+  /** Returns every entity content declares with the trait, in its order, for a check, which has no state. */
   declaredAll(game: Game): EntityRef[]
-  /** The trait of an entity content declares, by id or reference: for a check, which has no state. */
+  /** Returns the trait of an entity content declares, by id or reference, for a check, which has no state. */
   declaredGet(game: Game, id: string | null | undefined): TraitData<K> | undefined
   /**
-   * An entity for content's `entities`, of the kind (or its `of`), with the
-   * trait's fields put in `traits[trait]` and the rest left on the entity.
+   * Returns an entity for content's `entities`, of the kind unless `of` says otherwise. The trait's fields go in
+   * `traits[trait]` and the rest stay on the entity.
    */
   define(def: TraitEntityDef<K>): EntityDef
-  /** The reference to one, by id or reference, for the checker: an entity the game has, which must carry the trait. */
+  /** Returns the reference to an entity by id or reference, which the checker resolves to one the game has that carries the trait. */
   entry(id: string): Reference
-  /** A call's argument naming one by id or reference, `'park'` or `'location:park'`, checked as `entry`. */
+  /** Returns a call's argument naming one entity by id or reference, `'park'` or `'location:park'`, checked as `entry` is. */
   arg(): Arg<string, string, false>
-  /** A call's argument naming one or several, `'park'` or `['cafe', 'park']`, handed as a list. */
+  /** Returns a call's argument naming one entity or several, `'park'` or `['cafe', 'park']`, which the implementation gets as a list. */
   args(): Arg<string | readonly string[], string[], false>
 }
 
 /**
- * Declare a kind of entity a plugin's trait makes, once.
+ * Returns the {@link TraitKind} of a kind of entity a plugin's trait makes. Declare each such kind once, with this.
  *
  * ```ts
  * const PLACES = defineTraitKind({ kind: 'location', trait: 'places/location', fields: { exits: true, body: true, … } })
@@ -78,8 +87,7 @@ export type TraitKind<K extends string> = {
  * const CALLS = defineCalls('places', { effects: { move: { location: PLACES.arg() } } })
  * ```
  *
- * The kind itself is still the plugin's to declare in its `content.kinds`,
- * with its label and whether it's listed.
+ * The plugin still declares the kind itself in its `content.kinds`, with its label and whether it's listed.
  */
 export function defineTraitKind<K extends string>(spec: TraitKindSpec<K>): TraitKind<K> {
   const { kind, trait } = spec

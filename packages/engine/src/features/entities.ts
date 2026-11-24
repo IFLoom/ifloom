@@ -45,185 +45,193 @@ import { bounded, inRange, wanted } from '../range.ts'
 import { statOf, statView, type StatView } from './stats.ts'
 import { artSrc, spokenIds } from '../sceneBody.ts'
 
-/** One entity as the UI draws it. */
+/** An entity as the player sees it, in an {@link EntitiesView}'s `entries`. */
 export type EntityView = {
+  /** The entity's id within its kind. */
   id: string
-  /** How content names it: `'staff:ana'`. */
+  /** The entity's reference, such as `'staff:ana'`. */
   ref: string
-  /** Its name, with prose tokens filled in. */
+  /** The entity's name, with its prose tokens filled in. */
   name: string
-  /** Its description, filled in the same way; null with none. */
+  /** The entity's description, with its tokens filled in. Null if it has none. */
   description: string | null
-  /** Its picture's path, through `artSrc`; null with none. */
+  /** The entity's picture, as a path through `artSrc`. Null if it has none. */
   image: string | null
-  /** Its kind's tags, then its own. */
+  /** The entity's tags, its kind's first and then its own. */
   tags: string[]
-  /** Each of its kind's `flags`, by name: whether it holds for this one. Empty when the kind declares none. */
+  /** The answer to each of the kind's `flags` for this entity, by name. Empty when the kind declares none. */
   flags: Record<string, boolean>
-  /** Its kind's listed stats that the player can see on it, in declared order. */
+  /** The kind's listed stats the player can see on this entity, in the order the game declares them. */
   stats: StatView[]
-  /** Its kv store as it reads: what it was declared with, and what play set. */
+  /** The entity's kv store as it reads now, its declared keys with play's changes over them. */
   kv: Record<string, KvValue>
-  /** Its presentation hints, its own over its kind's, as written; left out with none. See `EntityUi`. */
+  /** The entity's ui hints (a {@link EntityUi}), its own over its kind's, kept as written. Left out if it has none. */
   ui?: Ui<EntityUi>
 }
 
+/** A listed kind as the player sees it, in `view.entities`, with its listed entities. */
 export type EntitiesView = {
-  /** The kind's id: `'character'`. */
+  /** The kind's id, such as `'character'`. */
   id: string
-  /** The kind's name for one: `'Character'`. */
+  /** The kind's label for one entity, such as `'Character'`. */
   label: string
-  /** The kind's name for several, for a heading: `'Characters'`. Its `label` if the kind gives none. */
+  /** The kind's label for several, for a heading, such as `'Characters'`. Its `label` when the kind gives none. */
   plural: string
-  /** The kind's `unique`: each one is one particular thing. */
+  /** The kind's `unique` mark, true when each entity is one particular thing that can hold others. */
   unique: boolean
-  /** Its entities that are listed and visible, declared ones first, then the ones created in play. */
+  /** The kind's listed, visible entities, declared ones first, then those created in play. */
   entries: EntityView[]
 }
 
 /**
- * Which entities a `count` or an `each` looks at: those `of` a kind, those a
- * holder holds (`at`), those with a tag or a trait, and those `where` holds
- * for, with `'$'` as each one. Every entity in the game if it says none.
+ * A selection of entities that a `count` or an `each` reads. Every entity in the game when it sets nothing.
+ *
+ * It narrows to those `of` a kind, those a holder holds (`at`), those with a tag or a trait, and those `where` holds
+ * for, with `'$'` as each one.
  */
 export type Select = {
-  /** A kind. */
+  /** The kind the entities are of. */
   of?: string
-  /** A holder: only what it holds (`'you'`, `'player'` or a unique entity). */
+  /** The holder whose things are selected, `'you'`, `'player'` or a unique entity. */
   at?: string
-  /** A tag it has, its kind's or its own. */
+  /** The tag the entities have, their kind's or their own. */
   tag?: string
-  /** A trait it has, by id. */
+  /** The id of a trait the entities carry. */
   trait?: string
-  /** A condition asked for each, with `'$'` as that one. */
+  /** The condition each entity must meet, with `'$'` as that entity. */
   where?: Condition
 }
 
-/** What a created entity is given in `create`: a name (or a `like` to read it from), a description, a picture, tags, traits, stats and kv. */
+/**
+ * The fields a `create` effect gives a new entity in its `with`. Each one left out is read from the entity it's made
+ * `like`, else from its kind.
+ */
 export type CreatedEntity = {
-  /** Its id within its kind: the next free number (`#1`, `#2`) if left out. */
+  /** The entity's id within its kind. The next free number (`#1`, `#2`) if left out. */
   id?: string
-  /** What the player reads. The `like`'s, if it is made like one and left out. */
+  /** The entity's name. The `like` entity's if left out. */
   name?: string
-  /** A line or two about it, tokens filled in when it is read. The `like`'s, if left out. */
+  /** The entity's description, with tokens filled when it's read. The `like` entity's if left out. */
   description?: string
-  /** Its picture, through `artSrc`. The `like`'s, if left out. */
+  /** The entity's picture, through `artSrc`. The `like` entity's if left out. */
   image?: string
-  /** Its tags, after its kind's and its `like`'s. */
+  /** The entity's own tags, after its kind's and its `like` entity's. */
   tags?: string[]
-  /** Its trait data, by trait id, over its `like`'s or its kind's. */
+  /** The entity's trait data, by trait id, over its `like` entity's or its kind's. */
   traits?: Record<string, unknown>
-  /** Where its stats start, over its `like`'s. */
+  /** The entity's starting stats, over its `like` entity's. */
   stats?: Record<string, number>
-  /** Its kv keys at the start, over its `like`'s. */
+  /** The entity's starting kv keys, over its `like` entity's. */
   kv?: Record<string, KvValue>
 }
 
-/** The fields `create` takes besides its kind. */
+/** The fields a `create` effect takes besides its kind. */
 export type CreateFields = {
-  /** Another entity of the same kind it reads what it isn't given from. */
+  /** The entity of the same kind the new one reads what it isn't given from. */
   like?: string
-  /** What it is made with: its id, name, description, picture, tags, traits, stats and kv. */
+  /** The new entity's fields, its id, name, description, picture, tags, traits, stats and kv. */
   with?: CreatedEntity
-  /** Who holds it once made: a holder for one, or how many each holds. Nobody if left out. */
+  /** The new entity's holder, or how many each holder holds. Nobody holds it if left out. */
   at?: Placement
 }
 
-/** What the entities feature adds, as types. */
+/** The entities feature's state, calls, content keys, view and references, as types. */
 export type EntitiesShape = {
   state: {
     /**
-     * What play changed about the game's entities, by kind and id:
-     * `entities.staff.ana`. A declared entity has no record until something
-     * changes it; one created in play has one from the start.
+     * The changes play has made to the game's entities, by kind and id, such as `entities.staff.ana`. A declared
+     * entity has no record until something changes it.
+     *
+     * An entity created in play has a record from the start.
      */
     entities: Record<string, Record<string, EntityState>>
-    /** How many of each kind have been created in play, for the next one's id. */
+    /** The number of entities of each kind created in play, for the next one's id. */
     created: Record<string, number>
-    /** Entities the game declares that were removed in play, by reference: gone for good. */
+    /** The references of declared entities removed in play. A `create` with the same id brings one back. */
     removed: string[]
   }
   conditions: {
     /**
-     * How many entities of a kind there are, or with `where`, how many it holds
-     * for (`'$'` in it is each one in turn). Bare, at least one:
-     * `{ count: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, gte: 2 }`.
-     * With a `Select`, the things it picks: `{ count: { at: 'you', tag: 'fruit' }, gte: 3 }`.
-     * Distinct things, unless `units` adds up how many of each are held.
+     * A condition on the number of entities of a kind, or with `where` the number it holds for, with `'$'` as each in
+     * turn. With no range it holds for at least one.
+     *
+     * `{ count: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, gte: 2 }` counts a kind, and
+     * `{ count: { at: 'you', tag: 'fruit' }, gte: 3 }` counts a `Select`. It counts distinct entities unless `units`
+     * adds up how many of each are held.
      */
     count: { count: string | Select; where?: Condition; units?: true } & Range
     /**
-     * An entity is in the game: `{ entity: 'staff:ana' }`. With `at`, how
-     * many of it a holder holds, bare at least one:
-     * `{ entity: 'food:apple', at: 'you', gte: 2 }`. With a range and no
-     * `at`, how many are held by everyone together.
+     * A condition that holds while an entity is in the game, such as `{ entity: 'staff:ana' }`. With `at` and a range
+     * it asks how many of it a holder holds.
+     *
+     * With `at` and no range it holds for at least one (`{ entity: 'food:apple', at: 'you', gte: 2 }` asks for two). With
+     * a range and no `at`, it counts the entity held by every holder together.
      */
     entity: { entity: string; at?: string } & Range
   }
   effects: {
     /**
-     * A new entity of a kind, made `with` what it is given, and `like`
-     * another of the kind, which it reads what it isn't given from. Its `id`
-     * is the next free number (`#1`, `#2`) if left out, never reused; an id
-     * already there is left as it is. `at` gives it to a holder:
-     * `{ create: 'photo', with: { name: 'Ava at work' }, at: 'player' }`.
+     * An effect that creates an entity of a kind, made `with` the fields it's given and `like` another of the kind for
+     * the rest. `at` gives it to a holder, as in `{ create: 'photo', with: { name: 'Ava at work' }, at: 'player' }`.
+     *
+     * Its `id` is the next free number (`#1`, `#2`) if left out, never reused. The effect does nothing for an id already
+     * in the game or a whole number.
      */
     create: { create: string } & CreateFields
-    /** Take an entity out of the game: `{ remove: 'staff:ana' }`. */
+    /** An effect that takes an entity out of the game for good, such as `{ remove: 'staff:ana' }`. */
     remove: { remove: string }
     /**
-     * The same effects for every entity of a kind (where `where` holds), one
-     * after another, with `'$'` as the one each time: wages, upkeep, a bad
-     * week. `{ each: 'staff', effects }`, or a `Select` for only what a holder
-     * holds, a tag or a trait: `{ each: { at: 'you', tag: 'fruit' }, effects }`.
+     * An effect that runs the same effects for every entity a kind or a `Select` picks, one after another, with `'$'`
+     * as each in turn. Use it for wages, upkeep or a bad week.
+     *
+     * `{ each: 'staff', effects }` covers a kind, and `{ each: { at: 'you', tag: 'fruit' }, effects }` covers what a
+     * holder holds with a tag. `where` narrows either.
      */
     each: { each: string | Select; where?: Condition; effects: EffectRef[] }
   }
   game: {
-    /** The kinds of thing the game keeps several of, each with its own stats. */
+    /** The game's kinds, the sorts of entity it keeps, each with its own stats. */
     kinds?: KindDef[]
-    /** The things of those kinds there are at the start. More can be created in play. */
+    /** The game's entities at the start. Play can create more. */
     entities?: EntityDef[]
     /**
-     * Traits by id and then entity. Given to `loadGame`, rows over what
-     * entities declare; on the game it returns, every entity's traits,
-     * worked out. Read them with `declaredTrait`.
+     * The game's traits, by trait id and then entity. In content given to `loadGame` they're rows over what entities
+     * declare.
+     *
+     * On the game `loadGame` returns, they're every entity's traits, worked out. Read them with `declaredTrait`.
      */
     traits?: TraitTable
   }
   pack: {
-    /** Kinds of thing the game keeps several of. A later pack can redeclare one by id. */
+    /** The pack's kinds. A later pack's kind replaces an earlier one with the same id. */
     kinds?: KindDef[]
-    /** Things of those kinds there at the start. A later pack can redeclare one by kind and id. */
+    /** The pack's entities at the start. A later pack's entity replaces an earlier one with the same kind and id. */
     entities?: EntityDef[]
     /**
-     * Traits given to entities, by trait id and then entity, over what each
-     * entity declares itself: `{ 'laundry/washable': { 'clothing:scarf': {
-     * temp: 30 } } }`. A later pack's row replaces an earlier one's.
+     * The pack's traits, by trait id and then entity, over what each entity declares itself, such as
+     * `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's.
      */
     traits?: TraitTable
   }
   view: {
     /**
-     * Each listed kind's listed, visible entities, by kind id: declared ones
-     * first, then those created in play. A listed kind is here, empty or not;
-     * a kind whose `listed` is false is not.
+     * Each listed kind with its listed, visible entities, in the order the kinds are declared. A kind whose `listed`
+     * is false is left out, and a listed kind with no entities shows empty.
      */
-    /** Each listed kind with its listed entities, in the order the kinds are declared. */
     entities: EntitiesView[]
   }
   lists: 'kind' | 'entity' | 'trait'
   references: {
-    /** A kind of entity. */
+    /** A reference to a kind of entity. */
     kind: { kind: string }
     /**
-     * An entity content declares, by reference: `'food:apple'`. `'$'` and
-     * `'food:*'` pass. With `carrying`, it must also carry that trait: a
-     * place the places plugin can take the player to, `{ entity:
-     * 'location:cafe', carrying: 'places/location' }`.
+     * A reference to an entity content declares, such as `'food:apple'`. `'$'` and `'food:*'` pass.
+     *
+     * With `carrying`, the entity must also carry that trait, as a location the places plugin takes the player to
+     * does (`{ entity: 'location:cafe', carrying: 'places/location' }`).
      */
     entity: { entity: string; carrying?: string }
-    /** Who a spoken line is under, by id: `@ava: "…"` in prose, or a `say` block's `speaker`. `'you'` and `'player'` pass. */
+    /** A reference to the speaker of a spoken line by id, from `@ava: "…"` in prose or a `say` block's `speaker`. `'you'` and `'player'` pass. */
     speaker: { speaker: string }
   }
 }
@@ -245,14 +253,14 @@ function selected(state: GameState, game: Game, select: Select, cx: FeatureConte
   )
 }
 
-/** A `count` condition's selection: a kind's, or the one it gives, with its own `where` and the condition's both asked. */
+/** Returns a `count` condition's selection, its kind or its `Select`. Its own `where` and the condition's must both hold. */
 export function countSelect(condition: EntitiesShape['conditions']['count']): Select {
   if (typeof condition.count === 'string') return { of: condition.count, where: condition.where }
   const both = [condition.count.where, condition.where].filter((when): when is Condition => when !== undefined)
   return { ...condition.count, where: both.length > 1 ? { all: both } : both[0] }
 }
 
-/** How many a `count` condition counts: distinct things, or with `units`, how many of each are held. */
+/** Returns the number a `count` condition counts, distinct entities or, with `units`, how many of each are held. */
 export function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game, cx: FeatureContext): number {
   const select = countSelect(condition)
   const refs = selected(state, game, select, cx)
@@ -273,7 +281,10 @@ function described(select: Select): string {
     .join(' ')
 }
 
-/** What a selection names: its kind, holder and trait, and its `where` with `'$'` as one of its kind (left as `'$'` with no kind). */
+/**
+ * Returns the references a selection makes, its kind, holder and trait and its `where`. In the `where`, `'$'` stands
+ * for any entity of its kind, or stays `'$'` with no kind.
+ */
 export function selectReferences(select: Select): Reference[] {
   return [
     ...(select.of !== undefined ? [{ kind: select.of }] : []),
@@ -438,6 +449,7 @@ function kindWords(game: Game, walk: WordWalk) {
   }
 }
 
+/** The entities feature, which keeps the changes play makes to entities and creates, removes and counts them. */
 export const entities = defineFeature<EntitiesShape>({
   name: 'entities',
   state: {

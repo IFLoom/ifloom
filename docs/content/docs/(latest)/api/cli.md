@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/cli` and its TSDoc by `npm run api-docs`. 
 
 Function. Explained in [The CLI](/docs/cli#buildfiles).
 
-Every file in a built folder, with its size, largest first.
+Returns every file in a built folder with its size in bytes, largest first. `at` names a subfolder to list instead.
 
 ```ts shape
 import { buildFiles } from '@ifloom/cli'
@@ -23,7 +23,8 @@ function buildFiles(dir: string, at?: string): { file: string; bytes: number }[]
 
 Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
 
-What `build` is given: the packs to load over the content, such as the locked content a player's codes opened.
+The options a game module's `build` receives. They name the packs to load over the content, such as the locked
+content a player's codes opened.
 
 ```ts shape
 import type { BuildOptions } from '@ifloom/cli'
@@ -34,20 +35,20 @@ type BuildOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocked` | [`Pack[]`](/docs/api/engine#pack) |  |  | Packs to pass to `loadGame` as `{ packs }`. `ifloom check` passes the game's `src/unlocks/` content here; empty otherwise. |
+| `unlocked` | [`Pack[]`](/docs/api/engine#pack) |  |  | The packs to pass to `loadGame` as `{ packs }`. `ifloom check` passes the game's `src/unlocks/` packs, and it's empty otherwise. |
 
 ## checkBuild
 
 Function. Explained in [The CLI](/docs/cli#checkbuild).
 
-Check a built folder is a game that opens from disk: an `index.html`, and
-nothing it loads from anywhere but beside it. Given the files the game names
-(`checkGame(game).files`), also each one that isn't in the folder (or, for a
-picture, in the page, after `--inline-assets`). Returns what is wrong.
+Returns a line for each reason a built folder won't open from disk, or an empty list when it will. Its `index.html`
+must load files only from beside it, with no module script.
 
-That code never fetches at runtime is held by the engine's and UI's own
-contract tests, on their source: a bundled library mentions `fetch` without
-ever calling it here, so the built file can't be searched for it.
+Given the files the game names (`checkGame(game).files`), it also reports each one that isn't in the folder, or in
+the page after `--inline-assets`.
+
+It doesn't look for `fetch` in the built file, since a bundled library can name it without calling it. The engine's
+and the UI's contract tests check their source never fetches at runtime instead.
 
 ```ts shape
 import { checkBuild } from '@ifloom/cli'
@@ -60,11 +61,12 @@ Uses: [`FileRef`](/docs/api/engine#fileref).
 
 Function. Explained in [The CLI](/docs/cli#checkfiles).
 
-Every file in `files` that isn't in `dir`, as `<where>: no file <dir>/<path>`.
-The files are the content checker's (`checkGame(game).files`), with their
-paths as the page asks for them, so `public/` before a build and `dist/`
-after one. `inlined` lists files that are in the page itself, after
-`--inline-assets`, which count as there.
+Returns a line for each file in `files` that isn't in `dir`, as `<where>: no file <dir>/<path>`. An empty list means
+every file is there.
+
+The files are the content checker's (`checkGame(game).files`), with their paths as the page requests them, so `dir`
+is `public/` before a build and `dist/` after one. Paths in `inlined` are inside the page after `--inline-assets`,
+and count as there.
 
 ```ts shape
 import { checkFiles } from '@ifloom/cli'
@@ -77,9 +79,8 @@ Uses: [`FileRef`](/docs/api/engine#fileref).
 
 Function. Explained in [The CLI](/docs/cli#checkgame).
 
-Everything wrong with a game: the engine's content checker's problems,
-once, then, given the game's public folder, every sound, picture and video
-file that isn't in it.
+Returns a line for each problem with a game module's game, the loader's problems first. Given the game's public
+folder, it adds each sound, picture and video file that isn't in it.
 
 ```ts shape
 import { checkGame } from '@ifloom/cli'
@@ -90,14 +91,14 @@ function checkGame(module: Record<string, unknown>, publicDir?: string): string[
 
 Function. Explained in [The CLI](/docs/cli#definegame).
 
-The game module `src/game.ts` exports as its default, for `ifloom check`,
-`playtest`, `snapshot`, `words` and `build`:
+Returns the game module for a definition, the default export of `src/game.ts`. It throws when `build` is missing.
+
+`ifloom check`, `playtest`, `snapshot`, `words` and `build` read the game module, and the page builds the game from
+it with `game.build()`.
 
     export default defineGame({
       build: ({ unlocked }) => loadGame(content, { id: 'my-story', title: 'My Story' }, { packs: unlocked }),
     })
-
-The page builds the game the same way, with `game.build()`.
 
 ```ts shape
 import { defineGame } from '@ifloom/cli'
@@ -110,13 +111,13 @@ Uses: [`GameModuleDef`](#gamemoduledef), [`GameModule`](#gamemodule).
 
 Function. Explained in [The CLI](/docs/cli#explorer).
 
-A policy that explores: in a scene, a choice it has not made yet; at
-bedtime (the calendar's), bed, walking home if it must; else someone to talk
-to and something to do, each once a turn, leaving what ends the turn till
-last; else the nearest place it hasn't been this turn; else, while a timer
-runs, wait for it (a `tick`); else end the turn. It
-never presses a button the game warns against. It knows nothing about any
-game, so it shows what a curious player meets — not a route through the story.
+Returns a policy that explores the game as a curious player would, rather than following a route through the story.
+It never chooses a choice or action that carries a warning.
+
+In a scene it chooses a choice it hasn't chosen yet. Otherwise, at the calendar's bedtime it goes to bed, walking
+home if it must. Failing that it talks to someone and does something, each once a turn, leaving an action that ends
+the turn till last. Then it walks to the nearest location it hasn't visited this turn, waits for a running timer with
+a `tick`, and at last ends the turn.
 
 ```ts shape
 import { explorer } from '@ifloom/cli'
@@ -129,9 +130,11 @@ Uses: [`Policy`](#policy).
 
 Function. Explained in [The CLI](/docs/cli#gamefrom).
 
-The game a game module builds, with its loader's problems in
-`describeProblem`'s words and the files it names. `unlocked` packs go to
-its `build` as `{ unlocked }`.
+Returns the game a game module builds, with its problems and warnings as sentences and the files its content names.
+It throws when the module's default export isn't made with `defineGame`.
+
+The problems are the loader's and the warnings the content checker's, each worded by `describeProblem`. `unlocked`
+packs go to the module's `build` as `{ unlocked }`.
 
 ```ts shape
 import { gameFrom } from '@ifloom/cli'
@@ -144,7 +147,7 @@ Uses: [`Pack`](/docs/api/engine#pack), [`Game`](/docs/api/engine#game), [`FileRe
 
 Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
 
-A game module, as `defineGame` returns it: `build` may be called with no options, as a page does.
+The game module `defineGame` returns, the default export of `src/game.ts`. Its `build` takes its options as optional, so a page calls `game.build()`.
 
 ```ts shape
 import type { GameModule } from '@ifloom/cli'
@@ -158,16 +161,16 @@ type GameModule = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
-| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
-| `policy` | [`Policy`](#policy) | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
-| `build` | `(options?: Partial<`[`BuildOptions`](#buildoptions)`>) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | The function that returns the state `ifloom playtest` starts from, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
+| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The function that returns the states `ifloom snapshot` renders every scene and location in, each made with `probe`. The start only if left out. |
+| `policy` | [`Policy`](#policy) | yes |  | The policy that chooses each command `ifloom playtest` sends. The CLI's `explorer()` if left out. |
+| `build` | `(options?: Partial<`[`BuildOptions`](#buildoptions)`>) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Builds the game with the definition's `build`, and returns the game and the loader's problems. `unlocked` is empty unless given. |
 
 ## GameModuleDef
 
 Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
 
-What a game module says about the game, as written to `defineGame`.
+The definition a game passes to `defineGame`. Only `build` is required.
 
 ```ts shape
 import type { GameModuleDef } from '@ifloom/cli'
@@ -181,24 +184,22 @@ type GameModuleDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `build` | `(options:` [`BuildOptions`](#buildoptions)`) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Build the game: what `loadGame` returns, its `game` and its `problems`. |
-| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
-| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
-| `policy` | [`Policy`](#policy) | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
+| `build` | `(options:` [`BuildOptions`](#buildoptions)`) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | The function that builds the game. It returns what `loadGame` returns, the `game` and its `problems`. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | The function that returns the state `ifloom playtest` starts from, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
+| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The function that returns the states `ifloom snapshot` renders every scene and location in, each made with `probe`. The start only if left out. |
+| `policy` | [`Policy`](#policy) | yes |  | The policy that chooses each command `ifloom playtest` sends. The CLI's `explorer()` if left out. |
 
 ## inlineAssets
 
 Function. Explained in [The CLI](/docs/cli#inlineassets).
 
-Put every picture in a built folder's `art/` into its `index.html` as a data
-URL, under its path, and remove it from the folder: one file with the art in
-it. The React UI's pictures look a path up there first (`assetUrl`). Worth it
-for a small game; a large one is better left as a folder. Sound in `audio/`
-and videos (`.mp4`, `.webm`) are never put in: they are too big, and are
-played from beside the page, so `art/` stays with only the videos in it.
-Which files are videos is the engine's `mediaType`.
-Returns how many files went in, how big the page is now, and how many videos
-were left beside it.
+Moves every file in a built folder's `art/` into its `index.html` as data URLs, except videos, and returns the
+counts. It suits a small game, and a large one is better left as a folder.
+
+Each file goes in under its path, and the React UI's `assetUrl` looks a path up there first. The engine's
+`mediaType` says which files are videos, and those stay in `art/`, as sound in `audio/` does. The result gives the
+number of files moved in, the page's size in bytes and the number of videos left beside it. `folder` names another
+folder than `art`.
 
 ```ts shape
 import { inlineAssets } from '@ifloom/cli'
@@ -209,7 +210,7 @@ function inlineAssets(dir: string, folder?: string): { files: number; bytes: num
 
 Function. Explained in [The CLI](/docs/cli#metricstext).
 
-The turn-by-turn numbers as a table, one row a turn.
+Returns a playtest's turn numbers as a tab-separated table, with a header row and one row a turn.
 
 ```ts shape
 import { metricsText } from '@ifloom/cli'
@@ -222,7 +223,10 @@ Uses: [`TurnMetrics`](#turnmetrics).
 
 Function. Explained in [The CLI](/docs/cli#newgame).
 
-Make a new game. Returns its folder and the files written there. Installs nothing.
+Makes a new game from a template, and returns its folder, the files written there and the theme it chose. It installs
+nothing.
+
+It throws when the name can't be a package name, the template or theme doesn't exist, or the folder isn't empty.
 
 ```ts shape
 import { newGame } from '@ifloom/cli'
@@ -234,6 +238,8 @@ Uses: [`NewGameOptions`](#newgameoptions), [`ThemeName`](#themename).
 ## NewGameOptions
 
 Type. Explained in [The CLI](/docs/cli#newgameoptions).
+
+Settings for `newGame`. Only `name` is required.
 
 ```ts shape
 import type { NewGameOptions } from '@ifloom/cli'
@@ -247,14 +253,16 @@ type NewGameOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  | The game's package name, which is also its folder's: `my-story`. For the `plugin` template it's the plugin's package name, such as `ifloom-plugin-weather`, and the plugin's id is the name without `ifloom-plugin-` or `plugin-` in front: `weather`. |
-| `template` | [`TemplateName`](#templatename) | yes |  | What to start from. `react` if left out. |
-| `into` | `string` | yes |  | Where to put it. Left out, `games/<name>` in the IFLoom checkout, or a folder named `<name>` in the current folder anywhere else. |
-| `theme` | [`ThemeName`](#themename) `\| 'none'` | yes |  | The React UI preset to start from. Left out, a `react` or `next` game gets one at random, so two new games don't start out looking alike, and a copied example keeps its own. `'none'` leaves the preset out, for the React UI's plain default look. The vanilla, vue and svelte templates have no React UI and ignore it. |
+| `name` | `string` |  |  | The game's package name, such as `my-story`, which is also its folder's name. For the `plugin` template it's the plugin's package name, such as `ifloom-plugin-weather`. The plugin's id is the name without `ifloom-plugin-` or `plugin-` in front, so `weather`. |
+| `template` | [`TemplateName`](#templatename) | yes |  | The template the game starts from. `react` if left out. |
+| `into` | `string` | yes |  | The folder to make the game in. `games/<name>` in the IFLoom checkout if left out, else `<name>` in the current folder. |
+| `theme` | [`ThemeName`](#themename) `\| 'none'` | yes |  | The React UI theme preset the game starts with. A `react` or `next` game gets one at random if left out, and a copied example keeps its own. `'none'` leaves the preset out, for the React UI's plain look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. |
 
 ## Playtest
 
 Type. Explained in [The CLI](/docs/cli#playtest-1).
+
+The result of a `playtest` run, with its transcript, each turn's numbers and the refusals.
 
 ```ts shape
 import type { Playtest } from '@ifloom/cli'
@@ -268,18 +276,19 @@ type Playtest = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `transcript` | `string` |  |  | Every screen, and the command taken on it, as plain text. |
+| `transcript` | `string` |  |  | The run's transcript as plain text, with each screen and the command sent from it. |
 | `turns` | [`TurnMetrics[]`](#turnmetrics) |  |  | Each turn's numbers, in order. |
-| `refusals` | `{ turn: number; command:` [`Command`](/docs/api/engine#command)`; reason: string }[]` |  |  | Commands the policy chose that were refused, with why: each one a policy or game bug. |
-| `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state it ended on. |
+| `refusals` | `{ turn: number; command:` [`Command`](/docs/api/engine#command)`; reason: string }[]` |  |  | The policy's commands that the game refused, each with its turn and reason. Each one is a bug in the policy or the game. |
+| `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state the run ended on. |
 
 ## playtest
 
 Function. Explained in [The CLI](/docs/cli#playtest).
 
-Play from `start` with `policy` until the turns are up, the policy stops, the game starts over, it goes
-round in circles, or the step limit is hit. Each notice raised along the way is written once, under the
-screen it first shows on.
+Returns the result of playing from `start` with `policy`, the explorer by default. It stops when `turns` or `steps`
+run out, the policy returns null, the game restarts or a screen keeps repeating.
+
+The transcript writes each notice once, under the screen it first shows on.
 
 ```ts shape
 import { playtest } from '@ifloom/cli'
@@ -292,6 +301,8 @@ Uses: [`Game`](/docs/api/engine#game), [`GameState`](/docs/api/engine#gamestate)
 
 Type. Explained in [The CLI](/docs/cli#playtestoptions).
 
+Settings for `playtest`. Each is optional.
+
 ```ts shape
 import type { PlaytestOptions } from '@ifloom/cli'
 type PlaytestOptions = {
@@ -302,14 +313,14 @@ type PlaytestOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `turns` | `number` | yes |  | Stop after this many turns have passed. 7 if left out. |
-| `steps` | `number` | yes |  | Stop after this many commands, whatever the turn: a guard against a policy going round in circles. 2000 if left out. |
+| `turns` | `number` | yes |  | The number of turns the run plays before it stops. 7 if left out. |
+| `steps` | `number` | yes |  | The most commands the run sends, whatever the turn, so a policy that goes round in circles still stops. 2000 if left out. |
 
 ## Policy
 
 Type. Explained in [The CLI](/docs/cli#policy).
 
-Picks the next command from what is on screen, or null to stop.
+A function that chooses the next command for `playtest` from the view, the state and the game. It returns null to stop the run.
 
 ```ts shape
 import type { Policy } from '@ifloom/cli'
@@ -322,7 +333,7 @@ Uses: [`View`](/docs/api/engine#view), [`GameState`](/docs/api/engine#gamestate)
 
 Type. Explained in [The CLI](/docs/cli#probe-1).
 
-A state to render every scene against, named for the problems it finds.
+A state the content checker renders every scene against, named for the problems it finds. Make one with `probe`, by playing.
 
 ```ts shape
 import type { Probe } from '@ifloom/cli'
@@ -334,18 +345,18 @@ type Probe = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  | What the problems it finds are named by: `'evening, after the café'`. |
+| `name` | `string` |  |  | The probe's name, which the problems it finds carry, such as `'evening, after the café'`. |
 | `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state to render every scene against. |
 
 ## probe
 
 Function. Explained in [The CLI](/docs/cli#probe).
 
-A probe state made by playing: each step in order, from the game's starting
-state, or from `from` (another probe, or a state). An effect is any content
-write, a plugin's included, so a probe never writes the state's own shape.
-A command (`{ play }`) is played as the player would press it, with all
-that follows a command, and must be allowed: a refused one throws, with why.
+Returns a probe made by playing each step in order, from the game's starting state or from `from`. It throws when
+the game refuses a command, with the reason.
+
+`from` is another probe or a state. An effect step is any effect content can write, a plugin's included, so a probe
+never writes the state directly. A `{ play }` step sends the command with everything that follows a command.
 
     const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: calendar.sleep() }])
     probe('a-week-in', game, [{ turn: { by: 6 } }, { 'calendar/set': { period: 'afternoon' } }], morning)
@@ -361,8 +372,8 @@ Uses: [`Game`](/docs/api/engine#game), [`ProbeStep`](#probestep), [`Probe`](/doc
 
 Type. Explained in [The CLI](/docs/cli#probestep).
 
-One step of a probe: an effect, applied as content applies it, or
-`{ play: command }`, a command played as the player would press it.
+One step of a probe, either an effect or `{ play: command }`. The probe applies an effect as content's effects
+apply, and sends a command as the player would.
 
 ```ts shape
 import type { ProbeStep } from '@ifloom/cli'
@@ -375,7 +386,8 @@ Uses: [`Effect`](/docs/api/engine#effect), [`CommandRef`](/docs/api/engine#comma
 
 Function. Explained in [The CLI](/docs/cli#screentext).
 
-A screen as plain text: where, when, the prose, every button with its price or reason, and a scene's inputs with what each holds.
+Returns a view as plain text, as `ifloom playtest` writes it. The text has the turn, the time, the body, each choice
+and action with its price or reason, and the inputs.
 
 ```ts shape
 import { screenText } from '@ifloom/cli'
@@ -388,13 +400,12 @@ Uses: [`View`](/docs/api/engine#view).
 
 Function. Explained in [The CLI](/docs/cli#snapshot).
 
-Every scene and every location rendered in every probe state, as text: what
-the player would read, and a scene's choices with what greys them out. Both
-come from the engine's `view`, so a snapshot reads as the screen does: a
-choice a lock or a plugin's guard refuses is greyed out with its reason.
-Compared with the file from the last run, a difference is either a bug or a
-change you meant, and the diff says which scene, in which state, read
-differently.
+Returns every scene and every location rendered as text in every probe state. It's what `ifloom snapshot` writes.
+
+The text comes from the engine's `view`, so it reads as the screen does. Each scene shows its body and its choices,
+and a choice that a lock or a plugin's guard refuses shows as disabled, with its reason. Locations come from the
+places plugin's `places/all` query, and a game without it has none. Compared with the last run's file, the diff
+names the scene and the probe that read differently.
 
 ```ts shape
 import { snapshot } from '@ifloom/cli'
@@ -407,6 +418,8 @@ Uses: [`Game`](/docs/api/engine#game), [`Probe`](/docs/api/engine#probe).
 
 Type. Explained in [The CLI](/docs/cli#templatename-and-themename).
 
+The name of a template in `TEMPLATES`.
+
 ```ts shape
 import type { TemplateName } from '@ifloom/cli'
 type TemplateName = (typeof TEMPLATES)[number]
@@ -415,6 +428,8 @@ type TemplateName = (typeof TEMPLATES)[number]
 ## TEMPLATES
 
 Const.
+
+The templates `ifloom new` can start a game from. `novel`, `cafe` and `town` copy the examples, and `plugin` makes a plugin package.
 
 ```ts shape
 import { TEMPLATES } from '@ifloom/cli'
@@ -425,6 +440,8 @@ const TEMPLATES: readonly ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel',
 
 Type. Explained in [The CLI](/docs/cli#templatename-and-themename).
 
+The name of a theme preset in `THEMES`.
+
 ```ts shape
 import type { ThemeName } from '@ifloom/cli'
 type ThemeName = (typeof THEMES)[number]
@@ -434,7 +451,7 @@ type ThemeName = (typeof THEMES)[number]
 
 Const.
 
-The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides.
+The names of the React UI's theme presets, each a stylesheet at `@ifloom/react/themes/<name>.css`.
 
 ```ts shape
 import { THEMES } from '@ifloom/cli'
@@ -445,7 +462,8 @@ const THEMES: readonly ['paper', 'terminal', 'studio', 'storybook']
 
 Type. Explained in [The CLI](/docs/cli#turnmetrics).
 
-One turn's numbers, as the turn ended: the player's stats and a count of each kind of entity. `turn` counts from 1.
+One turn's numbers in a playtest, taken as the turn ended. They hold the player's stats and the number of entities of
+each listed kind.
 
 ```ts shape
 import type { TurnMetrics } from '@ifloom/cli'
@@ -459,7 +477,7 @@ type TurnMetrics = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `turn` | `number` |  |  | The turn, from 1. |
-| `stats` | `Record<string, number>` |  |  | The player's stats as it ended, by id. |
-| `scenes` | `string[]` |  |  | The scenes shown during it, by id, in order. |
-| `refused` | `number` |  |  | How many commands the policy chose that were refused during it. |
+| `turn` | `number` |  |  | The turn's number, counting from 1. |
+| `stats` | `Record<string, number>` |  |  | The player's stats and, by kind id, the number of entities of each listed kind, as the turn ended. |
+| `scenes` | `string[]` |  |  | The ids of the scenes the turn opened, in order. |
+| `refused` | `number` |  |  | The number of the policy's commands the game refused during the turn. |

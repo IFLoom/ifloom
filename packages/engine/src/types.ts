@@ -4,91 +4,88 @@ import type { PluginSlice } from './plugin.ts'
 import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState } from './features/registry.ts'
 
 /**
- * The save format's version. Only a change to the shape of something saves
- * already have bumps it, with a step in `STEPS` (intake.ts) that reshapes it.
- * An added field doesn't: it declares a load default in `FIELDS` or in its
- * feature's `state`, and older saves get that default when they load.
+ * The save format's version. Only a change to the shape of a field saves already have bumps it, with a step in
+ * `STEPS` that reshapes older saves.
+ *
+ * An added field doesn't bump it. The field declares a load default in `FIELDS` or in its feature's `state`, and an
+ * older save gets that default when it loads.
  */
 export const SAVE_VERSION = 24 as const
 
-/** A value in the kv store: true/false, a number or text. */
+/** A value in the kv store, which is true or false, a number or text. */
 export type KvValue = boolean | number | string
 
-/** A stat's id. The game declares its stats; see `StatDef`. */
+/** A stat's id. The game declares each stat with a `StatDef`. */
 export type StatKey = string
-/** Every declared stat's current value, by id. */
+/** The current values of the stats the save keeps, by stat id. */
 export type Stats = Record<StatKey, number>
 
+/** The state a save keeps for one storyline. Its definition is read from content. */
 export type StorylineState = {
-  /** The turn it opens again, or null while it is open. */
+  /** The storyline's turn to open again, or null while it is open. */
   closedUntil: number | null
   /** The storyline's own kv keys, read and written with `of: 'storyline:<id>'`. */
   kv: Record<string, KvValue>
 }
 
-/** One object type from an intersection of pieces, so it reads as one in an editor. */
+/** An intersection of object types flattened into one, so an editor shows it as one type. */
 export type Flat<T> = { [K in keyof T]: T[K] }
 
 /** The fields of the save the core keeps itself. The features' are in `features/`. */
 type CoreState = {
-  /** The save format's version, `SAVE_VERSION`: `loadState` carries an older one forward. */
+  /** The save format's version, `SAVE_VERSION`. `loadState` carries an older save forward. */
   version: typeof SAVE_VERSION
-  /** Fixed per save. Keeps variant variants from dealing identically every run. */
+  /**
+   * The save's random seed, fixed when the game starts. Every seeded draw (variants, pools, rolls, storylets) mixes it
+   * in, so two games draw differently.
+   */
   seed: number
-  /** Each plugin's own state, by plugin id. */
+  /** The plugins' own state, by plugin id. */
   plugins: Record<string, PluginSlice>
   /**
-   * The game's own version (`game.version`) the save was made with. Only
-   * there when the game declares a version; a save without it is version 1.
+   * The game's own version (`game.version`) the save was made with. It is set only when the game declares a version,
+   * and a save without it counts as version 1.
    */
   gameVersion?: number
 }
 
 /**
- * The whole save: the core's fields and each feature's. Each field's new-game
- * value and load default are declared once, in `FIELDS` (intake.ts) or the
- * feature's `state`.
+ * The state a save keeps, the core's fields and each feature's. Definitions are read from content, so the save holds
+ * only what play changed.
+ *
+ * Each field declares its new-game value and load default once, in `FIELDS` or in its feature's `state`.
  */
 export type GameState = Flat<CoreState & FeatureState>
 
+/** Settings for `startingState`. A new game left without them gets a seed hashed from the game's id. */
 export type StartOptions = {
-  /** Fixes the save's random draws. Left out, it is hashed from the game's id, so tests deal the same cards. */
+  /** The new game's random seed. Hashed from the game's id if left out, so tests draw the same. */
   seed?: number
-  /** Keys to write to the kv store before the first scene: a name from a title screen, a difficulty. */
+  /** The kv keys written before the first scene, such as a name from a title page or a difficulty. */
   kv?: Record<string, KvValue>
   /**
-   * The player's stored values for the game's `play` settings, usually the
-   * profile's `core:settings`. A setting given no value, or one it doesn't take,
-   * starts at its default; ids the game doesn't declare are ignored.
+   * The player's stored values for the game's `play` settings, usually the profile's `core:settings`. A missing or
+   * invalid value starts at its default, and an undeclared id is ignored.
    */
   settings?: Record<string, unknown>
   /**
-   * The state a finished game ended on, for a New Game+: the stats, kv keys
-   * and things the game's `carryOver` lists are copied from it.
+   * The state a finished game ended on, for a New Game+. The engine copies the stats, kv keys and things the game's
+   * `carryOver` lists from it.
    */
   carry?: GameState
 }
 
 /**
- * When a thing applies: a block of prose, a choice, a line in a variants.
+ * A number content names that the engine works out when it reads it. Read one with `amountOf`.
  *
- * Plain nested data, so content stays serialisable and the loader can check it
- * — `{ storyline: 'baker' }` is verifiable against the declared storylines in a way
- * that an arbitrary function never was. Anything genuinely derived escapes
- * through `{ 'game/name': args }`, a condition the game's `rules` declare.
- */
-/**
- * A number content names, worked out when it is read: a number as written, a
- * stat of the player's by id, a stat with `{ stat, of? }`, a
- * kv key's number with `{ kv, of? }` (a value that is not a number counts as
- * 0), a value by name with `{ value, with? }`, or how many entities there are
- * with `{ count, where?, units? }`, counted as the `count` condition counts.
- * They combine as a `Formula` does (`sum`, `product`, `min`, `max`, `scale`,
- * `clamp`), with any amount as a part. `of` names whose, as it does in conditions. Read one with `amountOf`.
- * Effects take one in `by` and `to`, ranges in their bounds, stats in `min`
- * and `max`, and rolls in `plus` and `against`:
- * `{ stat: 'coins', gte: { stat: 'rent' } }` holds while the player has at
- * least the rent.
+ * An amount is a number, a stat of the player's by id, a stat with `{ stat, of? }`, a kv key's number with
+ * `{ kv, of? }` (a value that is not a number counts as 0), a value by name with `{ value, with? }`, or a count of
+ * entities with `{ count, where?, units? }`, counted as the `count` condition counts. Amounts combine as a `Formula`
+ * does (`sum`, `product`, `min`, `max`, `scale`, `clamp`), with any amount as a part, and `of` names the owner as it
+ * does in conditions.
+ *
+ * Effects take one in `by` and `to`, ranges in their bounds, stats in `min` and `max`, and rolls in `plus` and
+ * `against`. So `{ stat: 'coins', gte: { stat: 'rent' } }` holds while the player has at least the rent.
  */
 export type Amount =
   | number
@@ -105,95 +102,102 @@ export type Amount =
   | { clamp: Amount; min?: number; max?: number }
 
 /**
- * Bounds a number is compared with, as conditions compare one: `{ gte: 3 }`
- * is 3 or more. Each bound is an `Amount`, so it can be another number in
- * the game: `{ gte: { stat: 'rent' } }`.
+ * The bounds a condition compares a number with, so `{ gte: 3 }` holds for 3 or more. Each bound is an `Amount`, such
+ * as `{ gte: { stat: 'rent' } }`.
  */
 export type Range = {
-  /** The number is this or more. */
+  /** The range's lower bound, which the number must reach or pass. */
   gte?: Amount
-  /** The number is more than this. */
+  /** The range's lower bound, which the number must pass. */
   gt?: Amount
-  /** The number is this or less. */
+  /** The range's upper bound, which the number must not pass. */
   lte?: Amount
-  /** The number is less than this. */
+  /** The range's upper bound, which the number must stay below. */
   lt?: Amount
 }
 
-/** The conditions the core keeps itself, by the key that tells each apart. The features' are in `features/`. */
+/** The conditions the core keeps itself, by the key that tells each apart. The features declare the rest. */
 export type CoreConditions = {
+  /** A condition that holds when every condition in `all` holds. */
   all: { all: Condition[] }
+  /** A condition that holds when at least one condition in `any` holds. */
   any: { any: Condition[] }
+  /** A condition that holds when `not` doesn't. */
   not: { not: Condition }
 }
 
-/** Every kind of condition, by the key that tells it apart: the core's and the features'. */
+/** The table of every kind of condition, the core's and the features', by the key that tells it apart. Internal. */
 export type ConditionMap = CoreConditions & FeatureConditions
 
-/** The keys that tell one kind of condition from another. A plugin's call in short (`{ 'quests/done': … }`) has none. */
+/** A key that tells one kind of condition from another. A plugin's call in the short form (`{ 'quests/done': … }`) has none. */
 export type ConditionKey = keyof ConditionMap
 
-/** The condition a key stands for. */
+/** The kind of condition key `K` stands for. */
 export type ConditionOf<K extends ConditionKey> = ConditionMap[K]
 
 /**
- * A condition: one of the kinds in `ConditionMap`, told apart by its one kind
- * key, or a plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`,
- * checked against `ConditionRegistry` when the plugin declares its calls. See `PluginCall`.
+ * A test of the state that holds or doesn't, written as plain data on a block, a choice or a variants member. Each
+ * kind is told apart by its one key, such as `{ stat: 'coins', gte: 3 }`.
+ *
+ * A plugin's condition, or the game's own from its `rules`, is a `PluginCall` in the short form
+ * (`{ 'quests/done': { quest: 'bakery' } }`), checked against `ConditionRegistry` when its name is declared there.
+ * Being data, a condition stays serialisable and the content checker can check it.
  */
 export type Condition = ConditionMap[ConditionKey] | ConditionCall
 
 /**
- * The effects the core keeps itself, by the key that tells each apart. The
- * features' are in `features/`. The core has none: a call to a plugin's
- * effect or the game's own is a `PluginCall`.
+ * The effects the core keeps itself, by the key that tells each apart. It is empty, since the features declare every
+ * effect and a plugin's or the game's effect is a `PluginCall`.
  */
 export type CoreEffects = Record<never, never>
 
-/** Every effect, by the key that tells it apart: the core's and the features'. */
+/** The table of every effect, the core's and the features', by the key that tells it apart. Internal. */
 export type EffectMap = CoreEffects & FeatureEffects
 
-/** The keys that tell one effect from another, as conditions are told apart: `stat`, `kv`, `scene`. */
+/** A key that tells one effect from another, such as `stat`, `kv` or `scene`. */
 export type EffectKey = keyof EffectMap
 
 /**
- * An effect: one of the effects in `EffectMap`, told apart by its one key, as
- * a condition is (`{ stat: 'coins', by: -2 }`, `{ scene: null }`), or a
- * plugin's effect or the game's own in short: `{ 'quests/start': { quest: 'bakery' } }`,
- * `{ 'game/payRent': {} }`. It runs in its turn, on the state the effects
- * before it left. See `PluginCall`.
+ * A change to the state, told apart by its one key as a condition is (`{ stat: 'coins', by: -2 }`, `{ scene: null }`).
+ * It runs in its turn, on the state the effects before it left.
+ *
+ * A plugin's effect, or the game's own, is a `PluginCall` in the short form, such as
+ * `{ 'quests/start': { quest: 'bakery' } }` or `{ 'game/payRent': {} }`.
  */
 export type Effect = EffectMap[EffectKey] | EffectCall
 
-/** The commands the core keeps itself, by type. The features' are in `features/`. */
+/** The commands the core keeps itself, by type. The features declare the rest. */
 export type CoreCommands = {
   /**
-   * A new game. `seed` fixes its random draws (a UI passes a fresh one; left
-   * out, it comes from the game's id). `kv` is written to the kv store before the first
-   * scene: a name asked for on a title screen, a difficulty.
+   * The command that starts a new game, with `kv` written to the kv store before the first scene. `seed` fixes its
+   * random draws.
+   *
+   * A UI passes a fresh seed, and without one it is hashed from the game's id.
    */
   start: { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   /**
-   * Start over: a new game in place of this one, as a game-over choice
-   * sends it. A runner starts it as `runner.newGame()` does, keeping the
-   * player's profile and settings. On its own, `apply` makes the new game
-   * from the state's play settings and a seed drawn from this one, and says
-   * so with `newGame: true`.
+   * The command that starts over with a new game in place of this one, as a game-over choice sends it. A runner starts
+   * it as `runner.newGame()` does, keeping the player's profile and settings.
+   *
+   * Without a runner, `apply` makes the new game from the state's play settings and a seed drawn from this one, and
+   * reports it with `newGame: true`.
    */
   newGame: { type: 'newGame' }
-  /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { id: 'bakery' } }`. */
+  /** The command that runs a plugin's or the game's command by full name, as in `{ type: 'custom', name: 'quests/track', with: { id: 'bakery' } }`. */
   custom: { type: 'custom'; name: string; with?: Record<string, unknown> }
 }
 
-/** Every type of command: the core's and the features'. */
+/** The table of every type of command, the core's and the features', by type. Internal. */
 export type CommandMap = CoreCommands & FeatureCommands
 
-/** A command: one of the types in `CommandMap`. */
+/** A request to change the game, told apart by its `type`, such as `{ type: 'choose', id }`. The reducer applies it or refuses it. */
 export type Command = CommandMap[keyof CommandMap]
 
 // Each effect has the key it is told apart by: `stat` holds `{ stat }`. Each command's `type` is its key: `choose` holds
 // `{ type: 'choose' }`. Each line is `true` only while that is so.
 type KeyedBy<M> = { [K in keyof M]: M[K] extends Record<K, unknown> ? true : false }[keyof M]
 type KeysMatch<M, F extends string> = { [K in keyof M]: M[K] extends Record<F, K> ? true : false }[keyof M]
+/** A compile-time check that each effect carries the key it is told apart by. Internal. */
 export const effectKeysMatch: [false] extends [KeyedBy<EffectMap>] ? false : true = true
+/** A compile-time check that each command's `type` is its key. Internal. */
 export const commandKeysMatch: [false] extends [KeysMatch<CommandMap, 'type'>] ? false : true = true

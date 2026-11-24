@@ -1,24 +1,22 @@
 /**
- * Calls by name, as content writes them: a custom condition, effect or
- * command in either form, a value named with its arguments. Pure, and with no
- * imports but types, so the core features can read a call without loading
- * the core.
+ * Calls by name, the plugin and `game/…` conditions, effects, commands and values content writes. The module
+ * imports only types, so a core feature can read a call without loading the core.
  */
 import type { PluginArgs } from './plugin.ts'
 import type { PartnerQueries } from './partners.ts'
 import type { Command, Effect } from './types.ts'
 
 /**
- * A plugin's condition, effect or command in short, or the game's own
- * (`game/…`, from its `rules`): its full name as the only key, and its
- * arguments as the value, `{ 'quests/done': { quest: 'bakery' } }`. The arguments are
- * always an object; `true` calls it with none, as in `{ 'calendar/weekend':
- * true }`. Anything else (a list, a string, a number) is a problem the content
- * checker reports, and the call is asked with no arguments.
+ * A plugin's or the game's condition, effect or command in the short form, with its full name as the only key. The value
+ * is its arguments as an object, or `true` for none.
+ *
+ * `{ 'quests/done': { quest: 'bakery' } }` and `{ 'calendar/weekend': true }` are calls. Any other value, such as a
+ * list, a string or a number, is a problem the content checker reports, and the engine asks the call with no
+ * arguments.
  */
 export type PluginCall = { [name: CallName]: PluginArgs | true }
 
-/** A call's full name: a plugin's id (or `game`), a `/`, and the name: `'quests/done'`. */
+/** A call's full name, a plugin's id (or `game`), a `/` and the name, such as `'quests/done'`. */
 export type CallName = `${string}/${string}`
 
 /*
@@ -31,8 +29,8 @@ export type CallName = `${string}/${string}`
  * the engine: it knows no plugin.
  */
 /**
- * The conditions plugins and the game add, by full name, with what content
- * writes as each one's value: its arguments, or `true` for none.
+ * The registry of conditions plugins and the game add, by full name, with each one's arguments, or `true` for none.
+ * A plugin augments it, and a call to a declared name is type-checked against it.
  *
  * ```ts
  * declare module '@ifloom/engine' {
@@ -45,23 +43,23 @@ export type CallName = `${string}/${string}`
  */
 export interface ConditionRegistry {}
 
-/** The effects plugins and the game add, by full name, with what content writes as each one's value. As `ConditionRegistry`. */
+/** The registry of effects plugins and the game add, by full name, with each one's arguments. It works as `ConditionRegistry` does. */
 export interface EffectRegistry {}
 
-/** The commands plugins and the game add, by full name, with what content writes as each one's value. As `ConditionRegistry`. */
+/** The registry of commands plugins and the game add, by full name, with each one's arguments. It works as `ConditionRegistry` does. */
 export interface CommandRegistry {}
 
 /**
- * The queries plugins and the game answer, by full name, each as a function
- * from its arguments to its answer, which `context.query` and `pluginQuery`
- * read: `'loyalty/stampsLeft': () => number`. Holds `PartnerQueries`, what
- * first-party plugins ask each other, so those are typed in every program.
+ * The registry of queries plugins and the game answer, by full name, each typed as a function from its arguments to
+ * its answer (`'loyalty/stampsLeft': () => number`). `context.query` and `pluginQuery` read it.
+ *
+ * It extends `PartnerQueries`, the queries first-party plugins ask each other, so those are typed in every program.
  */
 export interface QueryRegistry extends PartnerQueries {}
 
 /**
- * What each plugin puts in the view, by its id, which `view.plugins` reads:
- * `shop: ShopView`. The game's own `rules.view` is `game`.
+ * The registry of each plugin's view by plugin id (`shop: ShopView`), which types `view.plugins`. The game's own
+ * `rules.view` is under `game`.
  */
 export interface ViewRegistry {}
 
@@ -71,47 +69,52 @@ type DeclaredCall<R> = { [K in keyof R & CallName]: { [P in K]: R[K] } }[keyof R
 /** A call to a name nobody declares: any arguments, so long as the name isn't a declared one. */
 type UndeclaredCall<R> = PluginCall & { [K in keyof R & CallName]?: never }
 
-/** A call in short, checked against a registry when its name is declared there, and loose otherwise. */
+/** A call in the short form, type-checked against registry `R` when its name is declared there and loose otherwise. */
 export type CallIn<R> = DeclaredCall<R> | UndeclaredCall<R>
 
-/** A condition by name, a plugin's or the game's own, in short: checked against `ConditionRegistry`. */
+/** A plugin's or the game's condition in the short form, type-checked against `ConditionRegistry`. */
 export type ConditionCall = CallIn<ConditionRegistry>
 
-/** An effect by name, a plugin's or the game's own, in short: checked against `EffectRegistry`. */
+/** A plugin's or the game's effect in the short form, type-checked against `EffectRegistry`. */
 export type EffectCall = CallIn<EffectRegistry>
 
-/** A command by name, a plugin's or the game's own, in short: checked against `CommandRegistry`. */
+/** A plugin's or the game's command in the short form, type-checked against `CommandRegistry`. */
 export type CommandCall = CallIn<CommandRegistry>
 
-/** What a query takes and answers: its declared arguments and answer, or anything for a name nobody declares. */
+/** The arguments a query takes, as `QueryRegistry` declares them, or an optional object for an undeclared name. */
 export type QueryArgs<K extends PropertyKey> = K extends keyof QueryRegistry
   ? QueryRegistry[K] extends (...args: infer A) => unknown
     ? A
     : [PluginArgs?]
   : [PluginArgs?]
+/** The answer a query gives, as `QueryRegistry` declares it, or `unknown` for an undeclared name. */
 export type QueryAnswer<K extends PropertyKey> = K extends keyof QueryRegistry
   ? QueryRegistry[K] extends (...args: never[]) => infer R
     ? R
     : unknown
   : unknown
 
-/** What the plugins put in the view, by plugin id: typed for each plugin that declares its view in `ViewRegistry`. */
+/** The plugins' views by plugin id, in `view.plugins`. Each plugin that declares its view in `ViewRegistry` is typed. */
 export type ViewsIn = { readonly [K in keyof ViewRegistry]?: ViewRegistry[K] } & Readonly<Record<string, unknown>>
 
 /**
- * A value named by content, with what it is asked: a stat's ceiling, an
- * app's badge, an achievement's progress. `{ value: 'messages/unread', with:
- * { channel: 'texts' } }`.
+ * A reference to a value by full name, with the arguments it is asked with. It sets a stat's ceiling, an app's badge
+ * or an achievement's progress, as in `{ value: 'messages/unread', with: { channel: 'texts' } }`.
  */
-export type ValueRef = { value: string; with?: PluginArgs }
+export type ValueRef = {
+  /** The value's full name, a plugin's (`messages/unread`) or the game's (`game/…`). */
+  value: string
+  /** The arguments the value is asked with. None if left out. */
+  with?: PluginArgs
+}
 
-/** A call by name, as the engine reads one written in short. */
+/** A call in the short form read into its name, `custom`, and its arguments, `with`. */
 export type CustomCall = { custom: string; with?: Record<string, unknown> }
 
-/** An effect as content writes it: one of the engine's, or a plugin's or the game's own in short. The same as `Effect`. */
+/** An effect in content, one of the engine's or a plugin's or the game's in the short form. It is the same type as `Effect`. */
 export type EffectRef = Effect
 
-/** A command as content writes it: a plain command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`), checked against `CommandRegistry`. */
+/** A command in content, a plain command or a plugin's in the short form (`{ 'places/go': { id: 'cafe' } }`), checked against `CommandRegistry`. */
 export type CommandRef = Command | CommandCall
 
 const isArgs = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -124,8 +127,8 @@ function shortName(entry: object): string | undefined {
 }
 
 /**
- * The call a condition or effect makes, if it is one: the short form read
- * into its name and arguments. Anything else, a built-in, is undefined.
+ * Returns the call a condition or effect in the short form makes, read into its name and arguments. Returns undefined for
+ * one of the engine's own.
  */
 export function customCall(entry: object): CustomCall | undefined {
   const name = shortName(entry)
@@ -135,10 +138,10 @@ export function customCall(entry: object): CustomCall | undefined {
 }
 
 /**
- * The name and arguments of a call in short, `{ 'calendar/pass': { by: 2 } }`
- * as `{ name: 'calendar/pass', with: { by: 2 } }`, or undefined for anything
- * else: one of the engine's own effects or conditions. For code that looks at
- * a list of effects, such as a plugin's guard or price.
+ * Returns the name and arguments of a call in the short form, or undefined for the engine's own conditions and effects.
+ * A plugin's guard or price uses it to read effects.
+ *
+ * `{ 'calendar/pass': { by: 2 } }` gives `{ name: 'calendar/pass', with: { by: 2 } }`.
  */
 export function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined {
   const call = customCall(entry)
@@ -146,9 +149,8 @@ export function callOf(entry: object): { name: string; with: Record<string, unkn
 }
 
 /**
- * What is wrong with a short call's arguments, if anything: they're an object,
- * or `true` for none. `{ 'places/at': ['cafe'] }` is reported, and is asked
- * with no arguments.
+ * Returns the problem with a short-form call's arguments, or undefined when they are an object or `true`. A call such
+ * as `{ 'places/at': ['cafe'] }` is reported and asked with no arguments.
  */
 export function shortFormProblem(entry: object): string | undefined {
   const name = shortName(entry)
@@ -158,7 +160,7 @@ export function shortFormProblem(entry: object): string | undefined {
   return `"${name}" takes its arguments as an object, such as { "${name}": { … } }, or true for none; this one has ${JSON.stringify(value)}`
 }
 
-/** A command as the engine runs it: a plugin's short form read as `{ type: 'custom', name, with }`. */
+/** Returns the command the engine runs for `ref`. A short-form call becomes `{ type: 'custom', name, with }`. */
 export function commandOf(ref: CommandRef): Command {
   const call = customCall(ref)
   if (!call || 'type' in ref) return ref as Command

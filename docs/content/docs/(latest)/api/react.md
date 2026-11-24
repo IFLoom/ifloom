@@ -13,9 +13,11 @@ Generated from the source of `@ifloom/react` and its TSDoc by `npm run api-docs`
 
 Function. Explained in [Components](/docs/react/components#asseturl).
 
-Where a picture really is. A build made with `ifloom build --inline-assets`
-puts every file from `art/` into the page as a data URL, under its path;
-everywhere else the path is used as it is.
+Returns the URL to load a file from, the data URL in the page when there is one, else the path unchanged. A leading
+`./` is ignored in the lookup.
+
+A build made with `ifloom build --inline-assets` puts the files from `art/` in the page as data URLs, under their
+paths.
 
 ```ts shape
 import { assetUrl } from '@ifloom/react'
@@ -26,7 +28,8 @@ function assetUrl(src: string): string
 
 Const. Explained in [Components](/docs/react/components#backlog).
 
-What was shown, oldest first, each scene followed by the choice made in it. Needs the runner's backlog on. `useBacklog` gives the entries alone.
+Renders the backlog as the `backlog` part, the scenes the player has seen oldest first, each followed by the choice
+made in it. It needs the runner's backlog on.
 
 ```ts shape
 import { Backlog } from '@ifloom/react'
@@ -37,18 +40,15 @@ const Backlog: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#beat).
 
-One beat of a scene's body: narration, a spoken line, a picture, a video,
-or a pick the player made earlier in a flowing scene (`chose`, its label,
-small and set in).
-Letters, notes and signs are inline pieces in a line (`InlineMail`,
-`InlineProp`, `InlineMono`). A picture whose block has `ui.tilt` sits at a
-slight angle. A sound beat draws nothing, and a spoken line with a voice
-gets a button to hear it again while the game's sound is playing. A picture
-or a clip opens in the `MediaViewer` when clicked, unless the viewer is off.
-Each carries `data-beat` with its kind, and `data-part="beat"`, except a
-video, which is a `"video"` part. A line with inline actions or tooltips
-draws them as `InlineAction` and `Tip` buttons in the line. Replace it in `components` to draw some
-kinds your own way and hand the rest to `Default`.
+Renders one beat of a scene's body, such as a paragraph, a spoken line or a picture. It's a `beat` part with
+`data-beat` naming its type, or a `video` part for a video.
+
+A past choice (`chose`) shows its label, small and set in. A picture whose block has `ui.tilt` sits at a slight
+angle, and a picture or a clip opens in the `MediaViewer` when clicked, unless the viewer is off. A sound beat
+renders nothing, and a spoken line with a voice gets a button to hear it again while the game's sound plays. Inline
+actions and tooltips render as `InlineAction` and `Tip` buttons in the line, and letters, notes and signs are UI
+pieces (`InlineMail`, `InlineProp`, `InlineMono`). Replace it in `components` to render some beats your own way and
+pass the rest to `Default`.
 
 ```ts shape
 import { Beat } from '@ifloom/react'
@@ -61,12 +61,12 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
 
 Const. Explained in [Components](/docs/react/components#beatgroup).
 
-A section of the scene's body with ui hints: its beats (`children`) in one
-`group` part, with each hint that's a string, a number or true/false as a
-`data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a
-game styles the section as one box. `section` is the section's hints.
-Replace it in `components` to draw a section your own way; the beats in
-it still come in on time.
+Renders the beats of a body section with ui hints in one `group` part, so a game styles the section as one box.
+`section` is the section's hints, and `children` its beats.
+
+Each hint that's a string, a number or true/false becomes a `data-*` attribute, so `{ card: 'result' }` is
+`data-card="result"`. Replace it in `components` to render a section your own way, and the beats in it still come in
+on time.
 
 ```ts shape
 import { BeatGroup } from '@ifloom/react'
@@ -79,7 +79,8 @@ Uses: [`BlockUi`](/docs/api/engine#blockui).
 
 Type. Explained in [Components](/docs/react/components#behaviouroptions).
 
-How the UI behaves: the media viewer, keyboard shortcuts and motion. Part of `UiOptions`.
+The options that change how the UI behaves, part of `UiOptions`. They turn the media viewer, keyboard shortcuts
+and motion on or off.
 
 ```ts shape
 import type { BehaviourOptions } from '@ifloom/react'
@@ -92,19 +93,19 @@ type BehaviourOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
-| `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
+| `viewer` | `boolean` | yes |  | True to let the player click a picture or a video in the story to see it large. True if left out. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | The keyboard shortcuts, 1 to 9 for the choices or actions on screen, Escape for the menu and the game's own keys in `map`. Off if left out. A minigame's keys work either way. |
+| `motion` | `boolean` | yes |  | True to play scene transitions and prose reveals, the `ui.transition` and `ui.reveal` hints. True if left out, and `false` shows every scene and every line at once. A player whose system asks for reduced motion sees them at once either way. |
 
 ## ChangeItem
 
 Const. Explained in [Components](/docs/react/components#changeitem).
 
-One stat the last command moved, as a `change` part: its signed text in the
-stat's format (`change-text`), then the change's `name` when the view
-gives one (`change-label`): an entity's name, or the stat's label when its
-format doesn't say what it is. It carries `data-stat`, `data-of` for an
-entity's stat and `data-dir="up"` or `"down"`.
+Renders one stat change from `view.changes` as a `change` part, its signed text in the stat's format (`change-text`)
+and then the change's `name` (`change-label`) when the view gives one.
+
+The name is an entity's name, or the stat's label when its format doesn't say what it is. The part carries
+`data-stat`, `data-of` for an entity's stat and `data-dir="up"` or `"down"`.
 
 ```ts shape
 import { ChangeItem } from '@ifloom/react'
@@ -117,9 +118,8 @@ Uses: [`ChangeView`](/docs/api/engine#changeview).
 
 Const. Explained in [Components](/docs/react/components#changes).
 
-The stats the last command moved (`view.changes`), as a `changes` list of
-`ChangeItem`s. Draws nothing when nothing moved. Not in the default layout:
-place it in yours, after `<Scene />` for feedback under the story.
+Renders the stats the last command changed, `view.changes`, as a `changes` list of `ChangeItem`s, and nothing when
+none changed. The default layout leaves it out, so place it in yours, such as after `<Scene />`.
 
 ```ts shape
 import { Changes } from '@ifloom/react'
@@ -130,20 +130,17 @@ const Changes: ComponentType<{ className?: string; }>
 
 Function. Explained in [Presentation hints](/docs/react/hints#checkuihints).
 
-Each problem with the React UI's hints in a game, as `where: what`: a hint
-this UI doesn't read on that place (a typo, or another UI's), and each
-value a hint's declaration in `UI_HINTS` finds wrong, such as a transition
-the game doesn't have, a `timer` that isn't one of the game's timers, pips
-on a stat with a range over 20, or a `hue` outside 0 to 360.
+Returns each problem with a game's `ui` hints and UI pieces for the React UI, as `where: what`. An empty list means
+there are none.
 
-It also reads the prose, and the words blocks write in place, for inline
-pieces, `[[ui:name|…]]`: a name that is neither built in (`INLINE_PIECES`),
-nor a plugin UI's, nor one of the game's own `inline` components, which
-would show only its words; and each built-in piece its check finds wrong,
-such as a `modal` with no prose key. A game's own component of a built-in
-name reads its arguments its own way, so it isn't checked.
+It reports a hint the React UI doesn't read on that target, such as a typo or another UI's, and each value a hint's
+declaration finds wrong. Examples are a transition the game doesn't have, a `timer` that isn't one of the game's
+timers, pips on a stat with a range over 20, or a `hue` outside 0 to 360.
 
-Empty when all is well.
+It also reads the prose and the words in place for UI pieces, `[[ui:name|…]]`. It reports a name that's neither
+built in, nor a plugin UI's, nor one of the game's own `inline` components, which would show only its words. It runs
+each built-in piece's check, so a `modal` with no prose key is reported. A game's own component with a built-in
+name reads its arguments its own way, so the check skips it.
 
 ```ts shape
 import { checkUiHints } from '@ifloom/react'
@@ -156,7 +153,7 @@ Uses: [`Game`](/docs/api/engine#game), [`CheckUiOptions`](#checkuioptions).
 
 Type. Explained in [Presentation hints](/docs/react/hints#checkuioptions).
 
-What `checkUiHints` takes besides the game.
+Settings for `checkUiHints`. Each is optional.
 
 ```ts shape
 import type { CheckUiOptions } from '@ifloom/react'
@@ -169,19 +166,19 @@ type CheckUiOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs the game draws with (the same list it gives `mountGame`): their `hints` and `inline` pieces are known. |
-| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own inline pieces (the same object you give `mountGame` or the `GameProvider`). |
-| `allow` | `readonly string[]` | yes |  | Hints and inline names that aren't reported (`['mood']`, say, for another UI's). |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs the game uses, the same list it gives `mountGame`. The check accepts their `hints` and UI pieces. |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for UI pieces, the same object you give `mountGame` or the `GameProvider`. |
+| `allow` | `readonly string[]` | yes |  | The hint and UI piece names the check never reports, such as `['mood']` for another UI's. |
 
 ## ChoiceButton
 
 Const. Explained in [Components](/docs/react/components#choicebutton).
 
-A choice or an action as a button: its label, its price, and (when it is
-greyed out) the reason, on the button itself so the player never has to
-hover to learn why. A warning (pressable, but the game would refuse it, as
-running past dawn) is marked and written under it. With `keys` on, a
-numbered choice shows its number key.
+Renders a choice or an action from its `RenderedChoice` as a `choice` button with its label and price. A disabled
+button shows its reason on the button itself, not on hover.
+
+A warning, the reason a plugin's guard will refuse it softly such as running past dawn, is marked and written under
+it, and so is an irreversible note. With `keys` on, a numbered choice shows its number key.
 
 ```ts shape
 import { ChoiceButton } from '@ifloom/react'
@@ -194,7 +191,8 @@ Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 Const. Explained in [Components](/docs/react/components#choicelist).
 
-A list of choices or actions, one per row. `part` names it for styling: `'choices'`, or `'actions'` for the room's buttons.
+Renders a list of choices or actions as `ChoiceButton`s, one per row, and nothing for an empty list. `part` names it
+`'choices'`, or `'actions'` for the room's actions.
 
 ```ts shape
 import { ChoiceList } from '@ifloom/react'
@@ -207,9 +205,10 @@ Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 Type. Explained in [Components](/docs/react/components#classes).
 
-Classes for a part. A string is merged over the built-in classes (yours win
-where they clash); a function gets the built-in classes and returns the ones
-to use, so `() => 'font-serif'` replaces them outright.
+Tailwind classes for the UI's parts, by `data-part` name. A string merges over the built-in classes and wins where
+they clash.
+
+A function gets the built-in classes and returns the ones to use, so `() => 'font-serif'` replaces them outright.
 
 ```ts shape
 import type { Classes } from '@ifloom/react'
@@ -569,7 +568,8 @@ Its fields are the keys of `Partial<Record<PartKey, string | ((defaults: string)
 
 Const. Explained in [Components](/docs/react/components#clock).
 
-Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. A thin default on `useClock`.
+Renders the game's time from `view.when` as the `clock` part, and nothing when no plugin writes one. The calendar
+plugin's UI has fuller parts.
 
 ```ts shape
 import { Clock } from '@ifloom/react'
@@ -580,7 +580,7 @@ const Clock: ComponentType<object>
 
 Type. Explained in [Components](/docs/react/components#clockstate).
 
-What `useClock` returns: where the game is in time.
+The game's time that `useClock` returns.
 
 ```ts shape
 import type { ClockState } from '@ifloom/react'
@@ -591,7 +591,7 @@ type ClockState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `when` | `string \| null` |  |  | The line the plugins wrote (`view.when`), such as "Day 3 · Wednesday morning", or null when none says. |
+| `when` | `string \| null` |  |  | The time line the plugins' `label`s write, `view.when`, such as "Day 3 · Wednesday morning". It's null when none writes one. |
 
 ## Components
 
@@ -658,14 +658,68 @@ type Components = {
 
 Plugins add fields of their own to it, which their pages list.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `Game` | [`Override`](/docs/api/react-kit#override)`<`[`GameProps`](#gameprops)`> \| undefined` | yes |  | The replacement for `Game`. |
+| `Sidebar` | [`Override`](/docs/api/react-kit#override)`<`[`SidebarProps`](#sidebarprops)`> \| undefined` | yes |  | The replacement for `Sidebar`. |
+| `Story` | [`Override`](/docs/api/react-kit#override)`<`[`StoryProps`](#storyprops)`> \| undefined` | yes |  | The replacement for `Story`. |
+| `Overlay` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; children?: ReactNode; }> \| undefined` | yes |  | The replacement for `Overlay`. |
+| `Section` | [`Override`](/docs/api/react-kit#override)`<`[`SectionProps`](#sectionprops)`> \| undefined` | yes |  | The replacement for `Section`. |
+| `When` | [`Override`](/docs/api/react-kit#override)`<{ condition:` [`Condition`](/docs/api/engine#condition)`; children?: ReactNode; }> \| undefined` | yes |  | The replacement for `When`. |
+| `Title` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `Title`. |
+| `Clock` | [`Override`](/docs/api/react-kit#override)`<object> \| undefined` | yes |  | The replacement for `Clock`. |
+| `StatList` | [`Override`](/docs/api/react-kit#override)`<object> \| undefined` | yes |  | The replacement for `StatList`. |
+| `RoomActions` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `RoomActions`. |
+| `Scene` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `Scene`. |
+| `Beat` | [`Override`](/docs/api/react-kit#override)`<{ beat:` [`SceneBeat`](/docs/api/engine#scenebeat)`; }> \| undefined` | yes |  | The replacement for `Beat`. |
+| `SceneHeader` | [`Override`](/docs/api/react-kit#override)`<{ scene: { id: string \| null; key: string; title: string; body: string; beats:…` | yes |  | The replacement for `SceneHeader`. |
+| `BeatGroup` | [`Override`](/docs/api/react-kit#override)`<{ section:` [`BlockUi`](/docs/api/engine#blockui) `& { readonly [hint: string]: unknown; }; children: ReactNode;…` | yes |  | The replacement for `BeatGroup`. |
+| `Fold` | [`Override`](/docs/api/react-kit#override)`<{ label: string; children: ReactNode; }> \| undefined` | yes |  | The replacement for `Fold`. |
+| `InlineAction` | [`Override`](/docs/api/react-kit#override)`<{ text: string; choice:` [`RenderedChoice`](/docs/api/engine#renderedchoice)`; className?: string; }> \| undefined` | yes |  | The replacement for `InlineAction`. |
+| `Tip` | [`Override`](/docs/api/react-kit#override)`<{ text: string; tip: string; className?: string; }> \| undefined` | yes |  | The replacement for `Tip`. |
+| `ChoiceList` | [`Override`](/docs/api/react-kit#override)`<{ choices:` [`RenderedChoice[]`](/docs/api/engine#renderedchoice)`; className?: string; part?: 'actions' \| 'choices'; }…` | yes |  | The replacement for `ChoiceList`. |
+| `ChoiceButton` | [`Override`](/docs/api/react-kit#override)`<{ choice:` [`RenderedChoice`](/docs/api/engine#renderedchoice)`; className?: string; }> \| undefined` | yes |  | The replacement for `ChoiceButton`. |
+| `PriceTag` | [`Override`](/docs/api/react-kit#override)`<{ price:` [`Price`](/docs/api/engine#price)`; className?: string; }> \| undefined` | yes |  | The replacement for `PriceTag`. |
+| `Notices` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; limit?: number; }> \| undefined` | yes |  | The replacement for `Notices`. |
+| `Notice` | [`Override`](/docs/api/react-kit#override)`<{ notice:` [`NoticeView`](/docs/api/engine#noticeview)`; }> \| undefined` | yes |  | The replacement for `Notice`. |
+| `NoticeStrip` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `NoticeStrip`. |
+| `MinigameCard` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `MinigameCard`. |
+| `DiceRoll` | [`Override`](/docs/api/react-kit#override)`<`[`DiceRollProps`](#dicerollprops)`> \| undefined` | yes |  | The replacement for `DiceRoll`. |
+| `DiceOverlay` | [`Override`](/docs/api/react-kit#override)`<{ rolls: readonly` [`Roll[]`](/docs/api/engine#roll)`; className?: string; }> \| undefined` | yes |  | The replacement for `DiceOverlay`. |
+| `Countdown` | [`Override`](/docs/api/react-kit#override)`<`[`CountdownProps`](#countdownprops)`> \| undefined` | yes |  | The replacement for `Countdown`. |
+| `Timers` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `Timers`. |
+| `Changes` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `Changes`. |
+| `ChangeItem` | [`Override`](/docs/api/react-kit#override)`<{ change:` [`ChangeView`](/docs/api/engine#changeview)`; }> \| undefined` | yes |  | The replacement for `ChangeItem`. |
+| `GameMenu` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `GameMenu`. |
+| `SavesMenu` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; onLoaded?: (() => void); }> \| undefined` | yes |  | The replacement for `SavesMenu`. |
+| `Backlog` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `Backlog`. |
+| `ModManager` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `ModManager`. |
+| `Inventory` | [`Override`](/docs/api/react-kit#override)`<`[`InventoryProps`](#inventoryprops)`> \| undefined` | yes |  | The replacement for `Inventory`. |
+| `PanelHost` | [`Override`](/docs/api/react-kit#override)`<object> \| undefined` | yes |  | The replacement for `PanelHost`. |
+| `EntityTable` | [`Override`](/docs/api/react-kit#override)`<{ kinds?: string[]; className?: string; }> \| undefined` | yes |  | The replacement for `EntityTable`. |
+| `InputFields` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `InputFields`. |
+| `InputField` | [`Override`](/docs/api/react-kit#override)`<{ input:` [`InputView`](/docs/api/engine#inputview)`; }> \| undefined` | yes |  | The replacement for `InputField`. |
+| `Picture` | [`Override`](/docs/api/react-kit#override)`<ClassAttributes<HTMLImageElement> & ImgHTMLAttributes<HTMLImageElement> & { '…` | yes |  | The replacement for `Picture`. |
+| `Video` | [`Override`](/docs/api/react-kit#override)`<`[`VideoProps`](#videoprops) `\| (Omit<DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>,…` | yes |  | The replacement for `Video`. |
+| `LayeredPicture` | [`Override`](/docs/api/react-kit#override)`<{ picture:` [`PictureView`](/docs/api/engine#pictureview)`; className?: string; }> \| undefined` | yes |  | The replacement for `LayeredPicture`. |
+| `Hotspot` | [`Override`](/docs/api/react-kit#override)`<{ hotspot:` [`HotspotView`](/docs/api/engine#hotspotview)`; }> \| undefined` | yes |  | The replacement for `Hotspot`. |
+| `MediaViewer` | [`Override`](/docs/api/react-kit#override)`<`[`MediaViewerProps`](#mediaviewerprops)`> \| undefined` | yes |  | The replacement for `MediaViewer`. |
+| `Icon` | [`Override`](/docs/api/react-kit#override)`<{ name:` [`IconName`](/docs/api/react-kit#iconname)`; label?: string; }> \| undefined` | yes |  | The replacement for `Icon`. |
+| `TitlePage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `TitlePage`. |
+| `SettingsPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `SettingsPage`. |
+| `LoadPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `LoadPage`. |
+| `CreditsPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `CreditsPage`. |
+| `GatePage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `GatePage`. |
+
 ## Countdown
 
 Const. Explained in [Components](/docs/react/components#countdown).
 
-A running timer, by id: its label, a bar that empties as it runs down, and
-the seconds left. Marked `data-urgent` with a quarter or less to go. With
-motion off, or a player who asks for reduced motion, only the seconds show.
-Draws nothing once the timer has run out or stopped.
+Renders a running timer by id as the `timer` part, with its label, a bar that empties and the seconds left. It
+renders nothing once the timer has run out or stopped.
+
+It's marked `data-urgent` with a quarter or less to go. With motion off, or for a player who asks for reduced
+motion, only the seconds show.
 
 ```ts shape
 import { Countdown } from '@ifloom/react'
@@ -678,6 +732,8 @@ Uses: [`CountdownProps`](#countdownprops).
 
 Type. Explained in [Components](/docs/react/components#countdownprops).
 
+The props of `Countdown`.
+
 ```ts shape
 import type { CountdownProps } from '@ifloom/react'
 type CountdownProps = {
@@ -689,15 +745,15 @@ type CountdownProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `timer` | `string` |  |  | The timer's id. Nothing is drawn while it isn't running. |
-| `label` | `boolean` | yes |  | Show the timer's `label` above the bar. True if left out. |
-| `className` | `string` | yes |  |  |
+| `timer` | `string` |  |  | The timer's id. `Countdown` renders nothing while it isn't running. |
+| `label` | `boolean` | yes |  | True to show the timer's `label` above the bar. True if left out. |
+| `className` | `string` | yes |  | Classes added to the `timer` part's own. |
 
 ## Credit
 
 Type. Explained in [Components](/docs/react/components#credit-gateoptions-and-pagedef).
 
-A line of the credits, or a link.
+One line of the credits page, as text or as a link with its label.
 
 ```ts shape
 import type { Credit } from '@ifloom/react'
@@ -708,7 +764,7 @@ type Credit = string | { label: string; href: string }
 
 Const. Explained in [Components](/docs/react/components#creditspage).
 
-The credits page: `PagesOptions.credits`, a line each, links opening in a new tab.
+Renders the credits page from `PagesOptions.credits`, a line each. Its links open in a new tab.
 
 ```ts shape
 import { CreditsPage } from '@ifloom/react'
@@ -719,11 +775,11 @@ const CreditsPage: ComponentType<{ className?: string; }>
 
 Component. Explained in [Components](/docs/react/components#defaultlayout).
 
-The React UI's own layout, which `GameShell` and `mountGame` draw when you
-give them none. The react and next templates start you with a copy of it in
-`src/layout.tsx`. Each section hides itself when the game has nothing for
-it, so the same layout suits a novel and a town. What the game's plugin UIs
-bring goes at each `<Plugins at="…" />`, in the order of its `plugins` list.
+Renders the React UI's own layout, which `GameShell` and `mountGame` render when you give them none. The `react` and
+`next` templates start you with a copy of it in `src/layout.tsx`.
+
+Each section hides itself when the game has nothing for it, so the same layout suits a novel and a town. The plugin
+UIs' components go at each `<Plugins at="…" />`, in the order of the game's `plugins` list.
 
 ```ts shape
 import { DefaultLayout } from '@ifloom/react'
@@ -734,11 +790,10 @@ function DefaultLayout(): JSX.Element
 
 Const. Explained in [Components](/docs/react/components#diceoverlay).
 
-Rolls the story doesn't name, shown for a moment over the scene: those the
-last command made that no block's `ui.dice` hint names, such as a roll a
-trigger made as the player came in. Each is a `DiceRoll`; the whole is the
-`dice-overlay` part, which goes after a few seconds or when the player
-dismisses it (`dice-dismiss`). `Scene` draws it.
+Renders the last command's rolls that no block's `ui.dice` hint names, for a moment over the scene, such as a roll a
+trigger made. Each is a `DiceRoll` inside the `dice-overlay` part.
+
+It goes a few seconds after the dice settle, or when the player presses `dice-dismiss`. `Scene` renders it.
 
 ```ts shape
 import { DiceOverlay } from '@ifloom/react'
@@ -751,13 +806,12 @@ Uses: [`Roll`](/docs/api/engine#roll).
 
 Const. Explained in [Components](/docs/react/components#diceroll).
 
-One roll the engine made: its dice, tumbling for `DICE_ROLL_MS` and then
-settling on the rolled faces, what was added, the total, and with a target,
-passed or failed and what it needed. A die on its top face or on 1 is marked,
-and so is a critical. Parts: `dice` (with `data-roll`, `data-state`
-`rolling` or `settled`, `data-passed` and `data-critical`), `dice-label`,
-`dice-faces`, `dice-face`, `dice-plus`, `dice-total`, `dice-outcome` and
-`dice-critical`. A screen reader hears the result once the dice settle.
+Renders one roll from `view.rolls`, its dice tumbling for a second and then settling on the rolled faces. It shows
+the bonus, the total and, with a target, the outcome and the number needed.
+
+A die on its top face or on 1 is marked, and so is a critical. Its parts are `dice` (with `data-roll`, `data-state`
+`rolling` or `settled`, `data-passed` and `data-critical`), `dice-label`, `dice-faces`, `dice-face`, `dice-plus`,
+`dice-total`, `dice-outcome` and `dice-critical`. Screen readers announce the result once the dice settle.
 
 ```ts shape
 import { DiceRoll } from '@ifloom/react'
@@ -770,6 +824,8 @@ Uses: [`DiceRollProps`](#dicerollprops).
 
 Type. Explained in [Components](/docs/react/components#dicerollprops).
 
+The props of `DiceRoll`.
+
 ```ts shape
 import type { DiceRollProps } from '@ifloom/react'
 type DiceRollProps = {
@@ -781,18 +837,18 @@ type DiceRollProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `roll` | [`Roll`](/docs/api/engine#roll) |  |  | The roll to draw, from `view.rolls`: its dice, each die's face and its total. |
-| `animate` | `boolean` | yes |  | Tumble before settling. True if left out; the motion option or a player's reduced-motion setting turns it off whatever this says. |
-| `className` | `string` | yes |  |  |
+| `roll` | [`Roll`](/docs/api/engine#roll) |  |  | The roll to render, from `view.rolls`, with its dice, each die's face and its total. |
+| `animate` | `boolean` | yes |  | True to let the dice tumble before they settle. True if left out, and the `motion` option or a player's reduced-motion setting turns it off either way. |
+| `className` | `string` | yes |  | Classes added to the `dice` part's own. |
 
 ## EntityTable
 
 Const. Explained in [Components](/docs/react/components#entitytable).
 
-The things the game keeps several of (`view.entities`): a table per kind,
-one row each, with its picture and description when it has them and the
-stats the player can see on it. Only the kinds given, or every listed kind;
-nothing at all when they are all empty.
+Renders the listed entities in `view.entities` as a table per kind, one row each, with the entity's picture,
+description and stats. It renders nothing when every kind is empty.
+
+`kinds` limits it to the kinds given by id, and every listed kind shows if left out.
 
 ```ts shape
 import { EntityTable } from '@ifloom/react'
@@ -803,11 +859,11 @@ const EntityTable: ComponentType<{ kinds?: string[]; className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#fold).
 
-A section with a `ui.fold` hint (what `fold()` writes), inside its
-`BeatGroup`: its beats (`children`) in a `fold` part the player opens and
-shuts, a `<details>`, under `label` (the hint's words) in a `fold-summary`
-part, with the beats in `fold-beats`. Shut to begin with. Replace it in
-`components` to draw a fold your own way.
+Renders a fold, a body section with a `ui.fold` hint that `fold()` writes, as a `<details>` the player opens and
+shuts. It starts shut, inside its `BeatGroup`.
+
+The `fold` part holds `label`, the hint's words, in a `fold-summary` part and the beats (`children`) in `fold-beats`.
+Replace it in `components` to render a fold your own way.
 
 ```ts shape
 import { Fold } from '@ifloom/react'
@@ -818,11 +874,11 @@ const Fold: ComponentType<{ label: string; children: ReactNode; }>
 
 Const. Explained in [Components](/docs/react/components#game).
 
-The page: the root of a layout, inside the game's provider. It draws the
-`page` part, a grid with the side column and the story side by side when it
-has a `Sidebar` (it then carries `data-has-sidebar`), or one centred column
-when it doesn't. With `pages` on, `GameShell` and `mountGame` draw it on
-the `game` page, and the title screen, settings and the rest in its place.
+Renders the page, the root of a layout inside the game's provider, as the `page` part. With a `Sidebar` it's a grid
+of the side column and the story, and carries `data-has-sidebar`.
+
+Without a `Sidebar` it's one centred column. With `pages` on, it renders on the `game` page, and the title screen,
+the settings and the other pages render in its place.
 
 ```ts shape
 import { Game } from '@ifloom/react'
@@ -834,6 +890,8 @@ Uses: [`GameProps`](#gameprops).
 ## GameContextValue
 
 Type. Explained in [Components](/docs/react/components#gamecontextvalue).
+
+The running game that `useGame` returns, with the runner, its snapshot, the view and `send`.
 
 ```ts shape
 import type { GameContextValue } from '@ifloom/react'
@@ -853,26 +911,25 @@ type GameContextValue = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner the game was mounted with. |
-| `mods` | [`ModsOption`](#modsoption) | yes |  | The mods option the game was mounted with, for the mods page; undefined for a game without mods. |
-| `snapshot` | [`RunnerSnapshot`](/docs/api/engine#runnersnapshot) |  |  | Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. |
-| `view` | [`View`](/docs/api/engine#view) |  |  | The view, as `snapshot.view`. |
-| `send` | `(command:` [`CommandRef`](/docs/api/engine#commandref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Run a command, a plain one or a plugin's in short as its helpers write it (`shop.buy('counter', 'food:bun')`). Returns what `runner.apply` returned, so a caller can show a refusal. |
-| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` |  |  | The panels the UI draws by name: the plugin UIs' with the game's own over them. |
-| `inline` | [`InlineComponents`](#inlinecomponents) |  |  | The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. |
-| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` |  |  | The renderers for plugin sections in apps, by plugin id: the plugin UIs' with the game's own over them. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | The mods option the game was mounted with, for the mods page. It's undefined for a game without mods. |
+| `snapshot` | [`RunnerSnapshot`](/docs/api/engine#runnersnapshot) |  |  | The runner's snapshot, `runner.snapshot()`, with the view, settings, backlog, undo, saves and helpers. |
+| `view` | [`View`](/docs/api/engine#view) |  |  | The view, the same as `snapshot.view`. |
+| `send` | `(command:` [`CommandRef`](/docs/api/engine#commandref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends a command and returns the runner's result, so a caller can show a refusal. The command is a core one or a plugin's as its helpers write it, such as `shop.buy('counter', 'food:bun')`. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` |  |  | The game's own panels by name, as `GameProviderProps.panels` gave them. The plugin UIs' panels aren't included. |
+| `inline` | [`InlineComponents`](#inlinecomponents) |  |  | The components for UI pieces that the plugin UIs and the game add, by name, the game's over the plugins'. The built-in ones aren't included. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` |  |  | The components for plugin sections in apps, by plugin id, the plugin UIs' with the game's own over them. |
 | `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) |  |  | The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. |
 
 ## GameMenu
 
 Const. Explained in [Components](/docs/react/components#gamemenu).
 
-The player's menu: saves, the backlog, undo and redo — each only if the game
-turned it on when it made the runner, mods when the provider has them, and
-each plugin UI's `settings` (the unlocks plugin's code box, say) behind a
-button of its own. With pages on, it also has Settings (if the game has
-any, or mods or a plugin UI's settings, which are there instead) and Title
-screen, which switch to those pages. With `keys` on, Escape opens the same
-buttons in a dialog.
+Renders the player's menu as the `menu` part, with buttons for saves, the backlog, undo and redo when the runner has
+them. With `keys` on, Escape opens the same buttons in a dialog.
+
+It adds mods when the provider has them, and each plugin UI's `settings`, such as the unlocks plugin's code box,
+behind a button of its own. With pages on, it has Settings and Title screen buttons instead, which switch to those
+pages, and the mods and the plugin UIs' settings move to the settings page.
 
 ```ts shape
 import { GameMenu } from '@ifloom/react'
@@ -882,6 +939,8 @@ const GameMenu: ComponentType<{ className?: string; }>
 ## GameProps
 
 Type. Explained in [Components](/docs/react/components#gameprops).
+
+The props of `Game`.
 
 ```ts shape
 import type { GameProps } from '@ifloom/react'
@@ -893,12 +952,15 @@ type GameProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `className` | `string` | yes |  | Classes added to its own. |
-| `children` | `ReactNode` | yes |  | The regions: a `Sidebar`, a `Story`, an `Overlay` and whatever else the page has. |
+| `className` | `string` | yes |  | Classes added to the `page` part's own. |
+| `children` | `ReactNode` | yes |  | The regions inside the page, such as a `Sidebar`, a `Story` and an `Overlay`. |
 
 ## GameProvider
 
 Component. Explained in [Components](/docs/react/components#gameprovider).
+
+Renders its children connected to a runner, so every component under it reads the runner's snapshot and sends
+commands through `useGame`. It re-renders when the runner has a new snapshot, and only then.
 
 ```ts shape
 import { GameProvider } from '@ifloom/react'
@@ -910,6 +972,8 @@ Uses: [`GameProviderProps`](#gameproviderprops).
 ## GameProviderProps
 
 Type. Explained in [Components](/docs/react/components#gameproviderprops).
+
+The props of `GameProvider`, the runner and the plugin UIs with the game's own panels, UI pieces, sections and mods.
 
 ```ts shape
 import type { GameProviderProps } from '@ifloom/react'
@@ -932,30 +996,29 @@ type GameProviderProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
-| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
-| `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
-| `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
-| `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
-| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
-| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
-| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
-| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
-| `mods` | [`ModsOption`](#modsoption) | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
-| `children` | `ReactNode` |  |  |  |
+| `components` | [`Components`](#components) | yes |  | The game's replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | The game's classes for the UI's parts, by `data-part` name. |
+| `unstyled` | `boolean` | yes |  | True to drop every built-in class, keeping the structure and the `data-part`s for your own styles. False if left out. |
+| `viewer` | `boolean` | yes |  | True to let the player click a picture or a video in the story to see it large. True if left out. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | The keyboard shortcuts, 1 to 9 for the choices or actions on screen, Escape for the menu and the game's own keys in `map`. Off if left out. A minigame's keys work either way. |
+| `motion` | `boolean` | yes |  | True to play scene transitions and prose reveals, the `ui.transition` and `ui.reveal` hints. True if left out, and `false` shows every scene and every line at once. A player whose system asks for reduced motion sees them at once either way. |
+| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner to render and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to use, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. The default layout places their components in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to render it yourself. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. One here replaces a plugin UI's panel of the same name. |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here replaces a built-in one of the same name, such as `modal` or `image`. A name no component renders shows its words. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | The game's components for plugin sections in apps, by plugin id. They replace the plugin UIs', such as the messages and feed UIs'. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | The mods the player can add, turn off or remove. Leave it out for a game without mods. |
+| `children` | `ReactNode` |  |  | The UI to render inside the provider. |
 
 ## GameShell
 
 Component. Explained in [The React UI](/docs/react#gameshell).
 
-The whole React UI, and the one root every entry draws (`mountGame` draws
-it too): the game's provider (the snapshot, the UI options, the keys and
-the clock), the game's sound, its text size, the pages if `pages` is on,
-and the layout, `DefaultLayout` unless you give your own. Every part a
-layout uses is exported on its own, so a game can build another page
-entirely.
+Renders the whole React UI for a runner, the root that `mountGame` renders too. It renders the layout,
+`DefaultLayout` unless you give your own, inside the game's provider.
+
+It also plays the game's sound, sets its text size and, with `pages` on, renders the pages around the game. Every
+part a layout uses is exported on its own, so a game can build another page entirely.
 
 ```ts shape
 import { GameShell } from '@ifloom/react'
@@ -967,6 +1030,8 @@ Uses: [`GameShellProps`](#gameshellprops).
 ## GameShellProps
 
 Type. Explained in [The React UI](/docs/react#gameshellprops).
+
+The props of `GameShell`, the `GameProviderProps` without `children`, with a layout, pages and sound.
 
 ```ts shape
 import type { GameShellProps } from '@ifloom/react'
@@ -991,27 +1056,27 @@ type GameShellProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
-| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
-| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
-| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
-| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
-| `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
-| `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
-| `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
-| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
-| `mods` | [`ModsOption`](#modsoption) | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
-| `layout` | `ComponentType` | yes |  | The page, as a component: a `Game` with a `Sidebar`, a `Story` and the rest, as in your `src/layout.tsx`, or any component of your own, since `useGame()` and every built-in component work in it. `DefaultLayout` if left out. |
-| `pages` | `boolean \|` [`PagesOptions`](#pagesoptions) | yes |  | The title screen and the pages around the game: `true`, or what they show. Off if left out, and the game starts straight away. With them on, the layout is drawn on the `game` page. |
-| `audio` | `false \|` [`AudioOptions`](/docs/api/audio#audiooptions) | yes |  | Sound, through `@ifloom/audio`. It starts on its own when the game lists any tracks in `game.audio`; `false` turns it off, and an object is passed to `startAudio` as its options. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | The game's components for plugin sections in apps, by plugin id. They replace the plugin UIs', such as the messages and feed UIs'. |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here replaces a built-in one of the same name, such as `modal` or `image`. A name no component renders shows its words. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to use, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. The default layout places their components in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to render it yourself. |
+| `components` | [`Components`](#components) | yes |  | The game's replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | The game's classes for the UI's parts, by `data-part` name. |
+| `unstyled` | `boolean` | yes |  | True to drop every built-in class, keeping the structure and the `data-part`s for your own styles. False if left out. |
+| `viewer` | `boolean` | yes |  | True to let the player click a picture or a video in the story to see it large. True if left out. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | The keyboard shortcuts, 1 to 9 for the choices or actions on screen, Escape for the menu and the game's own keys in `map`. Off if left out. A minigame's keys work either way. |
+| `motion` | `boolean` | yes |  | True to play scene transitions and prose reveals, the `ui.transition` and `ui.reveal` hints. True if left out, and `false` shows every scene and every line at once. A player whose system asks for reduced motion sees them at once either way. |
+| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner to render and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. One here replaces a plugin UI's panel of the same name. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | The mods the player can add, turn off or remove. Leave it out for a game without mods. |
+| `layout` | `ComponentType` | yes |  | The layout, the page as a component, such as a `Game` with a `Sidebar` and a `Story` in your `src/layout.tsx`. `DefaultLayout` if left out. Any component of your own works, since `useGame()` and every built-in component work inside it. |
+| `pages` | `boolean \|` [`PagesOptions`](#pagesoptions) | yes |  | The title screen and the pages around the game, `true` or the `PagesOptions` for them. Off if left out, and the game starts straight away. With pages on, the layout renders on the `game` page. |
+| `audio` | `false \|` [`AudioOptions`](/docs/api/audio#audiooptions) | yes |  | The game's sound through `@ifloom/audio`, which starts when the game declares any audio. `false` turns it off, and an object goes to `startAudio` as its options. |
 
 ## GateOptions
 
 Type. Explained in [Components](/docs/react/components#credit-gateoptions-and-pagedef).
 
-A notice the player confirms once before the title screen. Every word of it is the game's.
+A notice the player confirms once before the title screen, in `PagesOptions.gate`. The game writes every word of it.
 
 ```ts shape
 import type { GateOptions } from '@ifloom/react'
@@ -1026,18 +1091,18 @@ type GateOptions = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `title` | `string` |  |  | The gate's heading. |
-| `text` | `string` |  |  | Paragraphs, split on blank lines. |
-| `confirm` | `string` |  |  | The button that moves on. |
-| `decline` | `{ label: string; href?: string }` | yes |  | A button that doesn't: it goes to `href` if given, otherwise it stays. |
+| `text` | `string` |  |  | The gate's text, split into paragraphs on blank lines. |
+| `confirm` | `string` |  |  | The label of the button that confirms and goes on to the title screen. |
+| `decline` | `{ label: string; href?: string }` | yes |  | The button that declines, with its label. It goes to `href` if given, and otherwise the gate stays. |
 
 ## GatePage
 
 Const. Explained in [Components](/docs/react/components#gatepage).
 
-A notice the player confirms before the title screen, from
-`PagesOptions.gate`. Confirming is remembered in the profile's `ui:gate`
-namespace, so it shows once per device. Declining goes to its `href`, or
-stays.
+Renders the gate from `PagesOptions.gate`, a notice the player confirms before the title screen. The profile's
+`ui:gate` namespace remembers the confirmation, so the gate shows once per device.
+
+Declining goes to the decline button's `href`, or leaves the gate where it is.
 
 ```ts shape
 import { GatePage } from '@ifloom/react'
@@ -1048,10 +1113,11 @@ const GatePage: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#hotspot).
 
-One hotspot on a layered picture: a button over it, placed by its `rect` in
-percent. Its `aria-label` is the hotspot's label. A greyed-out one stays in
-the tab order with `aria-disabled`, gives its reason in `title` and to a
-screen reader, and sends nothing. One with a warning shows the warning icon.
+Renders one hotspot of a layered picture as a `hotspot` button over it, placed by its `rect` in percent. Its
+`aria-label` is the hotspot's label.
+
+A disabled one stays in the tab order with `aria-disabled`, gives its reason in `title` and to screen readers, and
+sends nothing. One with a warning shows the warning icon.
 
 ```ts shape
 import { Hotspot } from '@ifloom/react'
@@ -1064,12 +1130,11 @@ Uses: [`HotspotView`](/docs/api/engine#hotspotview).
 
 Const. Explained in [Components](/docs/react/components#inlineaction).
 
-An inline action, from `[[act:id|words]]`: the words as an `inline-action`
-button that sends the choice's command, with its price after them. Greyed
-out, it has `data-disabled` and `aria-disabled` and stays focusable, and a
-tap, hover or focus shows the reason in a `tip-content` bubble. A warning
-or an irreversible note shows the same way. Inline actions have no number
-key: the number keys pick the choices in the list.
+Renders an inline action from `[[act:id|words]]` as an `inline-action` button that sends its command, with its
+price after the words. It has no number key, since the number keys choose the listed choices.
+
+A disabled one has `data-disabled` and `aria-disabled` and stays focusable, and a tap, hover or focus shows the
+reason in a `tip-content` bubble. A warning or an irreversible note shows the same way.
 
 ```ts shape
 import { InlineAction } from '@ifloom/react'
@@ -1082,7 +1147,7 @@ Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 Type. Explained in [Components](/docs/react/components#inlinecomponent-and-inlineprops).
 
-A component that draws an inline piece of the prose named `N`.
+A component that renders the UI piece named `N` in prose.
 
 ```ts shape
 import type { InlineComponent } from '@ifloom/react'
@@ -1095,9 +1160,8 @@ Uses: [`InlineProps`](#inlineprops).
 
 Type. Explained in [Components](/docs/react/components#inlinecomponents).
 
-A game's own inline pieces by name, for `[[ui:name|…]]` in its prose. A
-name `InlineUi` declares gets its arguments typed; any other name takes them
-as text.
+A game's or a plugin UI's components for UI pieces in prose, by name. A name the engine's `InlineUi` declares gets its
+arguments typed, and any other name takes them as text.
 
 ```ts shape
 import type { InlineComponents } from '@ifloom/react'
@@ -1117,22 +1181,21 @@ Its fields are the keys of `{ [N in keyof InlineUi]?: InlineComponent<N> } & { [
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `modal` | [`InlineComponent`](#inlinecomponent)`<'modal'>` | yes |  | `[[ui:modal\|words\|key]]`: the words open a dialog showing the prose line `key`, titled `title` if given, else the words. |
-| `image` | [`InlineComponent`](#inlinecomponent)`<'image'>` | yes |  | `[[ui:image\|words\|path]]`: the words open the picture at `path` (resolved as `[[img:…]]` resolves it) in the viewer, described by `alt`. |
-| `mail` | [`InlineComponent`](#inlinecomponent)`<'mail'>` | yes |  | `[[ui:mail\|body\|From: Ava\|Subject: Hello]]`: a letter or an email, its header lines as written, then the body. A paragraph of its own. |
-| `prop` | [`InlineComponent`](#inlinecomponent)`<'prop'>` | yes |  | `[[ui:prop\|words\|sticky]]`: a note in the story's world, by its face (`sticky`, `clip` or `diary`). A paragraph of its own. |
-| `mono` | [`InlineComponent`](#inlinecomponent)`<'mono'>` | yes |  | `[[ui:mono\|words]]`: words in a typewriter face, such as a sign or a screen. |
+| `modal` | [`InlineComponent`](#inlinecomponent)`<'modal'>` | yes |  | The arguments of `[[ui:modal\|words\|key\|title]]`, whose words open a dialog with the prose key's line. The dialog's title is `title`, else the words. |
+| `image` | [`InlineComponent`](#inlinecomponent)`<'image'>` | yes |  | The arguments of `[[ui:image\|words\|path\|alt]]`, whose words open the picture at `path` in the viewer. `path` resolves as `[[img:…]]` does. |
+| `mail` | [`InlineComponent`](#inlinecomponent)`<'mail'>` | yes |  | The header lines of `[[ui:mail\|body\|From: Ava\|Subject: Hello]]`, a letter or an email in a paragraph of its own. The body follows the header. |
+| `prop` | [`InlineComponent`](#inlinecomponent)`<'prop'>` | yes |  | The face of `[[ui:prop\|words\|sticky]]`, a note in the story's world in a paragraph of its own. The face is `sticky`, `clip` or `diary`. |
+| `mono` | [`InlineComponent`](#inlinecomponent)`<'mono'>` | yes |  | The arguments of `[[ui:mono\|words]]`, which takes none. It sets the words in a typewriter face, such as a sign or a screen. |
 
 ## InlineImage
 
 Component. Explained in [Components](/docs/react/components#inlineimage).
 
-The built-in `image`, from `[[ui:image|words|path]]` or
-`[[ui:image|words|path|alt]]`: the words as an `InlineTrigger` that opens
-the picture at `path` in the `MediaViewer`, the lightbox a story's pictures
-open in. The path is resolved as `[[img:…]]` resolves it (`art/`, `.jpg` for
-a bare name), and `alt` describes it, else the words. Replace it with an
-`image` of your own in `inline`.
+Renders the built-in `image` UI piece from `[[ui:image|words|path|alt]]`, the words as an `InlineTrigger` that opens
+the picture at `path` in the `MediaViewer`. `alt` describes the picture, else the words do.
+
+The path resolves as `[[img:…]]` resolves it, with `art/` and `.jpg` added to a bare name. Replace it with an `image`
+of your own in `inline`.
 
 ```ts shape
 import { InlineImage } from '@ifloom/react'
@@ -1145,11 +1208,10 @@ Uses: [`InlineProps`](#inlineprops).
 
 Component. Explained in [Components](/docs/react/components#inlinemail).
 
-The built-in `mail`, from `[[ui:mail|body|From: Ava|Subject: Hello]]`: a
-letter or an email as a card, an `inline-mail` part, with each header line
-as written (a `mail-header` part), then the body (a `mail-body` part).
-Written as a paragraph of its own, it draws as one. Replace it with a
-`mail` of your own in `inline`.
+Renders the built-in `mail` UI piece from `[[ui:mail|body|From: Ava|Subject: Hello]]`, a letter or an email as an
+`inline-mail` card. Each header line is a `mail-header` part, and the body a `mail-body` part.
+
+Written as a paragraph of its own, it renders as one. Replace it with a `mail` of your own in `inline`.
 
 ```ts shape
 import { InlineMail } from '@ifloom/react'
@@ -1162,13 +1224,12 @@ Uses: [`InlineProps`](#inlineprops).
 
 Component. Explained in [Components](/docs/react/components#inlinemodal).
 
-The built-in `modal`, from `[[ui:modal|words|key]]` or
-`[[ui:modal|words|key|title]]`: the words as an `InlineTrigger` that opens
-a dialog with the prose line `key`, as `proseBeats` gives it for this save, drawn as a
-scene's paragraphs are, in an `inline-modal` part. The dialog is titled
-`title`, else the words. Escape, the close button or a click outside close
-it, and focus goes back to the words. A key with no prose shows the words.
-Replace it with a `modal` of your own in `inline`.
+Renders the built-in `modal` UI piece from `[[ui:modal|words|key|title]]`, the words as an `InlineTrigger` that
+opens a dialog with the prose key's line. A key with no prose shows only the words.
+
+The dialog renders the line as a scene's paragraphs, from `proseBeats` for this save, in an `inline-modal` part,
+titled `title` or else the words. Escape, the close button or a click outside closes it, and focus goes back to the
+words. Replace it with a `modal` of your own in `inline`.
 
 ```ts shape
 import { InlineModal } from '@ifloom/react'
@@ -1181,7 +1242,8 @@ Uses: [`InlineProps`](#inlineprops).
 
 Component. Explained in [Components](/docs/react/components#inlinemono).
 
-The built-in `mono`, from `[[ui:mono|words]]`: the words in a typewriter face, an `inline-mono` part. Replace it with a `mono` of your own in `inline`.
+Renders the built-in `mono` UI piece from `[[ui:mono|words]]`, the words in a typewriter face as an `inline-mono`
+part. Replace it with a `mono` of your own in `inline`.
 
 ```ts shape
 import { InlineMono } from '@ifloom/react'
@@ -1194,10 +1256,10 @@ Uses: [`InlineProps`](#inlineprops).
 
 Component. Explained in [Components](/docs/react/components#inlineprop).
 
-The built-in `prop`, from `[[ui:prop|words|face]]`: a note in the story's
-world, an `inline-prop` part with `data-face` (`sticky`, `clip`, `diary`, or
-whatever face the prose gives). Written as a paragraph of its own, it draws
-as one. Replace it with a `prop` of your own in `inline`.
+Renders the built-in `prop` UI piece from `[[ui:prop|words|face]]`, a note in the story's world, as an `inline-prop`
+part. `data-face` carries the face, such as `sticky`, `clip` or `diary`.
+
+Written as a paragraph of its own, it renders as one. Replace it with a `prop` of your own in `inline`.
 
 ```ts shape
 import { InlineProp } from '@ifloom/react'
@@ -1210,9 +1272,8 @@ Uses: [`InlineProps`](#inlineprops).
 
 Type. Explained in [Components](/docs/react/components#inlinecomponent-and-inlineprops).
 
-What an inline piece of the prose gets, from `[[ui:name|words|arg|…]]`: its
-`name`, the `text` to show and the `args` after the words, typed by what
-`InlineUi` declares for that name.
+The props a UI piece's component gets from `[[ui:name|words|arg|…]]` in prose. The `args` are typed by the name's
+entry in the engine's `InlineUi`.
 
 ```ts shape
 import type { InlineProps } from '@ifloom/react'
@@ -1225,18 +1286,18 @@ type InlineProps<N extends string = string> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `N` |  |  | The piece's name, as `[[ui:name\|…]]` wrote it. |
-| `text` | `string` |  |  | Its words, the second part. |
-| `args` | [`InlineUiArgs`](/docs/api/engine#inlineuiargs)`<N>` |  |  | The parts after its words, typed by the name's entry in `InlineUi`. |
+| `name` | `N` |  |  | The UI piece's name, from `[[ui:name\|…]]`. |
+| `text` | `string` |  |  | The UI piece's words, its second part, which the component shows. |
+| `args` | [`InlineUiArgs`](/docs/api/engine#inlineuiargs)`<N>` |  |  | The UI piece's parts after its words, typed by the name's entry in `InlineUi`. |
 
 ## InlineTrigger
 
 Component. Explained in [Components](/docs/react/components#inlinetrigger).
 
-The words of an inline piece as a button that opens something over the
-page: the part `inline-ui`, with `data-ui` set to the piece's name and
-`aria-haspopup="dialog"`. When `open` goes back to false, focus returns to
-it. The built-in `modal` and `image` use it, and so can a game's own.
+Renders a UI piece's words as a button that opens a dialog over the page, the `inline-ui` part with `data-ui` set to
+the piece's name. Focus returns to it when `open` goes back to false.
+
+The built-in `modal` and `image` pieces use it, and so can a game's own.
 
 ```ts shape
 import { InlineTrigger } from '@ifloom/react'
@@ -1247,7 +1308,8 @@ function InlineTrigger(props: { name: string; open: boolean; onOpen: () => void;
 
 Const. Explained in [Components](/docs/react/components#inputfield).
 
-One input: a text box, a number box, or the options to pick from. Shows the engine's refusal if the value won't do.
+Renders one input from `view.inputs` as a text box, a number box or its options to choose from. It shows the engine's
+refusal when the value won't do.
 
 ```ts shape
 import { InputField } from '@ifloom/react'
@@ -1260,9 +1322,8 @@ Uses: [`InputView`](/docs/api/engine#inputview).
 
 Const. Explained in [Components](/docs/react/components#inputfields).
 
-The inputs on offer while no scene is open (`view.inputs`), such as a
-field a room offers. Draws nothing while a scene is open, since `Scene`
-draws those itself, or when there are none.
+Renders the inputs in `view.inputs` while no scene is open, such as a field the room offers. It renders nothing
+while a scene is open, since `Scene` renders those inputs itself.
 
 ```ts shape
 import { InputFields } from '@ifloom/react'
@@ -1273,10 +1334,11 @@ const InputFields: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#inventory).
 
-What you carry: the things you hold (`view.held`), each with its count and
-a line about it. The inventory plugin's UI draws its own `InventoryCard` in
-its place, with a button that uses each thing and, with `drop`, one that
-drops it.
+Renders the things the player holds, `view.held`, as the `inventory` part, each with its count and its description.
+It renders nothing while the player holds nothing.
+
+The inventory plugin's UI renders its own `InventoryCard` in its place, with a button that uses each thing and, with
+`drop`, one that drops it.
 
 ```ts shape
 import { Inventory } from '@ifloom/react'
@@ -1289,6 +1351,8 @@ Uses: [`InventoryProps`](#inventoryprops).
 
 Type. Explained in [Components](/docs/react/components#inventoryprops).
 
+The props of `Inventory`.
+
 ```ts shape
 import type { InventoryProps } from '@ifloom/react'
 type InventoryProps = {
@@ -1300,15 +1364,16 @@ type InventoryProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `className` | `string` | yes |  |  |
-| `title` | `string \| false` | yes |  | Replaces the heading; `false` leaves it out, as under a section's title. |
-| `drop` | `boolean` | yes |  | A drop button on each thing, where a plugin's UI draws one, such as the inventory plugin's. The core list has none. |
+| `className` | `string` | yes |  | Classes added to the `inventory` part's own. |
+| `title` | `string \| false` | yes |  | The heading, the UI's word for the inventory if left out. `false` leaves it out, as under a section's title. |
+| `drop` | `boolean` | yes |  | True to give each thing a drop button, in a replacement that renders one, such as the inventory plugin's. The core list ignores it. |
 
 ## KeepPicturesOn
 
 Component. Explained in [Components](/docs/react/components#keeppictureson).
 
-Draws its children's pictures even while the pictures setting is off.
+Renders its children with their pictures shown even while the game's pictures setting is off. A layered picture uses
+it, since its hotspots are play.
 
 ```ts shape
 import { KeepPicturesOn } from '@ifloom/react'
@@ -1319,7 +1384,7 @@ function KeepPicturesOn(props: { children: ReactNode }): JSX.Element
 
 Type. Explained in [Components](/docs/react/components#keyoptions).
 
-What `keys` turns on, when it's an object rather than `true`.
+Settings for the `keys` option, given as an object in place of `true`.
 
 ```ts shape
 import type { KeyOptions } from '@ifloom/react'
@@ -1330,17 +1395,17 @@ type KeyOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `map` | `Record<string,` [`Command`](/docs/api/engine#command)`>` | yes |  | Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the command each sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces what that key does. |
+| `map` | `Record<string,` [`Command`](/docs/api/engine#command)`>` | yes |  | The game's own keys, each mapped by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`) to the command it sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces that key. |
 
 ## LayeredPicture
 
 Const. Explained in [Components](/docs/react/components#layeredpicture).
 
-A layered picture with hotspots: `view.scene.picture`, or a place's
-`location.picture`. The layers are stacked bottom first, each filling a box
-whose shape is the picture's `aspect`, else the first layer's own, else 16/9.
-Pictures go through `Picture` and videos through `Video`. It's drawn even
-while the game's pictures setting is off, since its hotspots are play.
+Renders a layered picture with its hotspots, from `view.scene.picture` or a location's `location.picture`. It renders
+even while the game's pictures setting is off, since its hotspots are play.
+
+The layers stack bottom first, each filling a box shaped by the picture's `aspect`, else the first layer's own, else
+16/9. Pictures go through `Picture` and videos through `Video`.
 
 ```ts shape
 import { LayeredPicture } from '@ifloom/react'
@@ -1353,7 +1418,8 @@ Uses: [`PictureView`](/docs/api/engine#pictureview).
 
 Const. Explained in [Components](/docs/react/components#loadpage).
 
-The load page: every save, newest first, to load; any that can't be read, to delete; and importing a save file. Needs the runner made with `saves`.
+Renders the load page, which lists every save newest first to load, any that can't be read to delete, and a button to
+import a save file. It needs a runner made with `saves`.
 
 ```ts shape
 import { LoadPage } from '@ifloom/react'
@@ -1364,9 +1430,10 @@ const LoadPage: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#mediaviewer).
 
-A picture or a video from the story, shown large over the page. A `Beat`
-opens it when the player clicks its picture or clip; Escape, a click
-outside or the close button closes it. Turn it off with `viewer: false`.
+Renders a picture or video from the story large over the page, as the `viewer` part. A `Beat` opens it when the
+player clicks its picture or clip, and `viewer: false` turns it off.
+
+Escape, a click outside or the close button closes it.
 
 ```ts shape
 import { MediaViewer } from '@ifloom/react'
@@ -1379,6 +1446,8 @@ Uses: [`MediaViewerProps`](#mediaviewerprops).
 
 Type. Explained in [Components](/docs/react/components#mediaviewerprops-and-viewermedia).
 
+The props of `MediaViewer`.
+
 ```ts shape
 import type { MediaViewerProps } from '@ifloom/react'
 type MediaViewerProps = {
@@ -1390,18 +1459,18 @@ type MediaViewerProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `media` | [`ViewerMedia`](#viewermedia) |  |  | The picture or video to show. |
-| `open` | `boolean` |  |  | Whether it's showing. |
-| `onOpenChange` | `(open: boolean) => void` |  |  | Called with false when the player closes it. |
+| `media` | [`ViewerMedia`](#viewermedia) |  |  | The picture or video beat to show. |
+| `open` | `boolean` |  |  | True while the viewer is open. |
+| `onOpenChange` | `(open: boolean) => void` |  |  | The function the viewer calls with false when the player closes it. |
 
 ## MinigameCard
 
 Const. Explained in [Components](/docs/react/components#minigamecard).
 
-The minigame being played: its title, the running state's words, a bar
-counting down its timer, and a button for each live input. The keyboard
-presses inputs too: the minigame's `keys`, else the arrows and space.
-`Scene` draws it in place of the scene while a minigame runs.
+Renders the running minigame from `view.minigame` as the `minigame` part, with its title, its words, its timer's
+bar and a button for each live input. `Scene` renders it in place of the scene.
+
+The keyboard presses inputs too, by the minigame's `keys`, else the arrow keys and space.
 
 ```ts shape
 import { MinigameCard } from '@ifloom/react'
@@ -1411,6 +1480,8 @@ const MinigameCard: ComponentType<{ className?: string; }>
 ## MinigameControls
 
 Type. Explained in [Components](/docs/react/components#minigamecontrols).
+
+The running minigame and its `send`, which `useMinigame` returns.
 
 ```ts shape
 import type { MinigameControls } from '@ifloom/react'
@@ -1422,21 +1493,20 @@ type MinigameControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `minigame` | [`MinigameView`](/docs/api/engine#minigameview) `\| null` |  |  | The minigame being played, as the view has it, or `null`. |
-| `send` | `(input: string) => ReturnType<`[`Runner`](/docs/api/engine#runner)`['apply']>` |  |  | Press one of its inputs. Returns what `apply` returned, so a refusal can be shown. |
+| `minigame` | [`MinigameView`](/docs/api/engine#minigameview) `\| null` |  |  | The running minigame, `view.minigame`, or `null` when none runs. |
+| `send` | `(input: string) => ReturnType<`[`Runner`](/docs/api/engine#runner)`['apply']>` |  |  | Presses one of the minigame's inputs by id, and returns the runner's result so a caller can show a refusal. |
 
 ## ModManager
 
 Const. Explained in [Components](/docs/react/components#modmanager).
 
-The mod manager: the mods the player has added, each on or off or removed,
-and adding one from a file. Mods change the game itself, so a change takes
-effect when the game is built again — `onChange` is where the game does that,
-usually by reloading the page. Problems the loader found in a mod are listed
-under it, and once anything has changed, a line saying a restart applies it
-and the button that does. Needs `mods` on the provider. It's in the menu,
-and on the settings page when the game has pages. `useMods` is the same
-without the look.
+Renders the mod manager as the `mods` part, which lists the player's mods to turn on, off or remove, and adds one
+from a file. It needs `mods` on the provider.
+
+Mods change the game itself, so a change takes effect when the game is built again, in the provider's `onChange`,
+such as by reloading the page. The loader's problems with a mod show under it. Once anything has changed, a line
+says a restart applies it, with the button that does. It's in the menu, and on the settings page when the game has
+pages.
 
 ```ts shape
 import { ModManager } from '@ifloom/react'
@@ -1447,7 +1517,7 @@ const ModManager: ComponentType<{ className?: string; }>
 
 Type. Explained in [Components](/docs/react/components#modsoption).
 
-The game's mods, for the mod manager: the store, what the loader said about them, and how to start over with a change.
+The game's mods for the mod manager, with the store, the loader's problems and the function that applies a change.
 
 ```ts shape
 import type { ModsOption } from '@ifloom/react'
@@ -1460,15 +1530,15 @@ type ModsOption = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `store` | [`Mods`](/docs/api/engine#mods) |  |  | Where the player's mods are kept: `mods(game.id, driver)` from `@ifloom/engine`, over the same driver as the saves. |
-| `problems` | `string[]` | yes |  | The loader's problems, as `describeProblem` writes them; the ones starting `mod:<id> ` are shown under that mod. |
-| `onChange` | `() => void` | yes |  | Build the game again with the mods as they now are — usually `() => location.reload()`. |
+| `store` | [`Mods`](/docs/api/engine#mods) |  |  | The store that keeps the player's mods, `mods(game.id, driver)` from `@ifloom/engine` over the same driver as the saves. |
+| `problems` | `string[]` | yes |  | The loader's problems, each worded by `describeProblem`. The mod manager shows a problem starting `mod:<id> ` under that mod. |
+| `onChange` | `() => void` | yes |  | The function that builds the game again with the mods as they now are, such as `() => location.reload()`. |
 
 ## ModsState
 
 Type. Explained in [Components](/docs/react/components#modsstate).
 
-What `useMods` gives a mod manager.
+The player's mods and the functions that change them, which `useMods` returns to a mod manager.
 
 ```ts shape
 import type { ModsState } from '@ifloom/react'
@@ -1487,26 +1557,26 @@ type ModsState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `available` | `boolean` |  |  | False when the provider was given no `mods`. |
+| `available` | `boolean` |  |  | True when the game has mods. It's false when the provider was given no `mods`. |
 | `list` | [`InstalledMod[]`](/docs/api/engine#installedmod) |  |  | The mods the player has added. |
-| `add` | `(file: File) => Promise<boolean>` |  |  | Add a mod from a file. True if it was added; otherwise `message` says why. |
-| `toggle` | `(id: string) => Promise<void>` |  |  | Turn a mod on or off. |
-| `remove` | `(id: string) => Promise<void>` |  |  | Remove a mod. |
-| `changed` | `boolean` |  |  | Whether anything changed since the game was built, so a restart would differ. |
-| `restart` | `(() => void) \| undefined` |  |  | Build the game again with the mods as they are now: the provider's `onChange`. Undefined if it gave none. |
-| `problemsFor` | `(id: string) => string[]` |  |  | The problems the loader found in one mod. |
-| `message` | `string \| null` |  |  | Why the last file could not be added, or the mods could not be read or changed, or null. |
+| `add` | `(file: File) => Promise<boolean>` |  |  | Adds a mod from a file, and resolves to true when it was added. When it fails, `message` gives the reason. |
+| `toggle` | `(id: string) => Promise<void>` |  |  | Turns a mod on or off. |
+| `remove` | `(id: string) => Promise<void>` |  |  | Removes a mod. |
+| `changed` | `boolean` |  |  | True once the mods have changed since the game was built, so a restart would differ. |
+| `restart` | `(() => void) \| undefined` |  |  | The provider's `onChange`, which builds the game again with the mods as they are now. It's undefined when the provider gave none. |
+| `problemsFor` | `(id: string) => string[]` |  |  | Returns the problems the loader found in one mod. |
+| `message` | `string \| null` |  |  | The reason the last file couldn't be added or the mods couldn't be read or changed, or null. |
 
 ## mountGame
 
 Function. Explained in [The React UI](/docs/react#mountgame).
 
-Start a game in the page: a runner with undo, saves and autosave (from
-`browserRunner`, so it starts with the player's stored settings), the
-whole React UI (`GameShell`, with your `layout`) drawn into `#root`, and
-the game's sound playing if it has any. Takes a game, or what `loadGame` returns, whose
-problems are logged as warnings. Resolves to the runner once the game is
-drawn, for anything the game wants to drive itself.
+Starts a game in the page and returns its runner once the game renders. It throws when nothing in the page matches
+`root`.
+
+It takes a game, or what `loadGame` returns, and logs any problems as warnings. It makes the runner with
+`browserRunner`, so the game has undo, saves, an autosave and the player's stored settings, and renders `GameShell`
+into `#root`. The game's sound plays if it has any.
 
 ```ts shape
 import { mountGame } from '@ifloom/react'
@@ -1518,6 +1588,8 @@ Uses: [`Game`](/docs/api/engine#game), [`MountOptions`](#mountoptions), [`Runner
 ## MountOptions
 
 Type. Explained in [The React UI](/docs/react#mountoptions).
+
+Settings for `mountGame`, the `GameShellProps` without `runner`, with where to render and how to start.
 
 ```ts shape
 import type { MountOptions } from '@ifloom/react'
@@ -1544,29 +1616,29 @@ type MountOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `audio` | `false \|` [`AudioOptions`](/docs/api/audio#audiooptions) | yes |  | Sound, through `@ifloom/audio`. It starts on its own when the game lists any tracks in `game.audio`; `false` turns it off, and an object is passed to `startAudio` as its options. |
-| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
-| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
-| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
-| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
-| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
-| `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
-| `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
-| `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
-| `mods` | [`ModsOption`](#modsoption) | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
-| `layout` | `ComponentType` | yes |  | The page, as a component: a `Game` with a `Sidebar`, a `Story` and the rest, as in your `src/layout.tsx`, or any component of your own, since `useGame()` and every built-in component work in it. `DefaultLayout` if left out. |
-| `pages` | `boolean \|` [`PagesOptions`](#pagesoptions) | yes |  | The title screen and the pages around the game: `true`, or what they show. Off if left out, and the game starts straight away. With them on, the layout is drawn on the `game` page. |
-| `root` | `string \| Element` | yes |  | Where to draw it: an element, or a selector for one. `'#root'` if left out. |
-| `start` | [`GameState`](/docs/api/engine#gamestate) | yes |  | The state to start from. A new game with a random seed if left out. |
-| `runner` | [`RunnerOptions`](/docs/api/engine#runneroptions) | yes |  | Merged over the defaults: undo 50 deep, saves in localStorage, an autosave each turn. |
+| `audio` | `false \|` [`AudioOptions`](/docs/api/audio#audiooptions) | yes |  | The game's sound through `@ifloom/audio`, which starts when the game declares any audio. `false` turns it off, and an object goes to `startAudio` as its options. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | The game's components for plugin sections in apps, by plugin id. They replace the plugin UIs', such as the messages and feed UIs'. |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here replaces a built-in one of the same name, such as `modal` or `image`. A name no component renders shows its words. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to use, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. The default layout places their components in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to render it yourself. |
+| `components` | [`Components`](#components) | yes |  | The game's replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | The game's classes for the UI's parts, by `data-part` name. |
+| `unstyled` | `boolean` | yes |  | True to drop every built-in class, keeping the structure and the `data-part`s for your own styles. False if left out. |
+| `viewer` | `boolean` | yes |  | True to let the player click a picture or a video in the story to see it large. True if left out. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | The keyboard shortcuts, 1 to 9 for the choices or actions on screen, Escape for the menu and the game's own keys in `map`. Off if left out. A minigame's keys work either way. |
+| `motion` | `boolean` | yes |  | True to play scene transitions and prose reveals, the `ui.transition` and `ui.reveal` hints. True if left out, and `false` shows every scene and every line at once. A player whose system asks for reduced motion sees them at once either way. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. One here replaces a plugin UI's panel of the same name. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | The mods the player can add, turn off or remove. Leave it out for a game without mods. |
+| `layout` | `ComponentType` | yes |  | The layout, the page as a component, such as a `Game` with a `Sidebar` and a `Story` in your `src/layout.tsx`. `DefaultLayout` if left out. Any component of your own works, since `useGame()` and every built-in component work inside it. |
+| `pages` | `boolean \|` [`PagesOptions`](#pagesoptions) | yes |  | The title screen and the pages around the game, `true` or the `PagesOptions` for them. Off if left out, and the game starts straight away. With pages on, the layout renders on the `game` page. |
+| `root` | `string \| Element` | yes |  | The element to render the game into, or a selector for it. `'#root'` if left out. |
+| `start` | [`GameState`](/docs/api/engine#gamestate) | yes |  | The state the game starts from. A new game with a random seed if left out. |
+| `runner` | [`RunnerOptions`](/docs/api/engine#runneroptions) | yes |  | The runner options, laid over `browserRunner`'s defaults of undo 50 deep, saves in `localStorage` and an autosave each turn. |
 
 ## Notice
 
 Const. Explained in [Components](/docs/react/components#notice).
 
-One notice: its picture, title and text, and a button to dismiss it.
+Renders one notice from `view.notices` as the `notice` part, with its picture, title, text and a button that dismisses it.
 
 ```ts shape
 import { Notice } from '@ifloom/react'
@@ -1579,9 +1651,10 @@ Uses: [`NoticeView`](/docs/api/engine#noticeview).
 
 Const. Explained in [Components](/docs/react/components#notices).
 
-Unseen notices, newest first, up to `limit`. The `'notices'` part, in the
-layout's overlay by default. On a narrow screen only the newest shows, with
-a `notices-more` button ("+2 more") that shows the rest.
+Renders the unseen notices from `view.notices.unseen`, up to `limit`, as the `notices` part. The default layout puts
+it in the overlay.
+
+On a narrow screen only the first shows, with a `notices-more` button ("+2 more") that shows the rest.
 
 ```ts shape
 import { Notices } from '@ifloom/react'
@@ -1592,11 +1665,11 @@ const Notices: ComponentType<{ className?: string; limit?: number; }>
 
 Const. Explained in [Components](/docs/react/components#noticestrip).
 
-What's waiting for the player, as a row of counts: unseen notices, then what
-the plugin UIs put at its `strip` spot, such as each app with a badge on the
-game's devices. A count is a button that opens where it is: the notices in
-a dialog, or the device on that app. Nothing when there's nothing unread. It's the `'notice-strip'` layout part, which no
-built-in layout includes.
+Renders a row of unread counts as the `notice-strip` part. It starts with the unseen notices, then the plugin UIs'
+components at the `strip` spot, such as each device app with a badge.
+
+Each count is a button that opens it, the notices in a dialog or the device on that app. It renders nothing when
+nothing is unread, and no built-in layout includes it.
 
 ```ts shape
 import { NoticeStrip } from '@ifloom/react'
@@ -1607,9 +1680,10 @@ const NoticeStrip: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#overlay).
 
-What floats over the page as it scrolls, and sits after it at the end: the
-notices, in the default layout. It sticks to the bottom of the window, so
-nothing is left under it. Nothing in it, it takes no room.
+Renders the `overlay` part, which sticks to the bottom of the window over the page and sits after it at the end. The
+default layout puts the notices in it.
+
+It takes no room while it has nothing in it.
 
 ```ts shape
 import { Overlay } from '@ifloom/react'
@@ -1620,8 +1694,8 @@ const Overlay: ComponentType<{ className?: string; children?: ReactNode; }>
 
 Type. Explained in [Components](/docs/react/components#overridablecomponents-and-partnames).
 
-The built-in components a game can replace, by name, each with the props it
-takes. A plugin's React UI adds its own by augmenting this interface:
+The built-in components a game can replace, by name, each typed by the props it takes. A plugin's React UI adds its
+own by augmenting this interface.
 
   declare module '@ifloom/react' {
     interface OverridableComponents { ShopCounter: Override&lt;ShopCounterProps> }
@@ -1686,11 +1760,64 @@ type OverridableComponents = {
 
 Plugins add fields of their own to it, which their pages list.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `Game` | [`Override`](/docs/api/react-kit#override)`<`[`GameProps`](#gameprops)`>` |  |  | The replacement for `Game`. |
+| `Sidebar` | [`Override`](/docs/api/react-kit#override)`<`[`SidebarProps`](#sidebarprops)`>` |  |  | The replacement for `Sidebar`. |
+| `Story` | [`Override`](/docs/api/react-kit#override)`<`[`StoryProps`](#storyprops)`>` |  |  | The replacement for `Story`. |
+| `Overlay` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; children?: ReactNode; }>` |  |  | The replacement for `Overlay`. |
+| `Section` | [`Override`](/docs/api/react-kit#override)`<`[`SectionProps`](#sectionprops)`>` |  |  | The replacement for `Section`. |
+| `When` | [`Override`](/docs/api/react-kit#override)`<{ condition:` [`Condition`](/docs/api/engine#condition)`; children?: ReactNode; }>` |  |  | The replacement for `When`. |
+| `Title` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `Title`. |
+| `Clock` | [`Override`](/docs/api/react-kit#override)`<object>` |  |  | The replacement for `Clock`. |
+| `StatList` | [`Override`](/docs/api/react-kit#override)`<object>` |  |  | The replacement for `StatList`. |
+| `RoomActions` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `RoomActions`. |
+| `Scene` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `Scene`. |
+| `Beat` | [`Override`](/docs/api/react-kit#override)`<{ beat:` [`SceneBeat`](/docs/api/engine#scenebeat)`; }>` |  |  | The replacement for `Beat`. |
+| `SceneHeader` | [`Override`](/docs/api/react-kit#override)`<{ scene: { id: string \| null; key: string; title: string; body: string; beats:…` |  |  | The replacement for `SceneHeader`. |
+| `BeatGroup` | [`Override`](/docs/api/react-kit#override)`<{ section:` [`BlockUi`](/docs/api/engine#blockui) `& { readonly [hint: string]: unknown; }; children: ReactNode;…` |  |  | The replacement for `BeatGroup`. |
+| `Fold` | [`Override`](/docs/api/react-kit#override)`<{ label: string; children: ReactNode; }>` |  |  | The replacement for `Fold`. |
+| `InlineAction` | [`Override`](/docs/api/react-kit#override)`<{ text: string; choice:` [`RenderedChoice`](/docs/api/engine#renderedchoice)`; className?: string; }>` |  |  | The replacement for `InlineAction`. |
+| `Tip` | [`Override`](/docs/api/react-kit#override)`<{ text: string; tip: string; className?: string; }>` |  |  | The replacement for `Tip`. |
+| `ChoiceList` | [`Override`](/docs/api/react-kit#override)`<{ choices:` [`RenderedChoice[]`](/docs/api/engine#renderedchoice)`; className?: string; part?: 'actions' \| 'choices'; }>` |  |  | The replacement for `ChoiceList`. |
+| `ChoiceButton` | [`Override`](/docs/api/react-kit#override)`<{ choice:` [`RenderedChoice`](/docs/api/engine#renderedchoice)`; className?: string; }>` |  |  | The replacement for `ChoiceButton`. |
+| `PriceTag` | [`Override`](/docs/api/react-kit#override)`<{ price:` [`Price`](/docs/api/engine#price)`; className?: string; }>` |  |  | The replacement for `PriceTag`. |
+| `Notices` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; limit?: number; }>` |  |  | The replacement for `Notices`. |
+| `Notice` | [`Override`](/docs/api/react-kit#override)`<{ notice:` [`NoticeView`](/docs/api/engine#noticeview)`; }>` |  |  | The replacement for `Notice`. |
+| `NoticeStrip` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `NoticeStrip`. |
+| `MinigameCard` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `MinigameCard`. |
+| `DiceRoll` | [`Override`](/docs/api/react-kit#override)`<`[`DiceRollProps`](#dicerollprops)`>` |  |  | The replacement for `DiceRoll`. |
+| `DiceOverlay` | [`Override`](/docs/api/react-kit#override)`<{ rolls: readonly` [`Roll[]`](/docs/api/engine#roll)`; className?: string; }>` |  |  | The replacement for `DiceOverlay`. |
+| `Countdown` | [`Override`](/docs/api/react-kit#override)`<`[`CountdownProps`](#countdownprops)`>` |  |  | The replacement for `Countdown`. |
+| `Timers` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `Timers`. |
+| `Changes` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `Changes`. |
+| `ChangeItem` | [`Override`](/docs/api/react-kit#override)`<{ change:` [`ChangeView`](/docs/api/engine#changeview)`; }>` |  |  | The replacement for `ChangeItem`. |
+| `GameMenu` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `GameMenu`. |
+| `SavesMenu` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; onLoaded?: (() => void); }>` |  |  | The replacement for `SavesMenu`. |
+| `Backlog` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `Backlog`. |
+| `ModManager` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `ModManager`. |
+| `Inventory` | [`Override`](/docs/api/react-kit#override)`<`[`InventoryProps`](#inventoryprops)`>` |  |  | The replacement for `Inventory`. |
+| `PanelHost` | [`Override`](/docs/api/react-kit#override)`<object>` |  |  | The replacement for `PanelHost`. |
+| `EntityTable` | [`Override`](/docs/api/react-kit#override)`<{ kinds?: string[]; className?: string; }>` |  |  | The replacement for `EntityTable`. |
+| `InputFields` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `InputFields`. |
+| `InputField` | [`Override`](/docs/api/react-kit#override)`<{ input:` [`InputView`](/docs/api/engine#inputview)`; }>` |  |  | The replacement for `InputField`. |
+| `Picture` | [`Override`](/docs/api/react-kit#override)`<ClassAttributes<HTMLImageElement> & ImgHTMLAttributes<HTMLImageElement> & { '…` |  |  | The replacement for `Picture`. |
+| `Video` | [`Override`](/docs/api/react-kit#override)`<`[`VideoProps`](#videoprops) `\| (Omit<DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>,…` |  |  | The replacement for `Video`. |
+| `LayeredPicture` | [`Override`](/docs/api/react-kit#override)`<{ picture:` [`PictureView`](/docs/api/engine#pictureview)`; className?: string; }>` |  |  | The replacement for `LayeredPicture`. |
+| `Hotspot` | [`Override`](/docs/api/react-kit#override)`<{ hotspot:` [`HotspotView`](/docs/api/engine#hotspotview)`; }>` |  |  | The replacement for `Hotspot`. |
+| `MediaViewer` | [`Override`](/docs/api/react-kit#override)`<`[`MediaViewerProps`](#mediaviewerprops)`>` |  |  | The replacement for `MediaViewer`. |
+| `Icon` | [`Override`](/docs/api/react-kit#override)`<{ name:` [`IconName`](/docs/api/react-kit#iconname)`; label?: string; }>` |  |  | The replacement for `Icon`. |
+| `TitlePage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `TitlePage`. |
+| `SettingsPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `SettingsPage`. |
+| `LoadPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `LoadPage`. |
+| `CreditsPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `CreditsPage`. |
+| `GatePage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `GatePage`. |
+
 ## Page
 
 Type. Explained in [Components](/docs/react/components#page-and-pagestate).
 
-A page by name: a built-in one, or the id of one in `PagesOptions.pages`.
+The name of a page, either a built-in one or the id of one a game or a plugin UI adds.
 
 ```ts shape
 import type { Page } from '@ifloom/react'
@@ -1701,7 +1828,7 @@ type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (strin
 
 Type. Explained in [Components](/docs/react/components#credit-gateoptions-and-pagedef).
 
-A page a game or plugin adds, with the title screen's button for it.
+A page a game adds in `PagesOptions.pages`, with its button on the title screen. A plugin UI adds one as a `PluginPage`.
 
 ```ts shape
 import type { PageDef } from '@ifloom/react'
@@ -1714,15 +1841,15 @@ type PageDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `label` | `string` |  |  | The title screen's button for it. |
-| `component` | `ComponentType` |  |  | What it draws. `usePage().back()` leaves it. |
-| `showOnTitle` | `boolean` | yes |  | Whether the title screen offers it. On unless set false. |
+| `label` | `string` |  |  | The label of the page's button on the title screen. |
+| `component` | `ComponentType` |  |  | The component that renders the page. `usePage().back()` leaves it. |
+| `showOnTitle` | `boolean` | yes |  | True to show a button for the page on the title screen. True if left out. |
 
 ## PagesOptions
 
 Type. Explained in [Components](/docs/react/components#pagesoptions).
 
-What the title screen and the pages around it show.
+Settings for the title screen and the pages around the game, the `pages` option. Each is optional.
 
 ```ts shape
 import type { PagesOptions } from '@ifloom/react'
@@ -1737,17 +1864,17 @@ type PagesOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `subtitle` | `string` | yes |  | A line under the title. |
-| `art` | `string` | yes |  | A picture for the title screen, by its path. |
-| `credits` | [`Credit[]`](#credit) | yes |  | Lines and links for the credits page. No Credits button without them. |
-| `gate` | [`GateOptions`](#gateoptions) | yes |  | A notice shown before the title screen until the player confirms it. |
-| `pages` | `Record<string,` [`PageDef`](#pagedef)`>` | yes |  | Pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, goes over it. |
+| `subtitle` | `string` | yes |  | The line under the title on the title screen. |
+| `art` | `string` | yes |  | The path of the title screen's picture. |
+| `credits` | [`Credit[]`](#credit) | yes |  | The credits page's lines and links. The title screen has no Credits button without them. |
+| `gate` | [`GateOptions`](#gateoptions) | yes |  | The notice shown before the title screen until the player confirms it. |
+| `pages` | `Record<string,` [`PageDef`](#pagedef)`>` | yes |  | The pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, replaces it. |
 
 ## PageState
 
 Type. Explained in [Components](/docs/react/components#page-and-pagestate).
 
-Where the player is among the pages, and how to move.
+The page the player is on among the pages around the game, with the functions that move between them.
 
 ```ts shape
 import type { PageState } from '@ifloom/react'
@@ -1764,21 +1891,20 @@ type PageState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `enabled` | `boolean` |  |  | False when the game was mounted without `pages`: the game is all there is. |
+| `enabled` | `boolean` |  |  | True while pages are on. It's false when the game mounted without `pages`, and then the page is always `game`. |
 | `page` | [`Page`](#page) |  |  | The page showing. |
-| `from` | [`Page`](#page) `\| null` |  |  | The page under this one, which `back` returns to; null at the title, the gate or the game. |
-| `go` | `(page:` [`Page`](#page)`) => void` |  |  | Show a page. `title`, `game` and `gate` start afresh; any other goes on top of the one showing. |
-| `back` | `() => void` |  |  | Return to the page under this one, or the title screen if there is none. |
+| `from` | [`Page`](#page) `\| null` |  |  | The page under this one, which `back` returns to. It's null at the title screen, the gate and the game. |
+| `go` | `(page:` [`Page`](#page)`) => void` |  |  | Shows a page. `title`, `game` and `gate` start afresh, and any other goes on top of the one showing. |
+| `back` | `() => void` |  |  | Returns to the page under this one, or to the title screen when there is none. |
 | `options` | [`PagesOptions`](#pagesoptions) |  |  | The options the pages were set up with. |
-| `added` | `Readonly<Record<string,` [`PageDef`](#pagedef)`>>` |  |  | Every page added to the built-in ones, by id: the plugin UIs' (`achievements`, say) and the game's own `pages` over them. |
+| `added` | `Readonly<Record<string,` [`PageDef`](#pagedef)`>>` |  |  | Every page added to the built-in ones, by id, the plugin UIs' (such as `achievements`) with the game's own `pages` over them. |
 
 ## PanelComponent
 
 Type. Explained in [Components](/docs/react/components#panelcomponent).
 
-A game's own component for a scene panel, an app's panel section or a panel
-content opens (`{ panel }`): it gets the data the game's custom panel
-returned, or what the panel was opened with.
+A component that renders a panel, for a scene's panel, an app's panel section or the `panel` effect. Its `data`
+prop is the data the game's own panel returned, else the panel's `with`.
 
 ```ts shape
 import type { PanelComponent } from '@ifloom/react'
@@ -1789,11 +1915,11 @@ type PanelComponent = ComponentType<{ data: unknown }>
 
 Const. Explained in [Components](/docs/react/components#panelhost).
 
-Draws the panel content opened (`view.panel`) in a dialog: the game's own
-`panels` by its name, else a plugin UI's panel of that name, else one of
-`BUILT_IN_PANELS`, with what it was opened with as `data`. Closing the
-dialog sends `closePanel`. The default layout has one; a layout of your own
-puts it anywhere inside the `GameProvider`.
+Renders the open panel, `view.panel`, in a `PartDialog`, and sends `closePanel` when the player closes it. The panel
+gets its `with` as `data`.
+
+It renders the game's own panel of that name, else a plugin UI's, else a built-in one (`stats` or `inventory`). The
+default layout has one, and a layout of your own puts it anywhere inside the `GameProvider`.
 
 ```ts shape
 import { PanelHost } from '@ifloom/react'
@@ -1804,7 +1930,7 @@ const PanelHost: ComponentType<object>
 
 Type. Explained in [Components](/docs/react/components#partkey).
 
-A `data-part` name: one of `PART_KEYS`, or one a plugin's UI adds through `PartNames`.
+A `data-part` name, either one the React UI renders or one a plugin's UI adds through `PartNames`.
 
 ```ts shape
 import type { PartKey } from '@ifloom/react'
@@ -2007,8 +2133,8 @@ Uses: [`PartNames`](#partnames).
 
 Type. Explained in [Components](/docs/react/components#overridablecomponents-and-partnames).
 
-The parts a plugin's React UI draws, by name, added by augmenting this
-interface so `classes` and `usePart` take them typed:
+The `data-part` names that plugin UIs add, as keys of an interface each UI augments. `classes` and `usePart` then
+take them typed.
 
   declare module '@ifloom/react' {
     interface PartNames { shop: true; good: true }
@@ -2028,13 +2154,11 @@ Plugins add fields of their own to it, which their pages list.
 
 Const. Explained in [Components](/docs/react/components#picture).
 
-An image that takes no space if its file is missing (a portrait the game
-hasn't drawn yet, art left out of a build) instead of showing a broken icon.
-It loads lazily (`loading="lazy"`, `decoding="async"`), so a picture far down
-the page waits until the player scrolls near it. It draws nothing while the
-game's pictures setting (`ui.settings.images`) is off, except in a layered
-picture. Every picture the UI draws goes through it, so replacing it in
-`components` changes them all.
+Renders a picture as an `<img>` that takes no space when its file is missing. Every picture the UI renders goes
+through it, so replacing it in `components` changes them all.
+
+It loads lazily, so a picture far down the page waits until the player scrolls near it. It renders nothing while the
+game's pictures setting (`ui.settings.images`) is off, except inside a layered picture.
 
 ```ts shape
 import { Picture } from '@ifloom/react'
@@ -2045,11 +2169,10 @@ const Picture: ComponentType<ClassAttributes<HTMLImageElement> & ImgHTMLAttribut
 
 Component. Explained in [The React UI](/docs/react#plugins).
 
-What the game's plugin UIs place at one spot of the layout, in the order of
-its `plugins` list: nothing for a plugin the game doesn't have. The default
-layout has one at each `PluginSpot`; a layout of your own puts them where
-it likes, or draws the plugins' components itself. The `room` spot draws
-nothing while a minigame runs, since the minigame stands where the room is.
+Renders the components the game's plugin UIs place at one spot of the layout, in `plugins` order. The `room` spot
+renders nothing while a minigame runs, since the minigame replaces the room.
+
+The default layout has one at each `PluginSpot`, and a layout of your own puts them where it likes.
 
 ```ts shape
 import { Plugins } from '@ifloom/react'
@@ -2062,7 +2185,8 @@ Uses: [`PluginSpot`](#pluginspot).
 
 Type. Explained in [Components](/docs/react/components#pluginsectioncomponent).
 
-Draws another plugin's view inside an app: a messages channel, a feed. Gets the plugin's slice of the view and the section's `with`.
+A component that renders another plugin's view as a section of a device's app, such as a messages channel or a feed.
+It gets the plugin's slice of the view and the section's `with`.
 
 ```ts shape
 import type { PluginSectionComponent } from '@ifloom/react'
@@ -2073,12 +2197,12 @@ type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginspot).
 
-Where the layout puts what plugin UIs bring, in the order of the game's
-`plugins` list:
+A spot in the layout where plugin UIs place their components, in the order of the game's `plugins` list. Each spot
+is one of these:
 
 - `stats`: inside the side column's Stats section, under the stats.
 - `sidebar`: the side column, after the Stats section.
-- `room`: the story, after the scene and before the room's actions. Nothing is drawn here while a minigame runs.
+- `room`: the story, after the scene and before the room's actions. Nothing renders here while a minigame runs.
 - `story`: the end of the story, after the room's actions.
 - `strip`: the `NoticeStrip`'s row of counts, after the notices.
 
@@ -2091,7 +2215,8 @@ type PluginSpot = 'stats' | 'sidebar' | 'room' | 'story' | 'strip'
 
 Const. Explained in [Components](/docs/react/components#pricetag).
 
-What a button costs, as the engine wrote it: the price's `text`, its stats, then plugins' notes ("until evening").
+Renders a choice's or action's price as the `choice-price` part, from the price's `text`, which names its stats and
+then plugins' notes such as "until evening".
 
 ```ts shape
 import { PriceTag } from '@ifloom/react'
@@ -2104,7 +2229,7 @@ Uses: [`Price`](/docs/api/engine#price).
 
 Type.
 
-How a block of prose is revealed: `delay` milliseconds after the reveal before it (or the scene coming on), coming in with `as`.
+The value of a block's `ui.reveal` hint, which holds the block back and then brings it in.
 
 ```ts shape
 import type { Reveal } from '@ifloom/react'
@@ -2116,14 +2241,14 @@ type Reveal = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `delay` | `number` | yes |  | Milliseconds to wait after the reveal before it, or after the scene comes on. |
-| `as` | [`TransitionName`](#transitionname) | yes |  | How the block comes in. |
+| `delay` | `number` | yes |  | The wait after the reveal before, or after the scene comes on, in milliseconds. 800 if left out. |
+| `as` | [`TransitionName`](#transitionname) | yes |  | The transition the block comes in with. `'fade'` if left out. |
 
 ## RevealBeat
 
 Type. Explained in [Components](/docs/react/components#revealpoint-revealgroup-and-revealbeat).
 
-One beat of a run, with its index in the scene's beats, and the roll drawn settled before it, if its `ui.dice` names one that isn't new.
+One beat of a run, with its index in the scene's beats and the settled roll its `ui.dice` names, if any.
 
 ```ts shape
 import type { RevealBeat } from '@ifloom/react'
@@ -2136,15 +2261,15 @@ type RevealBeat = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `beat` | [`SceneBeat`](/docs/api/engine#scenebeat) |  |  |  |
-| `index` | `number` |  |  | Its index in `view.scene.beats`. |
-| `roll` | [`Roll`](/docs/api/engine#roll) | yes |  | The roll its `ui.dice` names, drawn settled, when it isn't new. |
+| `beat` | [`SceneBeat`](/docs/api/engine#scenebeat) |  |  | The beat. |
+| `index` | `number` |  |  | The beat's index in `view.scene.beats`. |
+| `roll` | [`Roll`](/docs/api/engine#roll) | yes |  | The roll the beat's `ui.dice` names, rendered settled, when the roll isn't new. |
 
 ## RevealGroup
 
 Type. Explained in [Components](/docs/react/components#revealpoint-revealgroup-and-revealbeat).
 
-A run of a scene's beats, and the reveal that holds it back (null for the first, shown with the screen).
+A run of a scene's beats with the reveal that holds it back. The first run shows with the screen and has no reveal.
 
 ```ts shape
 import type { RevealGroup } from '@ifloom/react'
@@ -2157,15 +2282,15 @@ type RevealGroup = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `reveal` | [`RevealPoint`](#revealpoint) `\| null` |  |  | The reveal that holds this run back, or null for the first run, shown with the screen. |
-| `dice` | [`Roll`](/docs/api/engine#roll) | yes |  | A new roll whose dice tumble before this run, which waits for them to settle: the one its first beat's `ui.dice` names. |
+| `reveal` | [`RevealPoint`](#revealpoint) `\| null` |  |  | The reveal that holds this run back, or null for the first run, which shows with the screen. |
+| `dice` | [`Roll`](/docs/api/engine#roll) | yes |  | The new roll its first beat's `ui.dice` names. Its dice tumble before the run, which waits for them to settle. |
 | `beats` | [`RevealBeat[]`](#revealbeat) |  |  | The run's beats, in order. |
 
 ## RevealPoint
 
 Type. Explained in [Components](/docs/react/components#revealpoint-revealgroup-and-revealbeat).
 
-A reveal as the React UI plays it: where the prose holds back, how long since the run before (`delay`), how it comes in (`as`), and when, from the screen coming on (`at`).
+A reveal the React UI plays, a point where the body holds back its next run of beats. It gives the run's delay, transition and time.
 
 ```ts shape
 import type { RevealPoint } from '@ifloom/react'
@@ -2178,15 +2303,16 @@ type RevealPoint = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `delay` | `number` |  |  | Milliseconds since the run before. |
-| `as` | [`TransitionName`](#transitionname) |  |  | How the run comes in. |
-| `at` | `number` |  |  | When it comes, in milliseconds from the screen coming on. |
+| `delay` | `number` |  |  | The time between the run before and this run, in milliseconds. |
+| `as` | [`TransitionName`](#transitionname) |  |  | The transition the run comes in with. |
+| `at` | `number` |  |  | The time the run comes in, in milliseconds from the screen coming on. |
 
 ## RoomActions
 
 Const. Explained in [Components](/docs/react/components#roomactions).
 
-The buttons offered while no scene is open: the game's own and its plugins', such as a place's things to do.
+Renders the room's actions from `view.actions`, the game's own and its plugins', such as a location's. Its list is
+the `actions` part.
 
 ```ts shape
 import { RoomActions } from '@ifloom/react'
@@ -2197,11 +2323,12 @@ const RoomActions: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#savesmenu).
 
-The save and load menu: every slot newest first, to load, overwrite, delete
-or export as a file; a save that can't be read, to delete; a new slot; and importing a file a player kept.
-While the game's `saveable` refuses saving, the Save buttons are greyed out with the reason. Needs
-the runner made with `saves`. Says plainly when a save was made with packs or
-plugins this game doesn't have. `useSaves` is the same without the look.
+Renders the save and load menu as the `saves` part from `useSaves`. It needs a runner made with `saves`.
+
+It lists every slot newest first, to load, overwrite, delete or export as a file, and each save that can't be read,
+to delete. It has buttons for a new slot and for importing a file. While the game's `saveable` refuses saving, the
+Save buttons are disabled with the reason. It says when a loaded save was made with packs or plugins this game
+doesn't have.
 
 ```ts shape
 import { SavesMenu } from '@ifloom/react'
@@ -2212,7 +2339,7 @@ const SavesMenu: ComponentType<{ className?: string; onLoaded?: (() => void); }>
 
 Type. Explained in [Components](/docs/react/components#savesstate).
 
-What `useSaves` gives a save menu.
+The saves and the functions that change them, which `useSaves` returns to a save menu. Each function resolves to true when it worked.
 
 ```ts shape
 import type { SavesState } from '@ifloom/react'
@@ -2235,25 +2362,25 @@ type SavesState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `available` | `boolean` |  |  | False when the runner was made without `saves`: there is nothing to list. |
-| `saving` | [`SavingView`](/docs/api/engine#savingview) |  |  | Whether the game lets the player save now, and why not: `view.saving`. Loading is always allowed. |
-| `slots` | [`SaveMeta[]`](/docs/api/engine#savemeta) |  |  | Every save that can be read, newest first, as the runner's snapshot lists them. |
-| `broken` | [`BrokenSave[]`](/docs/api/engine#brokensave) |  |  | Saves that are there but can't be read, with why. They can only be deleted. |
-| `save` | `(name?: string) => Promise<boolean>` |  |  | Save in a new slot (the next free number), with the player's `name` for it if given. True if it was written. |
-| `overwrite` | `(slot: string) => Promise<boolean>` |  |  | Save over an existing slot. True if it was written. |
-| `load` | `(slot: string) => Promise<boolean>` |  |  | Load a slot. True if it loaded. |
-| `remove` | `(slot: string) => Promise<boolean>` |  |  | Delete a slot. True if it was deleted; if not, `message` says why. |
-| `exportFile` | `(slot: string) => Promise<boolean>` |  |  | Download a slot as a `.json` file the player can keep. True if it was there to download; if it failed, `message` says why. |
-| `importFile` | `(file: File) => Promise<boolean>` |  |  | Load a save from a file the player kept. True if it loaded. |
-| `message` | `string \| null` |  |  | Why the last save, load, delete, export or import failed, or null. |
-| `missingPacks` | `string[]` |  |  | Packs the last loaded save was made with that this game doesn't have. |
-| `missingPlugins` | `string[]` |  |  | Plugins the last loaded save was made with that this game doesn't have. |
+| `available` | `boolean` |  |  | True when the runner has saves. It's false when the runner was made without `saves`, and there's nothing to list. |
+| `saving` | [`SavingView`](/docs/api/engine#savingview) |  |  | The game's answer to saving now, from `view.saving`, with the reason when it refuses. Loading is always allowed. |
+| `slots` | [`SaveMeta[]`](/docs/api/engine#savemeta) |  |  | Every save that can be read, newest first, from the runner's snapshot. |
+| `broken` | [`BrokenSave[]`](/docs/api/engine#brokensave) |  |  | The saves that exist but can't be read, each with the reason. They can only be deleted. |
+| `save` | `(name?: string) => Promise<boolean>` |  |  | Saves in a new slot, the next free number, with the player's `name` for it if given. |
+| `overwrite` | `(slot: string) => Promise<boolean>` |  |  | Saves over an existing slot. |
+| `load` | `(slot: string) => Promise<boolean>` |  |  | Loads a slot. |
+| `remove` | `(slot: string) => Promise<boolean>` |  |  | Deletes a slot. When it fails, `message` gives the reason. |
+| `exportFile` | `(slot: string) => Promise<boolean>` |  |  | Downloads a slot as a `.json` file the player can keep. When it fails, `message` gives the reason. |
+| `importFile` | `(file: File) => Promise<boolean>` |  |  | Loads a save from a file the player kept. |
+| `message` | `string \| null` |  |  | The reason the last save, load, delete, export or import failed, or null. |
+| `missingPacks` | `string[]` |  |  | The packs the last loaded save was made with that this game doesn't have. |
+| `missingPlugins` | `string[]` |  |  | The plugins the last loaded save was made with that this game doesn't have. |
 
 ## Say
 
 Type. Explained in [Components](/docs/react/components#uistringkey-words-and-say).
 
-How a component says a word: by its key, with `{name}` filled from `vars`.
+A function that returns a word by its key, with each `{name}` in it filled from `vars`.
 
 ```ts shape
 import type { Say } from '@ifloom/react'
@@ -2264,37 +2391,26 @@ type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string
 
 Const. Explained in [Components](/docs/react/components#scene).
 
-The main column: the scene on screen, or the room when none is. Its picture (the
-`LayeredPicture` when the scene has one, else its `image`), its body, then
-either the game's own panel for it or its choices. While a minigame runs, it
-draws that instead: the game's panel named by the minigame's id, else
-`MinigameCard`.
+Renders `view.scene`, the open scene or the room, with its picture, body and choices. While a minigame runs it
+renders the panel named by the minigame's id, else `MinigameCard`.
 
-It plays the content's `ui.transition` hints when the screen (`view.scene.key`)
-changes, in a `scene-transition` part that keeps a copy of the scene before
-for its `out`, and reveals each block with a `ui.reveal` hint in a `reveal`
-part, with the choices after the last. A click on the scene or a key press
-shows the rest at once. The `motion` option, or the player's reduced-motion
-setting, turns all of it off. A speaker with a `ui.hue` gets their lines in
-that colour. The timing is `useScene`'s; the heading is `SceneHeader`.
+A panel the open scene holds renders in place of its choices.
+The picture is the scene's `LayeredPicture` when it has one, else its `image`. When `view.scene.key` changes it plays
+the `ui.transition` hints in a `scene-transition` part, which keeps a copy of the scene before for its `out`. It
+reveals each block with a `ui.reveal` hint in a `reveal` part, with the choices after the last, and a click or key
+press shows the rest at once. The `motion` option or the player's reduced-motion setting turns this off. A speaker
+with a `ui.hue` gets their lines in that colour. `useScene` sets the timing, and `SceneHeader` renders the heading.
 
-Dice: a block with a `ui.dice` hint gets the `DiceRoll` of the roll the last
-command made under that key, drawn before it, and a new roll's block waits
-for its dice to settle. New rolls no block names show for a moment in a
-`DiceOverlay`.
+A block with a `ui.dice` hint gets the `DiceRoll` of the last command's roll under that key, rendered before it, and
+a new roll's block waits for its dice to settle. New rolls that no block names show for a moment in a `DiceOverlay`.
+A block with a `ui.timer` hint gets a `Countdown` of that timer after it, while the timer runs.
 
-Timers: a block with a `ui.timer` hint gets a `Countdown` of that timer
-after it, while it runs.
+The beats of a body section with any ui hint render together in a `BeatGroup`, and a section with a `ui.fold` hint
+has its beats in a `Fold` inside its group. Replace either, or `SceneHeader`, in `components` to restyle that part
+and keep the motion.
 
-Groups: the beats of a section with any ui hint are drawn together in a
-`BeatGroup`, and a section with a `ui.fold` hint (what `fold()` writes) has
-its beats in a `Fold` inside its group. Replace either, or `SceneHeader`,
-in `components` to restyle that part and keep the motion.
-
-Inputs: the inputs on offer while the scene is open (`view.inputs`) are
-drawn after its words and before its choices, as `InputField`s in an
-`inputs` part. The layout's `InputFields` draws only those on offer while
-no scene is open.
+The inputs on offer while the scene is open (`view.inputs`) render after its body and before its choices, as
+`InputField`s in an `inputs` part. The layout's `InputFields` renders only those on offer while no scene is open.
 
 ```ts shape
 import { Scene } from '@ifloom/react'
@@ -2305,10 +2421,10 @@ const Scene: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#sceneheader).
 
-The scene's heading: the speaker's portrait, when the scene has a speaker
-with a picture (`scene-portrait`), and its title (`scene-title`), in a
-`scene-header` part. Gets `scene`, as `view.scene`. Replace it in
-`components` to draw the heading your own way; it comes in with the scene.
+Renders the scene's heading from `view.scene`, passed as `scene`, in a `scene-header` part. It holds the speaker's
+portrait (`scene-portrait`) when the speaker has a picture, and the title (`scene-title`).
+
+Replace it in `components` to render the heading your own way, and it still comes in with the scene.
 
 ```ts shape
 import { SceneHeader } from '@ifloom/react'
@@ -2321,7 +2437,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat), [`SpeakerView`](/docs/api/engin
 
 Type. Explained in [Components](/docs/react/components#scenerolls).
 
-The rolls on screen: all the last command made, the new ones that tumble, and `at`, which counts each new set.
+The rolls on screen, both all the last command made and the new ones whose dice tumble.
 
 ```ts shape
 import type { SceneRolls } from '@ifloom/react'
@@ -2334,15 +2450,15 @@ type SceneRolls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `all` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The rolls the last command made: `view.rolls`. |
-| `fresh` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The rolls the command that led here made, whose dice tumble. Empty for a screen that wasn't new. |
-| `at` | `number` |  |  | A count that moves on with each new set of rolls: key the dice by it, so a new set tumbles again. |
+| `all` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The rolls the last command made, `view.rolls`. |
+| `fresh` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The new rolls whose dice tumble, made by the command that led here. It's empty for a screen that wasn't new. |
+| `at` | `number` |  |  | A count that goes up with each new set of rolls. Key the dice by it, so a new set tumbles again. |
 
 ## SceneTiming
 
 Type. Explained in [Components](/docs/react/components#scenetiming).
 
-Everything `Scene` works out before it draws: see `useScene`.
+The scene's timing that `useScene` returns and `Scene` renders from, with its transitions, runs of beats, wait and rolls.
 
 ```ts shape
 import type { SceneTiming } from '@ifloom/react'
@@ -2363,23 +2479,23 @@ type SceneTiming = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `view` | [`View`](/docs/api/engine#view) |  |  | The view drawn. |
-| `motion` | `boolean` |  |  | Whether transitions, reveals and tumbling dice play: the `motion` option, unless the player asks for reduced motion. |
-| `transition` | [`ScreenTransition`](#screentransition) |  |  | How this screen comes in and goes out. `key` is `view.scene.key`: key the screen's element by it. |
-| `leave` | `{ out?:` [`TransitionName`](#transitionname)`; ms?: number }` |  |  | How the screen before goes, when the choice that led here says (its `out` and `ms`), over that screen's own. |
-| `groups` | [`RevealGroup[]`](#revealgroup) |  |  | The scene's beats in runs: those shown with the screen, then each that waits for a reveal or for dice. Empty while a minigame runs. |
-| `last` | `number` |  |  | When the last run comes, in milliseconds from the screen coming on; 0 with none. The choices come with it. |
-| `pending` | `boolean` |  |  | Whether runs are still to come: until then the choices can't be pressed, and a click or a key calls `skip`. |
-| `revealed` | `boolean` |  |  | Whether the player skipped the wait, or every run came in. Dice drawn after it show settled. |
-| `skip` | `() => void` |  |  | Show everything at once. |
+| `view` | [`View`](/docs/api/engine#view) |  |  | The view being rendered. |
+| `motion` | `boolean` |  |  | True when transitions, reveals and tumbling dice play. It's the `motion` option, unless the player asks for reduced motion. |
+| `transition` | [`ScreenTransition`](#screentransition) |  |  | The transitions this screen comes in and goes out with. Key the screen's element by its `key`. |
+| `leave` | `{ out?:` [`TransitionName`](#transitionname)`; ms?: number }` |  |  | The transition the screen before goes out with, from the choice that led here, over that screen's own. |
+| `groups` | [`RevealGroup[]`](#revealgroup) |  |  | The scene's beats in runs, first those shown with the screen, then each that waits for a reveal or for dice. It's empty while a minigame runs. |
+| `last` | `number` |  |  | The time the last run comes in, in milliseconds from the screen coming on, or 0 with none. The choices come with it. |
+| `pending` | `boolean` |  |  | True while runs are still to come. Until then the choices are disabled, and a click or a key calls `skip`. |
+| `revealed` | `boolean` |  |  | True once the player skipped the wait or every run has come in. Dice rendered after that show settled. |
+| `skip` | `() => void` |  |  | Shows every run at once. |
 | `rolls` | [`SceneRolls`](#scenerolls) |  |  | The rolls on screen. |
-| `unnamed` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | New rolls that no beat on screen names, for a moment over the scene (`DiceOverlay`). |
+| `unnamed` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The new rolls that no beat on screen names, which show for a moment over the scene in a `DiceOverlay`. |
 
 ## ScreenTransition
 
 Type. Explained in [Components](/docs/react/components#screentransition).
 
-The screen on show, and how it comes in and goes out.
+The transitions of the screen showing, how it comes in and goes out.
 
 ```ts shape
 import type { ScreenTransition } from '@ifloom/react'
@@ -2393,23 +2509,23 @@ type ScreenTransition = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `key` | `string` |  |  | `view.scene.key`: key the screen's element by it, so a new screen is a new element. |
-| `in` | [`TransitionName`](#transitionname) |  |  | How this screen comes in. |
-| `out` | [`TransitionName`](#transitionname) |  |  | How it goes out. |
-| `ms` | `number` |  |  | How long each takes, in milliseconds. |
+| `key` | `string` |  |  | The screen's key, `view.scene.key`. Key the screen's element by it, so a new screen is a new element. |
+| `in` | [`TransitionName`](#transitionname) |  |  | The transition the screen comes in with. |
+| `out` | [`TransitionName`](#transitionname) |  |  | The transition the screen goes out with. |
+| `ms` | `number` |  |  | The length of each transition, in milliseconds. |
 
 ## Section
 
 Const. Explained in [Components](/docs/react/components#section).
 
-A titled part of a layout, in the side column or the story. It hides itself
-when its children draw nothing (the plugin isn't there, the list is empty).
+Renders a titled section of a layout, in the side column or the story, as the `section` part. It hides itself when
+its children render nothing, such as a missing plugin or an empty list.
 
 - `collapsible` folds it in place with a button on its title. Each player's
   choice is remembered per `id` in the profile's `ui:sections`.
-- `dialog` draws its title, with `badge` if given, as a button that opens
-  the children in a dialog, looking as a folding section's title does
-  with its chevron pointing out.
+- `dialog` renders its title, with `badge` if given, as a button that opens
+  the children in a dialog. It looks like a folding section's title, with
+  its chevron pointing out.
 - `when` shows it only while a condition holds.
 
 ```ts shape
@@ -2422,6 +2538,8 @@ Uses: [`SectionProps`](#sectionprops).
 ## SectionProps
 
 Type. Explained in [Components](/docs/react/components#sectionprops).
+
+The props of `Section`.
 
 ```ts shape
 import type { SectionProps } from '@ifloom/react'
@@ -2440,27 +2558,26 @@ type SectionProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | What it's called for the profile: the open or folded state is kept under it. |
-| `title` | `string` |  |  | Its heading, as the player reads it. |
-| `collapsible` | `boolean` | yes |  | Fold in place with a button on its title. The player's choice is remembered. |
-| `dialog` | `boolean` | yes |  | Draw a button that opens the children in a dialog, instead of the children. |
-| `open` | `boolean` | yes |  | Open at first, for a folding section: true if left out. The player's last choice wins. |
-| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Only while this condition holds, such as `{ 'places/at': { location: 'home' } }`. |
-| `badge` | `ReactNode` | yes |  | Something small after the title: a count, a "new". |
-| `className` | `string` | yes |  |  |
-| `children` | `ReactNode` | yes |  |  |
+| `id` | `string` |  |  | The section's id, under which the profile keeps whether the player folded it. |
+| `title` | `string` |  |  | The section's heading. |
+| `collapsible` | `boolean` | yes |  | True to fold the section in place with a button on its title. The profile remembers the player's choice. |
+| `dialog` | `boolean` | yes |  | True to render the section as a button that opens its children in a dialog, in place of the children. |
+| `open` | `boolean` | yes |  | True to start a folding section open. True if left out, and the player's last choice wins. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | The condition the section shows under, such as `{ 'places/at': { location: 'home' } }`. Always shown if left out. |
+| `badge` | `ReactNode` | yes |  | A small mark after the title, such as a count or "new". |
+| `className` | `string` | yes |  | Classes added to the `section` part's own. |
+| `children` | `ReactNode` | yes |  | The section's contents. |
 
 ## SettingsPage
 
 Const. Explained in [Components](/docs/react/components#settingspage).
 
-The settings page, drawn from `view.settings`: a checkbox for a toggle,
-radio buttons for a choice, a slider for a range. Each change goes through
-`runner.setSetting`: a ui setting is written to the profile, and a play
-setting changes the game in play and is kept in the profile for the next
-new game. A refusal is shown under the list. Each plugin UI's `settings`
-follow, such as the unlocks plugin's code box, and with `mods`,
-a Mods section holding the `ModManager`.
+Renders the settings page from `view.settings`, with a checkbox for a toggle, radio buttons for a choice and a slider
+for a range. Its root is the `settings-page` part.
+
+Each change goes through `runner.setSetting`, which writes a UI setting to the profile, and changes a play setting in
+the game in play and keeps it in the profile for the next new game. A refusal shows under the list. Each plugin UI's
+`settings` follow, such as the unlocks plugin's code box, and with `mods` on, a Mods section with the `ModManager`.
 
 ```ts shape
 import { SettingsPage } from '@ifloom/react'
@@ -2471,11 +2588,11 @@ const SettingsPage: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#sidebar).
 
-The side column, with what you put in it. Below Tailwind's `md` (48rem) it
-becomes a drawer: a slim `top-bar` with the game's title, the clock and a
-`drawer-button` that slides the column in as a `drawer` (a dialog: focus
-stays in it, and Escape closes it). The drawer closes after the player
-picks something, unless a dialog it opened is still open.
+Renders the side column, the `sidebar` part, with its children. Below Tailwind's `md` (48rem) it becomes a drawer
+behind a `top-bar` with the game's title, the clock and a `drawer-button`.
+
+The `drawer` is a dialog, so focus stays in it and Escape closes it. It closes after the player chooses something,
+unless a dialog it opened is still open.
 
 ```ts shape
 import { Sidebar } from '@ifloom/react'
@@ -2488,6 +2605,8 @@ Uses: [`SidebarProps`](#sidebarprops).
 
 Type. Explained in [Components](/docs/react/components#sidebarprops).
 
+The props of `Sidebar`.
+
 ```ts shape
 import type { SidebarProps } from '@ifloom/react'
 type SidebarProps = {
@@ -2498,14 +2617,14 @@ type SidebarProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `className` | `string` | yes |  | Classes added to its own. |
-| `children` | `ReactNode` | yes |  | What the sidebar holds: sections, stats, plugins' spots. |
+| `className` | `string` | yes |  | Classes added to the `sidebar` part's own. |
+| `children` | `ReactNode` | yes |  | The side column's contents, such as sections, the stats and plugin spots. |
 
 ## StatDisplay
 
 Type. Explained in [Presentation hints](/docs/react/hints#statdisplay).
 
-How the sidebar draws a stat: its number, a bar from `min` to `max`, or pips, one per point.
+The value of a stat's `ui.display` hint, which renders it as its number, a bar from `min` to `max`, or pips, one per point.
 
 ```ts shape
 import type { StatDisplay } from '@ifloom/react'
@@ -2516,11 +2635,11 @@ type StatDisplay = 'number' | 'bar' | 'pips'
 
 Component. Explained in [Plugin UIs and the kit](/docs/react/kit#statgauge).
 
-A stat's value as a bar from its `min` to its `max`, or as pips, one per
-point, in rows of ten at most and of equal length, by its `ui.display`
-hint: the `<dd>` `StatList` draws under a stat. The row's length is the
-`--pips-per-row` custom property on the `stat-pips` part.
-A plugin's UI that lists stats of its own draws it too.
+Renders a stat's value as a bar from its `min` to its `max`, or as one pip per point, by its `ui.display` hint.
+`StatList` renders it as the `<dd>` under each stat.
+
+Pips wrap in rows of ten at most, of equal length, set by the `--pips-per-row` custom property on the `stat-pips`
+part.
 
 ```ts shape
 import { StatGauge } from '@ifloom/react'
@@ -2533,11 +2652,11 @@ Uses: [`StatView`](/docs/api/engine#statview).
 
 Const. Explained in [Components](/docs/react/components#statlist).
 
-The stats the game lists, with their values written as the game formats them.
-A stat with levels also shows its level and a bar towards the next one. A
-stat whose `ui.display` hint is `'bar'` gets a bar from its `min` to its
-`max` under it, and one with `'pips'` a row of pips, one per point (a bar
-past 20).
+Renders the stats in `view.stats` as the `stats` list, each value formatted by the game. A stat with levels also
+shows its level and a bar towards the next one.
+
+A stat whose `ui.display` hint is `'bar'` gets a bar from its `min` to its `max` under it, and one with `'pips'` a
+row of pips, one per point, or a bar past 20.
 
 ```ts shape
 import { StatList } from '@ifloom/react'
@@ -2548,12 +2667,11 @@ const StatList: ComponentType<object>
 
 Const. Explained in [Components](/docs/react/components#story).
 
-The main column, with what you put in it: the scene, then the bottom area
-(exits, the room's actions, the people here) in the default layout. It
-fills the width the side column leaves. The scene's title, prose, choices,
-inputs, exits and the people here keep to `--width-prose`, a reading column
-centred in the story unless `align` or `--margin-prose` says otherwise;
-pictures and panels keep the whole width.
+Renders the story, the main column, as the `story` part with its children. It fills the width the side column
+leaves.
+
+The scene's title, prose, choices, inputs, exits and the people here keep to `--width-prose`, a reading column
+centred in the story unless `align` or `--margin-prose` moves it. Pictures and panels take the full width.
 
 ```ts shape
 import { Story } from '@ifloom/react'
@@ -2566,6 +2684,8 @@ Uses: [`StoryProps`](#storyprops).
 
 Type. Explained in [Components](/docs/react/components#storyprops).
 
+The props of `Story`.
+
 ```ts shape
 import type { StoryProps } from '@ifloom/react'
 type StoryProps = {
@@ -2577,15 +2697,15 @@ type StoryProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `align` | `'center' \| 'start'` | yes |  | Where the reading column sits when the story is wider than `--width-prose`: `'center'` or `'start'`. Left out, the `--margin-prose` token decides, which centres it unless a preset or the game's stylesheet says otherwise. |
-| `className` | `string` | yes |  |  |
-| `children` | `ReactNode` | yes |  |  |
+| `align` | `'center' \| 'start'` | yes |  | The reading column's place when the story is wider than `--width-prose`, `'center'` or `'start'`. The `--margin-prose` token decides if left out, and centres it unless a preset or the game's stylesheet changes it. |
+| `className` | `string` | yes |  | Classes added to the `story` part's own. |
+| `children` | `ReactNode` | yes |  | The story's contents, such as the scene, the inputs, the room's actions and plugin spots. |
 
 ## StyleOptions
 
 Type. Explained in [Components](/docs/react/components#styleoptions).
 
-How the UI looks: the components it draws and the classes on its parts. Part of `UiOptions`.
+The options that change how the UI looks, part of `UiOptions`. They replace components and restyle parts.
 
 ```ts shape
 import type { StyleOptions } from '@ifloom/react'
@@ -2598,15 +2718,16 @@ type StyleOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
-| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
-| `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
+| `components` | [`Components`](#components) | yes |  | The game's replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | The game's classes for the UI's parts, by `data-part` name. |
+| `unstyled` | `boolean` | yes |  | True to drop every built-in class, keeping the structure and the `data-part`s for your own styles. False if left out. |
 
 ## TEXT_SIZES
 
 Const. Explained in [Presentation hints](/docs/react/hints#text_sizes).
 
-The text sizes the React UI's styles size the page for, from `ui.settings.textSize`. Another value needs CSS of the game's own.
+The text sizes the React UI's styles size the page for, the values of the `ui.settings.textSize` setting. Another
+value needs CSS of the game's own.
 
 ```ts shape
 import { TEXT_SIZES } from '@ifloom/react'
@@ -2617,10 +2738,10 @@ const TEXT_SIZES: readonly ['small', 'normal', 'large', 'larger']
 
 Function. Explained in [Components](/docs/react/components#textsize).
 
-Copies the setting the game names in `ui.settings.textSize` to
-`data-text-size` on `<html>`, now and whenever it changes, so the page is
-sized from its root on every page, the title's included. Draws nothing.
-`GameShell` has one.
+Renders nothing, and copies the setting the game names in `ui.settings.textSize` to `data-text-size` on `<html>`
+whenever it changes. The styles size every page from there, the title screen's included.
+
+`GameShell` renders one.
 
 ```ts shape
 import { TextSize } from '@ifloom/react'
@@ -2631,7 +2752,7 @@ function TextSize(): null
 
 Const. Explained in [Components](/docs/react/components#timers).
 
-Every running timer's `Countdown`, in the order they started. Nothing while none runs.
+Renders a `Countdown` for every running timer in `view.timers`, in the order they started, and nothing while none runs.
 
 ```ts shape
 import { Timers } from '@ifloom/react'
@@ -2642,9 +2763,10 @@ const Timers: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#tip).
 
-A tooltip in the prose, from `[[tip:key|words]]`: the words as a `tip`
-button, and the note in a `tip-content` bubble, shown on hover, keyboard
-focus or a tap, and read as the button's description.
+Renders a tooltip in prose from `[[tip:key|words]]`, the words as a `tip` button with the note in a `tip-content`
+bubble. The bubble shows on hover, keyboard focus or a tap.
+
+Screen readers read the note as the button's description.
 
 ```ts shape
 import { Tip } from '@ifloom/react'
@@ -2655,7 +2777,7 @@ const Tip: ComponentType<{ text: string; tip: string; className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#title).
 
-The game's title. `Clock` is where it is in time.
+Renders the game's title from `view.title`, the `title` part.
 
 ```ts shape
 import { Title } from '@ifloom/react'
@@ -2666,11 +2788,11 @@ const Title: ComponentType<{ className?: string; }>
 
 Const. Explained in [Components](/docs/react/components#titlepage).
 
-The title screen: the game's title, the subtitle and art if given, and the
-buttons Continue (the newest save), New game, New Game+ (once the game has
-been finished, if it carries anything over), Load, Settings (if the game has
-any), the pages the plugin UIs and the game add (the achievements plugin's
-Achievements, say), and Credits (if given).
+Renders the title screen, with the game's title, the subtitle and art when given, and a button for each page. Its
+root is the `title-page` part.
+
+The buttons are Continue (the newest save), New game, New Game+ (once the game is finished, if it carries anything
+over), Load, Settings (if the game has any), each added page with `showOnTitle`, and Credits (if given).
 
 ```ts shape
 import { TitlePage } from '@ifloom/react'
@@ -2681,7 +2803,7 @@ const TitlePage: ComponentType<{ className?: string; }>
 
 Type. Explained in [Presentation hints](/docs/react/hints#transition-1).
 
-How something comes on screen (`in`) and goes off it (`out`), over `ms` milliseconds each. A name on its own means both.
+A pair of transitions for a screen coming in and going out, the value of a `ui.transition` hint. A name on its own sets `in`.
 
 ```ts shape
 import type { Transition } from '@ifloom/react'
@@ -2694,15 +2816,15 @@ type Transition = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `in` | [`TransitionName`](#transitionname) | yes |  | How the new screen comes in. |
-| `out` | [`TransitionName`](#transitionname) | yes |  | How the screen before goes out. |
-| `ms` | `number` | yes |  | How long each takes, in milliseconds. |
+| `in` | [`TransitionName`](#transitionname) | yes |  | The transition the new screen comes in with. |
+| `out` | [`TransitionName`](#transitionname) | yes |  | The transition the screen before goes out with. |
+| `ms` | `number` | yes |  | The length of each transition, in milliseconds. 300 if left out. |
 
 ## TransitionName
 
 Type. Explained in [Presentation hints](/docs/react/hints#transitionname).
 
-A transition by name: one of `TRANSITIONS`, or one the game adds.
+The name of a transition, one of `TRANSITIONS` or one the game adds.
 
 ```ts shape
 import type { TransitionName } from '@ifloom/react'
@@ -2713,7 +2835,8 @@ type TransitionName = (typeof TRANSITIONS)[number] | (string & {})
 
 Const.
 
-The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own.
+The names of the transitions the React UI's styles play. A game adds its own names in `ui.transitionNames` on the
+game, with CSS of its own.
 
 ```ts shape
 import { TRANSITIONS } from '@ifloom/react'
@@ -2724,7 +2847,8 @@ const TRANSITIONS: readonly ['fade', 'slide-up', 'slide-left', 'zoom', 'none']
 
 Type. Explained in [Components](/docs/react/components#uioptions).
 
-What a game passes to make the UI its own: how it looks and how it behaves. `GameProvider`, `GameShell` and `mountGame` all take these.
+The options that make the React UI a game's own, how it looks and how it behaves. `GameProvider`, `GameShell` and
+`mountGame` all take them.
 
 ```ts shape
 import type { UiOptions } from '@ifloom/react'
@@ -2740,18 +2864,21 @@ type UiOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
-| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
-| `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
-| `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
-| `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
+| `components` | [`Components`](#components) | yes |  | The game's replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | The game's classes for the UI's parts, by `data-part` name. |
+| `unstyled` | `boolean` | yes |  | True to drop every built-in class, keeping the structure and the `data-part`s for your own styles. False if left out. |
+| `viewer` | `boolean` | yes |  | True to let the player click a picture or a video in the story to see it large. True if left out. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | The keyboard shortcuts, 1 to 9 for the choices or actions on screen, Escape for the menu and the game's own keys in `map`. Off if left out. A minigame's keys work either way. |
+| `motion` | `boolean` | yes |  | True to play scene transitions and prose reveals, the `ui.transition` and `ui.reveal` hints. True if left out, and `false` shows every scene and every line at once. A player whose system asks for reduced motion sees them at once either way. |
 
 ## UiProvider
 
 Component. Explained in [Components](/docs/react/components#uiprovider).
 
-Gives the components below it a game's `components`, `classes`, `unstyled`, `viewer`, `keys` and `motion`. `GameProvider` uses it.
+Renders its children with a game's `UiOptions`. A provider inside another adds to the outer one's options, so a
+screen can restyle its own corner.
+
+`GameProvider` renders one.
 
 ```ts shape
 import { UiProvider } from '@ifloom/react'
@@ -2763,6 +2890,8 @@ Uses: [`UiOptions`](#uioptions).
 ## UiStringKey
 
 Type. Explained in [Components](/docs/react/components#uistringkey-words-and-say).
+
+The key of one of the React UI's own words, such as `'stats'` or `'newGame'`.
 
 ```ts shape
 import type { UiStringKey } from '@ifloom/react'
@@ -2835,11 +2964,11 @@ type UiStringKey =
 
 Function. Explained in [Components](/docs/react/components#useaudio).
 
-Play the game's sound while the component is mounted, with `@ifloom/audio`.
-Inside a `GameProvider` it plays that game; outside, pass `runner`. Returns
-the player once it has started. `GameShell` and `mountGame` play the
-game's sound themselves; a `useAudio` beside them takes over from theirs,
-with its options, so the sound never plays twice.
+Returns the audio player once it has started, and plays the game's sound with `@ifloom/audio` while mounted. Outside
+a `GameProvider` it throws unless you pass `runner`.
+
+`GameShell` and `mountGame` play the game's sound themselves. A `useAudio` beside them takes over from theirs with
+its options, so the sound never plays twice. It reads the options once, when the player starts.
 
 ```ts shape
 import { useAudio } from '@ifloom/react'
@@ -2852,7 +2981,8 @@ Uses: [`AudioOptions`](/docs/api/audio#audiooptions), [`Runner`](/docs/api/engin
 
 Function. Explained in [Components](/docs/react/components#usebacklog).
 
-The backlog's entries, oldest first, as the runner's snapshot has them. Empty unless the runner's backlog is on.
+Returns the backlog's entries from the runner's snapshot, oldest first, and re-renders when they change. It's empty
+unless the runner's backlog is on.
 
 ```ts shape
 import { useBacklog } from '@ifloom/react'
@@ -2865,7 +2995,8 @@ Uses: [`BacklogEntry`](/docs/api/engine#backlogentry).
 
 Function. Explained in [Components](/docs/react/components#useclock).
 
-Where the game is in time, as the plugins' `label`s write it. `Clock` is drawn from it; the calendar plugin's UI has its parts (`useCalendar`).
+Returns the game's time from the running game, as the plugins' `label`s write it in `view.when`. It re-renders with
+each new view, and `Clock` renders from it.
 
 ```ts shape
 import { useClock } from '@ifloom/react'
@@ -2878,7 +3009,8 @@ Uses: [`ClockState`](#clockstate).
 
 Function. Explained in [Components](/docs/react/components#usegame).
 
-The runner, its snapshot, the current view and `send`. Only inside a `GameProvider`.
+Returns the running game, with the runner, its snapshot, the view and `send`. It throws outside a `GameProvider`, and
+re-renders with each new snapshot.
 
 ```ts shape
 import { useGame } from '@ifloom/react'
@@ -2891,14 +3023,12 @@ Uses: [`GameContextValue`](#gamecontextvalue).
 
 Function. Explained in [Components](/docs/react/components#useholds).
 
-Whether a condition holds now, against the state on show: any condition
-content can write, `{ 'places/at': { location: 'home' } }` say. It only
-reads, so saves and replays are as they were.
+Returns true while a condition holds in the running game's state, and re-renders with each new state. It takes any
+condition content can write, such as `{ 'places/at': { location: 'home' } }`, and returns true for none.
 
-An escape hatch for a layout: the view already says what the player can
-see, so reach for it only to place a part of your own by a condition the
-view has no field for, as `Section`'s `when` and `When` do. What the story
-shows belongs in content, where the engine checks it.
+It only reads, so saves and replays stay as they were. Use it to place a part of a layout by a condition the view
+has no field for, as `Section`'s `when` and `When` do. What the story shows belongs in content, where the engine
+checks it.
 
 ```ts shape
 import { useHolds } from '@ifloom/react'
@@ -2911,9 +3041,10 @@ Uses: [`Condition`](/docs/api/engine#condition).
 
 Function. Explained in [Components](/docs/react/components#useminigame).
 
-The minigame being played, and a way to press its inputs. Its timers run
-on the game's clock, which `GameProvider` runs. With `keys: true` it also
-maps the keyboard to the inputs, as `MinigameCard` does.
+Returns the running minigame and a `send` for its inputs from the running game, re-rendering with each new view.
+With `keys: true` it also maps the keyboard to the inputs, as `MinigameCard` does.
+
+The minigame's timer runs on the game's clock, which `GameProvider` starts.
 
 ```ts shape
 import { useMinigame } from '@ifloom/react'
@@ -2926,7 +3057,8 @@ Uses: [`MinigameControls`](#minigamecontrols).
 
 Function. Explained in [Components](/docs/react/components#usemods).
 
-The mod manager without the look: the list, adding, toggling and removing, and restarting. Needs `mods` on the provider.
+Returns the player's mods and the functions that add, toggle, remove and restart them, for a mod manager of your own.
+It needs `mods` on the provider.
 
 ```ts shape
 import { useMods } from '@ifloom/react'
@@ -2939,7 +3071,8 @@ Uses: [`ModsState`](#modsstate).
 
 Function. Explained in [Components](/docs/react/components#usemotion).
 
-Whether to play transitions and reveals: the `motion` option, unless the player asks for reduced motion.
+Returns true when the UI plays transitions and reveals. That's the `motion` option, unless the player's system asks
+for reduced motion.
 
 ```ts shape
 import { useMotion } from '@ifloom/react'
@@ -2950,7 +3083,8 @@ function useMotion(): boolean
 
 Function. Explained in [Components](/docs/react/components#usepage).
 
-Where the player is among the pages. Outside pages (`pages` off), `enabled` is false and the page is always `game`.
+Returns the page the player is on and the functions that move between pages. With `pages` off, `enabled` is false and
+the page is always `game`.
 
 ```ts shape
 import { usePage } from '@ifloom/react'
@@ -2963,8 +3097,10 @@ Uses: [`PageState`](#pagestate).
 
 Function. Explained in [Components](/docs/react/components#usepart).
 
-The attributes for one part: its `data-part` and its classes. `defaults` are
-the built-in classes; `extra` is a `className` a caller passed, added last.
+Returns the `data-part` and `className` attributes for one part. `defaults` are its built-in classes, and `extra` is
+a caller's `className`, added last.
+
+The game's `classes` for the part go over `defaults`, and `unstyled` drops `defaults`.
 
 ```ts shape
 import { usePart } from '@ifloom/react'
@@ -2977,9 +3113,8 @@ Uses: [`PartKey`](#partkey).
 
 Function. Explained in [Components](/docs/react/components#usepicturesshown).
 
-Whether pictures are drawn here: false only while the setting the game names
-in `ui.settings.images` is off. True outside a game, in a game that names
-none, and inside a layered picture.
+Returns false while the setting the game names in `ui.settings.images` is off, and true otherwise. It's true outside
+a game, in a game that names no setting and inside `KeepPicturesOn`.
 
 ```ts shape
 import { usePicturesShown } from '@ifloom/react'
@@ -2990,7 +3125,7 @@ function usePicturesShown(): boolean
 
 Function. Explained in [Plugin UIs and the kit](/docs/react/kit#usepluginuis).
 
-The plugin UIs the game in context has, in the order of its `plugins` list.
+Returns the running game's plugin UIs, those whose plugin the game has, in the order of its `plugins` list.
 
 ```ts shape
 import { usePluginUis } from '@ifloom/react'
@@ -3003,7 +3138,8 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 Function. Explained in [Components](/docs/react/components#useprofile).
 
-What the profile holds in a namespace, kept up to date as it changes. Undefined without a profile or before the first read.
+Returns the value the profile holds in a namespace, and re-renders when it changes. It's undefined without a profile
+or before the first read.
 
 ```ts shape
 import { useProfile } from '@ifloom/react'
@@ -3014,7 +3150,7 @@ function useProfile<T = unknown>(namespace: string): T | undefined
 
 Function.
 
-Whether the player's system asks for reduced motion. Follows the setting as it changes.
+Returns true while the player's system asks for reduced motion, and re-renders when the setting changes.
 
 ```ts shape
 import { useReducedMotion } from '@ifloom/react'
@@ -3025,8 +3161,8 @@ function useReducedMotion(): boolean
 
 Function. Explained in [Components](/docs/react/components#usesaves).
 
-The save menu without the menu: the slots, and saving, loading, deleting,
-exporting and importing them. Needs the runner made with `saves`.
+Returns the saves and the functions that save, load, delete, export and import them, for a save menu of your own. It
+re-renders when the saves change, and needs a runner made with `saves`.
 
 ```ts shape
 import { useSaves } from '@ifloom/react'
@@ -3039,23 +3175,25 @@ Uses: [`SavesState`](#savesstate).
 
 Function. Explained in [Components](/docs/react/components#usescene).
 
-The scene's timing and state, with nothing drawn: what `Scene` draws from.
-Use it in a scene of your own to keep the React UI's motion.
+Returns the scene's timing from the running game, which `Scene` renders from. Use it in a scene component of your
+own to keep the React UI's motion.
+
+It covers these:
 
 - The transition: the screen's `ui.transition` over the game's, with the
-  choice that led here (the runner's `snapshot.pressed`) deciding how it
+  choice that led here (the runner's `snapshot.pressed`) setting how it
   comes in and, with an `out`, how the screen before goes.
 - The runs: the beats shown with the screen, then each block with a
-  `ui.reveal`, or a `ui.dice` naming a roll the last command just made,
+  `ui.reveal`, or a `ui.dice` naming a new roll from the last command,
   and the beats after it, each with when it comes.
 - The wait: `pending` until the player clicks or presses a key (the first
   key press after a screen comes on calls `skip`, and does nothing else),
   or until the last run has come in.
-- The dice: new rolls (`rolls.fresh`) tumble before their run; any other
-  roll a beat names is on its `roll`, drawn settled; new rolls no beat
-  names are `unnamed`.
+- The dice: new rolls (`rolls.fresh`) tumble before their run. Any other
+  roll a beat names is on its `roll`, rendered settled, and new rolls no
+  beat names are `unnamed`.
 
-With motion off, nothing waits: `pending` is false and every roll is settled.
+With motion off nothing waits, so `pending` is false and every roll is settled.
 
 ```ts shape
 import { useScene } from '@ifloom/react'
@@ -3068,9 +3206,10 @@ Uses: [`SceneTiming`](#scenetiming).
 
 Function. Explained in [Components](/docs/react/components#usesetting).
 
-A setting's current value, as the runner's snapshot has it, kept up to date:
-a play setting's from the game in play, a ui setting's from the profile.
-Undefined for a setting the game doesn't declare.
+Returns a setting's value from the runner's snapshot, and re-renders when it changes. It's undefined for a setting
+the game doesn't declare.
+
+A play setting's value comes from the game in play, and a UI setting's from the profile.
 
 ```ts shape
 import { useSetting } from '@ifloom/react'
@@ -3083,7 +3222,8 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 Function. Explained in [Components](/docs/react/components#usetimer-and-usetimers).
 
-One running timer by id, or null when it isn't running (not started, stopped, or run out).
+Returns one running timer by id from `view.timers`, or null when it isn't running because it hasn't started, has
+stopped or has run out.
 
 ```ts shape
 import { useTimer } from '@ifloom/react'
@@ -3096,7 +3236,7 @@ Uses: [`TimerView`](/docs/api/engine#timerview).
 
 Function. Explained in [Components](/docs/react/components#usetimer-and-usetimers).
 
-The running timers, as `view.timers` has them, in the order they started.
+Returns the running timers from `view.timers`, in the order they started, and re-renders with each new view.
 
 ```ts shape
 import { useTimers } from '@ifloom/react'
@@ -3109,8 +3249,8 @@ Uses: [`TimerView`](/docs/api/engine#timerview).
 
 Function. Explained in [Components](/docs/react/components#usewords).
 
-`uiSay` for the game in context. Given a plugin UI's own `words`, it says
-those keys too, and the UI's own.
+Returns a `Say` for the running game's UI words, each the game's `ui.<key>` string over the English. Given a
+plugin UI's own `words`, it returns those keys too.
 
 ```ts shape
 import { useWords } from '@ifloom/react'
@@ -3124,12 +3264,12 @@ Uses: [`Say`](#say), [`Words`](#words), [`UiStringKey`](#uistringkey).
 
 Const. Explained in [Components](/docs/react/components#video).
 
-A video clip, from a `video` beat, a layered picture's layer or a post. It plays inline
-and, by default, like a GIF: by itself, looping and muted. It loads nothing
-until it scrolls into view (`preload="none"`), starts when it does, and
-pauses when it scrolls out again. A clip with sound follows the game's audio
-settings: muted while the mute setting is on, at the `video` channel's
-volume setting, else the `sfx` channel's.
+Renders a video clip inline, from a `video` beat, a layered picture's layer or a post. By default it plays like a GIF,
+by itself, looping and muted.
+
+It loads nothing until it scrolls into view, starts when it does and pauses when it scrolls out again. A clip with
+sound follows the game's audio settings. It's muted while the mute setting is on, and otherwise plays at the `video`
+channel's volume setting, else the `sfx` channel's.
 
 ```ts shape
 import { Video } from '@ifloom/react'
@@ -3141,6 +3281,8 @@ Uses: [`VideoProps`](#videoprops).
 ## VideoProps
 
 Type. Explained in [Components](/docs/react/components#videoprops).
+
+The props of `Video`, a `<video>`'s props with the fields a `video` beat gives.
 
 ```ts shape
 import type { VideoProps } from '@ifloom/react'
@@ -3160,19 +3302,19 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `src` | `string` |  |  | The file, through `artSrc`. |
-| `poster` | `string` | yes |  | A picture to show before it plays. |
-| `alt` | `string` | yes |  | What the clip shows, for a screen reader. |
-| `autoplay` | `boolean` |  |  | Start playing as soon as it's shown. |
-| `loop` | `boolean` |  |  | Play it again when it ends. |
-| `muted` | `boolean` |  |  | False asks for sound, which then follows the game's audio settings. |
-| `controls` | `boolean` |  |  | Show the browser's play, pause and volume controls. |
+| `src` | `string` |  |  | The clip's file, resolved as the art's paths are. |
+| `poster` | `string` | yes |  | The picture shown before the clip plays. |
+| `alt` | `string` | yes |  | The clip's description for screen readers. |
+| `autoplay` | `boolean` |  |  | True to start the clip as soon as it's in view. |
+| `loop` | `boolean` |  |  | True to play the clip again when it ends. |
+| `muted` | `boolean` |  |  | True to keep the clip silent. False asks for sound, which then follows the game's audio settings. |
+| `controls` | `boolean` |  |  | True to show the browser's play, pause and volume controls. |
 
 ## ViewerMedia
 
 Type. Explained in [Components](/docs/react/components#mediaviewerprops-and-viewermedia).
 
-A picture or a video beat: what the viewer shows.
+A picture or video beat, which the media viewer shows large.
 
 ```ts shape
 import type { ViewerMedia } from '@ifloom/react'
@@ -3185,7 +3327,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
 
 Const. Explained in [Components](/docs/react/components#when).
 
-Its children while `condition` holds, and nothing otherwise. `useHolds` is the same as a hook.
+Renders its children while `condition` holds, and nothing otherwise. `useHolds` does the same as a hook.
 
 ```ts shape
 import { When } from '@ifloom/react'
@@ -3198,9 +3340,10 @@ Uses: [`Condition`](/docs/api/engine#condition).
 
 Component. Explained in [Components](/docs/react/components#withpages).
 
-The game, or with `pages` on, the pages around it: the game shows
-only on the `game` page. Used inside a `GameProvider`; a layout's `Game`
-uses it, so a layout needn't.
+Renders its children, the game, or with `pages` on, the pages around it, with the game on the `game` page only. It
+renders inside a `GameProvider`.
+
+A layout's `Game` region renders one, so a layout of your own needn't.
 
 ```ts shape
 import { WithPages } from '@ifloom/react'
@@ -3213,9 +3356,8 @@ Uses: [`PagesOptions`](#pagesoptions).
 
 Type. Explained in [Components](/docs/react/components#words).
 
-A table of words in English by key, as a plugin's React UI declares its own
-(`{ buy: 'Buy' }`). A game rewords any of them the same way as the UI's,
-with `ui.<key>` in its strings.
+A table of words in English by key, such as a plugin UI's `{ buy: 'Buy' }`. A game rewords any of them with
+`ui.<key>` in its strings, as it rewords the UI's own.
 
 ```ts shape
 import type { Words } from '@ifloom/react'

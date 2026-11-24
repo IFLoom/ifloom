@@ -1,24 +1,17 @@
 /**
- * @ifloom/plugin-shop: vendors the player buys from and sells back to.
+ * The shop plugin, which adds vendors the player buys things from and sells them back to.
  *
- * What a vendor sells are entities, things the player then holds. A vendor
- * is an entity too, one that carries the `shop/vendor` trait, written with
- * `shop.vendor({ ... })` in content's `entities` (of the plugin's `vendor` kind
- * unless it says), so it holds its stock as any holder holds things, and a
- * mod changes one as it changes any entity. A good with no `stock` never
- * runs out: buying one gives the player a new one. A good with a `stock` is
- * held by the vendor, which starts with that many and, with `restock`, is
- * topped back up each turn or each day; buying moves one from the vendor to
- * the player. A vendor can take things back for part of their price and
- * mark a few goods down each day, drawn from the save's seed.
+ * A vendor is an entity with the `shop/vendor` trait, written with `shop.vendor({ ... })` in content's `entities`, of
+ * the plugin's `vendor` kind unless it says otherwise. It holds its stock as any holder holds things, and a mod changes
+ * it as it changes any entity.
  *
- * A thing's price is the good's, else its `shop/sellable` trait's.
+ * A good with no `stock` never runs out, so buying one makes a new thing. A good with a `stock` starts that many with
+ * the vendor and, with `restock`, is topped up each turn or day, and buying moves one to the player. A vendor can buy
+ * things back for part of their price and mark goods down each day, drawn from the save's seed.
  *
- * A vendor is refused while one of its `blocked` entries holds: closed by
- * one such as the opening hours `shop.hours(['morning'])` writes, which ask
- * the calendar, and not here by one with `hide`, such as
- * `places.onlyAt(['cafe'], undefined, { hide: true })`, which asks the places
- * plugin and never holds without it.
+ * A good's price is its own, else its thing's `shop/sellable` trait's. A vendor refuses trade while one of its
+ * `blocked` entries holds. An entry such as `shop.hours(['morning'])` closes it, and an entry with `hide`, such as
+ * `places.onlyAt(['cafe'], undefined, { hide: true })`, means the vendor isn't here.
  */
 import {
   artSrc,
@@ -70,61 +63,58 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** What the `shop/sellable` trait holds: what one is worth, by stat. */
+/** The data of the `shop/sellable` trait, a thing's price wherever a vendor sells it without a price of its own. */
 export type Sellable = {
-  /** What one costs, by stat: `{ coins: 4 }`. A good's own `price` is used over it. */
+  /** The price of one, by stat, such as `{ coins: 4 }`. A good's own `price` overrides it. */
   price: Record<string, number>
 }
 
-/** When a good's stock comes back: every turn, or every day of the calendar (every turn without one). */
+/** The interval a good's stock is topped up at, every turn or every calendar day. `'day'` means every turn in a game without the calendar. */
 export type Restock = 'turn' | 'day'
 
-/** One thing a vendor sells. */
+/** A good the game declares in a vendor's `goods`, a thing the vendor sells with its price and stock. */
 export type GoodDef = {
-  /** The thing, by reference: `'food:apple'`. */
+  /** The reference of the thing sold, such as `'food:apple'`. */
   entity: EntityRef
-  /** What one costs, by stat: `{ coins: 4 }`. Each stat should be spendable. The thing's `shop/sellable` price if left out. */
+  /** The price of one, by stat, such as `{ coins: 4 }`, each stat spendable. The thing's `shop/sellable` price if left out. */
   price?: Record<string, number>
   /**
-   * How many the vendor holds: it starts with that many, and `restock` tops
-   * it back up to it. Never runs out if left out: each one bought is new. A
-   * unique thing is always sold from the vendor's stock, so give it `stock: 1`
-   * or start it with the vendor.
+   * The number the vendor starts with and `restock` tops it back up to. The good never runs out if left out, and each
+   * one bought is new.
+   *
+   * The vendor always sells a unique thing from its stock, so give one `stock: 1` or start it with the vendor.
    */
   stock?: number
-  /** When the stock comes back up to `stock`. Never, if left out. */
+  /** The interval the stock is topped back up to `stock` at. Never if left out. */
   restock?: Restock
-  /** Offered only while this holds. */
+  /** The condition that must hold for the good to be on offer. */
   when?: Condition
 }
 
-/** Goods marked down each day: how many, and the fraction off. */
+/** A vendor's daily discounts, which the game declares in its `discounts`. The vendor marks `count` goods down each day, drawn from the save's seed. */
 export type DiscountDef = {
   /** The fraction off, such as `0.25` for a quarter. */
   off: number
-  /** How many goods are marked down each day. 1 if left out. */
+  /** The number of goods marked down each day. 1 if left out. */
   count?: number
 }
 
-/**
- * What the `shop/vendor` trait holds: what makes an entity a vendor the
- * player buys from. Its name is the entity's: "The counter".
- */
+/** The data of the `shop/vendor` trait, which makes an entity a vendor the player buys from. The vendor's name, such as "The counter", is the entity's. */
 export type Vendor = {
   /**
-   * Refused while one of these holds, with its reason: what buying and
-   * selling are refused with, the first that holds winning. An entry with
-   * `hide` says where the vendor is: while it holds, the vendor isn't `here`
-   * (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes
-   * it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])`
-   * writes opening hours as one, with the calendar). Open everywhere if left out.
+   * The reasons the vendor refuses to trade. The first entry that holds gives the reason, and the vendor is open
+   * everywhere if left out.
+   *
+   * While an entry with `hide` holds, the vendor isn't `here`, as with `places.onlyAt(['cafe'], undefined, { hide: true })`.
+   * Any other entry closes the vendor with its reason, as the opening hours `shop.hours(['morning', 'afternoon'])`
+   * writes do.
    */
   blocked?: Blocked[]
-  /** What it sells, in the order shown. */
+  /** The vendor's goods, in the order shown. */
   goods: GoodDef[]
-  /** The fraction of a thing's price it pays to take one back. It takes nothing back if left out. */
+  /** The fraction of a good's full price the vendor pays to buy one back. It buys nothing back if left out. */
   buysBack?: number
-  /** Goods marked down each day. None if left out. */
+  /** The vendor's daily discounts. None if left out. */
   discounts?: DiscountDef
 }
 
@@ -135,82 +125,78 @@ declare module '@ifloom/engine' {
   }
 }
 
-/**
- * What `shop.vendor()` takes: an entity's fields (its `of` is `'vendor'` if left
- * out) and the `shop/vendor` trait's, side by side.
- */
+/** A vendor the game declares in `entities` with `shop.vendor()`. It has an entity's fields and the `shop/vendor` trait's side by side. */
 export type VendorDef = Omit<EntityDef, 'of'> &
   Vendor & {
-    /** Its kind: the plugin's own, `vendor`, if left out. */
+    /** The vendor's kind. The plugin's own kind, `vendor`, if left out. */
     of?: string
   }
 
-/**
- * When a vendor's stock of a good was last topped up: the turn or day it
- * restocks on, or 0 for a good that never does. `left` is a count an older
- * save carried in, not yet written to what the vendor holds.
- */
-export type StockRecord = { at: number; left?: number }
+/** The record a save keeps of a vendor's last restock of a good, in {@link ShopState}'s `stocked`. */
+export type StockRecord = {
+  /** The turn or day of the last restock, or 0 for a good that never restocks. */
+  at: number
+  /** A count an older save carried in that the vendor doesn't hold yet. */
+  left?: number
+}
 
-/** What the plugin keeps in a save. The stock itself is what each vendor holds. */
+/** The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and goods are read from content. */
 export type ShopState = {
-  /** By vendor, then thing: when its stock was last topped up. */
+  /** The last restock of each good, by vendor and then by thing. */
   stocked: Record<string, Record<EntityRef, StockRecord>>
 }
 
-/** A good as the UI shows it. */
+/** A good as the player sees it, in a {@link VendorView}'s `goods`. */
 export type GoodView = {
-  /** The thing: `'food:apple'`. */
+  /** The reference of the thing sold, such as `'food:apple'`. */
   entity: EntityRef
-  /** Its name. */
+  /** The thing's name. */
   name: string
-  /** Its description; null with none. */
+  /** The thing's description, or null when it has none. */
   description: string | null
-  /** Its picture's path, through `artSrc`; null with none. */
+  /** The path of the thing's picture through `artSrc`, or null when it has none. */
   image: string | null
-  /** How many the vendor has left, or null when it never runs out. */
+  /** The number the vendor has left, or null when the good never runs out. */
   stock: number | null
-  /** How many you hold. */
+  /** The number of this thing the player holds. */
   owned: number
   /** The fraction off today, or 0. */
   off: number
-  /** The price before today's discount, or null when there is none. */
+  /** The price before today's discount, or null when there is no discount. */
   fullPrice: Price | null
-  /**
-   * The button that buys one: its price, and why it's greyed out, as any
-   * button has them. Send its `command`.
-   */
+  /** The button that buys one, with its price and any reason it's disabled. Its `command` is the one to send. */
   buy: RenderedChoice
-  /** The button that sells one back, or null if the vendor takes nothing back. */
+  /** The button that sells one back, or null when the vendor buys nothing back. */
   sell: RenderedChoice | null
-  /** What selling one back pays, or null. */
+  /** The price the vendor pays to buy one back, or null when it buys nothing back. */
   sellFor: Price | null
 }
 
-/** A vendor as the UI shows it. */
+/** A vendor as the player sees it, in `view.plugins.shop.vendors`. */
 export type VendorView = {
-  /** Its id, as `buy` names it: the bare id for one of the `vendor` kind, else its whole reference. */
+  /** The vendor's id as `shop.buy` names it, the bare id for one of the `vendor` kind, else its full reference. */
   id: string
-  /** Its entity: `'vendor:counter'`. */
+  /** The vendor's entity reference, such as `'vendor:counter'`. */
   ref: EntityRef
+  /** The vendor's name. */
   name: string
-  /** Where the player is: refused by none of its `blocked` entries with `hide`. */
+  /** True while none of the vendor's `blocked` entries with `hide` holds, so the vendor is where the player is. */
   here: boolean
-  /** Why it's closed, its first `blocked` entry without `hide` that holds, in the words `shop/buy` is refused with; null while it's open. */
+  /** The reason the vendor is closed, from its first `blocked` entry without `hide` that holds, or null while it's open. */
   closed: string | null
-  /** Takes things back. */
+  /** True when the vendor buys things back. */
   buysBack: boolean
   /** The goods on offer now, in the order the vendor lists them. */
   goods: GoodView[]
 }
 
+/** The vendors as the player sees them, in `view.plugins.shop`. */
 export type ShopView = {
-  /** Every vendor, in the order the game declares them. */
+  /** The game's vendors, in the order the game declares them. */
   vendors: VendorView[]
   /**
-   * The vendor whose counter the open `shop` panel shows, by its
-   * `with.vendor`, or null while no `shop` panel is open: what a UI draws in
-   * the panel, with no looking up.
+   * The vendor the open `shop` panel shows, named by its `with.vendor`, or null while no `shop` panel is open. A UI
+   * renders it in the panel as it is.
    */
   panel: VendorView | null
 }
@@ -273,8 +259,8 @@ function emptyState(): ShopState {
 }
 
 /**
- * The entity a vendor is, which holds its stock: `shop.vendorRef('counter')` is
- * `'vendor:counter'`. A reference is as written, for a vendor of another kind.
+ * Returns the entity reference of a vendor, which holds its stock. `shop.vendorRef('counter')` is `'vendor:counter'`,
+ * and a full reference comes back unchanged.
  */
 function vendorRef(vendor: string): EntityRef {
   return VENDORS.ref(vendor)
@@ -293,18 +279,16 @@ function usable(vendor: Vendor): Vendor {
 }
 
 /**
- * Every vendor in the game now, as references: every entity with the
- * `shop/vendor` trait, the ones content declares in its order, then those
- * made in play.
+ * Returns the references of every vendor in the game now, each entity with the `shop/vendor` trait. Those content
+ * declares come first in its order, then those made in play.
  */
 export function vendorsOf(state: GameState, game: Game): EntityRef[] {
   return VENDORS.all(state, game)
 }
 
 /**
- * The `shop/vendor` trait of a vendor, named by its id (`'counter'`) or its
- * reference, with any good that names no thing left out: one content
- * declares, or one made in play. Undefined for anything else.
+ * Returns the `shop/vendor` trait of a vendor, named by its id (`'counter'`) or reference, without any good that names
+ * no thing. Returns undefined for anything that isn't a vendor.
  */
 export function vendorOf(state: GameState, game: Game, ref: string | null | undefined): Vendor | undefined {
   return vendorIn(state, game, ref)
@@ -391,7 +375,7 @@ function offToday(state: GameState, one: One, good: GoodDef, cx: Ctx): number {
   return marked.some((entry) => entry.entity === good.entity) ? Math.min(1, discounts.off) : 0
 }
 
-/** What a thing is worth, by stat, when nobody says otherwise: its `shop/sellable` trait's price. */
+/** Returns a thing's `shop/sellable` trait, its price where a good gives none. Returns undefined for a thing without the trait. */
 export function sellableOf(state: GameState, game: Game, ref: EntityRef): Sellable | undefined {
   return traitOf(state, game, ref, SELLABLE)
 }
@@ -635,10 +619,7 @@ const vendorTrait: TraitDef<'shop/vendor'> = {
   },
 }
 
-/**
- * The plugin. Add it to the game's `plugins`, and write vendors in the
- * content's `entities` with `shop.vendor({ ... })`.
- */
+/** Returns the shop plugin for the game's `plugins`. The game declares its vendors in `entities` with `shop.vendor({ ... })`. */
 function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
   return definePlugin<ShopState, ShopView, typeof CALLS>({
     id: ID,
@@ -727,9 +708,8 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
 }
 
 /**
- * A vendor, for content's `entities`: an entity of the kind `vendor` (or
- * `of`) carrying the `shop/vendor` trait, with the entity's fields and the
- * trait's written side by side.
+ * Returns a vendor for content's `entities`, an entity of the kind `vendor` (or `of`) with the `shop/vendor` trait.
+ * It takes the entity's fields and the trait's side by side.
  *
  * ```ts
  * entities: [shop.vendor({ id: 'counter', name: 'The counter', blocked: [places.onlyAt(['cafe'], undefined, { hide: true })], goods: [{ entity: 'food:bun', price: { coins: 2 } }] })]
@@ -740,30 +720,30 @@ function vendor(def: VendorDef): EntityDef {
 }
 
 /**
- * The `shop/sellable` trait, to spread into an entity's or a kind's
- * `traits`: `traits: { ...sellable({ coins: 4 }) }`. A vendor that lists the
- * thing without a price of its own sells it for this.
+ * Returns the `shop/sellable` trait, to spread into an entity's or a kind's `traits`. A vendor that lists the thing
+ * without a price of its own sells it for this.
+ *
+ * @example
+ * traits: { ...shop.sellable({ coins: 4 }) }
  */
 const sellable = (price: Record<string, number>): { 'shop/sellable': Sellable } => ({ [SELLABLE]: { price } })
 
-/** A command: buy `count` (1 if left out) of a thing from a vendor. */
+/** Returns the `shop/buy` command, which buys `count` of a thing from a vendor, 1 if left out. */
 const buy = (vendor: string, entity: EntityRef, count?: number): CommandRef =>
   CALLS.commands.buy(count === undefined ? { vendor, entity } : { vendor, entity, count })
-/** A command: sell `count` (1 if left out) of a thing back to a vendor. */
+/** Returns the `shop/sell` command, which sells `count` of a thing back to a vendor, 1 if left out. */
 const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef =>
   CALLS.commands.sell(count === undefined ? { vendor, entity } : { vendor, entity, count })
 /**
- * An effect: open the vendor's counter in the `shop` panel, from a place's
- * action, a person's, a thing's use, an app or a choice. The UI draws it;
- * `shopUi` from `@ifloom/plugin-shop/react` draws it as a `ShopCounter`.
+ * Returns the effect that opens the vendor's counter in the `shop` panel. `shopUi` from `@ifloom/plugin-shop/react`
+ * renders the panel as a `ShopCounter`.
  */
 const openShop = (vendor: string): Effect => ({ panel: PANEL, with: { vendor } })
-/** A condition, with the calendar: its period of the day is none of these. Never without the calendar. */
+/** Returns the `shop/outside` condition, which holds while the calendar's period is none of these. It never holds without the calendar. */
 const outside = (...periods: string[]): Condition => CALLS.conditions.outside({ period: periods })
 /**
- * A `blocked` entry for a vendor's opening hours, with the calendar: closed
- * outside these periods of the day, with `reason` (the plugin's `shop/closed`
- * string, "Closed.", if left out).
+ * Returns a `blocked` entry for a vendor's opening hours, which closes it outside these calendar periods. Its reason
+ * is `reason`, or the `shop/closed` string ("Closed.") if left out.
  *
  * ```ts
  * shop.vendor({ id: 'counter', name: 'The counter', blocked: [shop.hours(['morning', 'afternoon'])], goods: [...] })
@@ -773,13 +753,34 @@ const hours = (periods: readonly string[], reason?: Reason): Blocked => ({
   when: outside(...periods),
   reason: reason ?? { string: `${ID}/closed` },
 })
-/** A condition: the vendor is open now. */
+/** Returns the `shop/open` condition, which holds while the vendor is open, wherever the player is. */
 const vendorOpen = (vendor: string): Condition => CALLS.conditions.open({ vendor })
-/** A condition: the vendor offers the thing now and has one left. */
+/** Returns the `shop/inStock` condition, which holds while the vendor offers the thing and has one left. */
 const inStock = (vendor: string, entity: EntityRef): Condition => CALLS.conditions.inStock({ vendor, entity })
 
 /**
- * The plugin, with its helpers on it: `shop()` makes the plugin for the
- * game's `plugins`, and content is written with `shop.vendor({ ... })` and `shop.buy('counter', 'food:bun')`.
+ * The shop plugin's factory, with its helpers as properties. `shop()` returns the plugin for the game's `plugins`, and
+ * content calls helpers such as `shop.vendor({ ... })` and `shop.buy('counter', 'food:bun')`.
  */
-export const shop = Object.assign(shopPlugin, { vendor, vendorRef, sellable, buy, sell, open: openShop, vendorOpen, inStock, outside, hours })
+export const shop = Object.assign(shopPlugin, {
+  /** Returns a vendor for content's `entities`, an entity with the `shop/vendor` trait, from the entity's fields and the trait's. */
+  vendor,
+  /** Returns the entity reference of a vendor; a bare id is one of the `vendor` kind. */
+  vendorRef,
+  /** Returns the `shop/sellable` trait, to spread into an entity's or a kind's `traits`. */
+  sellable,
+  /** Returns the `shop/buy` command, which buys `count` of a thing from a vendor, 1 if left out. */
+  buy,
+  /** Returns the `shop/sell` command, which sells `count` of a thing back to a vendor, 1 if left out. */
+  sell,
+  /** Returns the effect that opens the vendor's counter in the `shop` panel. */
+  open: openShop,
+  /** Returns the `shop/open` condition, which holds while the vendor is open, wherever the player is. */
+  vendorOpen,
+  /** Returns the `shop/inStock` condition, which holds while the vendor offers the thing and has one left. */
+  inStock,
+  /** Returns the `shop/outside` condition, which holds while the calendar's period is none of these. */
+  outside,
+  /** Returns a `blocked` entry for a vendor's opening hours, which closes it outside these calendar periods. */
+  hours,
+})

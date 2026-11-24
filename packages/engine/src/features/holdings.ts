@@ -31,71 +31,72 @@ import type { Amount, GameState } from '../types.ts'
 import { withUi, type EntityUi, type Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext } from './feature.ts'
 
-/** One thing a holder has, as the UI draws it. */
+/** A thing you hold as the player sees it, in `view.held`. Only things whose `visible` holds are listed. */
 export type HeldView = {
-  /** How content names it: `'food:apple'`. */
+  /** The thing's entity reference, such as `'food:apple'`. */
   ref: EntityRef
-  /** Its name, with prose tokens filled in. */
+  /** The thing's name, with its prose tokens filled in. */
   name: string
-  /** Its description, filled in the same way; null with none. */
+  /** The thing's description, with its tokens filled in. Null if it has none. */
   description: string | null
-  /** Its picture's path, through `artSrc`; null with none. */
+  /** The thing's picture, as a path through `artSrc`. Null if it has none. */
   image: string | null
-  /** Its kind's tags, then its own. */
+  /** The thing's tags, its kind's first and then its own. */
   tags: string[]
-  /** How many are held. */
+  /** The number of the thing held. */
   count: number
-  /** Who holds it: the protagonist being played, or `'player'`. */
+  /** The thing's holder, the protagonist being played or `'player'`. */
   at: Holder
-  /** Its presentation hints, its own over its kind's, as written; left out with none. See `EntityUi`. */
+  /** The thing's presentation hints (a {@link EntityUi}), its own over its kind's, kept as written. Left out if it has none. */
   ui?: Ui<EntityUi>
 }
 
-/** What the holdings feature adds, as types. */
+/** The holdings feature's state, effects, view and references, as types. */
 export type HoldingsShape = {
   state: {
     /**
-     * What play changed about who holds what, by holder and then thing:
-     * `held.player['food:apple']`. A count is kept once written, 0 included;
-     * anything else reads where content's `at` starts it.
+     * The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once
+     * written, 0 included.
+     *
+     * A count play hasn't changed is read from the entity's `at` in content.
      */
     held: Record<string, Record<string, number>>
-    /** The protagonist the player is playing, as `'you'` reads: null for the player themselves. */
+    /** The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. */
     you: EntityRef | null
   }
   effects: {
     /**
-     * Change how many of a thing a holder holds `by` an amount, or put it
-     * `to` a count: `'you'` if `at` is left out. Never below 0, and never
-     * more than 1 of a unique thing, which is taken from whoever else held it.
-     * `by` and `to` are each an `Amount`.
+     * An effect that changes how many of a thing a holder holds `by` an amount, or sets the count `to` one. The
+     * holder is `'you'` if `at` is left out.
+     *
+     * A count never goes below 0, and never above 1 for a unique thing, which the engine takes from whoever else held
+     * it. `by` and `to` are each an `Amount`.
      */
     entity: { entity: string; at?: string; by: Amount } | { entity: string; at?: string; to: Amount }
     /**
-     * Move a thing `to` another holder: `from` a holder, else from wherever a
-     * unique thing is, or from `'you'`; up to `by` of it (an `Amount`), else all there is.
+     * An effect that moves a thing `to` another holder, `by` of it (an `Amount`) or all there is. It moves it `from`
+     * the holder named, else from wherever a unique thing is, else from `'you'`.
      */
     move: { move: string; from?: string; to: string; by?: Amount }
-    /** Play as a protagonist, a unique entity, so `'you'` is them: `{ you: 'character:ava' }`; `{ you: null }` to be the player again. */
+    /**
+     * An effect that makes a protagonist, a unique entity, the one `'you'` names, such as `{ you: 'character:ava' }`.
+     * `{ you: null }` makes the player themselves again.
+     */
     you: { you: string | null }
   }
   view: {
-    /**
-     * What you hold, in the game's order of its entities: the protagonist's
-     * things while one is played, then the player's.
-     */
+    /** The things you hold, in the game's order of its entities. The protagonist's come first while one is played, then the player's. */
     held: HeldView[]
   }
   references: {
     /**
-     * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
-     * thing given to it, which can't be the holder itself; `protagonist` for a
-     * `you` effect, which names the one to play.
+     * A reference to a holder, `'player'`, `'you'` or a unique entity. `holds` names the thing given to it, which
+     * can't be the holder itself, and `protagonist` marks a `you` effect's choice of whom to play.
      */
     holder: { holder: string; holds?: string; protagonist?: boolean }
-    /** The entity a `create` makes a thing like, and the kind it makes, if it says. */
+    /** A reference to the entity a `create` makes a thing like, with the kind it makes when it names one. */
     like: { like: string; of?: string }
-    /** A trait, by id. */
+    /** A reference to a trait by id. */
     trait: { trait: string }
   }
 }
@@ -180,6 +181,7 @@ function kindIds(game: Game): Set<string> {
   return new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.content?.kinds ?? [])].map((kind) => kind.id))
 }
 
+/** The holdings feature, which keeps the counts each holder holds and the protagonist `'you'` names. */
 export const holdings = defineFeature<HoldingsShape>({
   name: 'holdings',
   state: {

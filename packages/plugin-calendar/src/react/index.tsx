@@ -18,7 +18,12 @@ declare module '@ifloom/react' {
   }
 }
 
-/** The calendar plugin's view, piece by piece: the day, the weekday, the period and the curfew, or null in a game without the plugin. `CalendarClock` is drawn from it. */
+/**
+ * Returns the calendar plugin's view from the running game, or null in a game without the plugin. It re-renders when
+ * the view changes.
+ *
+ * The view has the day, the weekday, the period and the curfew. `CalendarClock` renders from it.
+ */
 export function useCalendar(): CalendarView | null {
   return usePlugin(CALENDAR).view ?? null
 }
@@ -38,18 +43,16 @@ function CalendarClockImpl({ className }: { className?: string }) {
 }
 
 /**
- * Where the game is in time, as the core `Clock` draws it ("Day 3 ·
- * Wednesday morning"), with the calendar's pieces on it for styling:
- * `data-day`, `data-weekday`, `data-period`, and `data-curfew` while the
- * curfew binds. The calendar UI draws it in the `Clock`'s place. A thin
- * default on `useCalendar`.
+ * Renders the game's time, such as "Day 3 · Wednesday morning", from `view.when`. A preset styles its `clock` part.
+ *
+ * It carries `data-day`, `data-weekday` and `data-period` attributes, and `data-curfew` while the curfew binds.
+ * `calendarUi` renders it in place of the core `Clock`.
  */
 export const CalendarClock = overridable('CalendarClock', CalendarClockImpl)
 
 /**
- * The calendar plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: `CalendarClock` wherever the core `Clock` is, in the side
- * column and the top bar on a phone.
+ * The calendar plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It replaces the core `Clock` with
+ * `CalendarClock`, in the sidebar and in the top bar on a phone.
  */
 export const calendarUi: PluginUi = {
   ...CALENDAR,

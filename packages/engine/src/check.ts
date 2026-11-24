@@ -19,72 +19,89 @@ import { COMMAND_TYPES, conditionKeys, effectKeys, featureContext } from './core
 import type { Condition, GameState } from './types.ts'
 import type { UiTarget } from './features/ui.ts'
 
-/** Something wrong with a game's content: the pack it came from (`game` for a hand-built game), where, and what. */
+/** A fault the content checker finds in a game's content, with the pack it came from and the place in it. */
 export type Problem = {
-  /** The content or pack it came from, by name or id: `game` for a hand-built game. */
+  /** The name or id of the content or pack the problem came from. It is `game` for a hand-built game. */
   pack: string
-  /** What in it: `scene cafe.counter`, `finished`. */
+  /** The place in the content the problem is, such as `scene cafe.counter` or `finished`. */
   where: string
-  /** What's wrong: `unknown storyline "tides"`. */
+  /** The fault, such as `unknown storyline "tides"`. */
   what: string
 }
 
-/** A file the game names, as the page asks for it (after `artSrc` or `audioSrc`), with where it is named. */
+/** A file the game names, with the place that names it. Its `path` is the one the page asks for, after `artSrc` or `audioSrc`. */
 export type FileRef = {
-  /** The file, as the page asks for it. */
+  /** The file's path, as the page asks for it. */
   path: string
-  /** What sort of file it is. */
+  /** The file's type. */
   type: 'picture' | 'video' | 'audio'
-  /** Where the content names it, as a `Problem`'s `where` is written. */
+  /** The place the content names the file, written as a `Problem`'s `where` is. */
   where: string
 }
 
-/** A state to render every scene against, named for the problems it finds. */
+/** A state the content checker renders every scene against, named for the problems it finds. Make one with `probe`, by playing. */
 export type Probe = {
-  /** What the problems it finds are named by: `'evening, after the café'`. */
+  /** The probe's name, which the problems it finds carry, such as `'evening, after the café'`. */
   name: string
   /** The state to render every scene against. */
   state: GameState
 }
 
-/** What `checkGame` finds. */
+/** The report `checkGame` returns, with the content's problems, warnings and files. */
 export type Checked = {
   /**
-   * What's wrong with the content: a broken reference, a key declared twice, a call with the wrong arguments. Any
+   * The content's faults, such as a broken reference, a key declared twice, or a call with the wrong arguments. Any
    * problem fails `ifloom check`.
    */
   problems: Problem[]
-  /** What may go wrong in play but isn't a problem, such as a token that may be unset with no fallback. A warning fails no check. */
+  /** The faults that may show in play but aren't problems, such as a token that may be unset with no fallback. A warning fails no check. */
   warnings: Problem[]
-  /** Every file the content names (pictures, videos, sounds) and where, for a build to check they exist. */
+  /** The files the content names (pictures, videos, sounds) and where, for a build to check they exist. */
   files: FileRef[]
 }
 
 /**
- * What a problem is about, for `loadGame` to name the pack it came from.
- * Undefined is the game itself.
+ * The piece of content a problem is about, for `loadGame` to name the pack it came from. Undefined is the game itself.
  */
 export type Source = { list: CoreList; id: string } | { list: FeatureList; id?: string } | { plugin: string; list: string; id: string } | undefined
 
 /** The lists the core keeps itself. The features' lists are their own (`FeatureList`). */
 export type CoreList = 'prose'
 
-/** A `ui` field in a game's content: what it's written on, that thing's id where it has one, where it is (as a problem names it), and the hints as written. */
-export type UiField = { on: UiTarget; id?: string; where: string; ui: unknown }
+/** A `ui` field in a game's content, with the thing it's written on and the place it is. */
+export type UiField = {
+  /** The sort of thing the field is written on, such as a scene, a choice or a stat. */
+  on: UiTarget
+  /** The id of the thing the field is written on, where it has one. */
+  id?: string
+  /** The place the field is, written as a `Problem`'s `where` is. */
+  where: string
+  /** The field's hints, unchanged from content. */
+  ui: unknown
+}
 
-/** A line of words a player reads, with where it is: a prose line, or words written in place. Any `[[ui:…]]` pieces in it are a UI's to check. */
-export type TextLine = { where: string; text: string }
+/** A line of words a player reads, a prose line or words in place. A UI checks the `[[ui:…]]` pieces in it. */
+export type TextLine = {
+  /** The place the line is, written as a `Problem`'s `where` is. */
+  where: string
+  /** The line's words, markup and all. */
+  text: string
+}
 
-/** What `uiInContent` finds: every `ui` field and every line of words, in the order the content checker walks them. */
-export type UiInContent = { fields: UiField[]; lines: TextLine[] }
+/** The `ui` fields and lines of words `uiInContent` finds, in the order the content checker walks them. */
+export type UiInContent = {
+  /** The `ui` fields in the content. */
+  fields: UiField[]
+  /** The lines of words that could hold a UI piece. */
+  lines: TextLine[]
+}
 
 /**
- * Every `ui` field in a game's content and every line of words that could
- * hold a UI piece, found by the content checker's own walk: scenes, the
- * blocks and decisions in their flows, choices, actions, stats, kinds,
- * entities, the game's, and whatever a plugin's content holds (a place's
- * room and body). A UI package's checker reads it, so it checks its own
- * hints without walking the content itself.
+ * Returns the {@link UiInContent} of a game, every `ui` field and every line that could hold a UI piece. A UI package's
+ * checker reads it to check its own hints.
+ *
+ * The content checker's own walk finds them, in scenes, the blocks and decisions of their flows, choices, actions,
+ * stats, kinds, entities, the game's own and plugins' content, such as a location's room and body.
  */
 export function uiInContent(game: Game): UiInContent {
   const found: UiInContent = { fields: [], lines: [] }
@@ -92,17 +109,17 @@ export function uiInContent(game: Game): UiInContent {
   return found
 }
 
-/** A problem as a line: `pack · where · what`. */
+/** Returns a {@link Problem} as one line, `pack · where · what`. */
 export function describeProblem(problem: Problem): string {
   return `${problem.pack} · ${problem.where} · ${problem.what}`
 }
 
 /**
- * Everything wrong with a game's content, and every file it names. Runs on
- * any `Game`, hand-built or loaded. Give `probes` to also render every scene
- * against each state, so a scene that throws for one (through the game's own
- * conditions or values) is reported. A hand-built game's problems name the
- * pack `game`.
+ * Returns the {@link Checked} report of a game's content, its problems, warnings and the files it names. It runs on any
+ * `Game`, hand-built or loaded.
+ *
+ * Give `probes` to also render every scene against each state, so the report includes a scene that throws for one
+ * through the game's own conditions or values. A hand-built game's problems name the pack `game`.
  */
 export function checkGame(game: Game, options: { probes?: readonly Probe[] } = {}): Checked {
   return checkContent(game, options.probes ?? [], () => 'game')
@@ -172,7 +189,10 @@ function pagePath(path: string): string | null {
   return path.replace(/^\.?\//, '')
 }
 
-/** The content checker, with how to name the pack a problem came from. `loadGame` passes its own. `found` collects the `ui` fields and lines of words, for `uiInContent`. */
+/**
+ * Returns the content checker's report, naming each problem's pack through `packOf`, which `loadGame` passes. `found`
+ * collects the `ui` fields and lines of words, for `uiInContent`.
+ */
 export function checkContent(game: Game, probes: readonly Probe[], packOf: (source: Source) => string, found?: UiInContent): Checked {
   const problems: Problem[] = []
   const files: FileRef[] = []

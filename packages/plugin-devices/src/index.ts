@@ -55,118 +55,144 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
+/** A device the game declares in `data.devices.devices`, such as a phone or a laptop. Its apps name it in their `on`. */
 export type DeviceDef = {
+  /** The device's id, unique among the game's devices. */
   id: string
+  /** The device's name. */
   name: string
-  /** How the UI draws it: `'phone'`, `'laptop'`, or the game's own. */
+  /** The device's frame, a name such as `'phone'` or `'laptop'` that a UI renders it in. The device's id if left out. */
   frame?: string
-  /** Offer it from the sidebar. */
+  /** Offers the device from the sidebar, when true. */
   sidebar?: boolean
-  /** A picture behind the home screen. */
+  /** The picture behind the device's home screen. */
   wallpaper?: string
 }
 
-/** What fills an app. */
+/** A section of an app, one entry of an app's `sections`. Each form is told apart by its key. */
 export type Section =
-  /** Words, as a scene's body is written: `{ blocks: [text('…'), { prose: 'bank.balance' }] }`. */
+  /** Words, written as a scene's body is, such as `{ blocks: [text('…'), { prose: 'bank.balance' }] }`. */
   | { blocks: Block[] }
   /**
-   * Buttons, the same as a room's. One with a cost or effects is done as
-   * `{ type: 'action', id: 'devices/<id>' }`, so give each an id no other app's action has.
+   * Actions, as a location's are. One with a cost or effects runs as `{ type: 'action', id: 'devices/<id>' }`, so give
+   * each an id no other app's action has.
    */
   | { actions: ActionDef[] }
   /**
-   * The things of a kind a holder holds, newest first: `{ things: { of: 'photo' } }`
-   * for the photos you have. `at` is `'you'` if left out.
+   * The things of a kind a holder holds, such as `{ things: { of: 'photo' } }` for your photos. `at` is `'you'` if left
+   * out.
+   *
+   * The things come in reverse entity order, so the newest made in play come first.
    */
   | { things: { of: string; at?: string } }
-  /** The people the player can call and has met (the cast plugin's `cast/contacts`), with a Call button each. */
+  /** The people the player has met and can call (the cast's `cast/contacts`), each with a Call button. Empty without the cast. */
   | { contacts: true }
-  /** Another plugin's view, for the UI to draw with that plugin's renderer: a channel, a feed. */
+  /** Another plugin's view, such as a messages channel or a feed, which a UI renders with that plugin's components. */
   | { plugin: string; with?: Record<string, unknown> }
-  /** A panel the UI draws by name, as one the `panel` effect opens is, with what it is opened with. */
+  /** A panel a UI renders by name, as one the `panel` effect opens is, with the values it opens with. */
   | { panel: string; with?: Record<string, unknown> }
 
+/** An app the game declares in `data.devices.apps`. Opening it changes no location and passes no time. */
 export type AppDef = {
+  /** The app's id, unique among the game's apps. */
   id: string
+  /** The app's name. */
   name: string
-  /** A name the UI maps to a picture. */
+  /** The app's icon, a name a UI maps to a picture. */
   icon: string
-  /** The device it is on. */
+  /** The id of the device the app is on. */
   on: string
-  /** Installed: off the home screen until this holds. */
+  /** The app's install condition. The app stays off the home screen until it holds. */
   when?: Condition
-  /** On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. */
+  /** The app's refusals. The first entry whose `when` holds disables the app with its reason, or leaves it off the home screen with `hide`. */
   blocked?: Blocked[]
   /**
-   * A count, as an `Amount`: a value asked with its arguments
-   * (`{ value: 'messages/unread', with: { channel: 'texts' } }`), a stat or a
-   * kv key's number. Or a dot while a condition holds (`{ when }`).
+   * The app's badge, a count or a dot. A count is an {@link Amount}, such as a value asked with its arguments
+   * (`{ value: 'messages/unread', with: { channel: 'texts' } }`), a stat or a kv key's number.
+   *
+   * `{ when }` shows a dot while the condition holds.
    */
   badge?: Amount | { when: Condition }
-  /**
-   * What the app shows, top to bottom: words, actions, inputs, or a plugin's list (messages, a feed). See `Section`.
-   */
+  /** The app's sections, top to bottom. Each is a {@link Section}. */
   sections: Section[]
 }
 
 /**
- * What the plugin keeps in a save: each device the player has out, by id,
- * with the app open on it, or null on its home screen. A device not in
- * `shown` is put away. So every UI draws the same thing.
+ * The devices a save keeps out, each mapped to its open app, or null on its home screen. A device left out of `shown`
+ * is put away.
+ *
+ * Definitions are read from content.
  */
-export type DevicesState = { shown: Record<string, string | null> }
+export type DevicesState = {
+  /** The devices out, each id mapped to the open app's id, or null on the home screen. */
+  shown: Record<string, string | null>
+}
 
+/** An app's section as the player sees it, in an {@link AppView}'s `sections`. Each form is told apart by its `type`. */
 export type SectionView =
-  /** Words: the section's blocks as beats, drawn as a scene's are, and their words as text, for a UI that draws no beats. */
+  /** Words, the section's blocks rendered as beats, and their words joined as `text` for a UI that renders no beats. */
   | { type: 'prose'; text: string; beats: SceneBeat[] }
+  /** Actions, each rendered as a button. Actions whose `when` fails, or that a `hide` entry refuses, are left out. */
   | { type: 'actions'; actions: RenderedChoice[] }
+  /** A list of things or contacts, each entry with a title, a line, a picture's path or null, and its buttons. */
   | {
       type: 'list'
       entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[]
     }
+  /** Another plugin's view, named by its plugin id, with the section's `with` (`{}` if left out). */
   | { type: 'plugin'; plugin: string; with: Record<string, unknown> }
+  /** A panel named by its id, with the section's `with` (`{}` if left out). */
   | { type: 'panel'; panel: string; with: Record<string, unknown> }
 
+/** An app as the player sees it, in a {@link DeviceView}'s `apps` and `open`. */
 export type AppView = {
+  /** The app's id. */
   id: string
+  /** The app's name. */
   name: string
-  /** A name the UI maps to a picture. */
+  /** The app's icon, a name a UI maps to a picture. */
   icon: string
-  /** A count, a dot (`true`), or nothing (`0`). */
+  /** The app's badge, a count, a dot (`true`), or nothing (`0` or `false`). */
   badge: number | boolean
-  /** Why it can't be opened now, if it can't. */
+  /** The reason the app can't open now, from its `blocked` or a lock on `devices/open`. Left out when it can open. */
   disabled?: string
-  /** What opening it sends: `devices/open`. */
+  /** The `devices/open` command that opens the app. */
   command: Command
-  /** Filled in for the open app only. */
+  /** The app's sections. They're filled in only for the open app, and empty otherwise. */
   sections: SectionView[]
 }
 
+/** A device as the player sees it, in `view.plugins.devices.devices`. */
 export type DeviceView = {
+  /** The device's id. */
   id: string
+  /** The device's name. */
   name: string
-  /** How the UI draws it: `'phone'`, `'laptop'`, or the game's own. The device's id if it gives none. */
+  /** The device's frame, such as `'phone'` or `'laptop'`. The device's id when it gives none. */
   frame: string
-  /** Whether the sidebar offers it. */
+  /** True when the sidebar offers the device. */
   sidebar: boolean
-  /** The picture behind its home screen, through `artSrc`, or null. */
+  /** The device's `wallpaper` as written, or null when it has none. */
   wallpaper: string | null
-  /** Every count, plus one for each dot: what the sidebar button shows. */
+  /** The device's badge, the sum of its apps' counts plus one for each dot. The sidebar button shows it. */
   badge: number
-  /** Installed apps, in order. */
+  /** The device's installed apps, in declared order. A `hide` entry that holds leaves an app out. */
   apps: AppView[]
-  /** Out: on its home screen, or on an app. A UI draws a device that's shown, and none that isn't. */
+  /** True while the device is out, on its home screen or an app. A UI renders a device only while it's shown. */
   shown: boolean
-  /** The app open on it while it's shown, or null on its home screen or put away. */
+  /** The app open on the device while it's shown, or null on its home screen or while put away. */
   open: AppView | null
-  /** The button that shows it on its home screen, from put away or from an app (the `devices/home` string, `Home`). */
+  /** The button that shows the device's home screen, from put away or from an app. Its label is the `devices/home` string, "Home". */
   home: RenderedChoice
-  /** The button that puts it away (the `devices/close` string, `Close`), or null while it isn't shown. */
+  /** The button that puts the device away, labelled with the `devices/close` string, "Close". Null while the device isn't shown. */
   close: RenderedChoice | null
 }
 
-export type DevicesView = { devices: DeviceView[] }
+/** The devices as the player sees them, in `view.plugins.devices`. */
+export type DevicesView = {
+  /** The game's devices, in declared order, whether shown or not. */
+  devices: DeviceView[]
+}
 
 /**
  * What content writes for each of the plugin's calls (from `CALLS`), its
@@ -205,12 +231,12 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's devices: `data.devices.devices`, from its content and packs. */
+/** Returns the game's devices, `data.devices.devices` from its content and packs, in declared order. */
 export function devicesOf(game: Game): DeviceDef[] {
   return DATA.devices.all(game)
 }
 
-/** The game's apps, on every device: `data.devices.apps`, from its content and packs. */
+/** Returns the game's apps on every device, `data.devices.apps` from its content and packs, in declared order. */
 export function appsOf(game: Game): AppDef[] {
   return DATA.apps.all(game)
 }
@@ -445,7 +471,19 @@ const closeApp = (device: string): CommandRef => CALLS.commands.close({ id: devi
 const appOpen = (app: string): Condition => CALLS.conditions.open({ app })
 
 /**
- * The plugin, with its helpers on it: `devices()` makes the plugin for the
- * game's `plugins`, and content is written with `devices.open('camera')`.
+ * Returns the devices plugin, for the game's `plugins`. It cooperates with the cast, whose people a `contacts` section
+ * lists.
+ *
+ * Content declares devices and apps in `data.devices.devices` and `data.devices.apps`, and the helpers write its calls,
+ * such as `devices.open('camera')`.
  */
-export const devices = Object.assign(devicesPlugin, { open: openApp, home: homeScreen, close: closeApp, appOpen })
+export const devices = Object.assign(devicesPlugin, {
+  /** Returns the `devices/open` command, which opens the app and shows its device. It passes no time. */
+  open: openApp,
+  /** Returns the `devices/home` command, which shows the device on its home screen, from put away or from an app. */
+  home: homeScreen,
+  /** Returns the `devices/close` command, which puts the device away. */
+  close: closeApp,
+  /** Returns the `devices/open` condition, which holds while the app is open on a device that's shown. */
+  appOpen,
+})

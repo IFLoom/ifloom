@@ -60,27 +60,30 @@ declare module '@ifloom/react' {
   }
 }
 
-/** The devices in the view (an empty list when the game has no devices plugin). */
+/** The devices in `view.plugins.devices.devices`, as `useDevices` returns them. The list is empty in a game without the plugin. */
 export type DevicesState = DeviceView[]
 
-/** The devices in the view, if the game has the devices plugin. */
+/** Returns the devices from the running game, or an empty list in a game without the plugin. It re-renders when the view changes. */
 export function useDevices(): DevicesState {
   return usePlugin(DEVICES).view?.devices ?? []
 }
 
-/** Which device is out, as the game's state has it, and how to bring one out and put it away. */
+/**
+ * The device that's out and the controls to bring a device out or put it away, as `useDevice` returns them. The
+ * state comes from the save, so every UI agrees.
+ */
 export type DeviceState = {
-  /** The id of the device that's out, the first if more than one is, or `null`. */
+  /** The id of the device that's out, the first if more than one is, or null when none is. */
   openId: string | null
-  /** That device as the view has it, or `null`. */
+  /** The device that's out, or null when none is. */
   device: DeviceView | null
-  /** Brings a device out on its home screen: sends its `home` button's command. */
+  /** Brings the device out on its home screen by sending its `home` button's command. */
   open: (id: string) => void
-  /** Puts the device that's out away: sends its `close` button's command. */
+  /** Puts the device that's out away by sending its `close` button's command. */
   close: () => void
 }
 
-/** Which device is out, for a button row and the dialog that shows it. Every call reads the same, from the view. */
+/** Returns the device that's out and the controls to open and close devices, from the running game. It re-renders when the view changes. */
 export function useDevice(): DeviceState {
   const { send } = usePlugin(DEVICES)
   const devices = useDevices()
@@ -117,7 +120,12 @@ function DeviceButtonsImpl() {
   )
 }
 
-/** The sidebar's device buttons, each with its badge; a button brings the device out on its home screen, and the `DeviceDialog` shows it. */
+/**
+ * Renders a button for each device with `sidebar` set, from `view.plugins.devices`, each with its badge. A preset
+ * styles its `devices`, `device-button` and `device-badge` parts.
+ *
+ * A button brings its device out on its home screen, and the `DeviceDialog` shows it.
+ */
 export const DeviceButtons = overridable('DeviceButtons', DeviceButtonsImpl)
 
 function AppSectionImpl({ section }: { section: SectionView }) {
@@ -165,19 +173,31 @@ function AppSectionImpl({ section }: { section: SectionView }) {
   }
 }
 
-/** One section of an open app, drawn by kind; a plugin section by that plugin's renderer. */
+/**
+ * Renders one section of an open app by its `type`. A preset styles its `app-prose`, `app-entries`, `app-entry` and
+ * related parts.
+ *
+ * A `plugin` section renders with the section component that plugin's UI registers, and a `panel` section with the
+ * game's panel of that name. Either renders nothing when no UI supplies one.
+ */
 export const AppSection = overridable('AppSection', AppSectionImpl)
 
-/** The app being drawn, and its device. */
-export type OpenAppState = { device: DeviceView; app: AppView }
+/** The app being rendered and its device, as `useOpenApp` returns them. */
+export type OpenAppState = {
+  /** The device the app is open on. */
+  device: DeviceView
+  /** The open app, with all its sections. */
+  app: AppView
+}
 
 const OpenApp = createContext<OpenAppState | null>(null)
 
 /**
- * The app a section is drawn in, with all its sections, and its device; null
- * outside an open app. A `{ panel }` section's component gets only its `with`
- * as `data`, so it reads the app's other sections here: the buttons of an
- * `actions` section, to draw them on a card of its own.
+ * Returns the open app a section renders in, with its device, or null outside an open app. It re-renders when the
+ * open app changes.
+ *
+ * A `{ panel }` section's component gets only its `with` as `data`, so it reads the app's other sections here, such
+ * as an `actions` section's buttons to render on a card of its own.
  */
 export function useOpenApp(): OpenAppState | null {
   return useContext(OpenApp)
@@ -245,7 +265,10 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
   )
 }
 
-/** A device, open: its home screen of apps, or the app that is open, with a way back. */
+/**
+ * Renders a device's screen, its home screen of apps or the open app with a back button. A preset styles its
+ * `device-screen`, `app-launcher`, `app-button`, `app-icon`, `app-badge`, `app` and `app-header` parts.
+ */
 export const DeviceScreen = overridable('DeviceScreen', DeviceScreenImpl)
 
 function DeviceDialogImpl({ deviceId, onClose }: { deviceId?: string | null; onClose?: () => void }) {
@@ -282,10 +305,10 @@ function DeviceDialogImpl({ deviceId, onClose }: { deviceId?: string | null; onC
 }
 
 /**
- * The device that's out, in a dialog, drawn in its frame (`data-frame` for
- * the theme to style a phone or a laptop); `deviceId` draws only that one.
- * Closing the dialog puts the device away, and calls `onClose` if given. The
- * devices UI draws one for the whole game.
+ * Renders the device that's out in a dialog, with its frame in `data-frame` for a preset to style a phone or a
+ * laptop. With `deviceId`, it renders only that device.
+ *
+ * Closing the dialog puts the device away and calls `onClose`. `devicesUi` renders one for the whole game.
  */
 export const DeviceDialog = overridable('DeviceDialog', DeviceDialogImpl)
 
@@ -310,18 +333,18 @@ function DeviceStripImpl() {
 }
 
 /**
- * Each app with news on the game's devices, as a count in the `NoticeStrip`:
- * a button that opens the device on that app. The devices UI puts it at the
- * strip's `strip` spot.
+ * Renders a button in the `NoticeStrip` for each app with a badge that can open, with its count or a dot. A preset
+ * styles its `notice-strip-item` and `badge` parts.
+ *
+ * A button opens its app, which brings the device out. `devicesUi` places it in the layout's `strip`.
  */
 export const DeviceStrip = overridable('DeviceStrip', DeviceStripImpl)
 
 /**
- * The devices plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `DeviceButtons` in the side column, each app with
- * news in the `NoticeStrip`, and the `DeviceDialog` for the device that's
- * out. An app's plugin sections are drawn by the UI of the plugin they name,
- * such as `messagesUi` and `feedUi`.
+ * The devices plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `DeviceButtons` to the
+ * sidebar, the `DeviceStrip` to the notice strip and one `DeviceDialog` for the device that's out.
+ *
+ * The UI of the plugin an app's `plugin` section names renders that section, so list `messagesUi` and `feedUi` too.
  */
 export const devicesUi: PluginUi = {
   ...DEVICES,

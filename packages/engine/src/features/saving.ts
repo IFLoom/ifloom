@@ -10,32 +10,31 @@ import { reasonOf } from '../strings.ts'
 import type { Condition, GameState } from '../types.ts'
 import { appended, defineFeature, listWords } from './feature.ts'
 
-/** Whether the player can save now, and why not: what `view.saving` holds. */
+/** The player's leave to save as the player sees it, in `view.saving`. A UI greys out or hides its Save button from it. */
 export type SavingView = {
-  /** False while one of `game.saveable`'s entries holds. */
+  /** The leave to save, false while one of the game's `saveable` entries holds. */
   allowed: boolean
-  /** The first entry's `reason` that holds, or null when saving is allowed. */
+  /** The reason of the first `saveable` entry that holds. Null when saving is allowed. */
   reason: string | null
-  /** False while that entry has `hide`: leave Save off the screen rather than greyed out. */
+  /** The Save button's visibility, false while the entry that holds has `hide`. A UI then leaves Save off the screen rather than greying it out. */
   visible: boolean
 }
 
-/** What the saving feature adds, as types. */
+/** The saving feature's content key and view, as types. */
 export type SavingShape = {
   game: {
     /**
-     * When saving is refused, and why: `blocked` entries, refused while
-     * `when` holds, as a choice's are. The first that holds gives the
-     * reason. Saving is always allowed if left out.
+     * The game's reasons to refuse saving, as `blocked` entries refused while their `when` holds. The first entry
+     * that holds gives the reason, and saving is always allowed if left out.
      */
     saveable?: Blocked[]
   }
   pack: {
-    /** When saving is refused, after the entries before; one with the `id` of an earlier one takes its place. */
+    /** The pack's reasons to refuse saving, added after the content's. An entry with the `id` of an earlier one replaces it. */
     saveable?: Blocked[]
   }
   view: {
-    /** Whether the player can save now, for a Save button. */
+    /** The player's leave to save now, with the reason when it's refused. */
     saving: SavingView
   }
   lists: 'saveable'
@@ -43,12 +42,13 @@ export type SavingShape = {
 
 const ALLOWED: SavingView = Object.freeze({ allowed: true, reason: null, visible: true })
 
-/** Whether the player can save in this state, by the game's `saveable`. */
+/** Returns the player's leave to save in this state, from the game's `saveable`. Saving is allowed when no entry holds. */
 export function savingIn(state: GameState, game: Game, holds: (state: GameState, game: Game, condition: Condition | undefined) => boolean): SavingView {
   const entry = game.saveable?.find((blocked) => holds(state, game, blocked.when))
   return entry ? { allowed: false, reason: reasonOf(game, entry.reason), visible: !entry.hide } : ALLOWED
 }
 
+/** The saving feature, which refuses saving while a `saveable` entry holds. */
 export const saving = defineFeature<SavingShape>({
   name: 'saving',
   pack: appended<SavingShape['game'], SavingShape['pack'], Blocked & { id?: string }>(

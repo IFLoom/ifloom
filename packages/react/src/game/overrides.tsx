@@ -246,8 +246,8 @@ export const PART_KEYS = [
 ] as const
 
 /**
- * The parts a plugin's React UI draws, by name, added by augmenting this
- * interface so `classes` and `usePart` take them typed:
+ * The `data-part` names that plugin UIs add, as keys of an interface each UI augments. `classes` and `usePart` then
+ * take them typed.
  *
  *   declare module '@ifloom/react' {
  *     interface PartNames { shop: true; good: true }
@@ -256,121 +256,185 @@ export const PART_KEYS = [
 // oxlint-disable-next-line typescript/no-empty-interface, typescript/no-empty-object-type -- filled by augmentation
 export interface PartNames {}
 
-/** A `data-part` name: one of `PART_KEYS`, or one a plugin's UI adds through `PartNames`. */
+/** A `data-part` name, either one the React UI renders or one a plugin's UI adds through {@link PartNames}. */
 // oxlint-disable-next-line typescript/no-redundant-type-constituents -- `never` here until a plugin's UI augments PartNames
 export type PartKey = (typeof PART_KEYS)[number] | Extract<keyof PartNames, string>
 
 /**
- * Classes for a part. A string is merged over the built-in classes (yours win
- * where they clash); a function gets the built-in classes and returns the ones
- * to use, so `() => 'font-serif'` replaces them outright.
+ * Tailwind classes for the UI's parts, by `data-part` name. A string merges over the built-in classes and wins where
+ * they clash.
+ *
+ * A function gets the built-in classes and returns the ones to use, so `() => 'font-serif'` replaces them outright.
  */
 export type Classes = Partial<Record<PartKey, string | ((defaults: string) => string)>>
 
-/** A replacement for a built-in component. It gets the same props, and the built-in one as `Default`. */
+/** A component that replaces a built-in one. It gets the same props, and the built-in component as `Default`. */
 export type Override<P> = ComponentType<P & { Default: ComponentType<P> }>
 
 type PropsOf<T> = T extends ComponentType<infer P> ? P : never
 
 /**
- * The built-in components a game can replace, by name, each with the props it
- * takes. A plugin's React UI adds its own by augmenting this interface:
+ * The built-in components a game can replace, by name, each typed by the props it takes. A plugin's React UI adds its
+ * own by augmenting this interface.
  *
  *   declare module '@ifloom/react' {
  *     interface OverridableComponents { ShopCounter: Override<ShopCounterProps> }
  *   }
  */
 export interface OverridableComponents {
+  /** The replacement for `Game`. */
   Game: Override<PropsOf<typeof Game>>
+  /** The replacement for `Sidebar`. */
   Sidebar: Override<PropsOf<typeof Sidebar>>
+  /** The replacement for `Story`. */
   Story: Override<PropsOf<typeof Story>>
+  /** The replacement for `Overlay`. */
   Overlay: Override<PropsOf<typeof Overlay>>
+  /** The replacement for `Section`. */
   Section: Override<PropsOf<typeof Section>>
+  /** The replacement for `When`. */
   When: Override<PropsOf<typeof When>>
+  /** The replacement for `Title`. */
   Title: Override<PropsOf<typeof Title>>
+  /** The replacement for `Clock`. */
   Clock: Override<PropsOf<typeof Clock>>
+  /** The replacement for `StatList`. */
   StatList: Override<PropsOf<typeof StatList>>
+  /** The replacement for `RoomActions`. */
   RoomActions: Override<PropsOf<typeof RoomActions>>
+  /** The replacement for `Scene`. */
   Scene: Override<PropsOf<typeof Scene>>
+  /** The replacement for `Beat`. */
   Beat: Override<PropsOf<typeof Beat>>
+  /** The replacement for `SceneHeader`. */
   SceneHeader: Override<PropsOf<typeof SceneHeader>>
+  /** The replacement for `BeatGroup`. */
   BeatGroup: Override<PropsOf<typeof BeatGroup>>
+  /** The replacement for `Fold`. */
   Fold: Override<PropsOf<typeof Fold>>
+  /** The replacement for `InlineAction`. */
   InlineAction: Override<PropsOf<typeof InlineAction>>
+  /** The replacement for `Tip`. */
   Tip: Override<PropsOf<typeof Tip>>
+  /** The replacement for `ChoiceList`. */
   ChoiceList: Override<PropsOf<typeof ChoiceList>>
+  /** The replacement for `ChoiceButton`. */
   ChoiceButton: Override<PropsOf<typeof ChoiceButton>>
+  /** The replacement for `PriceTag`. */
   PriceTag: Override<PropsOf<typeof PriceTag>>
+  /** The replacement for `Notices`. */
   Notices: Override<PropsOf<typeof Notices>>
+  /** The replacement for `Notice`. */
   Notice: Override<PropsOf<typeof Notice>>
+  /** The replacement for `NoticeStrip`. */
   NoticeStrip: Override<PropsOf<typeof NoticeStrip>>
+  /** The replacement for `MinigameCard`. */
   MinigameCard: Override<PropsOf<typeof MinigameCard>>
+  /** The replacement for `DiceRoll`. */
   DiceRoll: Override<PropsOf<typeof DiceRoll>>
+  /** The replacement for `DiceOverlay`. */
   DiceOverlay: Override<PropsOf<typeof DiceOverlay>>
+  /** The replacement for `Countdown`. */
   Countdown: Override<PropsOf<typeof Countdown>>
+  /** The replacement for `Timers`. */
   Timers: Override<PropsOf<typeof Timers>>
+  /** The replacement for `Changes`. */
   Changes: Override<PropsOf<typeof Changes>>
+  /** The replacement for `ChangeItem`. */
   ChangeItem: Override<PropsOf<typeof ChangeItem>>
+  /** The replacement for `GameMenu`. */
   GameMenu: Override<PropsOf<typeof GameMenu>>
+  /** The replacement for `SavesMenu`. */
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
+  /** The replacement for `Backlog`. */
   Backlog: Override<PropsOf<typeof Backlog>>
+  /** The replacement for `ModManager`. */
   ModManager: Override<PropsOf<typeof ModManager>>
+  /** The replacement for `Inventory`. */
   Inventory: Override<PropsOf<typeof Inventory>>
+  /** The replacement for `PanelHost`. */
   PanelHost: Override<PropsOf<typeof PanelHost>>
+  /** The replacement for `EntityTable`. */
   EntityTable: Override<PropsOf<typeof EntityTable>>
+  /** The replacement for `InputFields`. */
   InputFields: Override<PropsOf<typeof InputFields>>
+  /** The replacement for `InputField`. */
   InputField: Override<PropsOf<typeof InputField>>
+  /** The replacement for `Picture`. */
   Picture: Override<PropsOf<typeof Picture>>
+  /** The replacement for `Video`. */
   Video: Override<PropsOf<typeof Video>>
+  /** The replacement for `LayeredPicture`. */
   LayeredPicture: Override<PropsOf<typeof LayeredPicture>>
+  /** The replacement for `Hotspot`. */
   Hotspot: Override<PropsOf<typeof Hotspot>>
+  /** The replacement for `MediaViewer`. */
   MediaViewer: Override<PropsOf<typeof MediaViewer>>
+  /** The replacement for `Icon`. */
   Icon: Override<PropsOf<typeof Icon>>
+  /** The replacement for `TitlePage`. */
   TitlePage: Override<PropsOf<typeof TitlePage>>
+  /** The replacement for `SettingsPage`. */
   SettingsPage: Override<PropsOf<typeof SettingsPage>>
+  /** The replacement for `LoadPage`. */
   LoadPage: Override<PropsOf<typeof LoadPage>>
+  /** The replacement for `CreditsPage`. */
   CreditsPage: Override<PropsOf<typeof CreditsPage>>
+  /** The replacement for `GatePage`. */
   GatePage: Override<PropsOf<typeof GatePage>>
 }
 
-/** Replacements for any of the `OverridableComponents`, by name. */
+/** Replacements for any of the {@link OverridableComponents}, by name. */
 export type Components = Partial<OverridableComponents>
 
-/** How the UI looks: the components it draws and the classes on its parts. Part of `UiOptions`. */
+/** The options that change how the UI looks, part of {@link UiOptions}. They replace components and restyle parts. */
 export type StyleOptions = {
-  /** Replacements for built-in components, by name. */
+  /** The game's replacements for built-in components, by name. */
   components?: Components
-  /** Classes for parts, by `data-part` name. */
+  /** The game's classes for the UI's parts, by `data-part` name. */
   classes?: Classes
-  /** Drop every built-in class. The structure and the `data-part`s stay, for your own styles. */
+  /** True to drop every built-in class, keeping the structure and the `data-part`s for your own styles. False if left out. */
   unstyled?: boolean
 }
 
-/** How the UI behaves: the media viewer, keyboard shortcuts and motion. Part of `UiOptions`. */
+/**
+ * The options that change how the UI behaves, part of {@link UiOptions}. They turn the media viewer, keyboard shortcuts
+ * and motion on or off.
+ */
 export type BehaviourOptions = {
-  /** Let the player click a picture or a video in the story to see it large. On if left out. */
+  /** True to let the player click a picture or a video in the story to see it large. True if left out. */
   viewer?: boolean
   /**
-   * Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for
-   * the menu, and any keys of the game's own in `map`. Off if left out. A
-   * minigame's keys work either way.
+   * The keyboard shortcuts, 1 to 9 for the choices or actions on screen, Escape for the menu and the game's own keys in
+   * `map`. Off if left out.
+   *
+   * A minigame's keys work either way.
    */
   keys?: boolean | KeyOptions
   /**
-   * Play scene transitions and prose reveals (the `ui.transition` and
-   * `ui.reveal` hints). On if left out. `false` shows every scene and every line at once.
-   * A player whose system asks for reduced motion gets them at once either way.
+   * True to play scene transitions and prose reveals, the `ui.transition` and `ui.reveal` hints. True if left
+   * out, and `false` shows every scene and every line at once.
+   *
+   * A player whose system asks for reduced motion sees them at once either way.
    */
   motion?: boolean
 }
 
-/** What a game passes to make the UI its own: how it looks and how it behaves. `GameProvider`, `GameShell` and `mountGame` all take these. */
+/**
+ * The options that make the React UI a game's own, how it looks and how it behaves. `GameProvider`, `GameShell` and
+ * `mountGame` all take them.
+ */
 export type UiOptions = StyleOptions & BehaviourOptions
 
 const NONE = {}
 const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true, keys: false, motion: true })
 
-/** Gives the components below it a game's `components`, `classes`, `unstyled`, `viewer`, `keys` and `motion`. `GameProvider` uses it. */
+/**
+ * Renders its children with a game's {@link UiOptions}. A provider inside another adds to the outer one's options, so a
+ * screen can restyle its own corner.
+ *
+ * `GameProvider` renders one.
+ */
 export function UiProvider({ components = NONE, classes = NONE, unstyled = false, viewer, keys, motion, children }: UiOptions & { children: ReactNode }) {
   const parent = useContext(UiContext)
   // Nested providers add to the outer one, so a screen can restyle just its own corner.
@@ -386,8 +450,10 @@ export function UiProvider({ components = NONE, classes = NONE, unstyled = false
 }
 
 /**
- * The attributes for one part: its `data-part` and its classes. `defaults` are
- * the built-in classes; `extra` is a `className` a caller passed, added last.
+ * Returns the `data-part` and `className` attributes for one part. `defaults` are its built-in classes, and `extra` is
+ * a caller's `className`, added last.
+ *
+ * The game's `classes` for the part go over `defaults`, and `unstyled` drops `defaults`.
  */
 export function usePart(name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; className: string } {
   const { classes, unstyled } = useContext(UiContext)
@@ -412,7 +478,10 @@ export function useKeysOption(): boolean | KeyOptions {
   return useContext(UiContext).keys
 }
 
-/** A built-in component that a game can replace by `name`. Used for every component the UI exports. */
+/**
+ * Returns a component that renders `Default`, or the game's replacement registered under `name` in `components`. Every
+ * component the UI exports is one.
+ */
 export function overridable<P extends object>(name: keyof OverridableComponents, Default: ComponentType<P>): ComponentType<P> {
   function Overridable(props: P) {
     const Custom = useContext(UiContext).components[name] as Override<P> | undefined

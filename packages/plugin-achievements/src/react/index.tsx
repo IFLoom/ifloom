@@ -21,12 +21,17 @@ import {
   usePlugin,
 } from '@ifloom/react/kit'
 
-/** The achievements plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The achievements plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings. */
 export const ACHIEVEMENTS_WORDS = {
+  /** The badge on an achievement the player has earned. */
   achievementEarned: 'Earned',
+  /** The line under an achievement's progress bar, with `{value}` and `{target}`. */
   achievementProgress: '{value} of {target}',
+  /** The title of the achievement list, its page, its dialog and the button that opens them. */
   achievements: 'Achievements',
+  /** The count of achievements earned, with `{earned}` and `{total}`. */
   achievementsCount: '{earned} of {total}',
+  /** The line the list shows while the game has no achievements to show. */
   noAchievements: 'No achievements yet.',
 } as const
 
@@ -57,10 +62,10 @@ declare module '@ifloom/react' {
 }
 
 /**
- * The achievements plugin's view: every achievement in the order the game
- * declares them, with how many are earned, or null in a game without the
- * plugin. A secret one not yet earned comes titled `???` with no description.
- * `AchievementList` is drawn from it.
+ * Returns the achievements plugin's view from the running game, or null in a game without the plugin. It re-renders
+ * when the view changes.
+ *
+ * A secret achievement not yet earned comes named `???`, with no description. `AchievementList` renders from it.
  */
 export function useAchievements(): AchievementsView | null {
   return usePlugin(ACHIEVEMENTS).view ?? null
@@ -139,10 +144,12 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
 }
 
 /**
- * Every achievement the game has: earned ones marked, secret ones not yet
- * earned as `???`, and a progress bar on any with a count to reach. Earned in
- * any save counts, as the profile remembers it. `title` replaces the heading;
- * `false` leaves it out. A thin default on `useAchievements`.
+ * Renders the list of achievements from `view.plugins.achievements`, marking earned ones. A preset styles its
+ * `achievements`, `achievement`, `achievement-title`, `achievement-progress` and related parts.
+ *
+ * An achievement earned in any save the profile remembers counts as earned. A secret one not yet earned shows as
+ * `???`, and one with a count to reach shows a progress bar. `title` replaces the heading, and `false` leaves it out.
+ * It renders nothing in a game without the plugin.
  */
 export const AchievementList = overridable('AchievementList', AchievementListImpl)
 
@@ -161,7 +168,10 @@ function AchievementsPageImpl({ className }: { className?: string }) {
   )
 }
 
-/** The achievements page, among the pages around the game: an `AchievementList` and a way back. */
+/**
+ * Renders the achievements page, one of the pages around the game, with an `AchievementList` and a back button. A
+ * preset styles its `achievements-page` part.
+ */
 export const AchievementsPage = overridable('AchievementsPage', AchievementsPageImpl)
 
 function AchievementsButtonImpl({ className }: { className?: string }) {
@@ -190,19 +200,20 @@ function AchievementsButtonImpl({ className }: { className?: string }) {
 }
 
 /**
- * The button that shows the achievements, with how many are earned: the
- * `'achievements-button'` part. With pages on it goes to the achievements
- * page (unless the game left that page out); otherwise it opens them in a
- * dialog. Nothing in a game without the plugin.
+ * Renders the button that opens the achievements, with the number earned. A preset styles its `achievements-button`
+ * part.
+ *
+ * With pages on and the achievements page present, the button goes to that page. Otherwise it opens the list in a
+ * dialog. It renders nothing in a game without the plugin.
  */
 export const AchievementsButton = overridable('AchievementsButton', AchievementsButtonImpl)
 
 /**
- * The achievements plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `AchievementsButton` in the side column, the
- * `achievements` page (with its title-screen button) when pages are on, the
- * `achievements` panel, and the achievements' words. To keep them in a
- * dialog with pages on, leave the page out: `{ ...achievementsUi, pages: undefined }`.
+ * The achievements plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the
+ * `AchievementsButton` to the sidebar, the `achievements` page and panel, and the plugin's words.
+ *
+ * The page appears only when pages are on, with a button on the title screen. To keep the list in a dialog with pages
+ * on, leave the page out with `{ ...achievementsUi, pages: undefined }`.
  */
 export const achievementsUi: PluginUi = {
   ...ACHIEVEMENTS,

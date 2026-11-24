@@ -13,9 +13,7 @@ Generated from the source of `@ifloom/plugin-quests` and `@ifloom/plugin-quests/
 
 Function. Explained in [Quests](/docs/plugins/quests#advance).
 
-Bring the record up to date with the game state: start what should start,
-move each quest on through every stage that is done, in order, and mark the
-ones that are finished. Nothing is ever taken back.
+Returns the quests record brought up to date with the game state. It never takes progress back.
 
 ```ts shape
 import { advance } from '@ifloom/plugin-quests'
@@ -27,6 +25,8 @@ Uses: [`QuestsState`](#questsstate), [`GameState`](/docs/api/engine#gamestate), 
 ### QuestDef
 
 Type. Explained in [Quests](/docs/plugins/quests#questdef).
+
+A quest the game declares in `data.quests.quests`. It needs at least one stage.
 
 ```ts shape
 import type { QuestDef } from '@ifloom/plugin-quests'
@@ -43,19 +43,19 @@ type QuestDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  | What the player reads: "Find your feet". |
-| `description` | `string` | yes |  | A line or two about it, for the quest list. |
-| `storyline` | `string` | yes |  | The storyline it belongs to, for a UI that groups quests by person. |
-| `starts` | [`Condition`](/docs/api/engine#condition) | yes |  | It starts the first time this holds. Leave it out to start the quest only with the `quests/start` effect. |
-| `secret` | `boolean` | yes |  | Left out of the count of quests still to find until it starts. |
-| `stages` | [`QuestStage[]`](#queststage) |  |  | In order. The quest is done when the last one is. |
+| `id` | `string` |  |  | The quest's id. |
+| `name` | `string` |  |  | The quest's name, such as "Find your feet". |
+| `description` | `string` | yes |  | The quest's line or two for the quest list. |
+| `storyline` | `string` | yes |  | The id of the storyline the quest belongs to, for a UI that groups quests by storyline. |
+| `starts` | [`Condition`](/docs/api/engine#condition) | yes |  | The condition that starts the quest the first time it holds. Without it, only the `quests/start` effect starts the quest. |
+| `secret` | `boolean` | yes |  | True to leave the quest out of the count of quests to find until it starts. |
+| `stages` | [`QuestStage[]`](#queststage) |  |  | The quest's stages, in order. The quest is done when the last stage is. |
 
 ### QuestEntry
 
 Type. Explained in [Quests](/docs/plugins/quests#questentry).
 
-A quest as the UI shows it.
+A started quest as the player sees it, in `view.plugins.quests.active` and `done`.
 
 ```ts shape
 import type { QuestEntry } from '@ifloom/plugin-quests'
@@ -77,24 +77,24 @@ type QuestEntry = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-| `description` | `string` |  |  | A line about it; `''` with none. |
-| `storyline` | `string \| null` |  |  | The storyline it belongs to, for a UI that groups quests by person, or null. |
-| `hint` | `string` |  |  | The hint for the stage the player is on; empty once the quest is done. |
-| `stage` | `number` |  |  | Stages done, and how many there are. |
-| `stages` | `number` |  |  | How many stages it has. |
-| `startedOn` | `number` |  |  | The turn it started. |
-| `doneOn` | `number \| null` |  |  | The turn it was done, or null while it isn't. |
-| `tracked` | `boolean` |  |  | Whether it's the quest the player tracks. |
-| `updated` | `boolean` |  |  | Started or moved on since the player last looked. |
-| `track` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that tracks it, or stops tracking it once it's tracked (labelled with the `quests/track` or `quests/untrack` string), or null once the quest is done. |
+| `id` | `string` |  |  | The quest's id. |
+| `name` | `string` |  |  | The quest's name. |
+| `description` | `string` |  |  | The quest's description, or `''` when it has none. |
+| `storyline` | `string \| null` |  |  | The id of the quest's storyline, for a UI that groups quests by storyline, or null. |
+| `hint` | `string` |  |  | The hint for the stage the player is on, or `''` once the quest is done. |
+| `stage` | `number` |  |  | The number of the quest's stages done. |
+| `stages` | `number` |  |  | The number of the quest's stages. |
+| `startedOn` | `number` |  |  | The turn the quest started on. |
+| `doneOn` | `number \| null` |  |  | The turn the quest was done on, or null while it isn't. |
+| `tracked` | `boolean` |  |  | True when the player tracks this quest. |
+| `updated` | `boolean` |  |  | True when the quest has started or moved on since the player last looked. |
+| `track` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that tracks the quest, or stops tracking it once tracked, or null once the quest is done. Its label is the `quests/track` or `quests/untrack` string. |
 
 ### questOf
 
 Function. Explained in [Quests](/docs/plugins/quests#questsof-and-questof).
 
-One of the game's quests, by id.
+Returns the quest with this id, or undefined when the game has none.
 
 ```ts shape
 import { questOf } from '@ifloom/plugin-quests'
@@ -107,8 +107,8 @@ Uses: [`Game`](/docs/api/engine#game), [`QuestDef`](#questdef).
 
 Function. Explained in [Quests](/docs/plugins/quests#quests).
 
-The plugin, with its helpers on it: `quests()` makes the plugin for the
-game's `plugins`, and content is written with `quests.done('bread')`.
+The quests plugin's factory, with its helpers as properties. `quests()` returns the plugin for the game's
+`plugins`, and content calls helpers such as `quests.done('bread')`.
 
 ```ts shape
 import { quests } from '@ifloom/plugin-quests'
@@ -119,18 +119,18 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`QuestsState`](
 
 | Helper | Signature | Description |
 |---|---|---|
-| `quests.active` | `(quest: string):` [`Condition`](/docs/api/engine#condition) |  |
-| `quests.done` | `(quest: string):` [`Condition`](/docs/api/engine#condition) |  |
-| `quests.reached` | `(quest: string, stage: string):` [`Condition`](/docs/api/engine#condition) |  |
-| `quests.start` | `(quest: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
-| `quests.track` | `(quest?: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
-| `quests.seen` | `(quest?: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `quests.active` | `(quest: string):` [`Condition`](/docs/api/engine#condition) | Returns the `quests/active` condition, which holds while the quest is started and not finished. |
+| `quests.done` | `(quest: string):` [`Condition`](/docs/api/engine#condition) | Returns the `quests/done` condition, which holds once the quest is finished. |
+| `quests.reached` | `(quest: string, stage: string):` [`Condition`](/docs/api/engine#condition) | Returns the `quests/reached` condition, which holds once this stage of the quest is done. |
+| `quests.start` | `(quest: string):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `quests/start` effect, which starts the quest now if it hasn't started. |
+| `quests.track` | `(quest?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `quests/track` command, which tracks the quest, or stops tracking with no argument. |
+| `quests.seen` | `(quest?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `quests/seen` command, which marks the quest's news seen, or every quest's with no argument. |
 
 ### questsOf
 
 Function. Explained in [Quests](/docs/plugins/quests#questsof-and-questof).
 
-The game's quests: `data.quests.quests`, from its content and packs.
+Returns the game's quests, from `data.quests.quests` in its content and packs.
 
 ```ts shape
 import { questsOf } from '@ifloom/plugin-quests'
@@ -143,7 +143,7 @@ Uses: [`Game`](/docs/api/engine#game), [`QuestDef`](#questdef).
 
 Type. Explained in [Quests](/docs/plugins/quests#questsstate).
 
-What the plugin keeps in a save.
+The quests a save keeps for the player, their progress, tracking and news. Quests themselves are read from content.
 
 ```ts shape
 import type { QuestsState } from '@ifloom/plugin-quests'
@@ -158,17 +158,17 @@ type QuestsState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `started` | `Record<string, number>` |  |  | Quests started, with the turn each one started. |
-| `reached` | `Record<string, number>` |  |  | How many of each started quest's stages are done. |
-| `done` | `Record<string, number>` |  |  | Quests finished, with the turn. |
-| `tracked` | `string \| null` |  |  | The quest the player has pinned, if any. |
-| `seen` | `Record<string, number>` |  |  | How far each quest had got when the player last looked at it: stages done, plus one once finished. |
+| `started` | `Record<string, number>` |  |  | The turn each started quest started on, by quest id. |
+| `reached` | `Record<string, number>` |  |  | The number of stages done in each started quest, by quest id. |
+| `done` | `Record<string, number>` |  |  | The turn each finished quest finished on, by quest id. |
+| `tracked` | `string \| null` |  |  | The id of the quest the player tracks, or null. |
+| `seen` | `Record<string, number>` |  |  | Each quest's progress when the player last looked at it, by quest id. It counts the stages done, plus one once the quest is finished. |
 
 ### QuestStage
 
 Type. Explained in [Quests](/docs/plugins/quests#queststage).
 
-One step of a quest.
+A stage the game declares in a `QuestDef`'s `stages`. The stage is done the first time its `done` holds after the stages before it.
 
 ```ts shape
 import type { QuestStage } from '@ifloom/plugin-quests'
@@ -181,13 +181,15 @@ type QuestStage = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `hint` | `string` |  |  | What the player reads while this is the stage they are on. |
-| `done` | [`Condition`](/docs/api/engine#condition) |  |  | The stage is done the first time this holds, once the stages before it are. |
+| `id` | `string` |  |  | The stage's id, unique within its quest. |
+| `hint` | `string` |  |  | The stage's hint, which the player reads while on this stage. |
+| `done` | [`Condition`](/docs/api/engine#condition) |  |  | The condition that marks the stage done, the first time it holds once the stages before it are done. |
 
 ### QuestsView
 
 Type. Explained in [Quests](/docs/plugins/quests#questsview).
+
+The quests as the player sees them, in `view.plugins.quests`.
 
 ```ts shape
 import type { QuestsView } from '@ifloom/plugin-quests'
@@ -202,11 +204,11 @@ type QuestsView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `active` | [`QuestEntry[]`](#questentry) |  |  | Started and not finished; the tracked one first, then newest first. |
-| `done` | [`QuestEntry[]`](#questentry) |  |  | Finished, most recent first. |
-| `toFind` | `number` |  |  | Quests not started yet, secret ones left out. |
-| `updates` | `number` |  |  | How many quests have news the player has not looked at: a badge. |
-| `seen` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks every quest's news seen (the `quests/allSeen` string, `Mark all seen`), or null while there is none. |
+| `active` | [`QuestEntry[]`](#questentry) |  |  | The quests started and not finished, the tracked one first and then the newest first. |
+| `done` | [`QuestEntry[]`](#questentry) |  |  | The finished quests, the most recent first. |
+| `toFind` | `number` |  |  | The number of quests not started yet, secret ones left out. |
+| `updates` | `number` |  |  | The number of quests with news the player hasn't looked at, for a badge. |
+| `seen` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks every quest's news seen, labelled with the `quests/allSeen` string (`Mark all seen`), or null while there is none. |
 
 ## @ifloom/plugin-quests/react
 
@@ -219,9 +221,11 @@ type QuestsView = {
 
 Const. Explained in [Quests](/docs/plugins/quests#questlog).
 
-The quest list: active quests with the hint for what to do next, then the
-finished ones. `title` is what the game calls it — a journal, a to-do list.
-A thin default on `useQuests`.
+Renders the quest log from `view.plugins.quests`, the active quests with their hints and track buttons, then the
+finished ones. `title` sets the heading, such as "Journal", and `title={false}` leaves it off.
+
+A preset can style the parts `quests`, `quests-title`, `quest`, `quest-title`, `quest-summary`, `quest-hint`,
+`quest-stage`, `quests-done` and `quest-done`.
 
 ```ts shape
 import { QuestLog } from '@ifloom/plugin-quests/react'
@@ -232,7 +236,7 @@ const QuestLog: ComponentType<{ className?: string; title?: string | false; }>
 
 Const.
 
-The quests plugin's words, in English. A game rewords any with `ui.<key>` in its strings.
+The quests plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
 ```ts shape
 import { QUESTS_WORDS } from '@ifloom/plugin-quests/react'
@@ -243,11 +247,17 @@ const QUESTS_WORDS: {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `questNew` | `'New'` |  |  | The badge on a quest that has changed since the player last looked. |
+| `questStage` | `'{stage} of {stages}'` |  |  | The count of a quest's stages done, with `{stage}` and `{stages}`. |
+| `quests` | `'Quests'` |  |  | The title of the quest log and its section. |
+
 ### QuestsControls
 
 Type.
 
-What `useQuests` returns: the quests plugin's view, with its buttons, and a command to track a quest of your choosing.
+The quests plugin's view with a function that tracks any quest, as `useQuests` returns it.
 
 ```ts shape
 import type { QuestsControls } from '@ifloom/plugin-quests/react'
@@ -263,18 +273,18 @@ type QuestsControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `active` | [`QuestEntry[]`](#questentry) |  |  | Started and not finished; the tracked one first, then newest first. |
-| `done` | [`QuestEntry[]`](#questentry) |  |  | Finished, most recent first. |
-| `toFind` | `number` |  |  | Quests not started yet, secret ones left out. |
-| `updates` | `number` |  |  | How many quests have news the player has not looked at: a badge. |
-| `seen` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks every quest's news seen (the `quests/allSeen` string, `Mark all seen`), or null while there is none. |
-| `track` | `(id: string \| null) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Track a quest by id, or track none with `null`: sends `quests/track`. Each quest's `track` button does it for that quest. |
+| `active` | [`QuestEntry[]`](#questentry) |  |  | The quests started and not finished, the tracked one first and then the newest first. |
+| `done` | [`QuestEntry[]`](#questentry) |  |  | The finished quests, the most recent first. |
+| `toFind` | `number` |  |  | The number of quests not started yet, secret ones left out. |
+| `updates` | `number` |  |  | The number of quests with news the player hasn't looked at, for a badge. |
+| `seen` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks every quest's news seen, labelled with the `quests/allSeen` string (`Mark all seen`), or null while there is none. |
+| `track` | `(id: string \| null) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `quests/track` for the quest with this id, or stops tracking with `null`. Each quest's `track` button does the same for that quest. |
 
 ### QuestsSection
 
 Component. Explained in [Quests](/docs/plugins/quests#questssection).
 
-The default layout's Quests section: a button with the count of news that opens the `QuestLog` in a dialog.
+Renders the default layout's Quests section, a button with the count of news from `view.plugins.quests.updates` that opens the `QuestLog` in a dialog.
 
 ```ts shape
 import { QuestsSection } from '@ifloom/plugin-quests/react'
@@ -285,10 +295,8 @@ function QuestsSection(): JSX.Element
 
 Const. Explained in [Quests](/docs/plugins/quests#questsui).
 
-The quests plugin's React UI, for `plugins` on `mountGame` or
-`GameProvider`: a Quests section in the side column that opens the
-`QuestLog` in a dialog, with the count of news on its button; the `quests`
-panel; and the quests' words.
+The quests plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `QuestsSection` to the
+sidebar, renders the `quests` panel as a `QuestLog`, and adds the plugin's words.
 
 ```ts shape
 import { questsUi } from '@ifloom/plugin-quests/react'
@@ -301,7 +309,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 Function. Explained in [Quests](/docs/plugins/quests#usequests).
 
-The quests plugin's view with its buttons and commands, or null in a game without the plugin. `QuestLog` is drawn from it.
+Returns the quests plugin's view and track command from the running game, or null in a game without the plugin. It re-renders when the view changes.
 
 ```ts shape
 import { useQuests } from '@ifloom/plugin-quests/react'

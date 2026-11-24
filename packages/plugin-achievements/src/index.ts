@@ -24,67 +24,86 @@ import {
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**
- * How far towards an achievement the player is: the value, out of `target`.
- * The value is an `Amount`, such as a stat's id, a kv key (`{ kv: 'coffees' }`)
- * or a value by name (`{ value: 'quests/updates' }`).
+ * A count towards an achievement, an achievement's `progress`. The player's progress is `value` out of `target`.
+ *
+ * `value` is an {@link Amount}, such as a stat's id, a kv key (`{ kv: 'coffees' }`) or a value by name
+ * (`{ value: 'quests/updates' }`).
  */
-export type ProgressDef = { value: Amount; target: number }
+export type ProgressDef = {
+  /** The count so far, an {@link Amount} the plugin works out after each command. */
+  value: Amount
+  /** The count that completes the achievement. It must be more than 0. */
+  target: number
+}
 
-/** An achievement in the game's content: one entry of `data.achievements.achievements`, the plugin's list of achievements. */
+/** An achievement the game declares in `data.achievements.achievements`. The player earns it once, by its condition, its progress or an effect. */
 export type AchievementDef = {
+  /** The achievement's id, unique among the game's achievements. */
   id: string
-  /** What the player reads: "First loaf". */
+  /** The achievement's name, such as "First loaf". */
   name: string
-  /** What it's for, for the list. */
+  /** The achievement's line in the list of achievements. */
   description?: string
-  /** A picture for it, for a UI to show. */
+  /** The achievement's picture, a path in the game's `art/` folder. */
   image?: string
-  /** Shown as `???`, with no description or progress, until it's earned. */
+  /** Hides the achievement until it's earned, when true. The view shows it as `???`, with no description, picture or progress. */
   secret?: boolean
   /**
-   * Earned the first time this holds, checked after every command. Leave it
-   * out to earn it when `progress` reaches its target, or only with the
-   * `achievements/grant` effect.
+   * The achievement's condition, checked after every command. The player earns it the first time the condition holds.
+   *
+   * Leave it out to earn the achievement when `progress` reaches its target, or only with the `achievements/grant` effect.
    */
   when?: Condition
-  /** A count towards it, such as 4 of 10. Without `when`, reaching the target earns it. */
+  /** The achievement's count to reach, such as 4 of 10. Without `when`, reaching the target earns it. */
   progress?: ProgressDef
 }
 
-/** What the plugin keeps in a save. */
+/** The achievements a save keeps for the player. Definitions are read from content, so only the earned ones are kept. */
 export type AchievementsState = {
-  /** Achievements earned in this save, with the turn each was earned. */
+  /** The save's earned achievements, each id mapped to the turn it was earned. */
   earned: Record<string, number>
 }
 
-/** What the plugin keeps in the player's profile, under its id: every achievement earned in any save, in the order they were first earned. */
-export type AchievementsProfile = { earned: string[] }
+/** The achievements the player's profile keeps under the plugin's id. The profile outlives saves, so it lists achievements earned in any save. */
+export type AchievementsProfile = {
+  /** The ids of every achievement earned in any save, in the order they were first earned. */
+  earned: string[]
+}
 
-/** An achievement as the UI shows it. */
+/**
+ * An achievement as the player sees it, in `view.plugins.achievements.achievements`. A secret one not yet earned
+ * shows no name, description, picture or progress.
+ */
 export type AchievementEntry = {
+  /** The achievement's id. */
   id: string
-  /** Its name, or `???` while it's secret and not earned. */
+  /** The achievement's name, or the `achievements/secret` string (`???`) while it's secret and not earned. */
   name: string
-  /** Its description, or `''` while it's secret and not earned. */
+  /** The achievement's description, or `''` when it has none or while it's secret and not earned. */
   description: string
-  /** Its picture's path, through `artSrc`; null with none, or while it's secret and not earned. */
+  /** The achievement's picture's path, through `artSrc`. It's null when there is none, or while it's secret and not earned. */
   image: string | null
-  /** Hidden until earned: its name, description and picture read `???`, `''` and null until then. */
+  /** The achievement's `secret` flag from content, true even after it's earned. */
   secret: boolean
-  /** Earned in this save, or in any save the profile remembers. */
+  /** True when this save earned the achievement, or any save the profile remembers did. */
   earned: boolean
-  /** The turn this save earned it, or null. Null too for one earned only in another save. */
+  /** The turn this save earned the achievement. It's null when this save hasn't, even if another save has. */
   earnedOn: number | null
-  /** How far towards it, or null if it has no progress or is a secret not yet earned. Earned, it reads as full. */
+  /**
+   * The achievement's progress, clamped to between 0 and its target. Once earned, it reads as full.
+   *
+   * It's null when the achievement has no `progress`, or while it's secret and not earned.
+   */
   progress: { value: number; target: number } | null
 }
 
+/** The achievements as the player sees them, in `view.plugins.achievements`. Earned counts take in the profile when the runner has one. */
 export type AchievementsView = {
-  /** Every achievement, in the order the game declares them. */
+  /** The game's achievements, in the order the game declares them. */
   achievements: AchievementEntry[]
-  /** How many are earned. */
+  /** The number of achievements earned, in this save or any save the profile remembers. */
   earned: number
-  /** How many the game declares, secret ones included. */
+  /** The number of achievements the game declares, secret ones included. */
   total: number
 }
 
@@ -122,7 +141,7 @@ function emptyState(): AchievementsState {
   return { earned: {} }
 }
 
-/** The game's achievements: `data.achievements.achievements`, from its content and packs. */
+/** Returns the game's achievements, `data.achievements.achievements` from its content and packs, in declared order. */
 export function achievementsOf(game: Game): AchievementDef[] {
   return DATA.achievements.all(game)
 }
@@ -258,7 +277,14 @@ const achievementEarned = (id: string): Condition => CALLS.conditions.earned({ a
 const grantAchievement = (id: string): EffectRef => CALLS.effects.grant({ achievement: id })
 
 /**
- * The plugin, with its helpers on it: `achievements()` makes the plugin for the
- * game's `plugins`, and content is written with `achievements.earned('first-loaf')`.
+ * Returns the achievements plugin, for the game's `plugins`. Its helpers write its calls, such as
+ * `achievements.earned('first-loaf')`.
+ *
+ * Content declares the achievements in `data.achievements.achievements`.
  */
-export const achievements = Object.assign(achievementsPlugin, { earned: achievementEarned, grant: grantAchievement })
+export const achievements = Object.assign(achievementsPlugin, {
+  /** Returns the `achievements/earned` condition, which holds when this save has earned the achievement. */
+  earned: achievementEarned,
+  /** Returns the `achievements/grant` effect, which earns the achievement now unless it's already earned. */
+  grant: grantAchievement,
+})

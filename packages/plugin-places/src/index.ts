@@ -1,21 +1,14 @@
 /**
- * Places: locations with exits between them and things to do in them, travel,
- * and where the player is.
+ * The places plugin, which adds locations with exits and actions, travel between them, and where the player is.
  *
- * The engine knows no places. This plugin keeps the player's location in its
- * own state, fills the screen with the room's description while no scene is
- * open (`scene`), offers the room's actions as buttons, and hands the UI the
- * exits. A location is an entity that carries the `places/location` trait,
- * written with `places.location({ ... })` in content's `entities`: its name, `description`
- * and `image` are the entity's, and its exits, body and actions are the
- * trait's. So a mod adds a room as it adds any entity, and changes one with
- * a `traits` row or by replacing the entity.
+ * The plugin keeps the player's location in its own state. While no scene is open, its room shows the location's
+ * body and actions, and its view lists the exits. A location is an entity with the `places/location` trait, written
+ * with `places.location({ ... })` in content's `entities`. Its name, `description` and `image` are the entity's, and
+ * its exits, body and actions are the trait's, so a mod adds or changes a location as it does any entity.
  *
- * The plugin brings the kind `location`, which `places.location()` uses. Each place
- * is unique, so it holds things: what lies there, shown in the view with a
- * button to pick it up. The `places/holder` query names where the player is
- * as that entity, so another plugin (the inventory's drop) can put something
- * down there by name.
+ * The plugin brings the unique kind `location`, so a location holds the things lying there, which the view lists with
+ * a button to pick each up. The `places/holder` query names the location the player is at, so another plugin, such
+ * as the inventory, can put a thing down there.
  */
 import {
   artSrc,
@@ -71,45 +64,41 @@ import {
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /**
- * What the `places/location` trait holds: what makes an entity a place the
- * player can be in. The place's name, its `description` (a word or two under the
- * name: "Home", "Café"), its `image` and its `tags` are the entity's.
+ * The data of the `places/location` trait, which makes an entity a location the player can be at. The location's
+ * name, `description`, `image` and `tags` are the entity's.
  */
 export type Place = {
-  /** The place it is inside: a room's building. `places/within` follows it. */
+  /** The id of the location this one is inside, such as the building a shop is in. `places/within` follows it. */
   parent?: string
-  /** The places one step away. */
+  /** The ids of the locations one step away. */
   exits: readonly string[]
   /**
-   * A layered picture with hotspots, drawn where the UI draws the room. A
-   * hotspot here sends a `command`; a place has no choices.
+   * The location's layered picture with hotspots, rendered with the room. A hotspot here sends a `command`, since a
+   * location has no choices.
    */
   picture?: PictureDef
   /**
-   * Travel here is refused while one of these holds, with its reason: a door
-   * shut for the night, a gate shut until a quest is done. With `hide`, the
-   * exit is left off the screen instead of greyed out.
+   * The reasons travel here is refused, such as a door shut for the night. With `hide`, the exit is left out of the
+   * view instead of disabled.
    */
   blocked?: Blocked[]
-  /** What the player reads here while no scene is open: prose blocks, as a data scene's body. */
+  /** The location's body, the blocks the player reads here while no scene is open. */
   body: Block[]
-  /** What there is to do here, offered as buttons. */
+  /** The location's actions, offered as buttons in the room. */
   actions?: ActionDef[]
   /**
-   * What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`.
-   * Null silences a channel. An open scene's audio and an `audio` effect's win over it.
+   * The audio that plays while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. Null silences a
+   * channel, and an open scene's audio and an `audio` effect's override it.
    */
   audio?: Record<string, string | null>
   /**
-   * Presentation hints for the room while no scene is open, carried to
-   * `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`.
-   * The engine gives them no meaning.
+   * The room's presentation hints while no scene is open, carried to `view.scene.ui` as a scene's are, such as the
+   * React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning.
    */
   ui?: Ui<SceneUi>
   /**
-   * What happens on the doorstep, after the player walks in by an exit (not
-   * after a `places/move`): someone catching you on the way in. Its effects
-   * apply while `when` holds, or always with no `when`.
+   * The effects that run after the player walks in by an exit, such as someone catching them on the way in. A
+   * `places/move` doesn't run them.
    */
   arrive?: Arrival
 }
@@ -121,92 +110,101 @@ declare module '@ifloom/engine' {
 }
 
 /**
- * What `places.location()` takes: an entity's fields (its `of` is `'location'` if
- * left out; its `description` is the line under the place's name, its `image` its
- * picture) and the `places/location` trait's, side by side. `ui` is the
- * trait's: the room's hints, as a scene's.
+ * A location the game declares in `entities` with `places.location()`. It has an entity's fields and the
+ * `places/location` trait's side by side, and its `ui` is the trait's room hints.
  */
 export type PlaceDef = Omit<EntityDef, 'of' | 'ui'> &
   Place & {
-    /** Its kind: the plugin's own, `location`, if left out. */
+    /** The location's kind. The plugin's own kind, `location`, if left out. */
     of?: string
   }
 
-/** What happens as the player walks into a place: effects, while `when` holds. */
-export type Arrival = { when?: Condition; effects: EffectRef[] }
+/** The effects that run as the player walks into a location by an exit, in a {@link Place}'s `arrive`. */
+export type Arrival = {
+  /** The condition that must hold for the effects to run. They always run if left out. */
+  when?: Condition
+  /** The effects that run on arrival. */
+  effects: EffectRef[]
+}
 
+/** Settings for `places()`. */
 export type PlacesOptions = {
-  /** Where a new game starts. Nowhere — no place at all — if left out. */
+  /** The id of the location a new game starts at. The player is at no location if left out. */
   start?: string
 }
 
-/** The plugin's state: where the player is, by the place's id (its whole reference for a place of another kind), or null. */
-export type PlacesState = { at: string | null }
+/** The location a save keeps for the player. Locations themselves are read from content. */
+export type PlacesState = {
+  /** The id of the location the player is at, its full reference for a location of another kind, or null when at none. */
+  at: string | null
+}
 
 /**
- * One way out of the current place, as the UI draws it: a button like any
- * other (`RenderedChoice`), whose `label` is the place's name, `disabled` why
- * it can't be taken now, `warning` a plugin's soft refusal, and `price` what
- * going costs. Send `command` to take it. The rest describes where it leads.
+ * An exit from the location the player is at as the player sees it, in `view.plugins.places.exits`. It is a
+ * `RenderedChoice` labelled with the destination's name, so its `command` takes the exit.
+ *
+ * Its `disabled` gives the reason the exit is refused, `warning` a plugin's soft refusal and `price` the cost of
+ * going. The other fields describe the destination.
  */
 export type ExitView = RenderedChoice & {
-  /** The place's entity: `'location:park'`. */
+  /** The destination's entity reference, such as `'location:park'`. */
   ref: EntityRef
-  /** The place's line under its name, its entity's `description`; null with none. */
+  /** The destination's `description`, the line under its name, or null when it has none. */
   description: string | null
-  /** The place's tags, its entity's. */
+  /** The destination's tags. */
   tags: string[]
-  /** The place's picture's path, its entity's `image` through `artSrc`; null with none. */
+  /** The path of the destination's picture, its `image` through `artSrc`, or null when it has none. */
   image: string | null
 }
 
-/** A thing lying where the player is, as the UI draws it. */
+/** A thing lying at the location the player is at as the player sees it, in `view.plugins.places.things`. */
 export type LyingView = {
-  /** How content names it: `'item:paper'`. */
+  /** The thing's entity reference, such as `'note:paper'`. */
   ref: EntityRef
+  /** The thing's name. */
   name: string
-  /** Its picture's path, through `artSrc`; null with none. */
+  /** The path of the thing's picture through `artSrc`, or null when it has none. */
   image: string | null
-  /** How many lie here. */
+  /** The number of this thing lying here. */
   count: number
-  /** The button that picks one up. Send its `command`. */
+  /** The button that picks one up. Its `command` is the one to send. */
   pickUp: RenderedChoice
 }
 
-/** Where the player is, as the UI draws it. */
+/** The location the player is at as the player sees it, in `view.plugins.places.location`. */
 export type PlaceView = {
-  /** The place's id, as `go` names it. */
+  /** The location's id, as `places.go` names it. */
   id: string
-  /** Its entity: `'location:park'`. */
+  /** The location's entity reference, such as `'location:park'`. */
   ref: EntityRef
+  /** The location's name. */
   name: string
-  /** The line under its name, its entity's `description`; null with none. */
+  /** The location's `description`, the line under its name, or null when it has none. */
   description: string | null
-  /** Its entity's tags, for the UI to style it by. */
+  /** The location's tags, which a UI can style it by. */
   tags: string[]
-  /** Its picture's path, its entity's `image` through `artSrc`; null with none. */
+  /** The path of the location's picture, its `image` through `artSrc`, or null when it has none. */
   image: string | null
   /**
-   * The place's picture as the engine's `pictureView` draws it, or null when it
-   * has none. Its hotspots are left out while a scene is open or a lock holds
-   * everything, as the exits are.
+   * The location's layered picture, rendered by the engine's `pictureView`, or null when it has none. Its hotspots are
+   * left out while a scene is open or a lock holds everything, as the exits are.
    */
   picture: PictureView | null
 }
 
-/** What the UI reads at `view.plugins.places`. */
+/** The player's location, its exits and the things lying there as the player sees them, in `view.plugins.places`. */
 export type PlacesView = {
-  /** Where the player is; null when nowhere. */
+  /** The location the player is at, or null when at none. */
   location: PlaceView | null
-  /** The exits, in the order the place lists them; none while a scene is open or a lock holds everything. */
+  /** The location's exits in the order it lists them. It is empty while a scene is open or a lock holds everything. */
   exits: ExitView[]
-  /** What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. */
+  /** The things the location holds, such as a thing the player dropped. It is empty while a scene is open or a lock holds everything. */
   things: LyingView[]
 }
 
 const ID = 'places'
 
-/** The kind the plugin brings for its places, so each can hold things: `'location:park'`. */
+/** The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique, so each location can hold things. */
 export const LOCATION = 'location'
 
 /** The places: entities carrying the `places/location` trait, a bare id naming one of the `location` kind. */
@@ -218,9 +216,8 @@ const PLACES = defineTraitKind({
 const TRAIT = PLACES.trait
 
 /**
- * How content names a place's entity, for `at` and `entity`: a bare id is
- * one of the plugin's kind (`places.locationRef('park')` is `'location:park'`), and
- * a reference is as written.
+ * Returns the entity reference of a location, for `at` and `entity`. A bare id is one of the plugin's kind
+ * (`places.locationRef('park')` is `'location:park'`), and a full reference comes back unchanged.
  */
 const locationRef = (id: string): EntityRef => PLACES.ref(id)
 
@@ -274,18 +271,16 @@ declare module '@ifloom/engine' {
 const short = (ref: EntityRef): string => PLACES.id(ref)
 
 /**
- * Every place in the game now, as references: every entity with the
- * `places/location` trait, the ones content declares in its order, then
- * those made in play.
+ * Returns the references of every location in the game now, each entity with the `places/location` trait. Those
+ * content declares come first in its order, then those made in play.
  */
 export function locationsOf(state: GameState, game: Game): EntityRef[] {
   return PLACES.all(state, game)
 }
 
 /**
- * The `places/location` trait of a place, named by its id (`'park'`) or its
- * reference: one content declares, or one made in play, read through what
- * it was made `like`. Undefined for anything else.
+ * Returns the `places/location` trait of a location, named by its id (`'park'`) or reference, read through the
+ * entity it was made `like`. Returns undefined for anything that isn't a location.
  */
 export function locationOf(state: GameState, game: Game, ref: string | null | undefined): Place | undefined {
   return PLACES.get(state, game, ref)
@@ -317,7 +312,7 @@ function ancestors(place: (id: string) => Place | undefined, id: string): string
   return out
 }
 
-/** Build the plugin. */
+/** Returns the places plugin for the game's `plugins`. `options.start` names the location a new game starts at. */
 function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, PlacesView> {
   /** Why the player cannot go there now, or undefined. */
   function goBlocked(state: GameState, game: Game, at: string | null, to: string): string | undefined {
@@ -505,9 +500,8 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
 }
 
 /**
- * A place, for content's `entities`: an entity of the kind `location` (or
- * `of`) carrying the `places/location` trait, with the entity's fields and
- * the trait's written side by side.
+ * Returns a location for content's `entities`, an entity of the kind `location` (or `of`) with the
+ * `places/location` trait. It takes the entity's fields and the trait's side by side.
  *
  * ```ts
  * entities: [places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['street'], body: [{ prose: 'place.cafe' }] })]
@@ -517,26 +511,28 @@ function location(def: PlaceDef): EntityDef {
   return PLACES.define(def)
 }
 
-/** The command that picks up one of a thing lying where the player is. */
+/** Returns the `places/pickUp` command, which picks up one of a thing lying where the player is. */
 const pickUp = (ref: EntityRef): CommandRef => CALLS.commands.pickUp({ id: ref })
-/** The command that walks to a place by an exit. */
+/** Returns the `places/go` command, which walks to a location by an exit. */
 const go = (id: string): CommandRef => CALLS.commands.go({ id })
-/** True in any of these places. */
+/** Returns the `places/at` condition, which holds while the player is at any of these locations. */
 const at = (...places: string[]): Condition => CALLS.conditions.at({ location: places })
-/** True in any of these places, or anywhere inside one. */
+/** Returns the `places/within` condition, which holds while the player is at any of these locations or anywhere inside one. */
 const within = (...places: string[]): Condition => CALLS.conditions.within({ location: places })
-/** The effect that puts the player somewhere at once. */
+/** Returns the `places/move` effect, which puts the player at the location at once, closing any scene and running no `arrive`. */
 const moveTo = (place: string): EffectRef => CALLS.effects.move({ location: place })
-/** True in none of these places, or nowhere. */
+/** Returns the `places/away` condition, which holds while the player is at none of these locations or at no location. */
 const away = (...places: string[]): Condition => CALLS.conditions.away({ location: places })
-/** Where the player is, by the place's id: the `places/here` query, asked of the game's places plugin. Null when nowhere. */
+/**
+ * Returns the id of the location the player is at, from the `places/here` query. Returns null when the player is at no
+ * location or the game has no places plugin.
+ */
 const where = (state: GameState, game: Game): string | null => pluginQuery(game, 'places/here')?.(state) ?? null
 /**
- * A `blocked` entry: refused anywhere but these places, with `reason` (the
- * plugin's `places/notHere` string, "Not here.", if left out). Its `when` is
- * `places.away(...)`, which never holds in a game without places, so there
- * nothing is refused by it. With `hide`, a button it refuses is left off the
- * screen, and a vendor isn't `here`.
+ * Returns a `blocked` entry that refuses anywhere but these locations, with `reason` or the `places/notHere` string
+ * ("Not here."). Its `when` is `places.away(...)`, which never holds in a game without places.
+ *
+ * With `hide`, a button it refuses is left out of the view, and a vendor it refuses isn't `here`.
  */
 const onlyAt = (places: string[], reason?: Reason, options: { hide?: boolean } = {}): Blocked => ({
   when: away(...places),
@@ -545,7 +541,28 @@ const onlyAt = (places: string[], reason?: Reason, options: { hide?: boolean } =
 })
 
 /**
- * The plugin, with its helpers on it: `places()` makes the plugin for the
- * game's `plugins`, and content is written with `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
+ * The places plugin's factory, with its helpers as properties. `places(options)` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
  */
-export const places = Object.assign(placesPlugin, { location, locationRef, pickUp, go, at, within, away, move: moveTo, onlyAt, where })
+export const places = Object.assign(placesPlugin, {
+  /** Returns a location for content's `entities`, an entity with the `places/location` trait, from the entity's fields and the trait's. */
+  location,
+  /** Returns the entity reference of a location; a bare id is one of the `location` kind. */
+  locationRef,
+  /** Returns the `places/pickUp` command, which picks up one of a thing lying where the player is. */
+  pickUp,
+  /** Returns the `places/go` command, which walks to a location by an exit. */
+  go,
+  /** Returns the `places/at` condition, which holds while the player is at any of these locations. */
+  at,
+  /** Returns the `places/within` condition, which holds while the player is at any of these locations or anywhere inside one. */
+  within,
+  /** Returns the `places/away` condition, which holds while the player is at none of these locations or at no location. */
+  away,
+  /** Returns the `places/move` effect, which puts the player at the location at once, closing any scene. */
+  move: moveTo,
+  /** Returns a `blocked` entry that refuses anywhere but these locations, with `reason` or the `places/notHere` string. */
+  onlyAt,
+  /** Returns the id of the location the player is at, from the `places/here` query, or null. */
+  where,
+})

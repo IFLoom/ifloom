@@ -14,7 +14,7 @@ Generated from the source of `@ifloom/plugin-unlocks` and `@ifloom/plugin-unlock
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-Whether this is the unlock's code.
+Returns true when the code is the unlock's code.
 
 ```ts shape
 import { codeFits } from '@ifloom/plugin-unlocks'
@@ -27,7 +27,7 @@ Uses: [`UnlockDef`](#unlockdef).
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-The script `ifloom build` puts in the page's head: the encrypted content, by unlock.
+Returns the script `ifloom build` puts in the page's head, which holds the encrypted content by unlock.
 
 ```ts shape
 import { contentScript } from '@ifloom/plugin-unlocks'
@@ -40,10 +40,11 @@ Uses: [`LockedContent`](#lockedcontent).
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#entercode).
 
-Try a code against every unlock, on a runner `startUnlocks` was started on:
-what it unlocked, or why not. One that works is remembered in the profile
-and recorded in the game in play. While it is checked, and after, the
-runner's snapshot says so at `helpers.unlocks`. Never throws.
+Returns the unlock a code opens, checked against every unlock on a runner `startUnlocks` was started on, or the
+reason it opens none. It never throws.
+
+The profile remembers a code that works, and the game in play records its unlock. The runner's snapshot reports the
+check at `helpers.unlocks` while it runs and after.
 
 ```ts shape
 import { enterCode } from '@ifloom/plugin-unlocks'
@@ -56,7 +57,7 @@ Uses: [`Runner`](/docs/api/engine#runner), [`Result`](/docs/api/engine#result), 
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#entered).
 
-What a code that worked unlocked.
+The unlock a code opened, as `enterCode` returns it.
 
 ```ts shape
 import type { Entered } from '@ifloom/plugin-unlocks'
@@ -71,15 +72,15 @@ type Entered = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `unlock` | `string` |  |  | The unlock's id. |
-| `name` | `string` |  |  | Its name. |
-| `already` | `boolean` |  |  | It was unlocked already: the code worked, and nothing changed. |
-| `restart` | `boolean` |  |  | It has content the game in play doesn't have yet: build the game again (reload the page) to add it. |
+| `name` | `string` |  |  | The unlock's name. |
+| `already` | `boolean` |  |  | True when the unlock was open already, so the code worked and changed nothing. |
+| `restart` | `boolean` |  |  | True when the unlock has packs the game in play doesn't have yet. Reloading the page builds the game again with them. |
 
 ### envName
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-The environment variable `ifloom build` reads an unlock's code from: `IFLOOM_UNLOCK_SUPPORTER` for `supporter`.
+Returns the name of the environment variable `ifloom build` reads an unlock's code from, such as `IFLOOM_UNLOCK_SUPPORTER` for `supporter`.
 
 ```ts shape
 import { envName } from '@ifloom/plugin-unlocks'
@@ -90,7 +91,7 @@ function envName(unlock: string): string
 
 Const.
 
-PBKDF2's rounds when an unlock doesn't say: slow enough that guessing codes one by one takes a long time.
+The number of PBKDF2 rounds for an unlock without its own `iterations`. It makes guessing codes one by one take a long time.
 
 ```ts shape
 import { ITERATIONS } from '@ifloom/plugin-unlocks'
@@ -101,10 +102,11 @@ const ITERATIONS: 600000
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-Encrypt an unlock's packs under its code, for the page: what `ifloom build`
-does with each file in `src/unlocks/`. The packs must be data, as a mod's
-are. Throws if the code isn't the unlock's, so a build can't ship content
-no code opens.
+Returns an unlock's packs encrypted under its code, for the page, as `ifloom build` does with each file in
+`src/unlocks/`. The packs must be data, as a mod's are.
+
+It throws when the code isn't the unlock's, so a build can't ship content no code opens, and when a pack holds a
+function.
 
 ```ts shape
 import { lockContent } from '@ifloom/plugin-unlocks'
@@ -117,7 +119,7 @@ Uses: [`UnlockDef`](#unlockdef), [`Pack`](/docs/api/engine#pack), [`LockedConten
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#lockedcontent).
 
-An unlock's content, encrypted, as `ifloom build` writes it into the page.
+An unlock's encrypted packs as `ifloom build` writes them into the page.
 
 ```ts shape
 import type { LockedContent } from '@ifloom/plugin-unlocks'
@@ -132,17 +134,17 @@ type LockedContent = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ifloomUnlock` | `1` |  |  | The format of this file: 1. |
+| `ifloomUnlock` | `1` |  |  | The format of this record, 1. |
 | `game` | `string` |  |  | The game's id. |
 | `unlock` | `string` |  |  | The unlock's id. |
-| `iv` | `string` |  |  | AES-GCM's nonce, in base64. |
+| `iv` | `string` |  |  | The AES-GCM nonce, in base64. |
 | `data` | `string` |  |  | The packs as JSON, encrypted, in base64. |
 
 ### lockedContent
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-The encrypted content the page holds, by unlock: what `ifloom build` put there. Empty in a page without any.
+Returns the encrypted content `ifloom build` put in the page, by unlock. Returns an empty record in a page without any.
 
 ```ts shape
 import { lockedContent } from '@ifloom/plugin-unlocks'
@@ -155,8 +157,8 @@ Uses: [`LockedContent`](#lockedcontent).
 
 Function.
 
-A code as it is checked: Unicode-normalised, with spaces and hyphens taken
-out, in capitals. So `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
+Returns a code in the form the plugin checks, Unicode-normalised, without spaces or hyphens, in capitals. So
+`bread-2026`, `BREAD 2026` and `Bread2026` are one code.
 
 ```ts shape
 import { normaliseCode } from '@ifloom/plugin-unlocks'
@@ -167,13 +169,13 @@ function normaliseCode(code: string): string
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#startunlocks).
 
-Codes in a running game, shaped like `startClock`: one call that returns
-the way to stop. From then on it records every unlock the profile
-remembers into the game in play and into each new game and loaded save, so
-a supporter enters a code once, and `enterCode` checks the codes the player
-enters. Where it stands is in the runner's snapshot, as an `UnlockStatus`
-at `snapshot.helpers.unlocks`. Needs the runner's `profile`. Pass `content`
-only in tests: the page's own is read otherwise. Start it once per runner.
+Starts code entry on a runner and returns the function that stops it. Start it once per runner, which needs a
+`profile`.
+
+It records every unlock the profile remembers into the game in play, each new game and each loaded save, so a
+supporter enters a code once, and `enterCode` checks the codes the player enters. It reports an
+`UnlockStatus` at `snapshot.helpers.unlocks`. Pass `content` only in tests, since it reads the page's own
+otherwise.
 
 ```ts shape
 import { startUnlocks } from '@ifloom/plugin-unlocks'
@@ -186,7 +188,7 @@ Uses: [`Runner`](/docs/api/engine#runner), [`LockedContent`](#lockedcontent).
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockdef).
 
-An unlock in the game's content: one entry of `data.unlocks.unlocks`, the plugin's list of unlocks.
+An unlock the game declares in `data.unlocks.unlocks`. It holds the code's hash, never the code.
 
 ```ts shape
 import type { UnlockDef } from '@ifloom/plugin-unlocks'
@@ -202,23 +204,22 @@ type UnlockDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  | Its name for the player: "Supporter edition". |
-| `description` | `string` | yes |  | What it opens, for the list of unlocks. |
-| `hash` | `string` |  |  | The code's hash, in hex, as `ifloom unlock-hash` prints it. Never the code. |
-| `salt` | `string` | yes |  | Extra salt for the hash, mixed in after the game's and the unlock's ids. Change it to change the hash without changing the code. |
-| `iterations` | `number` | yes |  | PBKDF2's rounds for this code. 600,000 if left out; fewer only in tests. |
+| `id` | `string` |  |  | The unlock's id. |
+| `name` | `string` |  |  | The unlock's name, such as "Supporter edition". |
+| `description` | `string` | yes |  | The unlock's description, a line for the list of unlocks. |
+| `hash` | `string` |  |  | The code's hash in hex, as `ifloom unlock-hash` prints it. |
+| `salt` | `string` | yes |  | The unlock's extra salt, mixed in after the game's and the unlock's ids. Changing it changes the hash without changing the code. |
+| `iterations` | `number` | yes |  | The number of PBKDF2 rounds for this code. 600,000 if left out, and fewer only in tests. |
 
 ### unlockedPacks
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#unlockedpacks).
 
-The content of every unlock the profile remembers, decrypted and checked
-that this engine can read it, to load over the game's content (which
-upgrades it). Call it before
-building the game: `loadGame(content, base, { packs: unlocked.packs })`. An
-unlock whose code has changed since (a new release with new codes) can't be
-opened, and is listed in `problems`; the player enters the new code.
+Returns the packs of every unlock the profile remembers, decrypted and checked that this engine can read them. Call
+it before building the game, and pass them as `loadGame(content, base, { packs: unlocked.packs })`.
+
+An unlock whose code has changed since it was entered, as in a new release with new codes, can't be opened and is
+listed in `problems`. The player then enters the new code.
 
 ```ts shape
 import { unlockedPacks } from '@ifloom/plugin-unlocks'
@@ -231,8 +232,8 @@ Uses: [`Profile`](/docs/api/engine#profile), [`LockedContent`](#lockedcontent), 
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-The hash of a code for an unlock, in hex: what goes in the unlock's `hash`.
-`ifloom unlock-hash` prints it, so you never write the code into the game.
+Returns the hash of a code for an unlock, in hex, the value for the unlock's `hash`. `ifloom unlock-hash` prints
+it, so you never write the code into the game.
 
 ```ts shape
 import { unlockHash } from '@ifloom/plugin-unlocks'
@@ -245,8 +246,8 @@ Uses: [`UnlockDef`](#unlockdef).
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#unlocks).
 
-The plugin, with its helpers on it: `unlocks()` makes the plugin for the
-game's `plugins`, and content is written with `unlocks.has('supporter')`.
+The unlocks plugin's factory, with its helpers as properties. `unlocks()` returns the plugin for the game's
+`plugins`, and content calls helpers such as `unlocks.has('supporter')`.
 
 ```ts shape
 import { unlocks } from '@ifloom/plugin-unlocks'
@@ -257,14 +258,14 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`UnlocksState`]
 
 | Helper | Signature | Description |
 |---|---|---|
-| `unlocks.has` | `(unlock: string):` [`Condition`](/docs/api/engine#condition) |  |
-| `unlocks.record` | `(unlock: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `unlocks.has` | `(unlock: string):` [`Condition`](/docs/api/engine#condition) | Returns the `unlocks/has` condition, which holds once this save records the unlock. |
+| `unlocks.record` | `(unlock: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `unlocks/record` command, which records the unlock in this save. `startUnlocks` sends it. |
 
 ### unlocksOf
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-The game's unlocks: `data.unlocks.unlocks`, from its content and packs.
+Returns the game's unlocks, from `data.unlocks.unlocks` in its content and packs.
 
 ```ts shape
 import { unlocksOf } from '@ifloom/plugin-unlocks'
@@ -277,7 +278,7 @@ Uses: [`Game`](/docs/api/engine#game), [`UnlockDef`](#unlockdef).
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksprofile).
 
-What the plugin keeps in the player's profile, under `unlocks`: a proof made from each code that worked, in hex. Never the code.
+The record the plugin keeps in the player's profile, under `unlocks`. It never holds a code.
 
 ```ts shape
 import type { UnlocksProfile } from '@ifloom/plugin-unlocks'
@@ -286,11 +287,15 @@ type UnlocksProfile = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `unlocked` | `Record<string, { proof: string }>` |  |  | The proof made from each code that worked, in hex, by unlock id. |
+
 ### UnlocksState
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksstate).
 
-What the plugin keeps in a save: the unlocks recorded in it, in the order they were.
+The unlocks a save keeps. Unlocks themselves are read from content.
 
 ```ts shape
 import type { UnlocksState } from '@ifloom/plugin-unlocks'
@@ -299,12 +304,15 @@ type UnlocksState = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `unlocked` | `string[]` |  |  | The ids of the unlocks recorded in this save, in the order they were recorded. |
+
 ### UnlockStatus
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockstatus).
 
-Where entering codes stands, as `startUnlocks` reports it in the runner's
-snapshot, at `snapshot.helpers.unlocks`, so every UI reads it the same way.
+The state of code entry that `startUnlocks` reports in the runner's snapshot, at `snapshot.helpers.unlocks`.
 
 ```ts shape
 import type { UnlockStatus } from '@ifloom/plugin-unlocks'
@@ -317,15 +325,15 @@ type UnlockStatus = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `status` | `'idle' \| 'checking' \| 'wrong' \| 'unlocked'` |  |  | `checking` while a code is checked (which takes a moment on purpose) and while the codes the profile remembers are, as codes start; `wrong` when the last code didn't work; `unlocked` when it did; `idle` otherwise. |
-| `reason` | `string \| null` |  |  | Why the last code didn't work, while `status` is `wrong`; null otherwise. |
-| `entered` | [`Entered`](#entered) `\| null` |  |  | What the last code unlocked, while `status` is `unlocked`; null otherwise. |
+| `status` | `'idle' \| 'checking' \| 'wrong' \| 'unlocked'` |  |  | The state of code entry, `checking`, `wrong`, `unlocked` or `idle`. It's `wrong` when the last code didn't work and `unlocked` when it did. It's `checking` while a code is checked, slowly on purpose, and while the profile's remembered codes are checked at start. |
+| `reason` | `string \| null` |  |  | The reason the last code didn't work while `status` is `wrong`, else null. |
+| `entered` | [`Entered`](#entered) `\| null` |  |  | The unlock the last code opened while `status` is `unlocked`, else null. |
 
 ### UnlocksView
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksview).
 
-What the UI reads at `view.plugins.unlocks`.
+The unlocks as the player sees them, in `view.plugins.unlocks`.
 
 ```ts shape
 import type { UnlocksView } from '@ifloom/plugin-unlocks'
@@ -338,15 +346,15 @@ type UnlocksView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocks` | [`UnlockView[]`](#unlockview) |  |  | Every unlock, in the order the game declares them. |
-| `unlocked` | `number` |  |  | How many are unlocked. |
-| `total` | `number` |  |  | How many unlocks the game declares. |
+| `unlocks` | [`UnlockView[]`](#unlockview) |  |  | The game's unlocks, in the order the game declares them. |
+| `unlocked` | `number` |  |  | The number of unlocks this save records. |
+| `total` | `number` |  |  | The number of unlocks the game declares. |
 
 ### UnlockView
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockview).
 
-An unlock as the UI shows it.
+An unlock as the player sees it, in `view.plugins.unlocks.unlocks`.
 
 ```ts shape
 import type { UnlockView } from '@ifloom/plugin-unlocks'
@@ -360,10 +368,10 @@ type UnlockView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-| `description` | `string` |  |  | What it opens, as the player reads it; `''` with none. |
-| `unlocked` | `boolean` |  |  | Recorded in this save. |
+| `id` | `string` |  |  | The unlock's id. |
+| `name` | `string` |  |  | The unlock's name. |
+| `description` | `string` |  |  | The unlock's description, or `''` when it has none. |
+| `unlocked` | `boolean` |  |  | True when this save records the unlock. |
 
 ## @ifloom/plugin-unlocks/react
 
@@ -375,7 +383,7 @@ type UnlockView = {
 
 Const.
 
-The unlocks plugin's words, in English. A game rewords any with `ui.<key>` in its strings.
+The unlocks plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
 ```ts shape
 import { UNLOCKS_WORDS } from '@ifloom/plugin-unlocks/react'
@@ -392,11 +400,23 @@ const UNLOCKS_WORDS: {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `checkingCode` | `'Checking…'` |  |  | The label of the unlock button while a code is checked. |
+| `code` | `'Code'` |  |  | The placeholder and the screen readers' label of the code box. |
+| `enterCode` | `'Enter a code'` |  |  | The heading over the code box, and the label of the menu button that opens it without pages. |
+| `locked` | `'Locked'` |  |  | The state of an unlock the player hasn't opened. |
+| `restartForUnlock` | `'Restart to add it'` |  |  | The label of the button that restarts the game to add the packs a code opened. |
+| `unlock` | `'Unlock'` |  |  | The label of the button that checks the code. |
+| `unlocked` | `'Unlocked'` |  |  | The state of an unlock the player has opened. |
+| `unlockedAlready` | `'{label} was unlocked already.'` |  |  | The message for a code that opened an unlock the player had already, with its `{label}`. |
+| `unlockedNow` | `'Unlocked: {label}.'` |  |  | The message for a code that has just opened an unlock, with its `{label}`. |
+
 ### UnlocksControls
 
 Type.
 
-What `useUnlocks` returns: the unlocks plugin's view, and entering a code.
+The unlocks plugin's view with the code box's state and a function that enters a code, as `useUnlocks` returns it.
 
 ```ts shape
 import type { UnlocksControls } from '@ifloom/plugin-unlocks/react'
@@ -416,26 +436,29 @@ type UnlocksControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocks` | [`UnlockView[]`](#unlockview) |  |  | Every unlock, in the order the game declares them. |
-| `unlocked` | `number` |  |  | How many are unlocked. |
-| `total` | `number` |  |  | How many unlocks the game declares. |
-| `available` | `boolean` |  |  | Whether codes can be entered: codes have started on the runner (the unlocks UI starts them). |
-| `enter` | `(code: string) => Promise<boolean>` |  |  | Try a code with `enterCode`. True if it unlocked something; `entered` says what, or `message` why not. |
-| `checking` | `boolean` |  |  | True while a code is being checked, which takes a moment on purpose: the snapshot's `helpers.unlocks.status`. |
-| `entered` | [`Entered`](#entered) `\| null` |  |  | What the last code unlocked, or null. |
-| `message` | `string \| null` |  |  | Why the last code didn't work, or null. |
-| `restart` | `(() => void) \| undefined` |  |  | Build the game again with what a code just opened: `onChange` from `unlocksUiWith`, when the last code needs it. Undefined otherwise. |
-| `problems` | `string[]` |  |  | What couldn't be opened of the content the profile remembers (a code that has changed since). |
+| `unlocks` | [`UnlockView[]`](#unlockview) |  |  | The game's unlocks, in the order the game declares them. |
+| `unlocked` | `number` |  |  | The number of unlocks this save records. |
+| `total` | `number` |  |  | The number of unlocks the game declares. |
+| `available` | `boolean` |  |  | True when code entry has started on the runner, which the unlocks UI does. |
+| `enter` | `(code: string) => Promise<boolean>` |  |  | Checks a code with `enterCode` and resolves true when it opened an unlock. `entered` then names it, or `message` gives the reason it didn't. |
+| `checking` | `boolean` |  |  | True while a code is checked, slowly on purpose, from the snapshot's `helpers.unlocks.status`. |
+| `entered` | [`Entered`](#entered) `\| null` |  |  | The unlock the last code opened, or null. |
+| `message` | `string \| null` |  |  | The reason the last code didn't work, or null. |
+| `restart` | `(() => void) \| undefined` |  |  | The function that builds the game again with the packs a code just opened, `onChange` from `unlocksUiWith`. It is undefined unless the last code needs it. |
+| `problems` | `string[]` |  |  | The problems opening the packs the profile remembers, such as a code that has changed since. |
 
 ### UnlocksPanel
 
 Const. Explained in [Unlocks](/docs/plugins/unlocks#unlockspanel).
 
-Entering a code, and the game's unlocks with which are unlocked: a box and
-a button, what the code unlocked or why it didn't, a button to restart
-when the code opened content the game in play doesn't have yet, and the
-list. On the settings page, and in the menu without pages, when the game
-lists the unlocks UI. A thin default on `useUnlocks`.
+Renders the code box and the list of unlocks from `view.plugins.unlocks`. It shows the unlock a code opened, or why
+the code failed.
+
+A restart button shows when the code opened packs the game in play doesn't have yet.
+
+The unlocks UI puts it on the settings page, or in the menu without pages. A preset can style the parts `unlocks`,
+`unlocks-title`, `unlock-form`, `unlock-input`, `unlocks-message`, `unlocks-entered`, `unlock-problem`,
+`unlocks-list`, `unlock`, `unlock-name`, `unlock-state` and `unlock-text`.
 
 ```ts shape
 import { UnlocksPanel } from '@ifloom/plugin-unlocks/react'
@@ -446,10 +469,12 @@ const UnlocksPanel: ComponentType<{ className?: string; }>
 
 Const. Explained in [Unlocks](/docs/plugins/unlocks#unlocksui).
 
-The unlocks plugin's React UI, for `plugins` on `mountGame` or
-`GameProvider`: codes start on the runner, and the `UnlocksPanel` is on
-the settings page (with pages on) or behind an Enter a code button in the
-menu. `unlocksUiWith` takes the problems and a restart.
+The unlocks plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `UnlocksPanel` on the
+settings page, or behind a menu button without pages.
+
+It also starts code entry on the runner.
+
+`unlocksUiWith` returns the same UI with problems and a restart.
 
 ```ts shape
 import { unlocksUi } from '@ifloom/plugin-unlocks/react'
@@ -462,7 +487,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksuioptions).
 
-What `unlocksUiWith` takes: what went wrong opening remembered content, and how to start over with new content.
+Settings for `unlocksUiWith`. Without them, the UI shows no problems and offers no restart.
 
 ```ts shape
 import type { UnlocksUiOptions } from '@ifloom/plugin-unlocks/react'
@@ -475,17 +500,17 @@ type UnlocksUiOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `problems` | `string[]` | yes |  | What `unlockedPacks` said it couldn't open, shown under the code box. |
-| `onChange` | `() => void` | yes |  | Build the game again with the content a code has just opened: usually `() => location.reload()`. |
-| `start` | `(runner:` [`Runner`](/docs/api/engine#runner)`) => () => void` | yes |  | How codes start on the runner: `startUnlocks` if left out. Returns the way to stop them. |
+| `problems` | `string[]` | yes |  | The `problems` from `unlockedPacks`, shown under the code box. |
+| `onChange` | `() => void` | yes |  | The function that builds the game again with the packs a code has just opened, such as `() => location.reload()`. |
+| `start` | `(runner:` [`Runner`](/docs/api/engine#runner)`) => () => void` | yes |  | The function that starts code entry on the runner and returns the function that stops it. `startUnlocks` if left out. |
 
 ### unlocksUiWith
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#unlocksuiwith).
 
-The unlocks plugin's React UI with options: what `unlockedPacks` couldn't
-open, shown under the code box, and `onChange`, which a Restart button
-calls once a code has opened content the game in play doesn't have yet.
+Returns the unlocks plugin's React UI with settings. It shows the `problems` from `unlockedPacks` under the code box.
+
+Its restart button calls `onChange` once a code has opened packs the game in play doesn't have yet.
 
 ```ts shape
 import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'
@@ -498,12 +523,10 @@ Uses: [`UnlocksUiOptions`](#unlocksuioptions), [`PluginUi`](/docs/api/react-kit#
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#useunlocks).
 
-The unlocks plugin's view and the code box's state, or null in a game
-without the plugin. Where entering stands comes from the runner's
-snapshot (`helpers.unlocks`, which `startUnlocks` reports), so it reads the
-same in every component. Without codes started on the runner (the unlocks
-UI starts them), `available` is false and the list still shows.
-`UnlocksPanel` is drawn from it.
+Returns the unlocks plugin's view and the code box's state from the running game, or null in a game without the
+plugin. It re-renders when the view or the snapshot's `helpers.unlocks` changes.
+
+Before code entry has started on the runner, `available` is false and the list of unlocks still shows.
 
 ```ts shape
 import { useUnlocks } from '@ifloom/plugin-unlocks/react'

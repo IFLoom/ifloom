@@ -9,26 +9,21 @@ import { entityKv, entityText, hasEntity, ownerOf, parseRef, speakerRef } from '
 import type { KvValue } from './types.ts'
 
 /**
- * Fill the tokens a line of prose may carry:
+ * Returns `text` with its `{{…}}` tokens filled for this state. An unset bare name prints nothing, and any other token
+ * that names nothing stays as written, so the missing name shows on screen.
  *
- * - `{{name}}`: a name of the game's own, looked up as a phrase (content's
- *   `phrases`, with `.` between groups: `{{outfit.verdict}}`), then a value
- *   in `rules.values`, then a key in the kv store (a name the player typed is
- *   a key like any other: `{{playerName}}`);
- * - `{{plugin/name}}`: a plugin's value, with any arguments after the name:
- *   `{{messages/unread channel=texts}}`;
- * - `{{kv:key of=storyline:baker}}`: a key in another kv store;
- * - `{{v:game/name}}` and `{{v:plugin/name}}`, the older way to write a
- *   value, which still works.
+ * The tokens are these:
  *
- * Any of them can end in `|` and words shown while the token is unset:
- * `{{flatmateName|Your flatmate}}`. Unset is a kv key that is unset or not
- * text or a number, a phrase no row of which holds, a value nobody has, or
- * one that gives `''`. The fallback is shown as written, with no tokens in it.
- * Without one, an unset bare name (`{{name}}`) prints nothing, and any other
- * token naming nothing is left as it is, so the missing name shows on
- * screen. Words a token prints are never read for tokens again, but a
- * phrase's own words are filled when it is printed.
+ * - `{{name}}` reads one of the game's phrases (content's `phrases`, with `.` between groups: `{{outfit.verdict}}`),
+ *   then a value in `rules.values`, then a kv key such as `{{playerName}}`.
+ * - `{{plugin/name}}` reads a plugin's value, with any arguments after the name (`{{messages/unread channel=texts}}`).
+ * - `{{kv:key of=storyline:baker}}` reads a key in another kv store.
+ * - `{{v:game/name}}` and `{{v:plugin/name}}` are the older way to write a value, and still work.
+ *
+ * A token can end in `|` and the words shown while it is unset, as in `{{flatmateName|Your flatmate}}`. A token is
+ * unset when its kv key is missing or not text or a number, no row of its phrase holds, no one has its value, or its
+ * value is `''`. The fallback is shown as written, with no tokens filled. The engine never reads a token's printed
+ * words for tokens again, but it fills a phrase's own words when it prints the phrase.
  */
 export function fillTokens(state: GameState, game: Game, text: string): string {
   if (!text.includes('{{')) return text
@@ -66,10 +61,10 @@ function tokenValue(state: GameState, game: Game, prefix: string | undefined, na
 }
 
 /**
- * A phrase's words for this state: the first of its rows whose `when` holds,
- * its tokens filled, or `''` when none does. Undefined when the game has no
- * phrase by that full name. `args` are what the token passed: each argument
- * the phrase declares is put in for `$<arg>` (see `PhraseWithArgs`).
+ * Returns a phrase's words for this state, the first of its rows whose `when` holds with its tokens filled, or `''`
+ * when none does. Returns undefined when the game has no phrase by that name.
+ *
+ * `args` are the token's arguments. Each argument the phrase declares replaces `$<arg>` (see `PhraseWithArgs`).
  */
 export function phraseText(state: GameState, game: Game, name: string, args: Readonly<Record<string, unknown>> = {}): string | undefined {
   const rows = phraseRows(game, name)
@@ -131,14 +126,14 @@ function argNames(state: GameState, game: Game, text: string, declared: readonly
 }
 
 /**
- * An entity's name as the player reads it: the name it was created with, or
- * its declaration's, with prose tokens filled. Its id when it has neither.
+ * Returns an entity's name with its tokens filled, the name it was created with or else its definition's. Returns the
+ * entity's id when it has neither.
  */
 export function entityName(state: GameState, game: Game, ref: string): string {
   return fillTokens(state, game, entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref)
 }
 
-/** An entity's description, filled like its name; undefined when it has none. */
+/** Returns an entity's description with its tokens filled, or undefined when it has none. */
 export function entityDescription(state: GameState, game: Game, ref: string): string | undefined {
   const description = entityText(state, game, ref, 'description')
   return description === undefined ? undefined : fillTokens(state, game, description)
@@ -154,7 +149,7 @@ function readKv(state: GameState, game: Game, key: string, of: string | undefine
   return hasEntity(state, game, owner) ? entityKv(state, game, owner)[key] : undefined
 }
 
-/** A value token's arguments, `channel=texts count=2`, as `with`: numbers and true/false read as such. */
+/** Returns a value token's arguments (`channel=texts count=2`) as an object. Numbers and `true` or `false` are read as such. */
 export function tokenArgs(text: string | undefined): Record<string, string | number | boolean> {
   const out: Record<string, string | number | boolean> = {}
   for (const pair of (text ?? '').trim().split(/\s+/).filter(Boolean)) {
@@ -166,21 +161,19 @@ export function tokenArgs(text: string | undefined): Record<string, string | num
 }
 
 /**
- * One member of a variants list: a prose key, or a prose key with a weight.
- * `{ prose: 'cafe.order/late', weight: 3 }` is drawn three times as often as a
- * member of weight 1. A plain key has weight 1.
+ * A member of a variants list, a prose key or a prose key with a weight. A plain key has weight 1, so
+ * `{ prose: 'cafe.order/late', weight: 3 }` is drawn three times as often.
  */
 export type VariantMember = string | { prose: string; weight?: number }
 
-/** A variants member's prose key. */
+/** Returns a variants member's prose key. */
 export function memberKey(member: VariantMember): string {
   return typeof member === 'string' ? member : member.prose
 }
 
 /**
- * A prose store from lines by key and variants by name: what data scenes read
- * their words from. `line(key, state)` fills the tokens for that save;
- * without a state it returns the line as written.
+ * Returns the prose store scenes read their words from, built from lines by key and variants lists by name. Its
+ * `line(key, state)` fills the tokens for that state, and returns the line unfilled without one.
  */
 export function proseStore(game: Game, lines: Record<string, string>, variants: Record<string, readonly VariantMember[]> = {}): ProseStore {
   const keys: Record<string, string[]> = {}

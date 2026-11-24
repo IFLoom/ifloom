@@ -107,12 +107,11 @@ function GameMenuImpl({ className }: { className?: string }) {
 }
 
 /**
- * The player's menu: saves, the backlog, undo and redo — each only if the game
- * turned it on when it made the runner, mods when the provider has them, and
- * each plugin UI's `settings` (the unlocks plugin's code box, say) behind a
- * button of its own. With pages on, it also has Settings (if the game has
- * any, or mods or a plugin UI's settings, which are there instead) and Title
- * screen, which switch to those pages. With `keys` on, Escape opens the same
- * buttons in a dialog.
+ * Renders the player's menu as the `menu` part, with buttons for saves, the backlog, undo and redo when the runner has
+ * them. With `keys` on, Escape opens the same buttons in a dialog.
+ *
+ * It adds mods when the provider has them, and each plugin UI's `settings`, such as the unlocks plugin's code box,
+ * behind a button of its own. With pages on, it has Settings and Title screen buttons instead, which switch to those
+ * pages, and the mods and the plugin UIs' settings move to the settings page.
  */
 export const GameMenu = overridable('GameMenu', GameMenuImpl)

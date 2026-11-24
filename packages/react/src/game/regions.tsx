@@ -55,10 +55,11 @@ function useWide(): boolean {
 /** How a `Sidebar` tells the `Game` it's there. */
 const SidebarSlot = createContext<((present: boolean) => void) | null>(null)
 
+/** The props of `Game`. */
 export type GameProps = {
-  /** Classes added to its own. */
+  /** Classes added to the `page` part's own. */
   className?: string
-  /** The regions: a `Sidebar`, a `Story`, an `Overlay` and whatever else the page has. */
+  /** The regions inside the page, such as a `Sidebar`, a `Story` and an `Overlay`. */
   children?: ReactNode
 }
 
@@ -84,18 +85,19 @@ function GameImpl({ className, children }: GameProps) {
 }
 
 /**
- * The page: the root of a layout, inside the game's provider. It draws the
- * `page` part, a grid with the side column and the story side by side when it
- * has a `Sidebar` (it then carries `data-has-sidebar`), or one centred column
- * when it doesn't. With `pages` on, `GameShell` and `mountGame` draw it on
- * the `game` page, and the title screen, settings and the rest in its place.
+ * Renders the page, the root of a layout inside the game's provider, as the `page` part. With a `Sidebar` it's a grid
+ * of the side column and the story, and carries `data-has-sidebar`.
+ *
+ * Without a `Sidebar` it's one centred column. With `pages` on, it renders on the `game` page, and the title screen,
+ * the settings and the other pages render in its place.
  */
 export const Game = overridable('Game', GameImpl)
 
+/** The props of `Sidebar`. */
 export type SidebarProps = {
-  /** Classes added to its own. */
+  /** Classes added to the `sidebar` part's own. */
   className?: string
-  /** What the sidebar holds: sections, stats, plugins' spots. */
+  /** The side column's contents, such as sections, the stats and plugin spots. */
   children?: ReactNode
 }
 
@@ -180,22 +182,24 @@ function SidebarImpl({ className, children }: SidebarProps) {
 }
 
 /**
- * The side column, with what you put in it. Below Tailwind's `md` (48rem) it
- * becomes a drawer: a slim `top-bar` with the game's title, the clock and a
- * `drawer-button` that slides the column in as a `drawer` (a dialog: focus
- * stays in it, and Escape closes it). The drawer closes after the player
- * picks something, unless a dialog it opened is still open.
+ * Renders the side column, the `sidebar` part, with its children. Below Tailwind's `md` (48rem) it becomes a drawer
+ * behind a `top-bar` with the game's title, the clock and a `drawer-button`.
+ *
+ * The `drawer` is a dialog, so focus stays in it and Escape closes it. It closes after the player chooses something,
+ * unless a dialog it opened is still open.
  */
 export const Sidebar = overridable('Sidebar', SidebarImpl)
 
+/** The props of `Story`. */
 export type StoryProps = {
   /**
-   * Where the reading column sits when the story is wider than `--width-prose`:
-   * `'center'` or `'start'`. Left out, the `--margin-prose` token decides, which
-   * centres it unless a preset or the game's stylesheet says otherwise.
+   * The reading column's place when the story is wider than `--width-prose`, `'center'` or `'start'`. The
+   * `--margin-prose` token decides if left out, and centres it unless a preset or the game's stylesheet changes it.
    */
   align?: 'center' | 'start'
+  /** Classes added to the `story` part's own. */
   className?: string
+  /** The story's contents, such as the scene, the inputs, the room's actions and plugin spots. */
   children?: ReactNode
 }
 
@@ -209,12 +213,11 @@ function StoryImpl({ align, className, children }: StoryProps) {
 }
 
 /**
- * The main column, with what you put in it: the scene, then the bottom area
- * (exits, the room's actions, the people here) in the default layout. It
- * fills the width the side column leaves. The scene's title, prose, choices,
- * inputs, exits and the people here keep to `--width-prose`, a reading column
- * centred in the story unless `align` or `--margin-prose` says otherwise;
- * pictures and panels keep the whole width.
+ * Renders the story, the main column, as the `story` part with its children. It fills the width the side column
+ * leaves.
+ *
+ * The scene's title, prose, choices, inputs, exits and the people here keep to `--width-prose`, a reading column
+ * centred in the story unless `align` or `--margin-prose` moves it. Pictures and panels take the full width.
  */
 export const Story = overridable('Story', StoryImpl)
 
@@ -228,21 +231,20 @@ function OverlayImpl({ className, children }: { className?: string; children?: R
 }
 
 /**
- * What floats over the page as it scrolls, and sits after it at the end: the
- * notices, in the default layout. It sticks to the bottom of the window, so
- * nothing is left under it. Nothing in it, it takes no room.
+ * Renders the `overlay` part, which sticks to the bottom of the window over the page and sits after it at the end. The
+ * default layout puts the notices in it.
+ *
+ * It takes no room while it has nothing in it.
  */
 export const Overlay = overridable('Overlay', OverlayImpl)
 
 /**
- * Whether a condition holds now, against the state on show: any condition
- * content can write, `{ 'places/at': { location: 'home' } }` say. It only
- * reads, so saves and replays are as they were.
+ * Returns true while a condition holds in the running game's state, and re-renders with each new state. It takes any
+ * condition content can write, such as `{ 'places/at': { location: 'home' } }`, and returns true for none.
  *
- * An escape hatch for a layout: the view already says what the player can
- * see, so reach for it only to place a part of your own by a condition the
- * view has no field for, as `Section`'s `when` and `When` do. What the story
- * shows belongs in content, where the engine checks it.
+ * It only reads, so saves and replays stay as they were. Use it to place a part of a layout by a condition the view
+ * has no field for, as `Section`'s `when` and `When` do. What the story shows belongs in content, where the engine
+ * checks it.
  */
 export function useHolds(condition: Condition | undefined): boolean {
   const { runner, snapshot } = useGame()
@@ -253,7 +255,7 @@ function WhenImpl({ condition, children }: { condition: Condition; children?: Re
   return useHolds(condition) ? <>{children}</> : null
 }
 
-/** Its children while `condition` holds, and nothing otherwise. `useHolds` is the same as a hook. */
+/** Renders its children while `condition` holds, and nothing otherwise. `useHolds` does the same as a hook. */
 export const When = overridable('When', WhenImpl)
 
 /** The profile namespace that remembers which sections the player folded. */
@@ -286,22 +288,25 @@ function useDrewNothing(): [RefObject<HTMLDivElement | null>, boolean] {
   return [ref, empty]
 }
 
+/** The props of `Section`. */
 export type SectionProps = {
-  /** What it's called for the profile: the open or folded state is kept under it. */
+  /** The section's id, under which the profile keeps whether the player folded it. */
   id: string
-  /** Its heading, as the player reads it. */
+  /** The section's heading. */
   title: string
-  /** Fold in place with a button on its title. The player's choice is remembered. */
+  /** True to fold the section in place with a button on its title. The profile remembers the player's choice. */
   collapsible?: boolean
-  /** Draw a button that opens the children in a dialog, instead of the children. */
+  /** True to render the section as a button that opens its children in a dialog, in place of the children. */
   dialog?: boolean
-  /** Open at first, for a folding section: true if left out. The player's last choice wins. */
+  /** True to start a folding section open. True if left out, and the player's last choice wins. */
   open?: boolean
-  /** Only while this condition holds, such as `{ 'places/at': { location: 'home' } }`. */
+  /** The condition the section shows under, such as `{ 'places/at': { location: 'home' } }`. Always shown if left out. */
   when?: Condition
-  /** Something small after the title: a count, a "new". */
+  /** A small mark after the title, such as a count or "new". */
   badge?: ReactNode
+  /** Classes added to the `section` part's own. */
   className?: string
+  /** The section's contents. */
   children?: ReactNode
 }
 
@@ -370,14 +375,14 @@ function SectionImpl({ id, title, collapsible = false, dialog = false, open: ini
 }
 
 /**
- * A titled part of a layout, in the side column or the story. It hides itself
- * when its children draw nothing (the plugin isn't there, the list is empty).
+ * Renders a titled section of a layout, in the side column or the story, as the `section` part. It hides itself when
+ * its children render nothing, such as a missing plugin or an empty list.
  *
  * - `collapsible` folds it in place with a button on its title. Each player's
  *   choice is remembered per `id` in the profile's `ui:sections`.
- * - `dialog` draws its title, with `badge` if given, as a button that opens
- *   the children in a dialog, looking as a folding section's title does
- *   with its chevron pointing out.
+ * - `dialog` renders its title, with `badge` if given, as a button that opens
+ *   the children in a dialog. It looks like a folding section's title, with
+ *   its chevron pointing out.
  * - `when` shows it only while a condition holds.
  */
 export const Section = overridable('Section', SectionImpl)

@@ -1,10 +1,8 @@
 /**
- * Builders for flowing scenes, exported from @ifloom/engine: a scene's body written
- * as the words and decisions it reads as, top to bottom.
+ * The builders a flowing scene's body is written with, top to bottom, as its words and decisions read.
  *
- * Each builder returns plain data, the same objects a pack or a mod writes
- * by hand, so a scene written with them saves, checks and replays as any
- * other.
+ * Each builder returns plain data, the same objects a pack or a mod writes by hand, so a scene written with them
+ * saves, checks and replays as any other.
  *
  * ```ts
  * import { choice, decide, jump, point, say, text } from '@ifloom/engine'
@@ -26,17 +24,22 @@ import type { PluginArgs } from './plugin.ts'
 import type { Block, FlowChoice } from './scene.ts'
 import type { BlockUi, Ui } from './features/ui.ts'
 
-/** What any block can have besides its own: a condition it shows under, and presentation hints. */
-export type BlockExtras = { when?: Condition; ui?: Ui<BlockUi> }
+/** The fields any block can have beside its own, a condition and ui hints. */
+export type BlockExtras = {
+  /** The block's condition, which leaves it out while it fails. */
+  when?: Condition
+  /** The block's ui hints. See `BlockUi`. */
+  ui?: Ui<BlockUi>
+}
 
 /**
- * Words as written: a paragraph, or several. The indentation every line
- * shares is taken off, so the words can sit indented in your code, and
- * blank lines at the start and the end go. A blank line between lines
- * starts a new paragraph. The words are read as prose is: `@ava: "…"` is a
- * spoken line, `[[img:…]]` a picture, `{{key}}` a token, and inline markup
- * works. Give it an `id` to name it for a translation's `words` table,
- * `scene.<scene>.text.<id>`; without one it is named by a hash of its words.
+ * Returns a `{ text }` block of words in place, one paragraph or several. A blank line between lines starts a new
+ * paragraph.
+ *
+ * It strips the indentation every line shares and the blank lines at either end, so the words can sit indented in your
+ * code. The words are read as prose is, so `@ava: "…"` is a spoken line, `[[img:…]]` a picture and `{{key}}` a token.
+ * An `id` keys the block in a translation's words table as `scene.<scene>.text.<id>`, and a hash of its words keys it
+ * without one.
  */
 export function text(words: string, extras: BlockExtras & { id?: string } = {}): Block {
   return { text: dedent(words), ...extras }
@@ -53,25 +56,26 @@ function dedent(words: string): string {
 }
 
 /**
- * A spoken line, under who says it, by id as `@id: "…"` in prose names them:
- * an entity, by reference or by bare id as a scene's `speaker` is (`'ava'` is
- * `character:ava`), `'you'` for whoever the player is playing, or `'player'`.
- * Its beat is a `say` with that `speaker` and their name.
+ * Returns a `{ say }` block, a spoken line under the id of who says it. Its beat is a `say` beat with that speaker and
+ * their name.
+ *
+ * `who` names the speaker as `@id: "…"` does in prose, an entity by reference or bare id (`'ava'` is `character:ava`),
+ * `'you'` for whoever the player is playing, or `'player'`.
  */
 export function say(who: string, words: string, extras: BlockExtras & { id?: string; voice?: string } = {}): Block {
   return { say: dedent(words), speaker: who, ...extras }
 }
 
-/** Blocks shown only while `condition` holds: a section, which can hold anything a body can. */
+/** Returns a section of blocks shown only while `condition` holds. A section can hold any block a body can. */
 export function when(condition: Condition, blocks: Block[], extras: Omit<BlockExtras, 'when'> = {}): Block {
   return { when: condition, blocks, ...extras }
 }
 
 /**
- * The first block that fits: each of `blocks` is tried in order, and only the
- * first whose own `when` holds, or that has none, is shown. Leave the last
- * without a `when` for the otherwise. A `when` in `extras` leaves the whole
- * thing out while it fails.
+ * Returns a `{ cases }` block that shows only the first of `blocks` whose own `when` holds, or that has none. Leave the
+ * last without a `when` as the fallback.
+ *
+ * A `when` in `extras` leaves the whole block out while it fails.
  *
  * ```ts
  * cases([
@@ -86,59 +90,60 @@ export function cases(blocks: Block[], extras: BlockExtras = {}): Block {
 }
 
 /**
- * A decision: the flow waits here until the player picks one of `choices`.
- * The pick's `then` comes next, then the blocks after the decision. Its id
- * is unique within the scene.
+ * Returns a decision, where the flow waits until the player chooses one of `choices`. Its id is unique within the
+ * scene.
+ *
+ * The chosen choice's `then` comes next, then the blocks after the decision.
  */
 export function decide(id: string, choices: FlowChoice[], extras: BlockExtras = {}): Block {
   return { decide: id, choices, ...extras }
 }
 
 /**
- * A choice at a decision, or among a scene's ending choices. `label` is its
- * words. Everything a `Choice` has goes in `fields`: its `effects`, `cost`,
- * `blocked`, `once` or `command`, and `then`, what the flow shows once it is
- * picked. Its id is unique within the scene.
+ * Returns a choice for a decision or a scene's ending choices, with `label` as its words. Its id is unique within the
+ * scene.
+ *
+ * Every other field of a `Choice` goes in `fields`, such as `effects`, `cost`, `blocked`, `once` or `command`, and
+ * `then`, the blocks the flow shows once the player chooses it.
  */
 export function choice(id: string, label: string, fields: Omit<FlowChoice, 'id' | 'label'> = {}): FlowChoice {
   return { id, label, ...fields }
 }
 
-/** A picture or a video in the flow, where it stands: `image('cafe/cup', { alt: 'A cup of tea' })`. */
+/** Returns a `{ media }` block, a picture or a video at this place in the flow, such as `image('cafe/cup', { alt: 'A cup of tea' })`. */
 export function image(src: string, media: Omit<SceneMedia, 'src'> & BlockExtras = {}): Block {
   const { when: shownWhen, ui, ...rest } = media
   return { media: { src, ...rest }, ...(shownWhen !== undefined ? { when: shownWhen } : {}), ...(ui !== undefined ? { ui } : {}) }
 }
 
-/** A minigame played where it stands. The flow waits until it ends, then carries on. */
+/** Returns a `{ minigame }` block, a minigame played at this place in the flow. The flow waits until it ends, then carries on. */
 export function minigame(id: string, extras: BlockExtras = {}): Block {
   return { minigame: id, ...extras }
 }
 
-/** A panel opened where it stands, with what it needs. The flow waits until the player closes it. */
+/** Returns a `{ panel }` block, a panel opened at this place in the flow with `args` as its `with`. The flow waits until the player closes it. */
 export function panel(name: string, args?: PluginArgs, extras: BlockExtras = {}): Block {
   return { panel: name, ...(args !== undefined ? { with: args } : {}), ...extras }
 }
 
 /**
- * Blocks the player can open and shut, under `label`: a letter to read, a
- * long aside. It is presentation only, a section with the React UI's `fold`
- * hint, and keeps no state; a UI that doesn't know the hint shows the blocks.
+ * Returns a fold, a section the player can open and shut under `label`, such as a letter to read. A UI without the
+ * `fold` hint shows the blocks open.
+ *
+ * A fold is presentation only, a section with the React UI's `fold` hint, and keeps no state.
  */
 export function fold(label: string, blocks: Block[], extras: BlockExtras = {}): Block {
   return { blocks, ...extras, ui: { ...extras.ui, fold: label } }
 }
 
-/** A place in the flow a choice can jump to, with `jump(id)`: at the top of a scene's body, in a section or in a choice's `then`. */
+/** Returns a point, a place in the flow a choice's `jump(id)` goes to, anywhere in a scene's body, a section or a choice's `then`. */
 export function point(id: string): Block {
   return { point: id }
 }
 
 /**
- * A choice's effect that carries the flow on from a point instead of after
- * its decision, once its `then` is done: `{ point: id }`. The point can be
- * anywhere in the scene, and the flow reads on from it. A flow loops only
- * this way, through a pick.
+ * Returns the jump effect `{ point: id }`, which carries the flow on from a point instead of after the choice's
+ * decision, once its `then` is done. A flow loops only this way, through a choice.
  */
 export function jump(id: string): { point: string } {
   return { point: id }

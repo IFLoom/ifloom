@@ -14,7 +14,7 @@ import { apply, describeProblem, loadGame, startingState } from './index.ts'
 import type { CommandRef, Content, Game, GameBase, GameState, LoadOptions, StartOptions } from './index.ts'
 import type { Plugin } from './plugin-api.ts'
 
-/** `loadGame`, for a test: the game, or an `Error` listing every problem the content checker found. */
+/** Returns the game `loadGame` builds, for a test. It throws an `Error` listing every problem the content checker finds. */
 export function loadChecked(content: readonly Content[], base: GameBase, options: LoadOptions = {}): Game {
   const { game, problems } = loadGame(content, base, options)
   if (problems.length > 0)
@@ -22,12 +22,12 @@ export function loadChecked(content: readonly Content[], base: GameBase, options
   return game
 }
 
-/** A new game, as `startingState` makes it, with no scene open: the room, where a plugin's actions and panels are. */
+/** Returns a new game's state from `startingState` with no scene open, so the room shows a plugin's actions and panels. */
 export function freshState(game: Game, options: StartOptions = {}): GameState {
   return { ...startingState(game, options), sceneId: null }
 }
 
-/** The state after each command in turn. Throws on the first one refused, naming it and its reason. */
+/** Returns the state after each command in turn. It throws on the first command refused, naming it and the reason. */
 export function play(state: GameState, game: Game, ...commands: readonly CommandRef[]): GameState {
   for (const [index, command] of commands.entries()) {
     const out = apply(state, game, command)
@@ -37,22 +37,21 @@ export function play(state: GameState, game: Game, ...commands: readonly Command
   return state
 }
 
-/** One way to load a plugin for a test: alone, or with one of the plugins it cooperates with. */
+/** One way to load a plugin for a test, alone or with one of the plugins it cooperates with. */
 export type PartnerCase = {
-  /** `alone`, or `with <id>`, for a test's name. */
+  /** The case's name for a test, `alone` or `with <id>`. */
   name: string
-  /** The partner's id, or `null` alone. */
+  /** The partner's id, or `null` for the plugin alone. */
   partner: string | null
-  /** The plugins to load: the partner, if any, then the plugin under test. */
+  /** The plugins to load, the partner first if there is one, then the plugin under test. */
   plugins: Plugin[]
-  /** Whether this case loads the plugin `id`: the plugin under test or the partner. */
+  /** Returns true when the case loads the plugin `id`, the plugin under test or the partner. */
   has: (id: string) => boolean
 }
 
 /**
- * The plugin alone, then with each partner in turn, for a test to run a block
- * in each. Every partner must be in the plugin's `cooperates`, since a plugin
- * reaches no other; one that isn't, or is listed twice, throws.
+ * Returns the {@link PartnerCase}s of a plugin, alone and then with each partner in turn, for a test to run in each. It
+ * throws for a partner missing from `cooperates` or listed twice.
  */
 export function partnerCases(plugin: Plugin, partners: readonly Plugin[]): PartnerCase[] {
   const cooperates = new Set(plugin.cooperates ?? [])
@@ -80,9 +79,8 @@ function codeOf(source: string): string {
 }
 
 /**
- * What breaks the plugin rules in a plugin package's source, given as each
- * file's text by its path (any path with `src/` in it, such as a glob's keys):
- * one line for each, or none.
+ * Returns one line for each break of the plugin rules in a plugin package's source, or none. Give each file's text by
+ * its path, any path with `src/` in it, such as a glob's keys.
  *
  * - The main entry, everything in `src/` but `src/react/`, imports only
  *   `@ifloom/engine`, `@ifloom/engine/plugin` and its own files beside it,
@@ -111,7 +109,7 @@ export function boundaryProblems(sources: Readonly<Record<string, string>>): str
   return problems
 }
 
-/** Every name a source exports, sorted: its `export function`, `const`, `type` and the rest, and each name in an export list. */
+/** Returns the names a source exports, sorted, from its `export function`, `const`, `type` and the rest, and each export list. */
 export function exportedNames(source: string): string[] {
   const names = new Set<string>()
   for (const match of source.matchAll(/^export (?:type|function|const|let|class|interface) ([A-Za-z_$][\w$]*)/gm)) names.add(match[1])
@@ -128,7 +126,7 @@ export function exportedNames(source: string): string[] {
   return [...names].sort()
 }
 
-/** Each name the entries' sources export that the page never mentions as a word, sorted. */
+/** Returns the names the entries' sources export that a docs page never mentions as a word, sorted. */
 export function undocumentedExports(sources: readonly string[], page: string): string[] {
   const names = new Set(sources.flatMap(exportedNames))
   return [...names].filter((name) => !new RegExp(`\\b${name}\\b`).test(page)).sort()

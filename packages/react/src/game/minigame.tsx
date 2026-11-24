@@ -10,17 +10,19 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
+/** The running minigame and its `send`, which `useMinigame` returns. */
 export type MinigameControls = {
-  /** The minigame being played, as the view has it, or `null`. */
+  /** The running minigame, `view.minigame`, or `null` when none runs. */
   minigame: MinigameView | null
-  /** Press one of its inputs. Returns what `apply` returned, so a refusal can be shown. */
+  /** Presses one of the minigame's inputs by id, and returns the runner's result so a caller can show a refusal. */
   send: (input: string) => ReturnType<Runner['apply']>
 }
 
 /**
- * The minigame being played, and a way to press its inputs. Its timers run
- * on the game's clock, which `GameProvider` runs. With `keys: true` it also
- * maps the keyboard to the inputs, as `MinigameCard` does.
+ * Returns the running minigame and a `send` for its inputs from the running game, re-rendering with each new view.
+ * With `keys: true` it also maps the keyboard to the inputs, as `MinigameCard` does.
+ *
+ * The minigame's timer runs on the game's clock, which `GameProvider` starts.
  */
 export function useMinigame({ keys = false }: { keys?: boolean } = {}): MinigameControls {
   const { view, runner } = useGame()
@@ -75,9 +77,9 @@ function MinigameCardImpl({ className }: { className?: string }) {
 }
 
 /**
- * The minigame being played: its title, the running state's words, a bar
- * counting down its timer, and a button for each live input. The keyboard
- * presses inputs too: the minigame's `keys`, else the arrows and space.
- * `Scene` draws it in place of the scene while a minigame runs.
+ * Renders the running minigame from `view.minigame` as the `minigame` part, with its title, its words, its timer's
+ * bar and a button for each live input. `Scene` renders it in place of the scene.
+ *
+ * The keyboard presses inputs too, by the minigame's `keys`, else the arrow keys and space.
  */
 export const MinigameCard = overridable('MinigameCard', MinigameCardImpl)

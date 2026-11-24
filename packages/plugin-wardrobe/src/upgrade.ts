@@ -69,9 +69,10 @@ function itemsToThings(pack: RawPack): RawPack {
   return out as RawPack
 }
 
-/** The version of what content writes for this plugin. */
+/** The schema of the content this plugin reads, numbered by the engine's schema. */
 export const CONTENT_VERSION = 13
 
+/** The steps that carry this plugin's content forward, each keyed by the schema it upgrades from. */
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (pack, tools) =>
@@ -82,7 +83,7 @@ export const contentMigrations: Record<number, ContentStep> = {
   12: (pack, tools) => tools.calls(itemsToThings(pack), (call) => (ITEM_CALLS[call.name] ? { name: call.name, with: itemArgs(call.name, call.with) } : call)),
 }
 
-/** The version of this plugin's commands. */
+/** The version of this plugin's commands, which command logs record. */
 export const COMMAND_VERSION = 13
 
 /** A command, if it is one of the named ones, with its arguments rewritten. */
@@ -91,6 +92,7 @@ const commandArgs =
   (command) =>
     command.type === 'custom' && typeof command.name === 'string' && names[command.name] ? { ...command, with: rewrite(command.name, command.with) } : command
 
+/** The steps that carry this plugin's logged commands forward, each keyed by the version it upgrades from. */
 export const commandMigrations: Record<number, CommandStep> = {
   // 5 → 6: a command's one target is `id`.
   5: commandArgs((name, args) => renamed(args, COMMANDS_6[name]), COMMANDS_6),

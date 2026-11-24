@@ -1,8 +1,8 @@
 /**
- * @ifloom/plugin-places/react: the places plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `placesUi` in the game's
- * `plugins` to have where the player is and the way out in the story, or
- * draw them yourself from `usePlaces`.
+ * The places plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `placesUi` in the game's `plugins` to render the player's location and its exits in the room. To render them
+ * yourself, read `usePlaces`.
  */
 import type { ComponentProps } from 'react'
 import type { EntityRef, GameState, Result } from '@ifloom/engine'
@@ -31,15 +31,15 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `usePlaces` returns: the places plugin's view, how to take an exit, and how to pick up what lies here. */
+/** The places plugin's view with functions that take an exit and pick up a thing, as `usePlaces` returns it. */
 export type PlacesControls = PlacesView & {
-  /** Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. */
+  /** Sends the command of the exit to the location with this id. The engine refuses it, as any command, when the exit is disabled or missing. */
   go: (exit: string) => Result<GameState>
-  /** Pick up one of a thing lying here, by its reference (`'item:paper'`): sends its `pickUp` command. */
+  /** Sends the `pickUp` command for one of the thing lying here with this reference, such as `'note:paper'`. */
   pickUp: (thing: EntityRef) => Result<GameState>
 }
 
-/** The places plugin's view with a way to travel, or null in a game without the plugin. `LocationCard` is drawn from it. */
+/** Returns the places plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes. */
 export function usePlaces(): PlacesControls | null {
   const { view, send } = usePlugin(PLACES)
   if (!view) return null
@@ -90,9 +90,11 @@ function LocationCardImpl() {
 }
 
 /**
- * Where the player is: the place's name and the line under it (its `description`), with its layered picture above them,
- * hotspots and all, and what lies there with a button to pick each up. The
- * exits are `Exits`. A thin default on `usePlaces`.
+ * Renders the player's location from `view.plugins.places.location`, its name and `description` under its layered
+ * picture, with the things lying there and a button to pick each up. `Exits` renders the exits.
+ *
+ * A preset can style the parts `location`, `location-name`, `location-text`, `location-things`, `location-thing`,
+ * `location-thing-name` and `location-thing-pick`.
  */
 export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
@@ -121,13 +123,15 @@ function ExitsImpl({ className }: { className?: string }) {
   )
 }
 
-/** The exits from where the player is, each a button, greyed out with its reason. Nothing without the places plugin. A thin default on `usePlaces`. */
+/**
+ * Renders the exits from `view.plugins.places.exits`, each a button that is disabled with its reason when refused. It
+ * renders nothing without the places plugin, and a preset can style the parts `exits` and `exit`.
+ */
 export const Exits = overridable('Exits', ExitsImpl)
 
 /**
- * The places plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `LocationCard` and the `Exits` in the story, before
- * the room's actions.
+ * The places plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `LocationCard` and
+ * the `Exits` in the room, before the room's actions.
  */
 export const placesUi: PluginUi = {
   ...PLACES,

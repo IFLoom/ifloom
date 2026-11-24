@@ -173,9 +173,10 @@ function TipImpl({ text, tip, className }: { text: string; tip: string; classNam
 }
 
 /**
- * A tooltip in the prose, from `[[tip:key|words]]`: the words as a `tip`
- * button, and the note in a `tip-content` bubble, shown on hover, keyboard
- * focus or a tap, and read as the button's description.
+ * Renders a tooltip in prose from `[[tip:key|words]]`, the words as a `tip` button with the note in a `tip-content`
+ * bubble. The bubble shows on hover, keyboard focus or a tap.
+ *
+ * Screen readers read the note as the button's description.
  */
 export const Tip = overridable('Tip', TipImpl)
 
@@ -219,20 +220,19 @@ function InlineActionImpl({ text, choice, className }: { text: string; choice: E
 }
 
 /**
- * An inline action, from `[[act:id|words]]`: the words as an `inline-action`
- * button that sends the choice's command, with its price after them. Greyed
- * out, it has `data-disabled` and `aria-disabled` and stays focusable, and a
- * tap, hover or focus shows the reason in a `tip-content` bubble. A warning
- * or an irreversible note shows the same way. Inline actions have no number
- * key: the number keys pick the choices in the list.
+ * Renders an inline action from `[[act:id|words]]` as an `inline-action` button that sends its command, with its
+ * price after the words. It has no number key, since the number keys choose the listed choices.
+ *
+ * A disabled one has `data-disabled` and `aria-disabled` and stays focusable, and a tap, hover or focus shows the
+ * reason in a `tip-content` bubble. A warning or an irreversible note shows the same way.
  */
 export const InlineAction = overridable('InlineAction', InlineActionImpl)
 
 /**
- * The words of an inline piece as a button that opens something over the
- * page: the part `inline-ui`, with `data-ui` set to the piece's name and
- * `aria-haspopup="dialog"`. When `open` goes back to false, focus returns to
- * it. The built-in `modal` and `image` use it, and so can a game's own.
+ * Renders a UI piece's words as a button that opens a dialog over the page, the `inline-ui` part with `data-ui` set to
+ * the piece's name. Focus returns to it when `open` goes back to false.
+ *
+ * The built-in `modal` and `image` pieces use it, and so can a game's own.
  */
 export function InlineTrigger({
   name,
@@ -241,11 +241,15 @@ export function InlineTrigger({
   className,
   children,
 }: {
+  /** The UI piece's name, set as `data-ui`. */
   name: string
-  /** Whether what it opens is open, for `aria-expanded`. */
+  /** True while the dialog the button opens is open, for `aria-expanded`. */
   open: boolean
+  /** The function the button calls when the player presses it. */
   onOpen: () => void
+  /** Classes added to the `inline-ui` part's own. */
   className?: string
+  /** The button's contents, the piece's words. */
   children: ReactNode
 }) {
   const button = useRef<HTMLButtonElement>(null)
@@ -268,13 +272,12 @@ export function InlineTrigger({
 }
 
 /**
- * The built-in `modal`, from `[[ui:modal|words|key]]` or
- * `[[ui:modal|words|key|title]]`: the words as an `InlineTrigger` that opens
- * a dialog with the prose line `key`, as `proseBeats` gives it for this save, drawn as a
- * scene's paragraphs are, in an `inline-modal` part. The dialog is titled
- * `title`, else the words. Escape, the close button or a click outside close
- * it, and focus goes back to the words. A key with no prose shows the words.
- * Replace it with a `modal` of your own in `inline`.
+ * Renders the built-in `modal` UI piece from `[[ui:modal|words|key|title]]`, the words as an `InlineTrigger` that
+ * opens a dialog with the prose key's line. A key with no prose shows only the words.
+ *
+ * The dialog renders the line as a scene's paragraphs, from `proseBeats` for this save, in an `inline-modal` part,
+ * titled `title` or else the words. Escape, the close button or a click outside closes it, and focus goes back to the
+ * words. Replace it with a `modal` of your own in `inline`.
  */
 export function InlineModal({ text, args }: InlineProps<'modal'>) {
   const game = useGameIfAny()
@@ -301,12 +304,11 @@ export function InlineModal({ text, args }: InlineProps<'modal'>) {
 }
 
 /**
- * The built-in `image`, from `[[ui:image|words|path]]` or
- * `[[ui:image|words|path|alt]]`: the words as an `InlineTrigger` that opens
- * the picture at `path` in the `MediaViewer`, the lightbox a story's pictures
- * open in. The path is resolved as `[[img:…]]` resolves it (`art/`, `.jpg` for
- * a bare name), and `alt` describes it, else the words. Replace it with an
- * `image` of your own in `inline`.
+ * Renders the built-in `image` UI piece from `[[ui:image|words|path|alt]]`, the words as an `InlineTrigger` that opens
+ * the picture at `path` in the `MediaViewer`. `alt` describes the picture, else the words do.
+ *
+ * The path resolves as `[[img:…]]` resolves it, with `art/` and `.jpg` added to a bare name. Replace it with an `image`
+ * of your own in `inline`.
  */
 export function InlineImage({ text, args }: InlineProps<'image'>) {
   const [open, setOpen] = useState(false)
@@ -323,11 +325,10 @@ export function InlineImage({ text, args }: InlineProps<'image'>) {
 }
 
 /**
- * The built-in `mail`, from `[[ui:mail|body|From: Ava|Subject: Hello]]`: a
- * letter or an email as a card, an `inline-mail` part, with each header line
- * as written (a `mail-header` part), then the body (a `mail-body` part).
- * Written as a paragraph of its own, it draws as one. Replace it with a
- * `mail` of your own in `inline`.
+ * Renders the built-in `mail` UI piece from `[[ui:mail|body|From: Ava|Subject: Hello]]`, a letter or an email as an
+ * `inline-mail` card. Each header line is a `mail-header` part, and the body a `mail-body` part.
+ *
+ * Written as a paragraph of its own, it renders as one. Replace it with a `mail` of your own in `inline`.
  */
 export function InlineMail({ text, args }: InlineProps<'mail'>) {
   const card = usePart('inline-mail', 'block rounded-lg border bg-card p-4 text-sm')
@@ -346,10 +347,10 @@ export function InlineMail({ text, args }: InlineProps<'mail'>) {
 }
 
 /**
- * The built-in `prop`, from `[[ui:prop|words|face]]`: a note in the story's
- * world, an `inline-prop` part with `data-face` (`sticky`, `clip`, `diary`, or
- * whatever face the prose gives). Written as a paragraph of its own, it draws
- * as one. Replace it with a `prop` of your own in `inline`.
+ * Renders the built-in `prop` UI piece from `[[ui:prop|words|face]]`, a note in the story's world, as an `inline-prop`
+ * part. `data-face` carries the face, such as `sticky`, `clip` or `diary`.
+ *
+ * Written as a paragraph of its own, it renders as one. Replace it with a `prop` of your own in `inline`.
  */
 export function InlineProp({ text, args }: InlineProps<'prop'>) {
   const attrs = usePart('inline-prop', 'block whitespace-pre-wrap rounded-lg border-2 border-dashed p-4 text-center font-medium')
@@ -360,7 +361,10 @@ export function InlineProp({ text, args }: InlineProps<'prop'>) {
   )
 }
 
-/** The built-in `mono`, from `[[ui:mono|words]]`: the words in a typewriter face, an `inline-mono` part. Replace it with a `mono` of your own in `inline`. */
+/**
+ * Renders the built-in `mono` UI piece from `[[ui:mono|words]]`, the words in a typewriter face as an `inline-mono`
+ * part. Replace it with a `mono` of your own in `inline`.
+ */
 export function InlineMono({ text }: InlineProps<'mono'>) {
   return (
     <span {...usePart('inline-mono', 'font-mono text-sm')} data-ui="mono">

@@ -5,29 +5,32 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
-/** What `useMods` gives a mod manager. */
+/** The player's mods and the functions that change them, which `useMods` returns to a mod manager. */
 export type ModsState = {
-  /** False when the provider was given no `mods`. */
+  /** True when the game has mods. It's false when the provider was given no `mods`. */
   available: boolean
   /** The mods the player has added. */
   list: InstalledMod[]
-  /** Add a mod from a file. True if it was added; otherwise `message` says why. */
+  /** Adds a mod from a file, and resolves to true when it was added. When it fails, `message` gives the reason. */
   add: (file: File) => Promise<boolean>
-  /** Turn a mod on or off. */
+  /** Turns a mod on or off. */
   toggle: (id: string) => Promise<void>
-  /** Remove a mod. */
+  /** Removes a mod. */
   remove: (id: string) => Promise<void>
-  /** Whether anything changed since the game was built, so a restart would differ. */
+  /** True once the mods have changed since the game was built, so a restart would differ. */
   changed: boolean
-  /** Build the game again with the mods as they are now: the provider's `onChange`. Undefined if it gave none. */
+  /** The provider's `onChange`, which builds the game again with the mods as they are now. It's undefined when the provider gave none. */
   restart: (() => void) | undefined
-  /** The problems the loader found in one mod. */
+  /** Returns the problems the loader found in one mod. */
   problemsFor: (id: string) => string[]
-  /** Why the last file could not be added, or the mods could not be read or changed, or null. */
+  /** The reason the last file couldn't be added or the mods couldn't be read or changed, or null. */
   message: string | null
 }
 
-/** The mod manager without the look: the list, adding, toggling and removing, and restarting. Needs `mods` on the provider. */
+/**
+ * Returns the player's mods and the functions that add, toggle, remove and restart them, for a mod manager of your own.
+ * It needs `mods` on the provider.
+ */
 export function useMods(): ModsState {
   const { mods } = useGame()
   const [list, setList] = useState<InstalledMod[]>([])
@@ -148,13 +151,12 @@ function ModManagerImpl({ className }: { className?: string }) {
 }
 
 /**
- * The mod manager: the mods the player has added, each on or off or removed,
- * and adding one from a file. Mods change the game itself, so a change takes
- * effect when the game is built again — `onChange` is where the game does that,
- * usually by reloading the page. Problems the loader found in a mod are listed
- * under it, and once anything has changed, a line saying a restart applies it
- * and the button that does. Needs `mods` on the provider. It's in the menu,
- * and on the settings page when the game has pages. `useMods` is the same
- * without the look.
+ * Renders the mod manager as the `mods` part, which lists the player's mods to turn on, off or remove, and adds one
+ * from a file. It needs `mods` on the provider.
+ *
+ * Mods change the game itself, so a change takes effect when the game is built again, in the provider's `onChange`,
+ * such as by reloading the page. The loader's problems with a mod show under it. Once anything has changed, a line
+ * says a restart applies it, with the button that does. It's in the menu, and on the settings page when the game has
+ * pages.
  */
 export const ModManager = overridable('ModManager', ModManagerImpl)

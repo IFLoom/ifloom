@@ -13,7 +13,7 @@ Generated from the source of `@ifloom/plugin-statuses` and `@ifloom/plugin-statu
 
 Type. Explained in [Statuses](/docs/plugins/statuses#activerecord).
 
-One active status as the save keeps it: its id, and the turns left on each stack, oldest first.
+The record a save keeps for one active status, in `StatusesState`'s `active`. The status's definition is read from content.
 
 ```ts shape
 import type { ActiveRecord } from '@ifloom/plugin-statuses'
@@ -23,11 +23,16 @@ type ActiveRecord = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The status's id. |
+| `left` | `number[]` |  |  | The turns left on each stack, oldest stack first. |
+
 ### ActiveStatus
 
 Type. Explained in [Statuses](/docs/plugins/statuses#activestatus).
 
-An active status as the UI shows it.
+An active status as the player sees it, in `view.plugins.statuses.active`.
 
 ```ts shape
 import type { ActiveStatus } from '@ifloom/plugin-statuses'
@@ -43,18 +48,18 @@ type ActiveStatus = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-| `description` | `string` |  |  | What it does, as the player reads it; `''` with none. |
-| `turnsLeft` | `number` |  |  | The turns left on its longest stack. |
-| `stacks` | `number` |  |  | How many times it's applied and still running: 1 unless the status stacks. |
-| `modifiers` | [`StatModifier[]`](/docs/api/engine-plugin#statmodifier) |  |  | What it does to the stats right now, all its stacks together, one entry per stat. |
+| `id` | `string` |  |  | The status's id. |
+| `name` | `string` |  |  | The status's name. |
+| `description` | `string` |  |  | The status's description, or `''` when it has none. |
+| `turnsLeft` | `number` |  |  | The turns left on the status's longest stack. |
+| `stacks` | `number` |  |  | The number of the status's stacks still running, 1 unless it stacks. |
+| `modifiers` | [`StatModifier[]`](/docs/api/engine-plugin#statmodifier) |  |  | The status's changes to the stats now, all its stacks together, one entry per stat. |
 
 ### Reapply
 
 Type. Explained in [Statuses](/docs/plugins/statuses#reapply).
 
-What applying a status that is already active does: start its turns again, or add another stack.
+The rule for applying a status that is already active. `'refresh'` starts its turns again, and `'stack'` adds another stack.
 
 ```ts shape
 import type { Reapply } from '@ifloom/plugin-statuses'
@@ -65,7 +70,7 @@ type Reapply = 'refresh' | 'stack'
 
 Type. Explained in [Statuses](/docs/plugins/statuses#statusdef).
 
-A timed status in the game's content: one entry of `data.statuses.statuses`, the plugin's list of statuses.
+A timed status the game declares in `data.statuses.statuses`. It lasts `turns` turns from the turn it is applied in.
 
 ```ts shape
 import type { StatusDef } from '@ifloom/plugin-statuses'
@@ -83,21 +88,21 @@ type StatusDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  | What the player reads: "Caffeinated". |
-| `description` | `string` | yes |  | A line about it, for the UI. |
-| `turns` | `number` |  |  | How many turns it lasts, counting the end of the turn it was applied in. |
-| `modifiers` | [`StatusModifier[]`](#statusmodifier) | yes |  | What it does to the player's stats while it lasts, per stack. Never written. |
-| `effects` | `{ start?:` [`EffectRef[]`](/docs/api/engine#effectref)`; turn?:` [`EffectRef[]`](/docs/api/engine#effectref)`; end?:` [`EffectRef[]`](/docs/api/engine#effectref) `}` | yes |  | What it does as it goes: `start` when it starts, and each time a stack is added; `turn` at the end of each turn it is active, once per stack, before its turns go down; `end` when it runs out, once per stack that ran out. |
-| `reapply` | [`Reapply`](#reapply) | yes |  | What applying it again does while it is active. `'refresh'` if left out. |
-| `max` | `number` | yes |  | With `reapply: 'stack'`, the most stacks it can have. No limit if left out. |
+| `id` | `string` |  |  | The status's id. |
+| `name` | `string` |  |  | The status's name, such as "Caffeinated". |
+| `description` | `string` | yes |  | The status's description, a line for the UI to show. |
+| `turns` | `number` |  |  | The number of turns the status lasts, counting the end of the turn it was applied in. |
+| `modifiers` | [`StatusModifier[]`](#statusmodifier) | yes |  | The status's changes to the player's stats while it lasts, per stack. The plugin never writes them to the stats. |
+| `effects` | `{ start?:` [`EffectRef[]`](/docs/api/engine#effectref)`; turn?:` [`EffectRef[]`](/docs/api/engine#effectref)`; end?:` [`EffectRef[]`](/docs/api/engine#effectref) `}` | yes |  | The status's effects as it runs. `start` runs as the status starts, `turn` once per stack at the end of each turn, and `end` once per stack that runs out. `start` also runs for each stack added, but not for a refresh or a stack that replaces the oldest at `max`. The `turn` effects run before the status's turns go down. |
+| `reapply` | [`Reapply`](#reapply) | yes |  | The rule for applying the status again while it is active. `'refresh'` if left out. |
+| `max` | `number` | yes |  | The most stacks the status can have, with `reapply: 'stack'`. A new stack past it replaces the oldest, and there is no limit if left out. |
 
 ### statuses
 
 Function. Explained in [Statuses](/docs/plugins/statuses#statuses).
 
-The plugin, with its helpers on it: `statuses()` makes the plugin for the
-game's `plugins`, and content is written with `statuses.apply('caffeinated')`.
+The statuses plugin's factory, with its helpers as properties. `statuses()` returns the plugin for the game's
+`plugins`, and content calls helpers such as `statuses.apply('caffeinated')`.
 
 ```ts shape
 import { statuses } from '@ifloom/plugin-statuses'
@@ -108,15 +113,15 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`StatusesState`
 
 | Helper | Signature | Description |
 |---|---|---|
-| `statuses.active` | `(id: string, stacks?:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) |  |
-| `statuses.apply` | `(id: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
-| `statuses.remove` | `(id: string, runEnd?: boolean):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `statuses.active` | `(id: string, stacks?:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) | Returns the `statuses/active` condition, which holds while the status is active, with a number of stacks in the range if given. |
+| `statuses.apply` | `(id: string):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `statuses/apply` effect, which starts the status, or refreshes or stacks it if it's already active. |
+| `statuses.remove` | `(id: string, runEnd?: boolean):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `statuses/remove` effect, which takes every stack of the status off, running its `end` effects with `runEnd`. |
 
 ### statusesOf
 
 Function. Explained in [Statuses](/docs/plugins/statuses#statusesof-and-statusof).
 
-The game's timed statuses: `data.statuses.statuses`, from its content and packs.
+Returns the game's timed statuses, from `data.statuses.statuses` in its content and packs.
 
 ```ts shape
 import { statusesOf } from '@ifloom/plugin-statuses'
@@ -129,7 +134,7 @@ Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 Type. Explained in [Statuses](/docs/plugins/statuses#statusesstate).
 
-What the plugin keeps in a save.
+The active statuses a save keeps for the player. Statuses themselves are read from content.
 
 ```ts shape
 import type { StatusesState } from '@ifloom/plugin-statuses'
@@ -140,11 +145,13 @@ type StatusesState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `active` | [`ActiveRecord[]`](#activerecord) |  |  | Active statuses, in the order they were first applied. |
+| `active` | [`ActiveRecord[]`](#activerecord) |  |  | The active statuses, in the order they were first applied. |
 
 ### StatusesView
 
 Type. Explained in [Statuses](/docs/plugins/statuses#statusesview).
+
+The active statuses as the player sees them, in `view.plugins.statuses`.
 
 ```ts shape
 import type { StatusesView } from '@ifloom/plugin-statuses'
@@ -155,13 +162,13 @@ type StatusesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `active` | [`ActiveStatus[]`](#activestatus) |  |  | Active statuses, in the order they were first applied. |
+| `active` | [`ActiveStatus[]`](#activestatus) |  |  | The active statuses, in the order they were first applied. |
 
 ### StatusModifier
 
 Type. Explained in [Statuses](/docs/plugins/statuses#statusmodifier).
 
-A change a status makes to what one of the player's stats reads, per stack.
+A change a status makes to the value one of the player's stats reads, per stack.
 
 ```ts shape
 import type { StatusModifier } from '@ifloom/plugin-statuses'
@@ -177,7 +184,7 @@ Plugins add fields of their own to it, which their pages list.
 
 Function. Explained in [Statuses](/docs/plugins/statuses#statusesof-and-statusof).
 
-One of the game's statuses, by id.
+Returns the status with this id, or undefined when the game has none.
 
 ```ts shape
 import { statusOf } from '@ifloom/plugin-statuses'
@@ -195,7 +202,7 @@ Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 Const.
 
-The statuses plugin's words, in English. A game rewords any with `ui.<key>` in its strings.
+The statuses plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
 ```ts shape
 import { STATUSES_WORDS } from '@ifloom/plugin-statuses/react'
@@ -209,13 +216,21 @@ const STATUSES_WORDS: {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `modifierAdd` | `'{n} {stat}'` |  |  | The line for a modifier that adds to a stat, with the signed `{n}` and the `{stat}`. |
+| `modifierMultiply` | `'×{n} {stat}'` |  |  | The line for a modifier that multiplies a stat, with `{n}` and the `{stat}`. |
+| `statusStacks` | `'×{n}'` |  |  | The badge on a status with more than one stack, with `{n}`. |
+| `statuses` | `'Statuses'` |  |  | The title of the status list. |
+| `turnLeft` | `'1 turn left'` |  |  | The line on a status with one turn left. |
+| `turnsLeft` | `'{n} turns left'` |  |  | The line on a status with `{n}` turns left. |
+
 ### statusesUi
 
 Const. Explained in [Statuses](/docs/plugins/statuses#statusesui).
 
-The statuses plugin's React UI, for `plugins` on `mountGame` or
-`GameProvider`: the `StatusList` under the stats in the side column, the
-`statuses` panel, and the statuses' words.
+The statuses plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `StatusList` under
+the stats in the sidebar and as the `statuses` panel, and adds the plugin's words.
 
 ```ts shape
 import { statusesUi } from '@ifloom/plugin-statuses/react'
@@ -228,10 +243,11 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 Const. Explained in [Statuses](/docs/plugins/statuses#statuslist).
 
-The statuses active now: each with its name, its stacks, the turns left on
-its longest stack, its description and what it does to the stats. Nothing while
-none is active, or in a game without the plugin. A thin default on
-`useStatuses`.
+Renders the active statuses from `view.plugins.statuses.active`, each with its name, stacks, turns left,
+description and changes to the stats. It renders nothing while no status is active or without the plugin.
+
+A preset can style the parts `statuses`, `statuses-title`, `status`, `status-label`, `status-stacks`,
+`status-turns`, `status-summary` and `status-modifiers`.
 
 ```ts shape
 import { StatusList } from '@ifloom/plugin-statuses/react'
@@ -242,7 +258,7 @@ const StatusList: ComponentType<{ className?: string; title?: string | false; }>
 
 Function. Explained in [Statuses](/docs/plugins/statuses#usestatuses).
 
-The statuses plugin's view: the active statuses, each with its turns left and what it does to the stats, or null in a game without the plugin. `StatusList` is drawn from it.
+Returns the statuses plugin's view from the running game, or null in a game without the plugin. It re-renders when the view changes.
 
 ```ts shape
 import { useStatuses } from '@ifloom/plugin-statuses/react'

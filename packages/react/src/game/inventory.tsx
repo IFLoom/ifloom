@@ -3,11 +3,13 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
+/** The props of `Inventory`. */
 export type InventoryProps = {
+  /** Classes added to the `inventory` part's own. */
   className?: string
-  /** Replaces the heading; `false` leaves it out, as under a section's title. */
+  /** The heading, the UI's word for the inventory if left out. `false` leaves it out, as under a section's title. */
   title?: string | false
-  /** A drop button on each thing, where a plugin's UI draws one, such as the inventory plugin's. The core list has none. */
+  /** True to give each thing a drop button, in a replacement that renders one, such as the inventory plugin's. The core list ignores it. */
   drop?: boolean
 }
 
@@ -40,9 +42,10 @@ function InventoryImpl({ className, title: titleText }: InventoryProps) {
 }
 
 /**
- * What you carry: the things you hold (`view.held`), each with its count and
- * a line about it. The inventory plugin's UI draws its own `InventoryCard` in
- * its place, with a button that uses each thing and, with `drop`, one that
- * drops it.
+ * Renders the things the player holds, `view.held`, as the `inventory` part, each with its count and its description.
+ * It renders nothing while the player holds nothing.
+ *
+ * The inventory plugin's UI renders its own `InventoryCard` in its place, with a button that uses each thing and, with
+ * `drop`, one that drops it.
  */
 export const Inventory = overridable('Inventory', InventoryImpl)

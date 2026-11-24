@@ -1,9 +1,9 @@
 /**
- * @ifloom/plugin-unlocks/react: the unlocks plugin's React UI, for a game drawn
- * with `@ifloom/react`. List `unlocksUi` (or `unlocksUiWith`, for what
- * couldn't be opened and how to restart) in the game's `plugins` to start
- * codes on the runner and put a code box on the settings page, or in the
- * menu without pages; or draw it yourself from `useUnlocks`.
+ * The unlocks plugin's React UI, for a game rendered with `@ifloom/react`.
+ *
+ * List `unlocksUi`, or `unlocksUiWith` for the problems and a restart, in the game's `plugins`. It starts code entry
+ * on the runner and puts a code box on the settings page, or in the menu without pages. To render it yourself, read
+ * `useUnlocks`.
  */
 import type { Runner } from '@ifloom/engine'
 import { createContext, useContext, useEffect, useState, type ComponentProps, type ReactNode, type SyntheticEvent } from 'react'
@@ -11,16 +11,25 @@ import { useGame, usePart } from '@ifloom/react'
 import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 import { enterCode, startUnlocks, type Entered, type UnlocksView } from '../index.ts'
 
-/** The unlocks plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The unlocks plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings. */
 export const UNLOCKS_WORDS = {
+  /** The label of the unlock button while a code is checked. */
   checkingCode: 'Checking…',
+  /** The placeholder and the screen readers' label of the code box. */
   code: 'Code',
+  /** The heading over the code box, and the label of the menu button that opens it without pages. */
   enterCode: 'Enter a code',
+  /** The state of an unlock the player hasn't opened. */
   locked: 'Locked',
+  /** The label of the button that restarts the game to add the packs a code opened. */
   restartForUnlock: 'Restart to add it',
+  /** The label of the button that checks the code. */
   unlock: 'Unlock',
+  /** The state of an unlock the player has opened. */
   unlocked: 'Unlocked',
+  /** The message for a code that opened an unlock the player had already, with its `{label}`. */
   unlockedAlready: '{label} was unlocked already.',
+  /** The message for a code that has just opened an unlock, with its `{label}`. */
   unlockedNow: 'Unlocked: {label}.',
 } as const
 
@@ -47,31 +56,34 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useUnlocks` returns: the unlocks plugin's view, and entering a code. */
+/** The unlocks plugin's view with the code box's state and a function that enters a code, as `useUnlocks` returns it. */
 export type UnlocksControls = UnlocksView & {
-  /** Whether codes can be entered: codes have started on the runner (the unlocks UI starts them). */
+  /** True when code entry has started on the runner, which the unlocks UI does. */
   available: boolean
-  /** Try a code with `enterCode`. True if it unlocked something; `entered` says what, or `message` why not. */
+  /** Checks a code with `enterCode` and resolves true when it opened an unlock. `entered` then names it, or `message` gives the reason it didn't. */
   enter: (code: string) => Promise<boolean>
-  /** True while a code is being checked, which takes a moment on purpose: the snapshot's `helpers.unlocks.status`. */
+  /** True while a code is checked, slowly on purpose, from the snapshot's `helpers.unlocks.status`. */
   checking: boolean
-  /** What the last code unlocked, or null. */
+  /** The unlock the last code opened, or null. */
   entered: Entered | null
-  /** Why the last code didn't work, or null. */
+  /** The reason the last code didn't work, or null. */
   message: string | null
-  /** Build the game again with what a code just opened: `onChange` from `unlocksUiWith`, when the last code needs it. Undefined otherwise. */
+  /**
+   * The function that builds the game again with the packs a code just opened, `onChange` from `unlocksUiWith`. It is
+   * undefined unless the last code needs it.
+   */
   restart: (() => void) | undefined
-  /** What couldn't be opened of the content the profile remembers (a code that has changed since). */
+  /** The problems opening the packs the profile remembers, such as a code that has changed since. */
   problems: string[]
 }
 
-/** What `unlocksUiWith` takes: what went wrong opening remembered content, and how to start over with new content. */
+/** Settings for `unlocksUiWith`. Without them, the UI shows no problems and offers no restart. */
 export type UnlocksUiOptions = {
-  /** What `unlockedPacks` said it couldn't open, shown under the code box. */
+  /** The `problems` from `unlockedPacks`, shown under the code box. */
   problems?: string[]
-  /** Build the game again with the content a code has just opened: usually `() => location.reload()`. */
+  /** The function that builds the game again with the packs a code has just opened, such as `() => location.reload()`. */
   onChange?: () => void
-  /** How codes start on the runner: `startUnlocks` if left out. Returns the way to stop them. */
+  /** The function that starts code entry on the runner and returns the function that stops it. `startUnlocks` if left out. */
   start?: (runner: Runner) => () => void
 }
 
@@ -79,12 +91,10 @@ export type UnlocksUiOptions = {
 const Options = createContext<UnlocksUiOptions | null>(null)
 
 /**
- * The unlocks plugin's view and the code box's state, or null in a game
- * without the plugin. Where entering stands comes from the runner's
- * snapshot (`helpers.unlocks`, which `startUnlocks` reports), so it reads the
- * same in every component. Without codes started on the runner (the unlocks
- * UI starts them), `available` is false and the list still shows.
- * `UnlocksPanel` is drawn from it.
+ * Returns the unlocks plugin's view and the code box's state from the running game, or null in a game without the
+ * plugin. It re-renders when the view or the snapshot's `helpers.unlocks` changes.
+ *
+ * Before code entry has started on the runner, `available` is false and the list of unlocks still shows.
  */
 export function useUnlocks(): UnlocksControls | null {
   const { runner, snapshot } = useGame()
@@ -189,11 +199,14 @@ function UnlocksPanelImpl({ className }: { className?: string }) {
 }
 
 /**
- * Entering a code, and the game's unlocks with which are unlocked: a box and
- * a button, what the code unlocked or why it didn't, a button to restart
- * when the code opened content the game in play doesn't have yet, and the
- * list. On the settings page, and in the menu without pages, when the game
- * lists the unlocks UI. A thin default on `useUnlocks`.
+ * Renders the code box and the list of unlocks from `view.plugins.unlocks`. It shows the unlock a code opened, or why
+ * the code failed.
+ *
+ * A restart button shows when the code opened packs the game in play doesn't have yet.
+ *
+ * The unlocks UI puts it on the settings page, or in the menu without pages. A preset can style the parts `unlocks`,
+ * `unlocks-title`, `unlock-form`, `unlock-input`, `unlocks-message`, `unlocks-entered`, `unlock-problem`,
+ * `unlocks-list`, `unlock`, `unlock-name`, `unlock-state` and `unlock-text`.
  */
 export const UnlocksPanel = overridable('UnlocksPanel', UnlocksPanelImpl)
 
@@ -208,9 +221,9 @@ function codesProvider(options: UnlocksUiOptions) {
 }
 
 /**
- * The unlocks plugin's React UI with options: what `unlockedPacks` couldn't
- * open, shown under the code box, and `onChange`, which a Restart button
- * calls once a code has opened content the game in play doesn't have yet.
+ * Returns the unlocks plugin's React UI with settings. It shows the `problems` from `unlockedPacks` under the code box.
+ *
+ * Its restart button calls `onChange` once a code has opened packs the game in play doesn't have yet.
  */
 export function unlocksUiWith(options: UnlocksUiOptions = {}): PluginUi {
   return {
@@ -221,9 +234,11 @@ export function unlocksUiWith(options: UnlocksUiOptions = {}): PluginUi {
 }
 
 /**
- * The unlocks plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: codes start on the runner, and the `UnlocksPanel` is on
- * the settings page (with pages on) or behind an Enter a code button in the
- * menu. `unlocksUiWith` takes the problems and a restart.
+ * The unlocks plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `UnlocksPanel` on the
+ * settings page, or behind a menu button without pages.
+ *
+ * It also starts code entry on the runner.
+ *
+ * `unlocksUiWith` returns the same UI with problems and a restart.
  */
 export const unlocksUi: PluginUi = unlocksUiWith()

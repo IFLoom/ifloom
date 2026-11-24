@@ -10,15 +10,19 @@ import { byId, defineFeature, listWords } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /**
- * Something the player can change from a settings screen, declared by the
- * game. A `play` setting (the default) is part of the game state and saved
- * with it; a `ui` setting never enters the state and lives in the profile.
+ * A setting the game declares in `settings`, which the player changes on a settings page. A `play` setting is saved
+ * with the state, and a `ui` setting is kept only in the profile.
+ *
+ * Its `type` sets the rest of its fields. A `toggle` has a true/false `default`. A `choice` has `options`, each a
+ * `value` with its `label`, and one value as its `default`. A `range` has `min`, `max`, an optional `step` and a
+ * number as its `default`.
  */
 export type SettingDef = {
+  /** The setting's id, which the `setting` condition and command name. */
   id: string
-  /** What the settings screen calls it. */
+  /** The setting's label on the settings page. */
   label: string
-  /** `'play'` if left out: in the state, readable by conditions. `'ui'`: for the UI only. */
+  /** The setting's reach, `'play'` (in the state, read by conditions) or `'ui'` (for the UI only). `'play'` if left out. */
   affects?: 'play' | 'ui'
 } & (
   | { type: 'toggle'; default: boolean }
@@ -26,32 +30,34 @@ export type SettingDef = {
   | { type: 'range'; min: number; max: number; step?: number; default: number }
 )
 
-/** A setting as a settings screen draws it. */
+/** A setting as the player sees it on a settings page, in `view.settings`. */
 export type SettingView = {
+  /** The setting's id. */
   id: string
+  /** The setting's label. */
   label: string
-  /** How the player sets it: a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. */
+  /** The setting's type, a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. */
   type: 'toggle' | 'choice' | 'range'
   /**
-   * `play` settings live in the save and change the game; `ui` settings live in the profile and only change how it's
-   * shown.
+   * The setting's reach. A `play` setting is kept in the save and changes the game, and a `ui` setting is kept in the
+   * profile and changes only how the game is shown.
    */
   affects: 'play' | 'ui'
-  /** A choice's options. */
+  /** The options of a `choice` setting, each a value with its label. */
   options?: { value: string; label: string }[]
-  /** A range's bounds and step. */
+  /** The lowest value of a `range` setting. */
   min?: number
-  /** A range's highest value. */
+  /** The highest value of a `range` setting. */
   max?: number
-  /** A range's step. 1 if the setting gives none. */
+  /** The step of a `range` setting. Left out when the setting gives none, which means 1. */
   step?: number
-  /** The value it has until the player changes it, as the game declares it. */
+  /** The setting's default, its value until the player changes it. */
   default: KvValue
-  /** A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. */
+  /** The value of a `play` setting in this game. Null for a `ui` setting, which the UI reads from the profile. */
   value: KvValue | null
 }
 
-/** What the settings feature adds, as types. */
+/** The settings feature's state, calls, content key, view and reference, as types. */
 export type SettingsShape = {
   state: {
     /** The value of each `play` setting the game declares, by id. */
@@ -59,32 +65,34 @@ export type SettingsShape = {
   }
   conditions: {
     /**
-     * A `play` setting, read as a kv key is: bare, whether it is truthy
-     * (`{ setting: 'hints' }`); with `is`, whether it equals that; with a range,
-     * whether its number is in it.
+     * A condition on a `play` setting, read as a kv key is. With nothing else it holds while the setting is truthy
+     * (`{ setting: 'hints' }`).
+     *
+     * With `is`, it holds while the setting equals that value. With a range, it holds while the setting's number is in
+     * it.
      */
     setting: { setting: string; is?: KvValue } & Range
   }
   commands: {
-    /** Change a `play` setting. Ignores locks, like a menu would. */
+    /** A command that changes a `play` setting `to` a value. No lock or plugin guard stops it, as with a menu. */
     setting: { type: 'setting'; id: string; to: KvValue }
   }
   game: {
-    /** What the player can change from a settings screen. None if left out. */
+    /** The game's settings, which the player changes from a settings page. None if left out. */
     settings?: SettingDef[]
   }
   pack: {
-    /** What the player can change from a settings screen. A later pack can redeclare one by id. */
+    /** The pack's settings. A later pack's setting replaces an earlier one with the same id. */
     settings?: SettingDef[]
   }
   view: {
-    /** Every setting the game declares, in order, for a settings screen. */
+    /** Every setting the game declares, in order, for a settings page. */
     settings: SettingView[]
   }
   lists: 'setting'
   fill: 'settings'
   references: {
-    /** A `play` setting, and the value it is compared with or given. */
+    /** A reference to a `play` setting, with the value it's compared with or given. */
     setting: { setting: string; is?: KvValue }
   }
 }
@@ -92,17 +100,17 @@ export type SettingsShape = {
 /** The profile namespace the player's settings are kept under: `ui` settings, and the `play` settings a new game starts with. */
 const SETTINGS_NAMESPACE = 'core:settings'
 
-/** The setting with this id, if the game declares it. */
+/** Returns the setting the game declares with this id. Undefined when there's none. */
 export function settingOf(game: Game, id: string): SettingDef | undefined {
   return game.settings?.find((setting) => setting.id === id)
 }
 
-/** Whether a setting lives in the game state (`play`) or only in the profile (`ui`). */
+/** Returns a setting's reach, `'play'` for one kept in the state and `'ui'` for one kept only in the profile. `'play'` when `affects` is left out. */
 export function settingAffects(setting: SettingDef): 'play' | 'ui' {
   return setting.affects ?? 'play'
 }
 
-/** What is wrong with a value for this setting, as a word the callers turn into a sentence. */
+/** Returns the fault with a value for this setting, as one word the caller turns into a sentence. Undefined when the value fits. */
 export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'number' | 'range' | 'step' | 'option' | undefined {
   switch (setting.type) {
     case 'toggle':
@@ -122,9 +130,10 @@ export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'n
 }
 
 /**
- * A setting's current value from the player's stored settings (the profile's
- * `core:settings`): the stored value if the setting can still take it, else the
- * setting's default. Undefined for a setting the game doesn't declare.
+ * Returns a setting's value from the player's stored settings, the profile's `core:settings`. That's the stored value
+ * if the setting still takes it, else the setting's default.
+ *
+ * Undefined for a setting the game doesn't declare.
  */
 export function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined {
   const setting = settingOf(game, id)
@@ -134,9 +143,10 @@ export function settingValue(game: Game, stored: Record<string, unknown> | undef
 }
 
 /**
- * Why this value can't be given to this setting, as the player reads it;
- * undefined if it can. Through the `setting` command (`'command'`) only a
- * `play` setting can be set; `runner.setSetting` (`'runner'`) sets either.
+ * Returns the reason the player reads when this value can't be given to the setting. Undefined when it can.
+ *
+ * Through the `setting` command (`'command'`) only a `play` setting can be set, and `runner.setSetting` (`'runner'`)
+ * sets either.
  */
 export function settingRefusal(game: Game, id: string, value: unknown, through: 'command' | 'runner' = 'command'): string | undefined {
   const setting = settingOf(game, id)
@@ -159,8 +169,8 @@ export function settingRefusal(game: Game, id: string, value: unknown, through: 
 }
 
 /**
- * Every `play` setting's value for a new game: the one given, if the setting
- * takes it, else its default. Unknown ids and values that don't fit are dropped.
+ * Returns each `play` setting's value for a new game. That's the value given when the setting takes it, else its
+ * default, and unknown ids and values that don't fit are dropped.
  */
 export function startingSettings(game: Game, given: Record<string, unknown> = {}): Record<string, KvValue> {
   const out: Record<string, KvValue> = {}
@@ -172,7 +182,7 @@ export function startingSettings(game: Game, given: Record<string, unknown> = {}
   return out
 }
 
-/** What is wrong with a setting's declaration, in the loader's words. */
+/** Returns the problems with a setting's declaration, in the loader's words. Empty when there are none. */
 export function settingProblems(setting: SettingDef): string[] {
   const out: string[] = []
   if (setting.affects !== undefined && setting.affects !== 'play' && setting.affects !== 'ui') {
@@ -188,7 +198,7 @@ export function settingProblems(setting: SettingDef): string[] {
   return out
 }
 
-/** What is wrong with a `{ setting }` condition, in the loader's words. */
+/** Returns the problems with a `{ setting }` condition, in the loader's words. Empty when there are none. */
 export function settingConditionProblems(game: Game, id: string, is: KvValue | undefined): string[] {
   const setting = settingOf(game, id)
   if (!setting) return [`unknown setting "${id}"`]
@@ -229,6 +239,7 @@ function settingsView(settings: Record<string, KvValue> | undefined, game: Game)
   })
 }
 
+/** The settings feature, which keeps `play` settings in the state and `ui` settings in the profile. */
 export const settings = defineFeature<SettingsShape>({
   name: 'settings',
   state: {

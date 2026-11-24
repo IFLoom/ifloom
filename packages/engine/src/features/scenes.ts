@@ -16,136 +16,150 @@ import { inRange, wanted } from '../range.ts'
 import { costEffects, costRefusal, payCost } from './actions.ts'
 import { everyBlock, flowBlockReferences, jumpOf, sceneChoices, stepped, withoutJump } from './flows.ts'
 
-/** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
+/**
+ * A patch a pack declares in `patches`, a change to one choice of a scene an earlier pack or the content declared.
+ * It adds, drops or replaces the choice.
+ *
+ * `addChoice` puts the choice before the choice `before` names, or last when `before` is left out or not found.
+ * `dropChoice` names the choice to drop, and `replaceChoice` takes the place of the choice with its id.
+ */
 export type Patch =
   | { scene: string; addChoice: DataScene['choices'][number]; before?: string }
   | { scene: string; dropChoice: string }
   | { scene: string; replaceChoice: DataScene['choices'][number] }
 
 /**
- * What makes a scene a storylet: the named draws it can be drawn from, how
- * often, and when. See the `{ scene: { from } }` effect.
+ * The fields that make a scene a storylet, a scene the `{ scene: { from } }` effect draws at random from a named set.
+ * They name the sets, the scene's weight and when it can be drawn.
  */
 export type StoryletFields = {
   /**
-   * The draws this scene can come up in, by name: `['cafe']`. A
-   * `{ scene: { from: 'cafe' } }` effect draws one of the scenes that name
-   * `'cafe'` here. Separate from `tags`, which only style the scene.
+   * The sets the scene can be drawn from, by name, such as `['cafe']`. A `{ scene: { from: 'cafe' } }` effect draws
+   * one of the scenes that name `'cafe'` here.
+   *
+   * It's separate from `tags`, which only style the scene.
    */
   drawnFrom?: string[]
-  /** How likely a draw is to pick it, against the others it could pick. 1 if left out. Needs `drawnFrom`. */
+  /** The scene's weight in a draw, against the other scenes it could be drawn with. 1 if left out, and it needs `drawnFrom`. */
   weight?: number
-  /** Only drawn while this holds. It gates draws only: a `scene` command or effect naming the scene opens it regardless. */
+  /**
+   * The storylet's condition. The scene can be drawn only while it holds, but a `scene` command or effect that names
+   * the scene opens it regardless.
+   */
   when?: Condition
 }
 
-/**
- * How many times something happened, and the turn of the first time and the
- * last: what `GameState.seen` keeps for each scene and `GameState.chosen` for
- * each choice.
- */
-export type Times = { n: number; first: number; last: number }
+/** A count of times something happened, with the turns of the first and the last. `GameState.seen` keeps one per scene and `GameState.chosen` one per choice. */
+export type Times = {
+  /** The number of times it happened. */
+  n: number
+  /** The turn it first happened on. */
+  first: number
+  /** The turn it last happened on. */
+  last: number
+}
 
-/** What the scenes feature adds, as types. */
+/** The scenes feature's state, calls, content keys and references, as types. */
 export type ScenesShape = {
   state: {
+    /** The id of the open scene. Null while no scene is open and the room shows. */
     sceneId: string | null
     /**
-     * Each scene the player has entered, by id: how many times, and the turn
-     * of the first time and the last. The engine's own record of what the
-     * player has actually watched, so a chain can say "not until you have seen
-     * the rung before this one", and how long ago, without every link needing
-     * a hand-written kv key.
+     * The scenes the player has entered, by id, with a count and the first and last turn of each. Content can gate a
+     * chain of scenes on it without a kv key per link.
      *
-     * Re-entering the scene you are already in — a hub redrawing itself after a
-     * choice — is not a viewing and does not count.
+     * Entering the scene that's already open, such as a hub rendered again after a choice, doesn't count.
      */
     seen: Record<string, Times>
     /**
-     * Each choice the player has picked, by `scene#choice`: how many times, and
-     * the turn of the first time and the last. Kept for every choice, so content
-     * can branch on an earlier decision without each one needing a kv key of its
-     * own, and a choice's `once` reads it.
+     * The choices the player has chosen, by `scene#choice`, with a count and the first and last turn of each. Content
+     * can gate on an earlier decision with it, and a choice's `once` reads it.
      */
     chosen: Record<string, Times>
   }
   conditions: {
     /**
-     * How many times a choice has been picked, by `scene#choice`. Bare, at least
-     * once: `{ chose: 'bakery.counter#buy-bread' }`.
+     * A condition on the number of times a choice was chosen, by `scene#choice`. With no range it holds once the
+     * choice was chosen at least once, as in `{ chose: 'bakery.counter#buy-bread' }`.
      */
     chose: { chose: string } & Range
     /**
-     * A scene the player has already been through. The order half of a gate: a
-     * stat says whether you are good enough yet, this says whether you have been
-     * here yet. Bare, it asks for one viewing; `{ seen: 'x', gte: 2 }` for two.
+     * A condition on the number of times the player entered a scene. With no range it holds after one visit, and
+     * `{ seen: 'x', gte: 2 }` asks for two.
+     *
+     * It's the order half of a gate. A stat says whether you're good enough yet, and `seen` says whether you've been
+     * here yet.
      */
     seen: { seen: string } & Range
     /**
-     * Whole turns since a scene was first entered, or a choice (`scene#choice`)
-     * first picked. The pace half of a gate:
-     * `{ since: 'baker.first-coffee', gte: 5 }` holds from five turns after
-     * the first coffee. With `last: true` it counts from the latest time
-     * instead, for a cooldown: `{ since: 'park.bench', last: true, gte: 3 }`.
-     * Something not yet seen or picked fails every range, `lt` included — "not long
-     * since" is not true of something that has not happened.
+     * A condition on the whole turns since a scene was first entered, or a choice (`scene#choice`) first chosen, such
+     * as `{ since: 'baker.first-coffee', gte: 5 }`. With `last: true` it counts from the latest time, for a cooldown.
+     *
+     * It's the pace half of a gate, and `{ since: 'park.bench', last: true, gte: 3 }` is a cooldown of three turns. A
+     * scene not yet seen or a choice not yet chosen fails every range, `lt` included.
      */
     since: { since: string; last?: boolean } & Range
-    /** The scene on screen is one of these. */
+    /** A condition that holds while the open scene is one of those listed. */
     scene: { scene: string[] }
   }
   effects: {
     /**
-     * Open a scene, `{ scene: 'cafe.counter' }`, or close the one on screen
-     * with `{ scene: null }`. With `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }`,
-     * a storylet draw: open one scene drawn at random from the scenes whose
-     * `drawnFrom` names `from` and whose `when` holds, by their `weight`; with
-     * none to draw, `otherwise` if given, else nothing.
+     * An effect that opens a scene, `{ scene: 'cafe.counter' }`, or closes the open one, `{ scene: null }`. Opening a
+     * scene starts its visit afresh, the open scene included.
+     *
+     * `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }` draws a storylet. It opens one scene drawn at random, by
+     * `weight`, from those whose `drawnFrom` names `from` and whose `when` holds. With none to draw it opens
+     * `otherwise`, or nothing when that's left out.
      */
     scene: { scene: string | null | { from: string; otherwise?: string } }
   }
   commands: {
+    /** A command that opens a scene by id. The engine refuses it while another scene is open. */
     scene: { type: 'scene'; id: string }
+    /** A command that chooses a choice of the open scene by id. It sends the choice's command, pays its cost, then runs its effects. */
     choose: { type: 'choose'; id: string }
+    /** A command that closes the open scene and shows the room. */
     leave: { type: 'leave' }
   }
   game: {
-    /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
+    /** The scene open on the first frame. The game opens on the room if left out. */
     introScene?: string
-    /** Every scene, as data. */
+    /** The game's scenes, as data. */
     scenes: DataScene[]
   }
   pack: {
+    /** The pack's scenes. A later pack's scene replaces an earlier one with the same id. */
     scenes?: DataScene[]
-    /** Surgical changes to content an earlier pack declared. */
+    /** The pack's patches to the choices of scenes declared before it. */
     patches?: Patch[]
-    /** The scene on screen on the first frame: a later pack's replaces an earlier one's. */
+    /** The scene open on the first frame. A later pack's replaces an earlier one's. */
     introScene?: string
   }
   lists: 'scene' | 'introScene'
   packOnly: 'patches'
   references: {
-    /** A scene, as a gate (`{ seen }`), as somewhere an effect goes, or as a button opens it. */
+    /** A reference to a scene, as a gate (`{ seen }`), as where an effect goes, or as a scene a button opens. */
     scene: { scene: string; as?: 'gate' | 'go' | 'open' }
-    /** A choice, by `scene#choice`. */
+    /** A reference to a choice by `scene#choice`. */
     choice: { choice: string }
-    /** A draw some scene's `drawnFrom` has to name. */
+    /** A reference to a storylet set that some scene's `drawnFrom` has to name. */
     drawnFrom: { drawnFrom: string }
-    /** Prose blocks, as a data scene's body. */
+    /** A reference to a list of blocks, such as a data scene's body. */
     blocks: { blocks: readonly Block[] | undefined }
     /**
-     * The inline actions (`[[act:id]]`) in a body, as blocks or as rendered
-     * prose, against `offers`: the ids of the choices or buttons it can name.
+     * A reference to the inline actions (`[[act:id]]`) in a body, as blocks or as rendered prose. `offers` lists the
+     * ids of the choices and actions they can name.
      */
     actionsIn: { actionsIn: readonly Block[] | string | undefined; offers: readonly string[] }
   }
 }
 
 /**
- * What prose blocks name: prose keys, variants and their pictures, conditions,
- * media, hints, the markup in words written in place, a spoken line's
- * markup, and inside sections, decisions (each choice as a scene's is, and
- * what it brings) and the minigames and panels a flow plays.
+ * Returns the references a list of blocks makes, for the content checker.
+ *
+ * They cover prose keys, variants and their pictures, conditions, media, hints, the markup in words written in place
+ * and in spoken lines, and inside sections, decisions (each choice as a scene's is, with its `then`) and the
+ * minigames and panels a flow plays.
  */
 export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
   const out: Reference[] = []
@@ -192,7 +206,10 @@ function choiceReferences(choice: Choice, oldKey?: string): Reference[] {
   return out
 }
 
-/** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and picture. */
+/**
+ * Returns the references a data scene makes, for the content checker. They cover its body, its choices' labels,
+ * conditions and effects, and its audio, panel and picture.
+ */
 export function dataSceneReferences(scene: DataScene): Reference[] {
   const out: Reference[] = [{ blocks: scene.body }]
   out.push({ actionsIn: scene.body, offers: sceneChoices(scene).map((choice) => choice.id) })
@@ -393,6 +410,7 @@ function sceneWords(game: Game, walk: WordWalk) {
   })
 }
 
+/** The scenes feature, which opens, chooses in and closes scenes and records what the player has seen and chosen. */
 export const scenes = defineFeature<ScenesShape>({
   name: 'scenes',
   state: {

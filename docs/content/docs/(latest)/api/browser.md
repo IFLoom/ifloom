@@ -11,13 +11,12 @@ Generated from the source of `@ifloom/browser` and its TSDoc by `npm run api-doc
 
 Function. Explained in [Browser helpers](/docs/browser#browserrunner).
 
-A runner with what most games in a browser want: a new game with a random
-seed, undo 50 steps deep, saves and a profile in `localStorage`, and an
-autosave each turn. It reads the profile before it starts, so the new
-game has the player's play settings and `settings()` has their ui
-settings from the first frame. Pass a `start` to begin elsewhere, and
-runner options to change any default; they are merged over these. Any UI
-can use it: the React UI's `mountGame` does, and so do the templates.
+Returns a runner set up for a browser, with saves and a profile in `localStorage`. Each runner option you pass
+replaces that option's default whole.
+
+The defaults are a new game with a random seed, undo 50 steps deep and an autosave each turn. It reads the profile
+before it starts, so the new game has the player's play settings and `settings()` has their UI settings from the
+first frame. Pass `start` to begin from another state. The React UI's `mountGame` and the templates use it.
 
 ```ts shape
 import { browserRunner } from '@ifloom/browser'
@@ -30,7 +29,7 @@ Uses: [`Game`](/docs/api/engine#game), [`RunnerOptions`](/docs/api/engine#runner
 
 Type. Explained in [Browser helpers](/docs/browser#clockoptions).
 
-How `startClock` ticks.
+Settings for `startClock`. Each is optional.
 
 ```ts shape
 import type { ClockOptions } from '@ifloom/browser'
@@ -41,13 +40,14 @@ type ClockOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `every` | `number` | yes |  | How often to tick while anything counts down, in milliseconds. 100 if left out. |
+| `every` | `number` | yes |  | The clock's interval between ticks while a timer or a minigame counts down, in milliseconds. 100 if left out. |
 
 ## dialogOpen
 
 Function. Explained in [Browser helpers](/docs/browser#dialogopen).
 
-Whether a dialog is open in the page: an open `<dialog>`, or an element with a dialog's role. Its own keys come first, and Escape is its own.
+Returns true while the page shows a dialog, an open `<dialog>` or an element with the `dialog` or `alertdialog` role.
+Shortcuts stand aside while it's open, so the dialog's own keys and Escape reach it.
 
 ```ts shape
 import { dialogOpen } from '@ifloom/browser'
@@ -58,9 +58,8 @@ function dialogOpen(): boolean
 
 Function. Explained in [Browser helpers](/docs/browser#ignoredkey).
 
-Whether a key press should be left alone by shortcuts: the player typing
-in a field, a key held with a modifier, or one something else already
-handled.
+Returns true for a key press that shortcuts should leave alone. That is a key typed into a field, a key held with
+Ctrl, Alt, Meta or Shift, or one another handler has already prevented.
 
 ```ts shape
 import { ignoredKey } from '@ifloom/browser'
@@ -71,9 +70,11 @@ function ignoredKey(event: KeyboardEvent): boolean
 
 Function. Explained in [Browser helpers](/docs/browser#indexeddbdriver).
 
-Saves in IndexedDB: asynchronous and roomy, the right home for long games,
-big backlogs and mod data. Opens (and if needed creates) one database with
-one store of strings by key.
+Returns a save driver that keeps its strings in IndexedDB, which holds far more than `localStorage`. Use it for long
+games, long backlogs and mods.
+
+It opens one database, `ifloom` unless `database` names another, with one store of strings by key, `saves` unless
+`store` names another. It creates both on first use. Tests pass their own `indexedDB`.
 
 ```ts shape
 import { indexedDbDriver } from '@ifloom/browser'
@@ -86,7 +87,7 @@ Uses: [`IndexedDbLike`](#indexeddblike), [`SaveDriver`](/docs/api/engine#savedri
 
 Type. Explained in [Browser helpers](/docs/browser#indexeddblike).
 
-The parts of `indexedDB` a driver needs.
+The part of the `indexedDB` API that `indexedDbDriver` uses. The browser's `indexedDB` fits it.
 
 ```ts fragment
 type IndexedDbLike = {
@@ -94,11 +95,15 @@ type IndexedDbLike = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `open` | `(name: string, version?: number \| undefined) => OpenRequest` |  |  | Opens a database by name at a version, and returns the request that settles with it. |
+
 ## KeysOptions
 
 Type. Explained in [Browser helpers](/docs/browser#keysoptions).
 
-What `startKeys` listens for.
+Settings for `startKeys`. Each is optional, and the number keys and a minigame's keys are on if left out.
 
 ```ts shape
 import type { KeysOptions } from '@ifloom/browser'
@@ -112,18 +117,19 @@ type KeysOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `choices` | `boolean \| ((key: number) => boolean)` | yes |  | The number keys 1 to 9 pick the choices on screen, in `numberedChoices` order, skipping a greyed-out one. On unless false. A function picks instead, given the key's number, and returns whether it did, such as a UI that clicks the button it drew with that number. |
-| `escape` | `() => boolean \| void` | yes |  | What Escape does, such as opening the game's menu. Nothing if left out. Return `false` when it did nothing, such as with no menu on screen, and the key goes on to the page as if it weren't there. |
-| `map` | `Record<string,` [`CommandRef`](/docs/api/engine#commandref)`>` | yes |  | Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the command each sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces what that key does. |
-| `minigame` | `boolean` | yes |  | A minigame's inputs from the keyboard too, with `startMinigameKeys`. On unless false. |
+| `choices` | `boolean \| ((key: number) => boolean)` | yes |  | The number keys' handling. By default keys 1 to 9 choose the choices on screen, in `numberedChoices` order, and a disabled one does nothing. `false` turns them off. A function chooses in their place. It gets the key's number and returns true when it handled the key, such as a UI that clicks the button it rendered with that number. |
+| `escape` | `() => boolean \| void` | yes |  | The function Escape calls, such as one that opens the game's menu. Escape does nothing if left out. Return `false` when it did nothing, such as with no menu on screen, and the key goes on to the page untouched. |
+| `map` | `Record<string,` [`CommandRef`](/docs/api/engine#commandref)`>` | yes |  | The game's own keys, each mapped by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`) to the command it sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces that key. |
+| `minigame` | `boolean` | yes |  | True to start `startMinigameKeys` too, so the keyboard sends a minigame's inputs. On unless false. |
 
 ## localStorageDriver
 
 Function. Explained in [Browser helpers](/docs/browser#localstoragedriver).
 
-Saves in `localStorage` (or any Web Storage). Simple and everywhere, but
-small: around 5MB per origin, and in Chromium every page opened from disk
-shares one origin. Pass a storage to use another, as tests do.
+Returns a save driver that keeps its strings in `localStorage`, or in the storage you pass. Every browser has it, but
+it holds about 5MB per origin.
+
+In Chromium every page opened from disk shares one origin, and so one 5MB store. Tests pass a storage of their own.
 
 ```ts shape
 import { localStorageDriver } from '@ifloom/browser'
@@ -136,10 +142,12 @@ Uses: [`StorageLike`](#storagelike), [`SaveDriver`](/docs/api/engine#savedriver)
 
 Function. Explained in [Browser helpers](/docs/browser#minigameinput).
 
-The minigame input a key presses, by `KeyboardEvent.key`, whether or not it
-does anything now: the minigame's own `keys`, else the arrow keys and space
-for `up`, `down`, `left`, `right` and `space`, else the input's own name
-when it's one letter. One-letter keys match either case.
+Returns the id of the minigame input that a key presses, by `KeyboardEvent.key`, or `undefined` for none. It returns
+the id even when the input does nothing now.
+
+It reads the minigame's own `keys` first. Without them, the arrow keys and space press the inputs `up`, `down`,
+`left`, `right` and `space`, and an input with a one-letter id is pressed by that letter. One-letter keys match
+either case.
 
 ```ts shape
 import { minigameInput } from '@ifloom/browser'
@@ -152,10 +160,11 @@ Uses: [`MinigameView`](/docs/api/engine#minigameview).
 
 Function. Explained in [Browser helpers](/docs/browser#nextslot).
 
-The slot for a new save: one more than the highest numbered slot in the
-listing (`saves.list()`), as a string, so `'1'` for the first. Slots named
-otherwise, such as `'auto'`, are passed over. A save that can't be read
-still holds its number, so a new save never writes over it.
+Returns the slot for a new save, one more than the highest numbered slot in a `saves.list()` listing, as a string.
+It returns `'1'` when there's none.
+
+It skips slots with other names, such as `'auto'`. A save that can't be read still counts, so a new save never
+writes over it.
 
 ```ts shape
 import { nextSlot } from '@ifloom/browser'
@@ -168,7 +177,8 @@ Uses: [`SaveListing`](/docs/api/engine#savelisting).
 
 Function. Explained in [Browser helpers](/docs/browser#numberedchoices).
 
-The choices the number keys pick, in order: the open scene's, else the room's buttons. Key 1 is the first.
+Returns the choices the number keys choose, in order. They're the open scene's choices, else the room's actions, and
+key 1 is the first.
 
 ```ts shape
 import { numberedChoices } from '@ifloom/browser'
@@ -181,15 +191,14 @@ Uses: [`View`](/docs/api/engine#view), [`RenderedChoice`](/docs/api/engine#rende
 
 Function. Explained in [Browser helpers](/docs/browser#startclock).
 
-The clock the game's timers need, which the engine doesn't keep. While
-anything counts down (a timer in `view.timers`, or the timer of the
-minigame being played) and the page is visible, it sends a `tick` with the
-real time since the last one, about every 100 ms. Time while the page is
-hidden is dropped: the tick on hiding sends what passed until then, and the
-clock starts afresh on showing, so a timer waits for the player. A timer a
-command has just started, or a minigame state just entered, counts from
-that command, not from the last tick. Returns the way to stop it. Start one
-per runner.
+Starts the clock that runs down the game's timers, and returns a function that stops it. The engine keeps no clock,
+so start one per runner.
+
+While a timer in `view.timers` or the running minigame's timer counts down and the page is visible, the clock sends
+a `tick` command with the real time since the last one, every 100 ms by default. It drops the time the page spends
+hidden, so a timer waits for the player. It sends the time up to the moment the page hides, then starts afresh when
+the page shows again. A timer that the last command started, or a minigame state it entered, counts from that
+command rather than from the last tick.
 
 ```ts shape
 import { startClock } from '@ifloom/browser'
@@ -202,10 +211,10 @@ Uses: [`Runner`](/docs/api/engine#runner), [`ClockOptions`](#clockoptions).
 
 Function. Explained in [Browser helpers](/docs/browser#startkeys).
 
-The game's keyboard shortcuts: the game's own keys, Escape, the number keys
-for the choices on screen, and a minigame's inputs. Keys the player types
-into a field, keys held with a modifier, and keys while a dialog is open
-are left alone. Returns the way to stop.
+Starts the game's keyboard shortcuts, and returns a function that stops them. They cover the game's own keys, Escape,
+the number keys for the choices on screen and a minigame's inputs.
+
+They leave alone a key typed into a field, a key held with a modifier and any key while a dialog is open.
 
 ```ts shape
 import { startKeys } from '@ifloom/browser'
@@ -218,11 +227,11 @@ Uses: [`Runner`](/docs/api/engine#runner), [`KeysOptions`](#keysoptions).
 
 Function. Explained in [Browser helpers](/docs/browser#startminigamekeys).
 
-Presses the minigame's inputs from the keyboard while one is being played,
-as `minigameInput` maps them. A key that belongs to an input is kept from
-doing anything else, such as scrolling the page, even while that input does
-nothing. It listens before other shortcuts, so a minigame's keys win.
-Returns the way to stop.
+Starts sending the running minigame's inputs from the keyboard, and returns a function that stops it. It maps keys
+with `minigameInput` and listens before other shortcuts, so a minigame's keys win.
+
+A key that maps to an input never does anything else, such as scrolling the page, even while that input does
+nothing.
 
 ```ts shape
 import { startMinigameKeys } from '@ifloom/browser'
@@ -235,12 +244,11 @@ Uses: [`Runner`](/docs/api/engine#runner).
 
 Function. Explained in [Browser helpers](/docs/browser#startrevealskip).
 
-Until stopped, the next key press calls `skip`, to show everything a scene
-still holds back, and does nothing else: it listens before other shortcuts
-and swallows the key, so a number key can't pick a choice that isn't shown
-yet. Typing in a field and keys held with a modifier are left alone. Start
-it while a UI holds something back, such as prose it reveals in steps, and
-stop it once everything is shown.
+Starts calling `skip` on each key press, and returns a function that stops it. Run it while a UI reveals a scene in
+steps, and stop it once the scene shows in full.
+
+It listens before other shortcuts and stops the key there, so a number key can't choose a choice the player can't
+see yet. It leaves alone a key typed into a field and a key held with a modifier.
 
 ```ts shape
 import { startRevealSkip } from '@ifloom/browser'
@@ -251,7 +259,7 @@ function startRevealSkip(skip: () => void): () => void
 
 Type. Explained in [Browser helpers](/docs/browser#storagelike).
 
-The parts of the Web Storage API a driver needs. `localStorage` is one.
+The part of the Web Storage API that `localStorageDriver` uses. `localStorage` and `sessionStorage` both fit it.
 
 ```ts shape
 import type { StorageLike } from '@ifloom/browser'
@@ -263,3 +271,11 @@ type StorageLike = {
   readonly length: number
 }
 ```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `getItem` | `(key: string) => string \| null` |  |  | Returns the string stored under a key, or `null` when there's none. |
+| `setItem` | `(key: string, value: string) => void` |  |  | Stores a string under a key, replacing any already there. |
+| `removeItem` | `(key: string) => void` |  |  | Removes the string stored under a key. |
+| `key` | `(index: number) => string \| null` |  |  | Returns the key at an index, or `null` past the end. The driver lists keys with it. |
+| `length` | `number` |  |  | The number of keys in the storage. |

@@ -13,51 +13,52 @@ import { byId, defineFeature, listWords, mergedById, type CommandContext, type F
 import { lockedBy } from './locks.ts'
 import { clampStat, lackingLine, statOf, statValue } from './stats.ts'
 
-/** What an action costs. */
+/** A cost a choice or an action declares in its `cost`, the stats it spends. The engine refuses it while the player has too little of one. */
 export type ActionCost = {
-  /** Stats it spends, by id, in the order the button should list them. */
+  /** The stats the cost spends, by id, in the order the button lists them. */
   stats?: Record<string, number>
-  /** Refusal lines by stat id, when this action's voice beats the stat's own. */
+  /** The refusal lines by stat id, used in place of the stat's own line when the player has too little. */
   reasons?: Record<string, string>
 }
 
-/** What the actions feature adds, as types. */
+/** The actions feature's command, content key and reference, as types. */
 export type ActionsShape = {
   commands: {
     /**
-     * Do an action by its id: the game's (`{ type: 'action', id: 'wait' }`),
-     * or a plugin's with its id in front (`'places/coffee'`).
+     * A command that does an action by its id. That's the game's id (`{ type: 'action', id: 'wait' }`), or a
+     * plugin's with the plugin's id in front (`'places/coffee'`).
      */
     action: { type: 'action'; id: string }
   }
   game: {
     /**
-     * What the player can do, by id. One with a `label` is a button in every
-     * room while no scene is open; one with none is done only by
-     * `{ type: 'action', id }`. None if left out.
+     * The game's actions, by id. None if left out.
+     *
+     * An action with a `label` is a button in the room while no scene is open, and one with no label is done only by
+     * `{ type: 'action', id }`.
      */
     actions?: ActionDef[]
   }
   pack: {
-    /** Actions, by id: a later pack's replaces an earlier one's. */
+    /** The pack's actions, by id. A later pack's action replaces an earlier one with the same id. */
     actions?: ActionDef[]
   }
   lists: 'action'
   references: {
-    /** An action the `action` command does, by its id. */
+    /** A reference to the action an `action` command does, by its id. */
     action: { action: string }
   }
 }
 
 /**
- * A `blocked` entry written the other way round: refused with `reason` unless
- * `when` holds. `need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
+ * Returns a `blocked` entry written the other way round, refused with `reason` unless `when` holds. For example
+ * `need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
  */
 export function need(reason: Reason, when: Condition): Blocked {
   return { when: { not: when }, reason }
 }
 
-/** Does pressing this action's button send `{ type: 'action' }`, rather than its command alone? */
+/** Returns true when the action's button sends `{ type: 'action' }`, and false when it sends only the action's command. */
 export function runsAsAction(action: ActionDef): boolean {
   return Boolean(action.effects?.length || action.cost || action.once || !action.command)
 }
@@ -70,9 +71,11 @@ function countedOnce(state: GameState, id: string): GameState {
 }
 
 /**
- * Is a button with this `once` spent, as `state.chosen` counts it under its
- * key (an action's id, a choice's `<scene>#<id>`): pressed this turn, or
- * ever? Never, with no `once`.
+ * Returns true when a choice's or an action's `once` is spent. `state.chosen` counts it under `key`, an action's id
+ * or a choice's `<scene>#<id>`.
+ *
+ * A `once` per game is spent after the first time, and one per turn is spent for the rest of that turn. With no `once`
+ * it's never spent.
  */
 export function onceSpent(state: GameState, key: string, once: Once | undefined): boolean {
   const chosen = state.chosen?.[key]
@@ -81,10 +84,12 @@ export function onceSpent(state: GameState, key: string, once: Once | undefined)
 }
 
 /**
- * Why the player cannot do this action right now, or undefined if they can.
- * Checked in the order the player would notice: a scene open, a lock, its
- * own `blocked`, once a turn, what it costs, then the command it sends.
- * `id` is the id the `action` command names it by.
+ * Returns the reason the player can't do this action now. Undefined when they can, and `id` is the id the `action`
+ * command names it by.
+ *
+ * @remarks
+ * The checks run in the order the player would notice them: an open scene, its `when`, a lock, its own `blocked`,
+ * its `once`, its cost, then the command it sends.
  */
 export function actionBlocked(
   state: GameState,
@@ -108,7 +113,7 @@ export function actionBlocked(
   return sends && cx.whyNotCommand ? deeper(() => cx.whyNotCommand!(state, game, sends)) : undefined
 }
 
-/** Why a button can't be paid for now: the first stat it spends that the player has too little of, in its words or the stat's. */
+/** Returns the reason a cost can't be paid now, for the first stat the player has too little of. Undefined when it can be paid. */
 export function costRefusal(state: GameState, game: Game, cost: ActionCost | undefined, cx: FeatureContext): string | undefined {
   for (const [stat, amount] of Object.entries(cost?.stats ?? {})) {
     if (amount > 0 && statValue(state, game, stat, undefined, cx) < amount) {
@@ -118,7 +123,7 @@ export function costRefusal(state: GameState, game: Game, cost: ActionCost | und
   return undefined
 }
 
-/** The state with an action's cost paid. A derived stat is never written. */
+/** Returns the state with a cost paid, each stat clamped to its range. A derived stat is never written. */
 export function payCost(state: GameState, game: Game, cost: ActionCost, cx: FeatureContext): GameState {
   let next = state
   for (const [id, amount] of Object.entries(cost.stats ?? {})) {
@@ -130,7 +135,7 @@ export function payCost(state: GameState, game: Game, cost: ActionCost, cx: Feat
   return next
 }
 
-/** What a cost applies, as stat effects, for guards, prices and locks to see. */
+/** Returns a cost as the stat effects it applies, so guards, prices and locks see it. */
 export const costEffects = (cost: ActionCost | undefined): Effect[] =>
   Object.entries(cost?.stats ?? {}).map(([stat, amount]): Effect => ({ stat, by: -amount }))
 
@@ -159,6 +164,7 @@ function deeper<T>(fn: () => T): T {
   }
 }
 
+/** The actions feature, which runs the `action` command. */
 export const actions = defineFeature<ActionsShape>({
   name: 'actions',
   commands: {
@@ -232,9 +238,10 @@ export const actions = defineFeature<ActionsShape>({
 })
 
 /**
- * What an action names, for the content checker: its conditions, effects,
- * command and hints, and its words. For a plugin whose content holds actions
- * (a place's, an app's) to hand to its `references`.
+ * Returns the references an action makes, for the content checker. They cover its words, conditions, effects, command
+ * and hints.
+ *
+ * A plugin whose content holds actions (a location's, an app's) passes these to its `references`.
  */
 export function actionReferences(action: ActionDef): Reference[] {
   return [

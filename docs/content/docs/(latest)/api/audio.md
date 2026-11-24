@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/audio` and its TSDoc by `npm run api-docs`
 
 Type. Explained in [The audio player](/docs/browser/audio-player#audiolike).
 
-The parts of an `HTMLAudioElement` the player uses. Tests pass a fake through `createAudio`.
+The part of an `HTMLAudioElement` that the audio player uses. Tests pass a fake through `AudioOptions.createAudio`.
 
 ```ts shape
 import type { AudioLike } from '@ifloom/audio'
@@ -27,9 +27,22 @@ type AudioLike = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `play` | `() => void \| Promise<void>` |  |  | Starts playing. The browser may refuse, by throwing or by rejecting the promise it returns. |
+| `pause` | `() => void` |  |  | Pauses playing. |
+| `volume` | `number` |  |  | The element's volume, from 0 to 1. |
+| `loop` | `boolean` |  |  | True when the element starts again from the beginning as it ends. |
+| `currentTime` | `number` |  |  | The element's position in the file, in seconds. |
+| `ended` | `boolean` |  |  | True once the element has played to its end. |
+| `onended` | `((event: Event) => void) \| null` |  |  | The handler the element calls when it plays to its end. |
+| `src` | `string` |  |  | The element's file. |
+
 ## AudioOptions
 
 Type. Explained in [The audio player](/docs/browser/audio-player#audiooptions).
+
+Settings for `startAudio`. Each is optional.
 
 ```ts shape
 import type { AudioOptions } from '@ifloom/audio'
@@ -42,17 +55,16 @@ type AudioOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `createAudio` | `(src: string) =>` [`AudioLike`](#audiolike) | yes |  | Makes the element for a file. `new Audio(src)` if left out. |
-| `log` | `(message: string) => void` | yes |  | Told every decision the player makes, for debugging: `log: console.debug`. |
-| `root` | `EventTarget` | yes |  | Where the first `pointerdown` or `keydown` unlocks sound. `document` if left out. |
+| `createAudio` | `(src: string) =>` [`AudioLike`](#audiolike) | yes |  | The function that makes the element for a file. `new Audio(src)` if left out. |
+| `log` | `(message: string) => void` | yes |  | A function that receives a line for each decision the player makes, for debugging, such as `console.debug`. |
+| `root` | `EventTarget` | yes |  | The element whose first `pointerdown` or `keydown` unlocks sound. `document` if left out. |
 
 ## AudioPlayer
 
 Type. Explained in [The audio player](/docs/browser/audio-player#audioplayer).
 
-What `startAudio` gives back: a function that stops the player, as every
-other `start*` gives, with what else a player can do on it. Calling it stops
-listening to the runner and the profile, and pauses everything.
+The audio player `startAudio` returns, a function that stops it with two methods on it. Calling it stops following
+the runner and the page's clicks and key presses, and pauses every sound.
 
 ```ts shape
 import type { AudioPlayer } from '@ifloom/audio'
@@ -63,13 +75,12 @@ type AudioPlayer = (() => void) & { unlock(): void; play(src: string, channel?: 
 
 Function. Explained in [The audio player](/docs/browser/audio-player#startaudio).
 
-Play a runner's `view.audio` in the browser until the function it returns
-is called, as `startClock`'s and `startKeys`' are. Background
-channels crossfade when their file changes and step through playlists. Each
-cue key plays once, and the keys already in the view when the player starts
-count as heard, so loading a save replays nothing. Volumes and muting come
-from the game's settings, as the runner's snapshot has them. Nothing plays until the player first
-clicks or presses a key, or until `unlock()`.
+Starts playing a runner's `view.audio` in the browser, and returns the `AudioPlayer` that stops it. Nothing
+plays until the player first clicks or presses a key, or until `unlock()`.
+
+Background channels crossfade when their file changes, and step through playlists. Each cue key plays once, and the
+player counts the cues already in the view when it starts as heard, so loading a save replays nothing. Volumes and
+muting follow the game's settings in the runner's snapshot.
 
 ```ts shape
 import { startAudio } from '@ifloom/audio'

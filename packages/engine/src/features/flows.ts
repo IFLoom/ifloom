@@ -20,65 +20,79 @@ import { defineFeature, type FeatureCheckTools, type FeatureContext } from './fe
 import { minigameOf, startMinigame } from './minigames.ts'
 
 /**
- * One step of a visit's path, in the order they came: a pick at a decision
- * or among the ending choices (`chose`), a jump to a point a pick made, or a
- * minigame or panel in the flow done with.
+ * A step of a visit's path in `state.flow`, kept in the order the steps came.
+ *
+ * `{ chose }` is a choice at a decision or among the ending choices, `{ point }` a jump a choice made, and
+ * `{ minigame }` or `{ panel }` a wait done with.
  */
 export type FlowStep = { chose: string } | { point: string } | { minigame: string } | { panel: string }
 
-/** The open scene's visit: its path so far, and what the flow is waiting on, if anything. */
+/** The visit a save keeps for the open scene, with its path so far and the wait the flow stands at. The scene's body is read from content. */
 export type FlowState = {
-  /** The scene this visit is of. */
+  /** The id of the scene the visit is of. */
   scene: string
-  /**
-   * The picks made, the points jumped to and the minigames and panels done with, in order: what the view replays to
-   * draw the visit.
-   */
+  /** The visit's steps in order, the choices made, the points jumped to and the minigames and panels done with. The view replays them to render the visit. */
   path: FlowStep[]
-  /** The minigame being played or the panel open where the flow stands, until it is done; null while it waits on nothing. */
+  /** The minigame being played or the panel open where the flow stands, until it's done. Null while the flow waits on neither. */
   waiting: { minigame: string } | { panel: string } | null
 }
 
-/** What the flows feature adds, as types. */
+/** The flows feature's state, effect and reference, as types. */
 export type FlowsShape = {
   state: {
     /**
-     * The open scene's visit: each pick, jump and wait passed, in order, and
-     * what the flow waits on. Null with no scene open, and for a visit with
-     * nothing to keep yet. It starts again each time a scene is entered.
+     * The open scene's visit, each choice, jump and wait passed in order, and the wait the flow stands at. It starts
+     * again each time a scene is entered.
+     *
+     * Null while no scene is open, and for a visit with nothing to keep yet.
      */
     flow: FlowState | null
   }
   effects: {
     /**
-     * Carry the flow on from this point of the open scene, after the
-     * choice's `then`: `{ point: 'questions' }`, written by `jump()`. Only a
-     * choice's effect, in the scene that has the point, so a flow loops only
-     * through a pick. Anywhere else it does nothing.
+     * An effect that carries the flow on from a point of the open scene after the choice's `then`, such as
+     * `{ point: 'questions' }`, written by `jump()`. It works only as a choice's effect in the scene that has the point.
+     *
+     * So a flow loops only through a choice. Anywhere else the effect does nothing.
      */
     point: { point: string }
   }
   references: {
-    /** A jump to a point, `{ point }` as an effect: only a choice's, in the scene that has the point. */
+    /** A reference to the point a `{ point }` effect jumps to. The checker accepts it only as a choice's effect in the scene that has the point. */
     jump: { jump: string }
   }
 }
 
-/** A content block the flow reached, with where it is in the scene and the hints of the sections around it. */
-export type FlowContent = { block: Block; address: string; section?: Ui<BlockUi> }
+/** A block the flow reached, with its address in the scene and the ui hints of the sections around it. */
+export type FlowContent = {
+  /** The block reached. */
+  block: Block
+  /** The block's address in the scene, its indexes joined by `.` with a choice's id where it's in a `then`. */
+  address: string
+  /** The ui hints of the sections around the block, the inner over the outer. Left out when there are none. */
+  section?: Ui<BlockUi>
+}
 
-/** Where a flow stands once it has gone as far as it can without the player. */
+/**
+ * The place a flow stands once it has gone as far as it can without the player. That's a decision with no choice for
+ * it yet (`decide`), a minigame or a panel not done with, or the `end`.
+ */
 export type FlowStop =
   | { at: 'decide'; id: string; choices: readonly FlowChoice[]; address: string }
   | { at: 'minigame'; minigame: string; address: string }
   | { at: 'panel'; panel: string; with: PluginArgs; address: string }
   | { at: 'end' }
 
-/** What a walk tells the one walking it: each block reached, each past pick, and where the path's last step was passed. */
+/** The callbacks `walkFlow` calls as it walks, for each block reached, each past choice and the moment the path's last step is passed. */
 export type FlowVisitor = {
+  /** The callback for each block the walk reaches. */
   content?: (reached: FlowContent) => void
+  /** The callback for each past choice, where it was made, with its decision's id and section hints. */
   chose?: (choice: FlowChoice, at: { decide?: string; section?: Ui<BlockUi> }) => void
-  /** The path's last step was just passed: what is reached from here, a pick's `chose` first, is what the last pick, jump or wait brought. */
+  /**
+   * The callback for the moment the walk passes the path's last step. Whatever the walk reaches after it, a choice's
+   * `chose` first, is what the last choice, jump or wait brought.
+   */
   caughtUp?: () => void
 }
 
@@ -94,18 +108,15 @@ const isMinigame = (block: Block): block is Extract<Block, { minigame: string }>
 const isPanel = (block: Block): block is Extract<Block, { panel: string }> => 'panel' in block
 
 /**
- * Walk a scene's body as a flow, along `path`, as far as it goes without
- * the player: to a decision with no pick for it yet, a minigame or panel not
- * done with, or the end. `holds` asks a block's `when`. Every block reached
- * is handed to `visit`, with each past pick where it was made.
+ * Walks a scene's body as a flow along `path` and returns where it stops without the player. `holds` answers a
+ * block's `when`, and `visit` gets every block reached and each past choice where it was made.
  *
- * A pick at a decision runs its choice's `then`, then the blocks after the
- * decision. A jump after a pick carries on from that point instead, once
- * the `then` is done, wherever the point is: at the top of the body, in a
- * section or in a choice's `then`. From there the flow goes on as if it had
- * read its way to the point: to the end of the list the point is in, then
- * after the section or the decision around it. A pick among the ending
- * choices followed by a jump carries on from the point too.
+ * @remarks
+ * The walk stops at a decision with no choice for it yet, a minigame or panel not done with, or the end. A choice at
+ * a decision runs its `then`, then the blocks after the decision. A jump after a choice carries on from its point
+ * instead, once the `then` is done, wherever the point is (at the top of the body, in a section or in a choice's
+ * `then`). From there the flow reads on to the end of the point's list, then after the section or decision around it.
+ * An ending choice followed by a jump carries on from the point too.
  */
 export function walkFlow(
   scene: Pick<DataScene, 'body' | 'choices'>,
@@ -239,7 +250,7 @@ function framesTo(list: readonly Block[], point: string, prefix: string, section
   return undefined
 }
 
-/** Every block in a body, sections, branches and all, with where each sits. */
+/** Returns every block in a body with its address, sections, cases and choices' `then` included. `top` is true for a block of the body itself. */
 export function everyBlock(body: readonly Block[], prefix = ''): { block: Block; address: string; top: boolean }[] {
   return body.flatMap((block, index) => {
     const address = `${prefix}${index}`
@@ -251,17 +262,17 @@ export function everyBlock(body: readonly Block[], prefix = ''): { block: Block;
   })
 }
 
-/** Every choice a scene has: each decision's, in order, then its ending choices. */
+/** Returns every choice a scene has, each decision's in order, then its ending choices. */
 export function sceneChoices(scene: Pick<DataScene, 'body' | 'choices'>): FlowChoice[] {
   return [...everyBlock(scene.body).flatMap(({ block }) => (isDecide(block) ? block.choices : [])), ...scene.choices]
 }
 
-/** Does this body flow: does it have a decision, a point, a minigame or a panel anywhere? */
+/** Returns true when a body flows, with a decision, a point, a minigame or a panel anywhere in it. */
 export function flows(body: readonly Block[]): boolean {
   return everyBlock(body).some(({ block }) => isDecide(block) || isPoint(block) || isMinigame(block) || isPanel(block))
 }
 
-/** The point a choice's effects jump to, if one of them is a jump. */
+/** Returns the point a choice's effects jump to. Undefined when none of them is a jump. */
 export function jumpOf(effects: readonly unknown[] | undefined): string | undefined {
   for (const effect of effects ?? []) {
     if (effect && typeof effect === 'object' && 'point' in effect && Object.keys(effect).length === 1) {
@@ -272,12 +283,12 @@ export function jumpOf(effects: readonly unknown[] | undefined): string | undefi
   return undefined
 }
 
-/** A choice's effects without its jump, which the flow takes rather than the reducer. */
+/** Returns a choice's effects without its jump, which the flow takes rather than the reducer. */
 export function withoutJump<T>(effects: readonly T[] | undefined): T[] {
   return (effects ?? []).filter((effect) => !(effect && typeof effect === 'object' && 'point' in effect && Object.keys(effect).length === 1))
 }
 
-/** The state with its visit's path one step longer. */
+/** Returns the state with steps added to the visit's path. A visit of another scene is replaced by a new one. */
 export function stepped(state: GameState, scene: string, ...steps: FlowStep[]): GameState {
   const flow = state.flow?.scene === scene ? state.flow : { scene, path: [], waiting: null }
   return { ...state, flow: { ...flow, path: [...flow.path, ...steps] } }
@@ -431,13 +442,14 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
   }
 }
 
-/** What a flow's blocks name beyond what prose blocks do: minigames and panels played where they stand. */
+/** Returns the references a flow's block makes beyond other blocks', the minigame or panel it plays where it stands. Empty for any other block. */
 export function flowBlockReferences(block: Block): Reference[] {
   if (isMinigame(block)) return [{ minigame: block.minigame }]
   if (isPanel(block)) return [{ openPanel: block.panel, with: block.with ?? {} }]
   return []
 }
 
+/** The flows feature, which keeps each visit's path and starts the minigames and panels a flow waits on. */
 export const flowsFeature = defineFeature<FlowsShape>({
   name: 'flows',
   requires: ['scenes', 'minigames'],

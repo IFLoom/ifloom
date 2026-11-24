@@ -4,12 +4,13 @@ import { browserRunner } from '@ifloom/browser'
 import { describeProblem, type Game, type GameState, type Problem, type Runner, type RunnerOptions } from '@ifloom/engine'
 import { GameShell, type GameShellProps } from './shell.tsx'
 
+/** Settings for `mountGame`, the {@link GameShellProps} without `runner`, with where to render and how to start. */
 export type MountOptions = Omit<GameShellProps, 'runner'> & {
-  /** Where to draw it: an element, or a selector for one. `'#root'` if left out. */
+  /** The element to render the game into, or a selector for it. `'#root'` if left out. */
   root?: string | Element
-  /** The state to start from. A new game with a random seed if left out. */
+  /** The state the game starts from. A new game with a random seed if left out. */
   start?: GameState
-  /** Merged over the defaults: undo 50 deep, saves in localStorage, an autosave each turn. */
+  /** The runner options, laid over `browserRunner`'s defaults of undo 50 deep, saves in `localStorage` and an autosave each turn. */
   runner?: RunnerOptions
 }
 
@@ -19,12 +20,12 @@ function problemText(problem: unknown): string {
 }
 
 /**
- * Start a game in the page: a runner with undo, saves and autosave (from
- * `browserRunner`, so it starts with the player's stored settings), the
- * whole React UI (`GameShell`, with your `layout`) drawn into `#root`, and
- * the game's sound playing if it has any. Takes a game, or what `loadGame` returns, whose
- * problems are logged as warnings. Resolves to the runner once the game is
- * drawn, for anything the game wants to drive itself.
+ * Starts a game in the page and returns its runner once the game renders. It throws when nothing in the page matches
+ * `root`.
+ *
+ * It takes a game, or what `loadGame` returns, and logs any problems as warnings. It makes the runner with
+ * `browserRunner`, so the game has undo, saves, an autosave and the player's stored settings, and renders `GameShell`
+ * into `#root`. The game's sound plays if it has any.
  */
 export async function mountGame(loaded: Game | { game: Game; problems?: readonly unknown[] }, options: MountOptions = {}): Promise<Runner> {
   const { root: where = '#root', start, runner: runnerOptions, ...shell } = options

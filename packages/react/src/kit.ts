@@ -12,7 +12,7 @@
  *   `useDialogParts`, `PageHeading`, `BackButton`, `usePageParts`, `PROSE`.
  * - The shadcn/ui primitives the UI is made of, with `cn` and `Icon`.
  *
- * Everything a game draws with (`useGame`, `usePart`, `ChoiceButton`,
+ * The parts a game renders with (`useGame`, `usePart`, `ChoiceButton`,
  * `Picture`, `Section`, the words) is in `@ifloom/react`.
  */
 

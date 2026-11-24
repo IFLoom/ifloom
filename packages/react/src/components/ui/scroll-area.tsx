@@ -2,6 +2,7 @@ import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/utils.ts'
 
+/** Renders shadcn/ui's scroll area, a box that scrolls its children vertically with a thin styled scrollbar. */
 export function ScrollArea({ className, children, ...props }: ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
     <ScrollAreaPrimitive.Root data-slot="scroll-area" className={cn('relative overflow-hidden', className)} {...props}>

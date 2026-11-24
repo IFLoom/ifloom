@@ -13,7 +13,7 @@ Generated from the source of `@ifloom/react/kit` and its TSDoc by `npm run api-d
 
 Component. Explained in [Plugin UIs and the kit](/docs/react/kit#pageheading-and-backbutton).
 
-The page's Back button, the `page-back` part: `usePage().back()`.
+Renders a page's Back button, the `page-back` part, which calls `usePage().back()`.
 
 ```ts shape
 import { BackButton } from '@ifloom/react/kit'
@@ -23,6 +23,8 @@ function BackButton(): JSX.Element
 ## Badge
 
 Component. Explained in [Components](/docs/react/components#badge).
+
+Renders shadcn/ui's badge, a small rounded label in a `<span>`.
 
 ```ts shape
 import { Badge } from '@ifloom/react/kit'
@@ -35,6 +37,8 @@ Uses: [`BadgeProps`](#badgeprops).
 
 Type. Explained in [Components](/docs/react/components#badgeprops).
 
+The props of `Badge`, a `<span>`'s props and a `variant`.
+
 ```ts shape
 import type { BadgeProps } from '@ifloom/react/kit'
 type BadgeProps = {
@@ -45,9 +49,15 @@ type BadgeProps = {
 
 Plugins add fields of their own to it, which their pages list.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `variant` | `'default' \| 'secondary' \| 'outline' \| 'destructive' \| null` | yes |  | The badge's look, `default`, `secondary`, `outline` or `destructive`. `default` if left out. |
+
 ## badgeVariants
 
 Function.
+
+Returns the Tailwind classes for a badge's `variant`, shadcn/ui's badge variants. `default` if left out.
 
 ```ts fragment
 function badgeVariants(props?: (ConfigVariants<{ variant: { default: string; secondary: string; outline: string; destructive: string; }; }> & ClassProp) | undefined): string
@@ -56,6 +66,8 @@ function badgeVariants(props?: (ConfigVariants<{ variant: { default: string; sec
 ## Button
 
 Component. Explained in [Components](/docs/react/components#button).
+
+Renders shadcn/ui's button, a `<button>` styled by `buttonVariants`.
 
 ```ts shape
 import { Button } from '@ifloom/react/kit'
@@ -67,6 +79,8 @@ Uses: [`ButtonProps`](#buttonprops).
 ## ButtonProps
 
 Type. Explained in [Components](/docs/react/components#buttonprops).
+
+The props of `Button`, a `<button>`'s props with a `variant`, a `size` and `asChild`.
 
 ```ts shape
 import type { ButtonProps } from '@ifloom/react/kit'
@@ -80,9 +94,17 @@ type ButtonProps = {
 
 Plugins add fields of their own to it, which their pages list.
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `variant` | `'link' \| 'default' \| 'secondary' \| 'outline' \| 'ghost' \| 'destructive' \| null` | yes |  | The button's look, `default`, `secondary`, `outline`, `ghost`, `destructive` or `link`. `default` if left out. |
+| `size` | `'default' \| 'sm' \| 'lg' \| 'icon' \| null` | yes |  | The button's size, `default`, `sm`, `lg` or `icon` (a square for one icon). `default` if left out. |
+| `asChild` | `boolean` | yes |  | True to render the one child element with the button's classes in place of a `<button>`, through Radix's `Slot`. False if left out. |
+
 ## buttonVariants
 
 Function.
+
+Returns the Tailwind classes for a button's `variant` and `size`, shadcn/ui's button variants. `default` for both if left out.
 
 ```ts fragment
 function buttonVariants(props?: (ConfigVariants<{ variant: { default: string; secondary: string; outline: string; ghost: string; destructive: string; link: string; }; size: { default: string; sm: string; lg: string; icon: string; }; }> & ClassProp) | undefined): string
@@ -91,6 +113,8 @@ function buttonVariants(props?: (ConfigVariants<{ variant: { default: string; se
 ## Card
 
 Component. Explained in [Components](/docs/react/components#card).
+
+Renders shadcn/ui's card, a bordered `<div>` on the card colour.
 
 ```ts shape
 import { Card } from '@ifloom/react/kit'
@@ -101,6 +125,8 @@ function Card(props: ComponentProps<'div'>): JSX.Element
 
 Component.
 
+Renders a card's content, a padded `<div>`.
+
 ```ts shape
 import { CardContent } from '@ifloom/react/kit'
 function CardContent(props: ComponentProps<'div'>): JSX.Element
@@ -109,6 +135,8 @@ function CardContent(props: ComponentProps<'div'>): JSX.Element
 ## CardDescription
 
 Component.
+
+Renders a card's description as a `<p>` in the muted colour.
 
 ```ts shape
 import { CardDescription } from '@ifloom/react/kit'
@@ -119,6 +147,8 @@ function CardDescription(props: ComponentProps<'p'>): JSX.Element
 
 Component.
 
+Renders a card's footer, a padded `<div>` that lines its children up in a row.
+
 ```ts shape
 import { CardFooter } from '@ifloom/react/kit'
 function CardFooter(props: ComponentProps<'div'>): JSX.Element
@@ -127,6 +157,8 @@ function CardFooter(props: ComponentProps<'div'>): JSX.Element
 ## CardHeader
 
 Component.
+
+Renders a card's header, a `<div>` that stacks its title and description.
 
 ```ts shape
 import { CardHeader } from '@ifloom/react/kit'
@@ -137,6 +169,8 @@ function CardHeader(props: ComponentProps<'div'>): JSX.Element
 
 Component.
 
+Renders a card's title as an `<h3>`.
+
 ```ts shape
 import { CardTitle } from '@ifloom/react/kit'
 function CardTitle(props: ComponentProps<'h3'>): JSX.Element
@@ -146,7 +180,7 @@ function CardTitle(props: ComponentProps<'h3'>): JSX.Element
 
 Function. Explained in [Components](/docs/react/components#cn).
 
-Join class names, letting a later Tailwind class win over an earlier one. shadcn/ui's `cn`.
+Returns class names joined into one string, a later Tailwind class winning over an earlier one that conflicts. It's shadcn/ui's `cn`.
 
 ```ts fragment
 function cn(...inputs: ClassValue[]): string
@@ -156,6 +190,8 @@ function cn(...inputs: ClassValue[]): string
 
 Component. Explained in [Components](/docs/react/components#dialog).
 
+Renders a dialog's root, Radix's `Dialog.Root`, which holds whether the dialog is open.
+
 ```ts fragment
 function Dialog(props: DialogProps): ReactNode | Promise<ReactNode>
 ```
@@ -164,6 +200,8 @@ function Dialog(props: DialogProps): ReactNode | Promise<ReactNode>
 
 Component.
 
+Renders a control that closes its dialog, Radix's `Dialog.Close`.
+
 ```ts fragment
 function DialogClose(props: DialogCloseProps & RefAttributes<HTMLButtonElement>): ReactNode
 ```
@@ -171,6 +209,8 @@ function DialogClose(props: DialogCloseProps & RefAttributes<HTMLButtonElement>)
 ## DialogContent
 
 Component.
+
+Renders a dialog's box in a portal, over an overlay, with a close button in its corner.
 
 ```ts shape
 import { DialogContent } from '@ifloom/react/kit'
@@ -182,6 +222,8 @@ Uses: [`DialogContentProps`](#dialogcontentprops).
 ## DialogContentProps
 
 Type. Explained in [Components](/docs/react/components#dialogcontentprops).
+
+The props of `DialogContent`, Radix's `Dialog.Content` props with the options below.
 
 ```ts fragment
 type DialogContentProps = {
@@ -198,15 +240,17 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `bare` | `boolean` | yes |  | Skip the built-in classes on the content, the overlay and the close button, so the caller styles them all. |
-| `closeLabel` | `string` | yes |  | The screen-reader text on the close button. |
-| `closeIcon` | `ReactNode` | yes |  | The close button's icon. |
-| `overlayProps` | `(DialogOverlayProps & RefAttributes<HTMLDivElement>) \| undefined` | yes |  | Attributes for the overlay behind the dialog (a `className`, a `data-part`). |
-| `closeProps` | `(DialogCloseProps & RefAttributes<HTMLButtonElement>) \| undefined` | yes |  | Attributes for the close button. |
+| `bare` | `boolean` | yes |  | True to leave out the built-in classes on the content, the overlay and the close button, so the caller styles them all. False if left out. |
+| `closeLabel` | `string` | yes |  | The close button's text for screen readers. `'Close'` if left out. |
+| `closeIcon` | `ReactNode` | yes |  | The close button's icon. An X if left out. |
+| `overlayProps` | `(DialogOverlayProps & RefAttributes<HTMLDivElement>) \| undefined` | yes |  | The props of the overlay behind the dialog, such as a `className` or a `data-part`. |
+| `closeProps` | `(DialogCloseProps & RefAttributes<HTMLButtonElement>) \| undefined` | yes |  | The props of the close button. |
 
 ## DialogDescription
 
 Component.
+
+Renders a dialog's description in the muted colour, which screen readers read after the title.
 
 ```ts fragment
 function DialogDescription(props: DialogDescriptionProps & RefAttributes<HTMLParagraphElement>): JSX.Element
@@ -215,6 +259,8 @@ function DialogDescription(props: DialogDescriptionProps & RefAttributes<HTMLPar
 ## DialogHeader
 
 Component.
+
+Renders a dialog's header, a `<div>` that stacks its title and description.
 
 ```ts shape
 import { DialogHeader } from '@ifloom/react/kit'
@@ -225,6 +271,8 @@ function DialogHeader(props: ComponentProps<'div'>): JSX.Element
 
 Component.
 
+Renders a dialog's title, which screen readers announce. `bare` leaves out its built-in classes.
+
 ```ts fragment
 function DialogTitle(props: DialogTitleProps & RefAttributes<HTMLHeadingElement> & { bare?: boolean; }): JSX.Element
 ```
@@ -232,6 +280,8 @@ function DialogTitle(props: DialogTitleProps & RefAttributes<HTMLHeadingElement>
 ## DialogTrigger
 
 Component.
+
+Renders the control that opens its dialog, Radix's `Dialog.Trigger`.
 
 ```ts fragment
 function DialogTrigger(props: DialogTriggerProps & RefAttributes<HTMLButtonElement>): ReactNode
@@ -241,7 +291,7 @@ function DialogTrigger(props: DialogTriggerProps & RefAttributes<HTMLButtonEleme
 
 Type. Explained in [Presentation hints](/docs/react/hints#hintcheckcontext).
 
-What a hint's check is told: the game, what the hint is written on (and its id, where it has one), and the transition names the game has.
+The context a `UiHint`'s check receives, with the game, the target the hint is on and the game's transition names.
 
 ```ts shape
 import type { HintCheckContext } from '@ifloom/react/kit'
@@ -256,15 +306,16 @@ type HintCheckContext = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `game` | [`Game`](/docs/api/engine#game) |  |  | The loaded game, for a hint that names something in it. |
-| `on` | [`UiTarget`](/docs/api/engine#uitarget) |  |  | What the hint is written on: a scene, a choice, a block, a stat, an entity or the game. |
-| `id` | `string` | yes |  | The id of what it's written on: a stat's, a scene's, a choice's, a kind's or an entity's reference. |
-| `transitions` | `ReadonlySet<string>` |  |  | `TRANSITIONS` and the game's own `ui.transitionNames`. |
+| `on` | [`UiTarget`](/docs/api/engine#uitarget) |  |  | The sort of target the hint is on, such as a scene, a choice, a block, a stat, an entity or the game. |
+| `id` | `string` | yes |  | The target's id, such as a stat's, a scene's or a choice's id, or a kind's or an entity's reference. |
+| `transitions` | `ReadonlySet<string>` |  |  | The transition names the game has, `TRANSITIONS` with the game's own `ui.transitionNames`. |
 
 ## Icon
 
 Const. Explained in [Components](/docs/react/components#icon).
 
-One of the UI's icons. Replace it in `components` to use your own set everywhere.
+Renders one of the UI's icons by name, with `label` as its accessible name. Replace `Icon` in `components` to use
+your own set everywhere.
 
 ```ts shape
 import { Icon } from '@ifloom/react/kit'
@@ -277,7 +328,7 @@ Uses: [`IconName`](#iconname).
 
 Type. Explained in [Components](/docs/react/components#iconname).
 
-The icons the UI draws, by what they're for.
+The name of an icon the UI renders, named by its use.
 
 ```ts shape
 import type { IconName } from '@ifloom/react/kit'
@@ -288,14 +339,14 @@ type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chev
 
 Const. Explained in [Plugin UIs and the kit](/docs/react/kit#kit_layout).
 
-The layout classes the React UI's stylesheet always has, for laying out a
-plugin's parts: flex and grid, gaps, alignment, growing and shrinking, text
-sizes and weights, and an entry's buttons beside its words from Tailwind's
-`sm` up. With the kit's
-looks, `buttonVariants`, `badgeVariants`, `PROSE` and `useDialogParts`, a
-plugin's UI needs no class of its own, so it needs no stylesheet. A class
-not here may be missing from `styles.min.css`; a UI that needs one ships
-its own stylesheet.
+The layout classes the React UI's built stylesheet always has, for laying out a plugin's parts. A class not listed
+here may be missing from `styles.min.css`.
+
+A UI that needs an unlisted class ships its own stylesheet.
+
+They cover flex and grid, gaps, alignment, growing and shrinking, text sizes and weights, and an entry's buttons
+beside its words from Tailwind's `sm` up. With these, the kit's looks, `buttonVariants`, `badgeVariants`, `PROSE`
+and `useDialogParts`, a plugin's UI needs no stylesheet.
 
 ```ts shape
 import { KIT_LAYOUT } from '@ifloom/react/kit'
@@ -306,12 +357,11 @@ const KIT_LAYOUT: readonly ['flex', 'inline-flex', 'grid', 'contents', 'hidden',
 
 Const. Explained in [Plugin UIs and the kit](/docs/react/kit#kit_looks).
 
-How each kit part looks with no preset, in the theme's tokens: the classes
-`useKitPart` starts from. A card is boxed, edged in the primary colour once
-done and dashed while still open (never faded, so its words keep their
-contrast); a note is small and muted; a meter is a thin bar; an opener is
-a small outlined button; and so on. A preset
+The Tailwind classes each kit part has with no preset, in the theme's tokens, which `useKitPart` starts from. A preset
 restyles them by `data-kit`, and a game by `classes` or its own CSS.
+
+A card is boxed, edged in the primary colour once done and dashed while still open. It's never faded, so its words
+keep their contrast. A note is small and muted, a meter is a thin bar and an opener is a small outlined button.
 
 ```ts shape
 import { KIT_LOOKS } from '@ifloom/react/kit'
@@ -324,25 +374,25 @@ Uses: [`KitPart`](#kitpart).
 
 Const. Explained in [Plugin UIs and the kit](/docs/react/kit#kit_parts).
 
-What a part is like, whatever drew it, carried as `data-kit` beside its own
-`data-part`: a plugin's goods, jobs and achievements are all `card`s. The
-presets style these and the theme's tokens, never a plugin's own parts, so
-a plugin's UI looks right in each preset without a stylesheet of its own,
-and a game's stylesheet can restyle every card at once.
+The kit's parts, the sorts of part any component can mark itself as with `data-kit` beside its own `data-part`. A
+vendor's goods, a job and an achievement are all `card`s.
 
-- `card`: an entry in a list, boxed: a vendor's good, a job, an achievement.
-- `item`: an entry in a list, not boxed: a status.
+The presets style these and the theme's tokens, never a plugin's own parts. So a plugin's UI looks right in each
+preset without a stylesheet of its own, and a game's stylesheet can restyle every card at once. The parts are these:
+
+- `card`: a boxed entry in a list, such as a vendor's good, a job or an achievement.
+- `item`: an entry in a list without a box, such as a status.
 - `title`: an entry's name. `heading`: a list's heading.
 - `note`: a line about an entry, quieter than its title.
-- `meter`: a bar of progress, with a `<span>` inside as wide as it's got.
-- `commands`: buttons that do something, not choices the story offers.
+- `meter`: a progress bar, with a `<span>` inside as wide as the progress.
+- `commands`: a group of buttons for a plugin's commands, rather than a scene's choices.
 - `opener`: a button that opens something over the page, such as a dialog.
-- `form` and `input`: where the player types something, such as a code.
+- `form` and `input`: a form and its field for the player to type in, such as a code.
 - `badge`: a small label on an entry. `thumb`: a small picture of it.
 - `label`: a short word beside a value, such as a slot's name.
 
-An entry that can be done says how it stands in `data-state`: `"done"`, or
-`"open"` while it isn't yet. One the player hasn't found yet carries `data-secret`.
+An entry that can be done sets `data-state` to `"done"`, or to `"open"` while it isn't yet. An entry the player
+hasn't found yet carries `data-secret`.
 
 ```ts shape
 import { KIT_PARTS } from '@ifloom/react/kit'
@@ -353,6 +403,8 @@ const KIT_PARTS: readonly ['card', 'item', 'title', 'heading', 'note', 'meter', 
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#kitpart).
 
+The name of a kit part in `KIT_PARTS`.
+
 ```ts shape
 import type { KitPart } from '@ifloom/react/kit'
 type KitPart = (typeof KIT_PARTS)[number]
@@ -362,7 +414,8 @@ type KitPart = (typeof KIT_PARTS)[number]
 
 Function. Explained in [Components](/docs/react/components#overridable).
 
-A built-in component that a game can replace by `name`. Used for every component the UI exports.
+Returns a component that renders `Default`, or the game's replacement registered under `name` in `components`. Every
+component the UI exports is one.
 
 ```ts shape
 import { overridable } from '@ifloom/react/kit'
@@ -375,7 +428,7 @@ Uses: [`OverridableComponents`](/docs/api/react#overridablecomponents).
 
 Type. Explained in [Components](/docs/react/components#override).
 
-A replacement for a built-in component. It gets the same props, and the built-in one as `Default`.
+A component that replaces a built-in one. It gets the same props, and the built-in component as `Default`.
 
 ```ts shape
 import type { Override } from '@ifloom/react/kit'
@@ -386,7 +439,7 @@ type Override<P> = ComponentType<P & { Default: ComponentType<P> }>
 
 Component. Explained in [Plugin UIs and the kit](/docs/react/kit#pageheading-and-backbutton).
 
-A page's heading, as the built-in pages have: the `page-heading` part. A page a plugin or game adds uses it too.
+Renders a page's heading, the `page-heading` part, as the built-in pages have. A page a plugin or a game adds uses it too.
 
 ```ts shape
 import { PageHeading } from '@ifloom/react/kit'
@@ -397,9 +450,10 @@ function PageHeading(props: { children: ReactNode }): JSX.Element
 
 Component. Explained in [Components](/docs/react/components#partdialog).
 
-A dialog drawn with the UI's `dialog` parts, as the menu's is: open while
-`open` is true, titled `title`, calling `onClose` when the player closes it.
-`PanelHost` and the plugins' UIs use it, and a layout of your own can too.
+Renders a dialog with the UI's `dialog` parts, open while `open` is true and titled `title`. It calls `onClose` when
+the player closes it.
+
+The menu, `PanelHost` and the plugins' UIs use it, and a layout of your own can too.
 
 ```ts shape
 import { PartDialog } from '@ifloom/react/kit'
@@ -410,7 +464,7 @@ function PartDialog(props: { open: boolean; onClose: () => void; title: string; 
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#plugincontrols-and-pluginviewof).
 
-What `usePlugin` gives a component: the plugin's view, its words and a way to send its commands.
+The plugin's view, words and `send` that `usePlugin` returns to a component.
 
 ```ts shape
 import type { PluginControls } from '@ifloom/react/kit'
@@ -423,17 +477,16 @@ type PluginControls<Id extends string, W extends Words> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `view` | [`PluginViewOf`](#pluginviewof)`<Id> \| undefined` |  |  | The plugin's slice of the view, `view.plugins[id]`, typed; undefined in a game without the plugin. |
-| `words` | [`Say`](/docs/api/react#say)`<(keyof W & string) \|` [`UiStringKey`](/docs/api/react#uistringkey)`>` |  |  | Say one of the plugin's words, or the UI's, by key: the game's `ui.<key>` over the English. |
-| `send` | `(command:` [`CommandRef`](/docs/api/engine#commandref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Run a command, as the plugin's helpers write it: `send(shop.buy(vendor, entity))`, or a button's `command` from the view. Returns what `runner.apply` returned, so a caller can show a refusal. |
+| `view` | [`PluginViewOf`](#pluginviewof)`<Id> \| undefined` |  |  | The plugin's slice of the view, `view.plugins[id]`, typed. It's undefined in a game without the plugin. |
+| `words` | [`Say`](/docs/api/react#say)`<(keyof W & string) \|` [`UiStringKey`](/docs/api/react#uistringkey)`>` |  |  | Returns one of the plugin's words or the UI's by key, the game's `ui.<key>` string over the English. |
+| `send` | `(command:` [`CommandRef`](/docs/api/engine#commandref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends a command and returns the runner's result, so a caller can show a refusal. The command is one a plugin helper writes, `send(shop.buy(vendor, entity))`, or a `RenderedChoice`'s `command` from the view. |
 
 ## PluginKit
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginkit-1).
 
-One plugin's UI, declared once: its id and its words. Spread it into the
-module's `PluginUi`, and hand it to `usePlugin` in each component, so the
-words are written in one place and the view comes typed.
+A plugin UI's id and words, declared once with `pluginKit`. Spread it into the `PluginUi` and pass it to
+`usePlugin` in each component, so every component reads the same words and a typed view.
 
 ```ts shape
 import type { PluginKit } from '@ifloom/react/kit'
@@ -445,15 +498,15 @@ type PluginKit<Id extends string = string, W extends Words = Words> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `Id` |  |  | The plugin's id, as its engine side names it. |
-| `words` | `W` |  |  | Its words in English, by key. A game rewords any with `ui.<key>` in its strings. |
+| `id` | `Id` |  |  | The plugin's id, the same as its engine side's. |
+| `words` | `W` |  |  | The UI's words in English, by key. A game rewords any of them with `ui.<key>` in its strings. |
 
 ## pluginKit
 
 Function. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginkit).
 
-Declare a plugin's UI once, by the plugin's id and its words, for
-`usePlugin` and the module's `PluginUi`:
+Returns the `PluginKit` for a plugin's id and its words, for `usePlugin` and the UI's `PluginUi`. The
+words are empty if left out.
 
   const SHOP = pluginKit('shop', SHOP_WORDS)
   export const shopUi: PluginUi = { ...SHOP, panels: { ... } }
@@ -483,15 +536,15 @@ type PluginPage = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `label` | `string` |  |  | The title screen's button for it: a key of the module's words (or the UI's). |
-| `component` | `ComponentType` |  |  | What the page shows. It's drawn inside the game, so `useGame()` works in it. |
-| `showOnTitle` | `boolean` | yes |  | Whether the title screen offers it. On unless set false. |
+| `label` | `string` |  |  | The label of the page's button on the title screen, as a key of the module's words or the UI's. |
+| `component` | `ComponentType` |  |  | The component that renders the page. It renders inside the game, so `useGame()` works in it. |
+| `showOnTitle` | `boolean` | yes |  | True to show a button for the page on the title screen. True if left out. |
 
 ## PluginPanel
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginpanel).
 
-A panel a plugin UI draws by name, for content's `panel` effect.
+A panel a plugin UI renders by name, which content opens with the `panel` effect.
 
 ```ts shape
 import type { PluginPanel } from '@ifloom/react/kit'
@@ -503,16 +556,17 @@ type PluginPanel = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `component` | [`PanelComponent`](/docs/api/react#panelcomponent) |  |  | What it draws, given what the panel was opened with as `data`. |
-| `title` | `string \| ((data: Readonly<Record<string, unknown>>, view:` [`View`](/docs/api/engine#view)`) => string \| undefined)` | yes |  | The dialog's title: a key of the module's words (or the UI's), or a function of what the panel was opened with and the view. Content's `with.title` goes over it. |
+| `component` | [`PanelComponent`](/docs/api/react#panelcomponent) |  |  | The component that renders the panel. It gets the panel's `with` as `data`. |
+| `title` | `string \| ((data: Readonly<Record<string, unknown>>, view:` [`View`](/docs/api/engine#view)`) => string \| undefined)` | yes |  | The panel dialog's title, as a key of the module's words or the UI's, or a function of the panel's `with` and the view. Content's `with.title` replaces it. |
 
 ## PluginUi
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginui).
 
-A plugin's React UI, as its `/react` subpath exports it (`shopUi`), for a
-game's `plugins` list. Everything in it is optional, and it's a plain
-object: spread it and leave out what you don't want, such as
+A plugin's React UI, which its `/react` subpath exports (`shopUi`) for a game's `plugins` list. Every field but `id`
+is optional.
+
+It's a plain object, so a game spreads it and leaves out the parts it doesn't want, such as
 `{ ...achievementsUi, pages: undefined }`.
 
 ```ts shape
@@ -534,24 +588,24 @@ type PluginUi = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  | The plugin's id, as its engine side names it. The module does nothing in a game without that plugin. |
-| `words` | [`Words`](/docs/api/react#words) | yes |  | Its words in English, by key. A game rewords any with `ui.<key>` in its strings. |
-| `panels` | `Readonly<Record<string,` [`PluginPanel`](#pluginpanel)`>>` | yes |  | Panels by name, which `PanelHost` draws when content opens one. A game's own `panels` of the same name go over these. |
-| `layout` | `Readonly<Partial<Record<`[`PluginSpot`](/docs/api/react#pluginspot)`, readonly ComponentType[]>>>` | yes |  | What the default layout places, by spot. A layout of your own places them with `<Plugins at="…" />`, or draws the components itself. |
-| `sections` | `Readonly<Record<string,` [`PluginSectionComponent`](/docs/api/react#pluginsectioncomponent)`>>` | yes |  | Renderers for a plugin's section in a device's app, by that plugin's id. The game's own `sections` go over these. |
-| `inline` | [`InlineComponents`](/docs/api/react#inlinecomponents) | yes |  | Inline pieces it draws, for `[[ui:name\|…]]` in prose. The game's own `inline` go over these. `checkUiHints` knows their names. |
-| `hints` | `readonly` [`UiHint[]`](#uihint) | yes |  | The `ui` hints its components read, declared as `UI_HINTS` declares the React UI's, so `checkUiHints` checks them. |
-| `pages` | `Readonly<Record<string,` [`PluginPage`](#pluginpage)`>>` | yes |  | Pages it adds among the pages around the game, by id. A game's own page of the same id goes over it. |
-| `settings` | `{ label: string; component: ComponentType }` | yes |  | Something for the settings page, such as a code box: drawn there with pages on, and behind a menu button labelled `label` (a key of its words) without them. |
-| `components` | [`Components`](/docs/api/react#components) | yes |  | Built-in components it replaces by name, as a game's `components` do. The game's own go over these. |
-| `provider` | `ComponentType<{ children: ReactNode }>` | yes |  | Wraps the game, for state the module keeps beside the runner, such as codes being entered. |
+| `id` | `string` |  |  | The plugin's id, the same as its engine side's. The UI does nothing in a game without that plugin. |
+| `words` | [`Words`](/docs/api/react#words) | yes |  | The UI's words in English, by key. A game rewords any of them with `ui.<key>` in its strings. |
+| `panels` | `Readonly<Record<string,` [`PluginPanel`](#pluginpanel)`>>` | yes |  | The UI's panels by name, which `PanelHost` renders when content opens one. A game's own `panels` of the same name replace them. |
+| `layout` | `Readonly<Partial<Record<`[`PluginSpot`](/docs/api/react#pluginspot)`, readonly ComponentType[]>>>` | yes |  | The components the layout places, by spot. A layout of your own places them with `<Plugins at="…" />`, or renders them itself. |
+| `sections` | `Readonly<Record<string,` [`PluginSectionComponent`](/docs/api/react#pluginsectioncomponent)`>>` | yes |  | The components that render a plugin's section in a device's app, by that plugin's id. The game's own `sections` replace them. |
+| `inline` | [`InlineComponents`](/docs/api/react#inlinecomponents) | yes |  | The UI pieces it renders for `[[ui:name\|…]]` in prose, by name. The game's own `inline` replace them, and `checkUiHints` checks their names. |
+| `hints` | `readonly` [`UiHint[]`](#uihint) | yes |  | The `ui` hints its components read, each a `UiHint`, so `checkUiHints` checks them as it checks the React UI's own. |
+| `pages` | `Readonly<Record<string,` [`PluginPage`](#pluginpage)`>>` | yes |  | The pages it adds among the pages around the game, by id. A game's own page with the same id replaces one. |
+| `settings` | `{ label: string; component: ComponentType }` | yes |  | The plugin UI's component for the settings page, such as a box for codes. Without pages it renders behind a menu button labelled by `label`, a key of the UI's words. |
+| `components` | [`Components`](/docs/api/react#components) | yes |  | The built-in components it replaces, by name, as a game's `components` do. The game's own replace these. |
+| `provider` | `ComponentType<{ children: ReactNode }>` | yes |  | A component that wraps the game, for state the UI keeps beside the runner, such as codes being entered. |
 
 ## PluginViewOf
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#plugincontrols-and-pluginviewof).
 
-A plugin's slice of the view, by its id: the type its engine side declares
-in the engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
+The type of a plugin's slice of the view, `view.plugins[id]`, by the plugin's id. It's the plugin's entry in the
+engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
 
 ```ts shape
 import type { PluginViewOf } from '@ifloom/react/kit'
@@ -564,10 +618,11 @@ Uses: [`ViewRegistry`](/docs/api/engine#viewregistry).
 
 Const. Explained in [Plugin UIs and the kit](/docs/react/kit#prose).
 
-The story's reading column: capped at `--width-prose` and placed by
-`--margin-prose` (centred by default; `Story`'s `align` sets it). Prose,
-choices, inputs, the scene's title, exits and the people here use it;
-pictures and panels keep the whole column.
+The Tailwind classes for the story's reading column, as wide as `--width-prose` and placed by `--margin-prose`. The
+column is centred unless `Story`'s `align` moves it.
+
+Prose, choices, inputs, the scene's title, exits and the people here use it, while pictures and panels take the
+story's full width.
 
 ```ts shape
 import { PROSE } from '@ifloom/react/kit'
@@ -578,6 +633,8 @@ const PROSE: 'w-full max-w-(--width-prose) mx-(--margin-prose)'
 
 Component. Explained in [Components](/docs/react/components#scrollarea).
 
+Renders shadcn/ui's scroll area, a box that scrolls its children vertically with a thin styled scrollbar.
+
 ```ts fragment
 function ScrollArea(props: ScrollAreaProps & RefAttributes<HTMLDivElement>): JSX.Element
 ```
@@ -585,6 +642,8 @@ function ScrollArea(props: ScrollAreaProps & RefAttributes<HTMLDivElement>): JSX
 ## Separator
 
 Component. Explained in [Components](/docs/react/components#separator).
+
+Renders shadcn/ui's separator, a one-pixel line. It's horizontal and decorative unless the props say otherwise.
 
 ```ts fragment
 function Separator(props: SeparatorProps & RefAttributes<HTMLDivElement>): JSX.Element
@@ -594,6 +653,8 @@ function Separator(props: SeparatorProps & RefAttributes<HTMLDivElement>): JSX.E
 
 Component. Explained in [Components](/docs/react/components#tabs).
 
+Renders a set of tabs, Radix's `Tabs.Root`, which holds the open tab's value.
+
 ```ts fragment
 function Tabs(props: TabsProps & RefAttributes<HTMLDivElement>): ReactNode
 ```
@@ -601,6 +662,8 @@ function Tabs(props: TabsProps & RefAttributes<HTMLDivElement>): ReactNode
 ## TabsContent
 
 Component.
+
+Renders one tab's content, shown while its trigger is open.
 
 ```ts fragment
 function TabsContent(props: TabsContentProps & RefAttributes<HTMLDivElement>): JSX.Element
@@ -610,6 +673,8 @@ function TabsContent(props: TabsContentProps & RefAttributes<HTMLDivElement>): J
 
 Component.
 
+Renders the row of tab triggers.
+
 ```ts fragment
 function TabsList(props: TabsListProps & RefAttributes<HTMLDivElement>): JSX.Element
 ```
@@ -617,6 +682,8 @@ function TabsList(props: TabsListProps & RefAttributes<HTMLDivElement>): JSX.Ele
 ## TabsTrigger
 
 Component.
+
+Renders one tab's trigger, which opens the `TabsContent` with the same `value`.
 
 ```ts fragment
 function TabsTrigger(props: TabsTriggerProps & RefAttributes<HTMLButtonElement>): JSX.Element
@@ -626,6 +693,8 @@ function TabsTrigger(props: TabsTriggerProps & RefAttributes<HTMLButtonElement>)
 
 Component. Explained in [Components](/docs/react/components#tooltip).
 
+Renders a tooltip's root, Radix's `Tooltip.Root`, which holds whether it's open.
+
 ```ts fragment
 function Tooltip(props: TooltipProps): ReactNode | Promise<ReactNode>
 ```
@@ -633,6 +702,8 @@ function Tooltip(props: TooltipProps): ReactNode | Promise<ReactNode>
 ## TooltipContent
 
 Component.
+
+Renders a tooltip's box in a portal, 4 pixels from its trigger unless `sideOffset` says otherwise.
 
 ```ts fragment
 function TooltipContent(props: TooltipContentProps & RefAttributes<HTMLDivElement>): JSX.Element
@@ -642,6 +713,8 @@ function TooltipContent(props: TooltipContentProps & RefAttributes<HTMLDivElemen
 
 Component.
 
+Renders the provider that tooltips below it share, Radix's `Tooltip.Provider`, which sets their delay.
+
 ```ts fragment
 function TooltipProvider(props: TooltipProviderProps): ReactNode | Promise<ReactNode>
 ```
@@ -649,6 +722,8 @@ function TooltipProvider(props: TooltipProviderProps): ReactNode | Promise<React
 ## TooltipTrigger
 
 Component.
+
+Renders the element that opens its tooltip on hover or focus, Radix's `Tooltip.Trigger`.
 
 ```ts fragment
 function TooltipTrigger(props: TooltipTriggerProps & RefAttributes<HTMLButtonElement>): ReactNode
@@ -658,11 +733,10 @@ function TooltipTrigger(props: TooltipTriggerProps & RefAttributes<HTMLButtonEle
 
 Type. Explained in [Presentation hints](/docs/react/hints#uihint).
 
-A `ui` hint a UI reads, declared once: its name, where content writes it,
-and what's wrong with a value (each problem worded as it follows the place,
-`ui.timer "kettle" is not a timer the game has`). `checkUiHints` reports a
-hint no declaration names for that place, and runs each one's check. A
-plugin UI brings its own in `PluginUi.hints`.
+A `ui` hint a UI reads, declared once with its name, its targets and a check of its value. `checkUiHints` reports a
+hint that no declaration names for its target, and runs each declaration's check.
+
+A plugin UI declares its own in `PluginUi.hints`.
 
 ```ts shape
 import type { UiHint } from '@ifloom/react/kit'
@@ -675,15 +749,16 @@ type UiHint = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  | The key content writes under `ui`. |
-| `on` | `readonly` [`UiTarget[]`](/docs/api/engine#uitarget) |  |  | Where it's written. |
-| `check` | `((value: unknown, cx:` [`HintCheckContext`](#hintcheckcontext)`) => string \| readonly string[] \| undefined)` | yes |  | The problems with a value, if any. |
+| `name` | `string` |  |  | The hint's key under `ui`. |
+| `on` | `readonly` [`UiTarget[]`](/docs/api/engine#uitarget) |  |  | The sorts of target content can write the hint on. |
+| `check` | `((value: unknown, cx:` [`HintCheckContext`](#hintcheckcontext)`) => string \| readonly string[] \| undefined)` | yes |  | Returns the problems with a value, or nothing when it's fine. Word each problem to follow the place it's reported at, such as `ui.timer "kettle" is not a timer the game has`. |
 
 ## useDialogParts
 
 Function. Explained in [Plugin UIs and the kit](/docs/react/kit#usedialogparts).
 
-The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with `extra` classes on the dialog.
+Returns the attributes for a dialog's `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with
+`extra` classes on the dialog. Every dialog of the UI uses them, so they all look alike.
 
 ```ts shape
 import { useDialogParts } from '@ifloom/react/kit'
@@ -696,12 +771,12 @@ Uses: [`PartKey`](/docs/api/react#partkey).
 
 Function. Explained in [Plugin UIs and the kit](/docs/react/kit#usekitpart).
 
-The attributes for a part that's one of the kit's: its `data-part`, its
-`data-kit` and its classes, the kit part's look (`KIT_LOOKS`) with `layout`
-over it, then a game's `classes` for the part, then `className`, a
-caller's. `unstyled` drops the look and the layout, as it does every
-built-in class. So `useKitPart('card', 'job')` is a card, and a list entry
-with its buttons beside it is `useKitPart('card', 'good', 'sm:flex-row sm:items-start')`.
+Returns the `data-part`, `data-kit` and `className` attributes for a part marked as one of the kit's. The game's
+`unstyled` option drops the kit's look and `layout`, as it drops every built-in class.
+
+The classes are the kit part's look from `KIT_LOOKS`, then `layout`, then the game's `classes` for the part, then
+`className`. `useKitPart('card', 'job')` is a card, and a list entry with its buttons beside it is
+`useKitPart('card', 'good', 'sm:flex-row sm:items-start')`.
 
 ```ts shape
 import { useKitPart } from '@ifloom/react/kit'
@@ -714,7 +789,8 @@ Uses: [`KitPart`](#kitpart), [`PartKey`](/docs/api/react#partkey).
 
 Function.
 
-The attributes for a page's outer section, as every built-in page has: centred, as wide as `--width-reading`. `part` names it.
+Returns the attributes for a page's outer section, centred and as wide as `--width-reading`, as every built-in page
+has. `part` names the part, `title-page` by default.
 
 ```ts shape
 import { usePageParts } from '@ifloom/react/kit'
@@ -727,10 +803,11 @@ Uses: [`PartKey`](/docs/api/react#partkey).
 
 Function. Explained in [Plugin UIs and the kit](/docs/react/kit#useplugin).
 
-A plugin's view, words and commands, for a component of its UI: what
-`pluginKit` declared, bound to the game in context. The view is typed by
-the plugin's `ViewRegistry` entry, the words are its table with the game's
-rewording over them, and `send` takes the commands its helpers write.
+Returns a plugin's view, words and `send` from the running game, for a component of the plugin's UI. It re-renders
+whenever the view changes.
+
+The view is typed by the plugin's `ViewRegistry` entry, and the words are the kit's with the game's `ui.<key>`
+strings over them.
 
 ```ts shape
 import { usePlugin } from '@ifloom/react/kit'

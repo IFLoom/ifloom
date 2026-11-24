@@ -64,7 +64,10 @@ function InputFieldImpl({ input }: { input: InputView }) {
   )
 }
 
-/** One input: a text box, a number box, or the options to pick from. Shows the engine's refusal if the value won't do. */
+/**
+ * Renders one input from `view.inputs` as a text box, a number box or its options to choose from. It shows the engine's
+ * refusal when the value won't do.
+ */
 export const InputField = overridable('InputField', InputFieldImpl)
 
 /** Inputs as a list, in an `inputs` part. Drawn by `InputFields` outside a scene and by `Scene` inside one. */
@@ -88,8 +91,7 @@ function InputFieldsImpl({ className }: { className?: string }) {
 }
 
 /**
- * The inputs on offer while no scene is open (`view.inputs`), such as a
- * field a room offers. Draws nothing while a scene is open, since `Scene`
- * draws those itself, or when there are none.
+ * Renders the inputs in `view.inputs` while no scene is open, such as a field the room offers. It renders nothing
+ * while a scene is open, since `Scene` renders those inputs itself.
  */
 export const InputFields = overridable('InputFields', InputFieldsImpl)

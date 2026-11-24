@@ -64,10 +64,10 @@ function NoticeStripImpl({ className }: { className?: string }) {
 }
 
 /**
- * What's waiting for the player, as a row of counts: unseen notices, then what
- * the plugin UIs put at its `strip` spot, such as each app with a badge on the
- * game's devices. A count is a button that opens where it is: the notices in
- * a dialog, or the device on that app. Nothing when there's nothing unread. It's the `'notice-strip'` layout part, which no
- * built-in layout includes.
+ * Renders a row of unread counts as the `notice-strip` part. It starts with the unseen notices, then the plugin UIs'
+ * components at the `strip` spot, such as each device app with a badge.
+ *
+ * Each count is a button that opens it, the notices in a dialog or the device on that app. It renders nothing when
+ * nothing is unread, and no built-in layout includes it.
  */
 export const NoticeStrip = overridable('NoticeStrip', NoticeStripImpl)

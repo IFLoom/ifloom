@@ -23,12 +23,10 @@ function PictureImpl({ onError, ...props }: ComponentProps<'img'> & { 'data-part
 }
 
 /**
- * An image that takes no space if its file is missing (a portrait the game
- * hasn't drawn yet, art left out of a build) instead of showing a broken icon.
- * It loads lazily (`loading="lazy"`, `decoding="async"`), so a picture far down
- * the page waits until the player scrolls near it. It draws nothing while the
- * game's pictures setting (`ui.settings.images`) is off, except in a layered
- * picture. Every picture the UI draws goes through it, so replacing it in
- * `components` changes them all.
+ * Renders a picture as an `<img>` that takes no space when its file is missing. Every picture the UI renders goes
+ * through it, so replacing it in `components` changes them all.
+ *
+ * It loads lazily, so a picture far down the page waits until the player scrolls near it. It renders nothing while the
+ * game's pictures setting (`ui.settings.images`) is off, except inside a layered picture.
  */
 export const Picture = overridable('Picture', PictureImpl)

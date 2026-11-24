@@ -139,9 +139,10 @@ const TRAIT = 'places/location'
 const pictured = (place: Record<string, unknown>): Record<string, unknown> =>
   'stage' in place && !('picture' in place) ? (renamed(place, { stage: 'picture' }) as Record<string, unknown>) : place
 
-/** The version of what content writes for this plugin. */
+/** The schema of the content this plugin reads, numbered by the engine's schema. */
 export const CONTENT_VERSION = 28
 
+/** The steps that carry this plugin's content forward, each keyed by the schema it upgrades from. */
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (pack, tools) =>
@@ -203,9 +204,10 @@ export const contentMigrations: Record<number, ContentStep> = {
   },
 }
 
-/** The version of this plugin's commands. */
+/** The version of this plugin's commands, which command logs record. */
 export const COMMAND_VERSION = 6
 
+/** The steps that carry this plugin's logged commands forward, each keyed by the version it upgrades from. */
 export const commandMigrations: Record<number, CommandStep> = {
   // 5 → 6: a command's one target is `id`.
   5: (command) =>

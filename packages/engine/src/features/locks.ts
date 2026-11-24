@@ -8,58 +8,54 @@ import type { Command, Condition, Effect, GameState } from '../types.ts'
 import { appended, defineFeature, listWords, type FeatureContext } from './feature.ts'
 
 /**
- * Something the player cannot do for now, and why.
+ * A lock the game declares in `locks`, which stops some commands while its `when` holds. The engine refuses the
+ * command with `reason`, and the view greys out its button with the same line.
  *
- * A game's stretches — an intro that holds you in one room, a first morning
- * that only lets you get to work — are locks: data that says what is stopped,
- * while what holds, and the line the player reads. The reducer refuses on the
- * first lock that matches and the view greys the button out with the same
- * line, so the two cannot disagree.
+ * A game's stretches are locks, such as an intro that keeps you at one location or a first morning that only lets you
+ * get to work. The reducer and the view read the same first lock that matches, so they can't disagree.
  */
 export type Lock = {
-  /**
-   * A name for it, so a later pack can replace it: a pack's lock with the
-   * same id takes its place. Left out, a lock is simply added.
-   */
+  /** The lock's id, so a later pack can replace it. A lock with no id is always added. */
   id?: string
-  /** While this holds, the lock is on. */
+  /** The lock's condition. The lock is on while it holds. */
   when: Condition
   /**
-   * Commands it stops, by type. `'*'` stops everything not in `except`. A
-   * plugin's commands can be named one by one (`'quests/track'`) or all at once
-   * (`'quests/*'`); `'custom'` stops every plugin command.
+   * The commands the lock stops, by type. `'*'` stops every command not in `except`.
+   *
+   * A plugin's commands can be named one by one (`'quests/track'`) or all at once (`'quests/*'`), and `'custom'`
+   * stops every plugin command.
    */
   deny: readonly LockTarget[]
-  /** Commands it lets through all the same, by the same names as `deny`. */
+  /** The commands the lock lets through all the same, named as in `deny`. */
   except?: readonly LockTarget[]
   /**
-   * Only commands that would apply this effect: the engine's by its key
-   * (`'turn'`) or a plugin's by name (`'calendar/pass'`). See `effectsOf`.
+   * The effect a command must apply for the lock to stop it, named by its key. That's the engine's key (`'turn'`)
+   * or a plugin's name (`'calendar/pass'`), checked against `effectsOf`.
    */
   effect?: string
   /**
-   * Leave a button this lock stops off the screen instead of greying it out:
-   * an exit, a room's action, a game or plugin button. Not one that ignores locks.
+   * The lock's hide mark, true to leave the buttons it stops off the screen rather than greyed out. It covers the
+   * room's buttons, the places plugin's exits included, and never a command that ignores locks.
    */
   hide?: boolean
-  /** Why. The refusal and the disabled text are this same line. */
+  /** The lock's reason, the line both the refusal and the greyed-out button show. */
   reason: string
 }
 
-/** What the locks feature adds, as types. */
+/** The locks feature's content key, as types. */
 export type LocksShape = {
   game: {
-    /** What the player cannot do for now, and why. Checked in order; the first that stops a command gives the reason. */
+    /** The game's locks, checked in order. The first one that stops a command gives the reason. */
     locks?: Lock[]
   }
   pack: {
-    /** Locks after the ones before; one with the `id` of an earlier one takes its place. */
+    /** The pack's locks, added after the content's. A lock with the `id` of an earlier one replaces it. */
     locks?: Lock[]
   }
   lists: 'lock'
 }
 
-/** What a lock's `deny` and `except` can name: a command type, `'*'`, or a plugin command or plugin. */
+/** A name a lock's `deny` and `except` take. It's a command type, `'*'`, a plugin command (`'quests/track'`) or a whole plugin (`'quests/*'`). */
 export type LockTarget = Command['type'] | '*' | `${string}/${string}`
 
 function names(list: readonly LockTarget[] | undefined, command: Command): boolean {
@@ -78,8 +74,8 @@ function covers(lock: Lock, command: Command): boolean {
 }
 
 /**
- * The first lock that stops this command right now, if any, with the
- * command's effects from `effects`, asked only when a lock names an effect.
+ * Returns the first lock that stops the command now, or undefined. `effects` lists the command's effects, and it's
+ * called only when a lock names an effect.
  */
 export function lockIn(state: GameState, game: Game, command: Command, effects: () => readonly Effect[], cx: FeatureContext): Lock | undefined {
   for (const lock of game.locks ?? []) {
@@ -96,16 +92,17 @@ export function lockIn(state: GameState, game: Game, command: Command, effects: 
   return undefined
 }
 
-/** Why this command is stopped right now, or undefined if nothing stops it. */
+/** Returns the reason of the lock that stops the command now. Undefined when no lock stops it. */
 export function lockedBy(state: GameState, game: Game, command: Command, cx: FeatureContext): string | undefined {
   return lockIn(state, game, command, () => cx.effectsOf(state, game, command), cx)?.reason
 }
 
-/** Is a lock on that stops everything? */
+/** Returns true while a lock that denies `'*'` is on. Its `except` isn't considered. */
 export function lockedOut(state: GameState, game: Game, cx: FeatureContext): boolean {
   return (game.locks ?? []).some((lock) => lock.deny.includes('*') && cx.holds(state, game, lock.when))
 }
 
+/** The locks feature, which refuses a command a lock stops before any plugin's guard runs. */
 export const locks = defineFeature<LocksShape>({
   name: 'locks',
   // A lock is the first thing that stops a command: before the plugins' guards and what the command itself needs.

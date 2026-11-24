@@ -6,20 +6,21 @@ import { usePicturesShown } from './display.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useSetting } from './pages.tsx'
 
+/** The props of `Video`, a `<video>`'s props with the fields a `video` beat gives. */
 export type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 'loop' | 'muted' | 'controls'> & {
-  /** The file, through `artSrc`. */
+  /** The clip's file, resolved as the art's paths are. */
   src: string
-  /** A picture to show before it plays. */
+  /** The picture shown before the clip plays. */
   poster?: string
-  /** What the clip shows, for a screen reader. */
+  /** The clip's description for screen readers. */
   alt?: string
-  /** Start playing as soon as it's shown. */
+  /** True to start the clip as soon as it's in view. */
   autoplay: boolean
-  /** Play it again when it ends. */
+  /** True to play the clip again when it ends. */
   loop: boolean
-  /** False asks for sound, which then follows the game's audio settings. */
+  /** True to keep the clip silent. False asks for sound, which then follows the game's audio settings. */
   muted: boolean
-  /** Show the browser's play, pause and volume controls. */
+  /** True to show the browser's play, pause and volume controls. */
   controls: boolean
 }
 
@@ -121,11 +122,11 @@ function VideoImpl({ src, poster, alt, autoplay, loop, muted, controls, classNam
 }
 
 /**
- * A video clip, from a `video` beat, a layered picture's layer or a post. It plays inline
- * and, by default, like a GIF: by itself, looping and muted. It loads nothing
- * until it scrolls into view (`preload="none"`), starts when it does, and
- * pauses when it scrolls out again. A clip with sound follows the game's audio
- * settings: muted while the mute setting is on, at the `video` channel's
- * volume setting, else the `sfx` channel's.
+ * Renders a video clip inline, from a `video` beat, a layered picture's layer or a post. By default it plays like a GIF,
+ * by itself, looping and muted.
+ *
+ * It loads nothing until it scrolls into view, starts when it does and pauses when it scrolls out again. A clip with
+ * sound follows the game's audio settings. It's muted while the mute setting is on, and otherwise plays at the `video`
+ * channel's volume setting, else the `sfx` channel's.
  */
 export const Video = overridable('Video', VideoImpl)

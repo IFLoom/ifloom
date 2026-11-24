@@ -12,6 +12,7 @@ import { fail, ok, type Result } from '../result.ts'
 import type { Command, GameState, KvValue } from '../types.ts'
 import type { ProfileKeeper } from './profile.ts'
 
+/** The runner's settings, each one's value now and a way to change one. */
 export type SettingsKeeper = {
   /** Every setting the game declares, by id, with its value in `state`: the same object until a value changes. */
   values(state: GameState): Readonly<Record<string, KvValue>>
@@ -29,7 +30,7 @@ const NO_SETTINGS: PlayerSettings = {
   change: () => ({ refused: 'No settings.' }),
 }
 
-/** `changed` is told when a write to the profile changes what a setting reads. */
+/** Returns the runner's settings for a game. `changed` is called when a write to the profile changes a setting's value. */
 export function settingsKeeper(game: Game, profile: ProfileKeeper, changed: () => void): SettingsKeeper {
   const seam = runnerHooks.find((hooks) => hooks.settings)?.settings ?? NO_SETTINGS
   let stored: Record<string, unknown> | undefined

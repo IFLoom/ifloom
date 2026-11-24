@@ -10,10 +10,13 @@ import { useState, type ComponentProps } from 'react'
 import { ChoiceButton, usePart } from '@ifloom/react'
 import { overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
-/** The cheats plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The cheats plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings. */
 export const CHEATS_WORDS = {
+  /** The note on a cheat the player has used once. */
   cheatUsedOnce: 'Used once',
+  /** The note on a cheat the player has used more than once, with `{n}` uses. */
   cheatUsedTimes: 'Used {n} times',
+  /** The label of the cheats button and the title of its dialog. */
   cheats: 'Cheats',
 } as const
 
@@ -36,14 +39,19 @@ declare module '@ifloom/react' {
   }
 }
 
-/** A heading of the cheat panel and the cheats under it. `name` is null for the cheats with no group, which come first. */
-export type CheatGroup = { name: string | null; cheats: CheatView[] }
+/** A group of the cheats panel, a heading and the cheats under it. The cheats with no group form one with a null name. */
+export type CheatGroup = {
+  /** The group's heading, or null for the cheats with no group. */
+  name: string | null
+  /** The group's cheats, in the order the game declares them. */
+  cheats: CheatView[]
+}
 
-/** What `useCheats` returns: the cheats plugin's view, the cheats by group, and the command. */
+/** The cheats plugin's view with its cheats grouped and a way to use one, as `useCheats` returns it. */
 export type CheatsControls = CheatsView & {
-  /** The cheats by their `group`, in the order each group first appears; the ungrouped ones first. */
+  /** The cheats grouped by their `group`, the ungrouped ones first, then each group in the order it first appears. */
   groups: CheatGroup[]
-  /** Use a cheat: sends `cheats/use`, refused with the reason its button gives. */
+  /** Sends the `cheats/use` command for the cheat. A refused use returns the reason its button gives. */
   use: (cheat: string) => Result<GameState>
 }
 
@@ -58,7 +66,10 @@ function grouped(cheats: readonly CheatView[]): CheatGroup[] {
   return groups.sort((a, b) => Number(a.name !== null) - Number(b.name !== null))
 }
 
-/** The cheats plugin's view with its command, or null in a game without the plugin. `CheatPanel` is drawn from it. */
+/**
+ * Returns the cheats plugin's view, its groups and its command from the running game, or null in a game without the
+ * plugin. It re-renders when the view changes. `CheatPanel` renders from it.
+ */
 export function useCheats(): CheatsControls | null {
   const { view, send } = usePlugin(CHEATS)
   if (!view) return null
@@ -98,10 +109,12 @@ function CheatPanelImpl({ className }: { className?: string }) {
 }
 
 /**
- * The cheats the player can see, under their groups' headings: each a button
- * greyed out with its reason while it's refused (a supporter cheat before the
- * unlock, a once cheat after its use), its description, and how many times
- * this save has used it. A thin default on `useCheats`.
+ * Renders the cheats from `view.plugins.cheats` under their groups' headings, each with its button, its description
+ * and its use count. A preset styles its `cheats`, `cheats-group`, `cheats-group-title`, `cheat`, `cheat-text` and
+ * `cheat-used` parts.
+ *
+ * A refused cheat's button is disabled with its reason, such as a supporter cheat before the unlock or a `once`
+ * cheat after its use. It renders nothing while the player can see no cheat.
  */
 export const CheatPanel = overridable('CheatPanel', CheatPanelImpl)
 
@@ -125,16 +138,15 @@ function CheatsButtonImpl({ className }: { className?: string }) {
 }
 
 /**
- * The button that opens the `CheatPanel` in a dialog: the `'cheats'` part.
- * Nothing in a game without the plugin, or while it has no cheat the player
- * can see.
+ * Renders the button that opens the `CheatPanel` in a dialog. A preset styles its `cheats-button` part.
+ *
+ * It renders nothing in a game without the plugin, or while the player can see no cheat.
  */
 export const CheatsButton = overridable('CheatsButton', CheatsButtonImpl)
 
 /**
- * The cheats plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `CheatsButton` in the side column, which opens the
- * `CheatPanel`, and the cheats' words.
+ * The cheats plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `CheatsButton` to the
+ * sidebar, which opens the `CheatPanel`, and the plugin's words.
  */
 export const cheatsUi: PluginUi = {
   ...CHEATS,

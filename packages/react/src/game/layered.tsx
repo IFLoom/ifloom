@@ -51,10 +51,11 @@ function HotspotImpl({ hotspot }: { hotspot: HotspotView }) {
 }
 
 /**
- * One hotspot on a layered picture: a button over it, placed by its `rect` in
- * percent. Its `aria-label` is the hotspot's label. A greyed-out one stays in
- * the tab order with `aria-disabled`, gives its reason in `title` and to a
- * screen reader, and sends nothing. One with a warning shows the warning icon.
+ * Renders one hotspot of a layered picture as a `hotspot` button over it, placed by its `rect` in percent. Its
+ * `aria-label` is the hotspot's label.
+ *
+ * A disabled one stays in the tab order with `aria-disabled`, gives its reason in `title` and to screen readers, and
+ * sends nothing. One with a warning shows the warning icon.
  */
 export const Hotspot = overridable('Hotspot', HotspotImpl)
 
@@ -117,10 +118,10 @@ function LayeredPictureImpl({ picture, className }: { picture: PictureView; clas
 }
 
 /**
- * A layered picture with hotspots: `view.scene.picture`, or a place's
- * `location.picture`. The layers are stacked bottom first, each filling a box
- * whose shape is the picture's `aspect`, else the first layer's own, else 16/9.
- * Pictures go through `Picture` and videos through `Video`. It's drawn even
- * while the game's pictures setting is off, since its hotspots are play.
+ * Renders a layered picture with its hotspots, from `view.scene.picture` or a location's `location.picture`. It renders
+ * even while the game's pictures setting is off, since its hotspots are play.
+ *
+ * The layers stack bottom first, each filling a box shaped by the picture's `aspect`, else the first layer's own, else
+ * 16/9. Pictures go through `Picture` and videos through `Video`.
  */
 export const LayeredPicture = overridable('LayeredPicture', LayeredPictureImpl)

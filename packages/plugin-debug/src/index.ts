@@ -30,10 +30,11 @@ import {
 import { arg, defineCalls, definePlugin, type CommandsOf, type DefinedPlugin, type PluginCommand } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
+/** The debug readout as the developer sees it, in `view.plugins.debug`. It lists the locks that are on, the triggers that have fired and the seed. */
 export type DebugView = {
-  /** Every lock whose `when` holds now, with what it stops and why. */
+  /** The game's locks whose `when` holds now, each with its reason and the commands it denies. */
   locks: { reason: string; deny: string[] }[]
-  /** Triggers that have fired, with the turn each last did. */
+  /** The triggers that have fired, each id mapped to the turn it last fired on. */
   fired: Record<string, number>
   /** The save's seed, which every random draw is hashed from. */
   seed: number
@@ -206,15 +207,25 @@ const debugTurn = (turn: number): CommandRef => CALLS.commands.turn({ to: turn }
 const debugGo = (location: string): CommandRef => CALLS.commands.go({ id: location })
 
 /**
- * The plugin, with its helpers on it: `debug()` makes the plugin for the
- * game's `plugins`, and content is written with `debug.stat('coins', 10)`.
+ * Returns the debug plugin, for the game's `plugins` in development builds only. Its commands ignore locks, need no
+ * exit and pay no cost, and a release build leaves the plugin out.
+ *
+ * Its helpers write its commands, such as `debug.stat('coins', 10)`. It cooperates with the calendar and places, which
+ * `debug/time` and `debug/go` need.
  */
 export const debug = Object.assign(debugPlugin, {
+  /** Returns the `debug/stat` command, which sets the stat to `to`, clamped to its range. With `of`, it sets the entity's stat. */
   stat: debugStat,
+  /** Returns the `debug/kv` command, which sets the kv key to `to`. */
   kv: debugKv,
+  /** Returns the `debug/held` command, which sets how many of the thing the holder `at` holds. `'you'` if `at` is left out. */
   held: debugHeld,
+  /** Returns the `debug/scene` command, which opens the scene, or closes the open scene when none is named. */
   scene: debugScene,
+  /** Returns the `debug/time` command, which sets the calendar's day and period without ending a turn. It's refused without the calendar. */
   time: debugTime,
+  /** Returns the `debug/turn` command, which sets the turn count without running any turn's rules. */
   turn: debugTurn,
+  /** Returns the `debug/go` command, which moves the player to the location with no exit needed. It's refused without places. */
   go: debugGo,
 })

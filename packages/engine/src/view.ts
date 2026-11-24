@@ -21,51 +21,57 @@ export type { EntitiesView, EntityView } from './features/entities.ts'
 type ViewBase = {
   /** The game's title. */
   title: string
-  /** Where the game is in time, in plugins' words ("Day 3 · Wednesday morning"), or null if none says. */
+  /** The time in the game in the plugins' words, such as "Day 3 · Wednesday morning", or null when no plugin gives one. */
   when: string | null
+  /** The open scene as the player sees it, or the room when none is open, or the minigame while one is played. */
   scene: {
+    /** The open scene's id, or null for the room. */
     id: string | null
-    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<id>` (a plugin's room scene) or `room`. It changes when the screen does, and only then. */
+    /**
+     * The screen's key, which changes when the screen does and only then. It is `scene:<id>`, `minigame:<id>`,
+     * `room:<id>` for a plugin's room scene, or `room`.
+     */
     key: string
+    /** The screen's title, the scene's or the room's. */
     title: string
+    /** The body as markup text. A UI renders `beats`, which are this text parsed. */
     body: string
+    /** The body parsed into beats, such as paragraphs, speech, pictures and past choices, ready to render. */
     beats: SceneBeat[]
-    /** The first of `beats` the flow's last step brought (a pick, a jump, a minigame or panel done with), so a UI can animate only those; 0 with none. */
+    /** The index of the first beat the flow's last step added, so a UI can animate only those. It is 0 with none. */
     fresh: number
-    /** The scene's tags, for the UI to style it by. */
+    /** The scene's tags, for a UI to style it by. */
     tags: string[]
-    /** Who is speaking: the scene's `speaker`, as their entity is, or null. See `SpeakerView`. */
+    /** The scene's `speaker`, read from their entity, or null. */
     speaker: SpeakerView | null
-    /** The big picture to draw with the scene: the speaker's, else null. */
+    /** The speaker's picture to show with the scene, or null without one. */
     image: string | null
-    /** The scene's layered picture and its hotspots, or null when it has none. See `pictureView`. */
+    /** The scene's layered picture and its hotspots, or null when it has none. `pictureView` builds it. */
     picture: PictureView | null
+    /** The open scene's visible choices, ready to render. It is empty for the room and while a minigame is played. */
     choices: RenderedChoice[]
-    /** The scene's presentation hints (the room scene's, when no scene is open), as written; left out with none. See `SceneUi`. */
+    /** The scene's `ui` hints, or the room scene's when no scene is open, unchanged from content. Left out with none. */
     ui?: Ui<SceneUi>
   }
   /**
-   * The buttons on offer besides the scene's choices: the game's actions and the plugins' (wait, sleep, travel), each
-   * ready to draw.
+   * The actions on offer besides the scene's choices, ready to render. The `actions` providers' come first, such as
+   * wait, sleep and travel, then the game's own `actions`.
    */
   actions: RenderedChoice[]
-  /** What each plugin gives the UI, by plugin id: typed for each plugin that declares its view in `ViewRegistry`. */
+  /** The plugins' views, by plugin id. Each plugin that declares its view in `ViewRegistry` has it typed. */
   plugins: ViewsIn
 }
 
-/** Everything a UI draws for one state: the core's fields and each feature's. */
+/** One state as a UI renders it, returned by `view`. It holds the core's fields and each feature's. */
 export type View = Flat<ViewBase & FeatureView>
 
 /**
- * Everything the UI draws, assembled from the state in one pass.
+ * Returns the {@link View} of a state, the value a UI renders. Without `options.profile`, no plugin's view reads the
+ * profile.
  *
- * The scene, its choices, the room's buttons, the plugins' views and the audio
- * come from `screen`, which renders the open scene once; the rest is read from
- * the state here. `view` only formats: what each choice would apply and the
- * picks stay on the screen.
- *
- * `options.profile` hands each plugin's view its profile namespace; the
- * runner passes it, and without it no view sees the profile.
+ * The scene, its choices, the room's actions, the plugins' views and the audio come from `screen`, which renders the
+ * open scene once, and the rest comes from the state. `view` only formats, so each choice's effects and the pool picks
+ * stay on the screen.
  */
 export function view(state: GameState, game: Game, options: ViewOptions = {}): View {
   return viewOf(screen(state, game, options), state, game)

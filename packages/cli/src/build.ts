@@ -4,14 +4,14 @@ import { mediaType, type FileRef } from '@ifloom/engine'
 import { checkFiles } from './check.ts'
 
 /**
- * Check a built folder is a game that opens from disk: an `index.html`, and
- * nothing it loads from anywhere but beside it. Given the files the game names
- * (`checkGame(game).files`), also each one that isn't in the folder (or, for a
- * picture, in the page, after `--inline-assets`). Returns what is wrong.
+ * Returns a line for each reason a built folder won't open from disk, or an empty list when it will. Its `index.html`
+ * must load files only from beside it, with no module script.
  *
- * That code never fetches at runtime is held by the engine's and UI's own
- * contract tests, on their source: a bundled library mentions `fetch` without
- * ever calling it here, so the built file can't be searched for it.
+ * Given the files the game names (`checkGame(game).files`), it also reports each one that isn't in the folder, or in
+ * the page after `--inline-assets`.
+ *
+ * It doesn't look for `fetch` in the built file, since a bundled library can name it without calling it. The engine's
+ * and the UI's contract tests check their source never fetches at runtime instead.
  */
 export function checkBuild(dir: string, files?: readonly FileRef[]): string[] {
   const problems: string[] = []
@@ -49,7 +49,7 @@ function inlinedAssets(html: string): Set<string> {
   }
 }
 
-/** Every file in a built folder, with its size, largest first. */
+/** Returns every file in a built folder with its size in bytes, largest first. `at` names a subfolder to list instead. */
 export function buildFiles(dir: string, at = ''): { file: string; bytes: number }[] {
   return readdirSync(join(dir, at))
     .flatMap((name) => {
@@ -81,15 +81,13 @@ function pruneEmpty(dir: string): void {
 }
 
 /**
- * Put every picture in a built folder's `art/` into its `index.html` as a data
- * URL, under its path, and remove it from the folder: one file with the art in
- * it. The React UI's pictures look a path up there first (`assetUrl`). Worth it
- * for a small game; a large one is better left as a folder. Sound in `audio/`
- * and videos (`.mp4`, `.webm`) are never put in: they are too big, and are
- * played from beside the page, so `art/` stays with only the videos in it.
- * Which files are videos is the engine's `mediaType`.
- * Returns how many files went in, how big the page is now, and how many videos
- * were left beside it.
+ * Moves every file in a built folder's `art/` into its `index.html` as data URLs, except videos, and returns the
+ * counts. It suits a small game, and a large one is better left as a folder.
+ *
+ * Each file goes in under its path, and the React UI's `assetUrl` looks a path up there first. The engine's
+ * `mediaType` says which files are videos, and those stay in `art/`, as sound in `audio/` does. The result gives the
+ * number of files moved in, the page's size in bytes and the number of videos left beside it. `folder` names another
+ * folder than `art`.
  */
 export function inlineAssets(dir: string, folder = 'art'): { files: number; bytes: number; videos: number } {
   let all: { file: string; bytes: number }[]

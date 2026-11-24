@@ -22,27 +22,47 @@ import {
   usePlugin,
 } from '@ifloom/react/kit'
 
-/** The debug plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+/** The debug plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings. */
 export const DEBUG_WORDS = {
+  /** The label of the button that closes the open scene. */
   closeScene: 'Close the scene',
+  /** The title of the debug card. */
   debug: 'Debug',
+  /** The label of the form that moves the player to a location, shown only with the places plugin. */
   debugGo: 'Go',
+  /** The label of the form that sets how many of an entity the player holds. */
   debugHeld: 'Held',
+  /** The label of the form that sets a kv key. */
   debugKv: 'kv key',
+  /** The label of the tab with the command log. */
   debugLog: 'Log',
+  /** The label of the form that opens a scene. */
   debugScene: 'Scene',
+  /** The label of the tab with the forms that set the state. */
   debugSet: 'Set',
+  /** The label of the form that sets a stat. */
   debugStat: 'Stat',
+  /** The label of the form that sets an entity's stat. */
   debugStatOf: 'Stat of',
+  /** The label of the tab that shows the state. */
   debugState: 'State',
+  /** The label of the form that sets the time. */
   debugTime: 'Time',
+  /** The label of the form that sets the turn. */
   debugTurn: 'Turn',
+  /** The label of the tab that lists the locks and each disabled button's reason. */
   debugWhy: 'Why not',
+  /** The heading over the list of disabled buttons and their reasons. */
   greyedOut: 'Greyed out',
+  /** The heading over the list of locks that are on. */
   locksOn: 'Locks on',
+  /** The line the locks list shows while no lock is on. */
   noneOn: 'None.',
+  /** The line the disabled list shows while every button can be used. */
   nothingGreyed: 'Nothing.',
+  /** The note that shows the save's seed, with `{seed}`. */
   seed: 'seed {seed}',
+  /** The label of each form's submit button. */
   set: 'Set',
 } as const
 
@@ -71,28 +91,30 @@ declare module '@ifloom/react' {
 }
 
 /**
- * What `useDebug` returns: the debug plugin's view, what's greyed out, the
- * state and the log, and undo and redo. Its commands are the plugin's
- * helpers, sent with `useGame().send`: `send(debug.stat('coins', 50))`.
+ * The debug plugin's view with the refused buttons, the state, the command log and undo and redo, as `useDebug`
+ * returns it. Send the plugin's helpers with `useGame().send`, such as `send(debug.stat('coins', 50))`.
  */
 export type DebugControls = DebugView & {
-  /** Every greyed-out button on screen: the actions, the scene's choices and each person's buttons. */
+  /** The disabled buttons on screen, from the actions, the scene's choices and the cast's people here. */
   greyed: RenderedChoice[]
-  /** The whole game state. */
+  /** The runner's whole game state. */
   state: GameState
-  /** The commands run since the start, in order. */
+  /** The commands the runner has run since the start, in order. */
   log: Command[]
-  /** Whether there's a state to go back to. */
+  /** True when the runner has a state to go back to. */
   canUndo: boolean
-  /** Whether there's an undone state to go forward to. */
+  /** True when the runner has an undone state to go forward to. */
   canRedo: boolean
-  /** Go back a state, as `runner.undo()`. */
+  /** Goes back a state, as `runner.undo()` does. */
   undo: () => void
-  /** Go forward a state, as `runner.redo()`. */
+  /** Goes forward a state, as `runner.redo()` does. */
   redo: () => void
 }
 
-/** The debug plugin's view with its commands, or null in a game without the plugin. `DebugCard` is drawn from it. */
+/**
+ * Returns the debug plugin's view with the runner's state, log and undo controls from the running game, or null in a
+ * game without the plugin. It re-renders when the snapshot changes. `DebugCard` renders from it.
+ */
 export function useDebug(): DebugControls | null {
   const { runner, view, snapshot } = useGame()
   const data = usePlugin(DEBUG).view
@@ -271,18 +293,18 @@ function DebugCardImpl({ className }: { className?: string }) {
 }
 
 /**
- * The debug card, for a game built with `@ifloom/plugin-debug`: set things by
- * hand, see the locks that are on and every greyed-out button's reason, read
- * the state and the command log, step back and forward. Draws nothing in a
- * game built without the plugin. A thin default on `useDebug`.
+ * Renders the debug card from `view.plugins.debug`, with forms for the debug commands, the locks, the disabled
+ * buttons' reasons, the state, the log and undo and redo. A preset styles its `debug` and `debug-*` parts.
+ *
+ * It renders nothing in a game built without the plugin.
  */
 export const DebugCard = overridable('DebugCard', DebugCardImpl)
 
 /**
- * The debug plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `DebugCard` at the end of the story, and the debug
- * card's words. It does nothing in a build without the plugin, so it can be
- * listed in every build.
+ * The debug plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `DebugCard` to the end of
+ * the story, and the plugin's words.
+ *
+ * It renders nothing in a build without the plugin, so a game can list it in every build.
  */
 export const debugUi: PluginUi = {
   ...DEBUG,

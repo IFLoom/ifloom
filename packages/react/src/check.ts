@@ -15,13 +15,13 @@ import { INLINE_PIECES } from './game/inline.tsx'
 import type { PluginUi } from './game/plugins.tsx'
 import { TRANSITIONS, UI_HINTS, type HintCheckContext, type UiHint } from './hints.ts'
 
-/** What `checkUiHints` takes besides the game. */
+/** Settings for `checkUiHints`. Each is optional. */
 export type CheckUiOptions = {
-  /** The plugin UIs the game draws with (the same list it gives `mountGame`): their `hints` and `inline` pieces are known. */
+  /** The plugin UIs the game uses, the same list it gives `mountGame`. The check accepts their `hints` and UI pieces. */
   plugins?: readonly PluginUi[]
-  /** The game's own inline pieces (the same object you give `mountGame` or the `GameProvider`). */
+  /** The game's own components for UI pieces, the same object you give `mountGame` or the `GameProvider`. */
   inline?: InlineComponents
-  /** Hints and inline names that aren't reported (`['mood']`, say, for another UI's). */
+  /** The hint and UI piece names the check never reports, such as `['mood']` for another UI's. */
   allow?: readonly string[]
 }
 
@@ -29,20 +29,17 @@ export type CheckUiOptions = {
 const placeOf = (on: UiTarget, where: string) => (on === 'game' ? 'game' : on === 'block' ? `${where} block` : where)
 
 /**
- * Each problem with the React UI's hints in a game, as `where: what`: a hint
- * this UI doesn't read on that place (a typo, or another UI's), and each
- * value a hint's declaration in `UI_HINTS` finds wrong, such as a transition
- * the game doesn't have, a `timer` that isn't one of the game's timers, pips
- * on a stat with a range over 20, or a `hue` outside 0 to 360.
+ * Returns each problem with a game's `ui` hints and UI pieces for the React UI, as `where: what`. An empty list means
+ * there are none.
  *
- * It also reads the prose, and the words blocks write in place, for inline
- * pieces, `[[ui:name|…]]`: a name that is neither built in (`INLINE_PIECES`),
- * nor a plugin UI's, nor one of the game's own `inline` components, which
- * would show only its words; and each built-in piece its check finds wrong,
- * such as a `modal` with no prose key. A game's own component of a built-in
- * name reads its arguments its own way, so it isn't checked.
+ * It reports a hint the React UI doesn't read on that target, such as a typo or another UI's, and each value a hint's
+ * declaration finds wrong. Examples are a transition the game doesn't have, a `timer` that isn't one of the game's
+ * timers, pips on a stat with a range over 20, or a `hue` outside 0 to 360.
  *
- * Empty when all is well.
+ * It also reads the prose and the words in place for UI pieces, `[[ui:name|…]]`. It reports a name that's neither
+ * built in, nor a plugin UI's, nor one of the game's own `inline` components, which would show only its words. It runs
+ * each built-in piece's check, so a `modal` with no prose key is reported. A game's own component with a built-in
+ * name reads its arguments its own way, so the check skips it.
  */
 export function checkUiHints(game: Game, options: CheckUiOptions = {}): string[] {
   const out: string[] = []

@@ -1,49 +1,49 @@
 /**
- * Content migrations: a pack written for an older `SCHEMA` is carried forward
- * one step at a time until it is a pack of this one, the way `STEPS` in
- * `intake.ts` carries a save. `loadGame` goes through `upgradePack`, so an old
- * pack and an old mod file still load.
+ * Content migrations, which carry a pack written for an older `SCHEMA` forward one step at a time, as `STEPS` carries
+ * a save. `loadGame` calls `upgradePack`, so an old pack or mod file still loads.
  *
- * The engine's steps reshape only what the engine reads. What a plugin reads
- * (its `data`, its calls' arguments, its strings, its traits) is the plugin's
- * to carry forward, with its own `contentMigrations`, and a pack records
- * which version of each plugin's content it was written for in `plugins`.
- * Commands in a command log are carried forward the same way, by the engine's
- * `COMMAND_STEPS` and each plugin's `commandMigrations`.
+ * The engine's steps reshape only the fields the engine reads. Each plugin carries its own `data`, call arguments,
+ * strings and traits forward with its `contentMigrations`, and a pack records in `plugins` the version of each
+ * plugin's content it was written for. The engine's `COMMAND_STEPS` and each plugin's `commandMigrations` carry a
+ * command log's commands forward the same way.
  */
 import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 import { carryChain, type Chain } from './chain.ts'
 
-/** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
+/** The content schema this engine reads. `PACK_STEPS` upgrade a pack of an older schema, and a newer one is refused. */
 export const SCHEMA = 30
 
-/** A pack as it came in: some schema's shape, not necessarily this one. */
-export type RawPack = Record<string, unknown> & { schema: number }
+/** A pack as it arrived, in the shape of the schema it records, which may be older than `SCHEMA`. */
+export type RawPack = Record<string, unknown> & {
+  /** The content schema the pack was written for. */
+  schema: number
+}
 
 /**
- * What a step may need of the game a pack is laid over, besides the pack:
- * the entities content and the plugins declare, the game's word for the
- * player (its string `you`), and the prose under the pack (the content's
- * and the packs' before it). The loader gives it; a step that has none
- * reads only the pack.
+ * The parts of the game under a pack that an upgrade step may read beside the pack. `loadGame` passes it, and a step
+ * without it reads only the pack.
  */
-export type PackContext = { entities?: readonly unknown[]; you?: readonly string[]; prose?: Readonly<Record<string, string>> }
+export type PackContext = {
+  /** The entities the content, the plugins and earlier packs declare. */
+  entities?: readonly unknown[]
+  /** The game's words for the player, from its string `you`. */
+  you?: readonly string[]
+  /** The prose keys' lines under the pack, from the content and earlier packs. */
+  prose?: Readonly<Record<string, string>>
+}
 
 /**
- * The steps that reshape a pack, keyed by the schema each upgrades *from*.
- * The lowest key is the oldest schema the engine reads: an older pack is too
- * old. A schema above it with no step changed nothing the engine reads, so a
- * pack goes on from it as it is (a plugin's own steps may still run there):
- * 6 → 7 named plugin calls' arguments, 7 → 8 renamed the timed-effects plugin
- * to statuses, 11 → 12 renamed the feed's `feed/unseen`, 13 → 14 made the
- * cast's characters entities, 23 → 24 made places' locations and the shop's
- * vendors entities, and 28 → 29 changed the devices plugin's `devices/close`.
+ * The engine's steps that reshape a pack, keyed by the schema each upgrades from. The lowest key is the oldest schema
+ * the engine reads.
  *
- * When the content format changes, bump `SCHEMA` and add the step that
- * reshapes the previous schema in the same change. A step returns a new pack
- * and never changes the one it was given; the schema number is set for it.
+ * A schema above it with no step changed nothing the engine reads, so a pack goes on unchanged, though a plugin's own
+ * steps may run there. Those were 6 → 7 (plugin calls' arguments), 7 → 8 (statuses), 11 → 12 (`feed/unseen`),
+ * 13 → 14 (the cast's characters), 23 → 24 (locations and vendors) and 28 → 29 (`devices/close`).
+ *
+ * When the content format changes, bump `SCHEMA` and add the step from the previous schema in the same change. A step
+ * returns a new pack and never changes the one it was given, and the runner sets the schema number for it.
  */
 export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) => RawPack> = {
   // 4 → 5: flags become the kv store, wherever content can hold them.
@@ -528,7 +528,7 @@ function toSchema22(pack: RawPack): RawPack {
 /**
  * The fields each effect had while effects were told apart by `kind`, before
  * schema 21. An object is only read as an effect when its `kind` is one of
- * these and every other field is one of its own, so a scene beat or an
+ * these and every other field is one of its own, so a scene's block or an
  * input that happens to have a `kind` is left alone.
  */
 const KIND_FIELDS: Record<string, readonly string[]> = {
@@ -567,8 +567,10 @@ const TARGET_FIELD: Record<string, string> = {
 }
 
 /**
- * An effect written while effects were told apart by `kind`, in the keyed
- * form schema 21 writes, or the object as it came when it isn't one:
+ * Returns an effect written with a `kind` field (before schema 21) in the keyed form. Returns the object unchanged when
+ * it isn't such an effect.
+ *
+ * The rewrites are these:
  * - `{ kind: 'stat', stat, by }` is `{ stat, by }`, and so for `entity`,
  *   `minigame`, `timer` and `panel`, whose key was already their target;
  * - the others' target is their key: `{ kind: 'kv', key: 'x', to }` is
@@ -870,7 +872,7 @@ function kindToTags(value: Record<string, unknown>): Record<string, unknown> {
   return { ...rest, tags, ...(kind === 'gear' && rest.start === undefined ? { start: 1 } : {}) }
 }
 
-/** A `scene/choice` key as `scene#choice`: the last `/` is the one between them, as the engine read it. */
+/** Returns a `scene/choice` key as `scene#choice`, splitting at the last `/`. A key that already has a `#` is returned unchanged. */
 export function choiceKey(key: string): string {
   if (key.includes('#')) return key
   const cut = key.lastIndexOf('/')
@@ -896,7 +898,7 @@ function toSchema11(value: Record<string, unknown>): Record<string, unknown> {
   return { level: tier, ...rest }
 }
 
-/** The kind a collection's entries became, by the collection's id: its own id, except the phone's `gallery`, whose entries are `photo` things. */
+/** Returns the kind a collection's entries became, by the collection's id. It is the same id, except `gallery`, whose entries became `photo` things. */
 export function collectionKind(collection: string): string {
   return collection === 'gallery' ? 'photo' : collection
 }
@@ -1148,77 +1150,82 @@ function deepArrays(value: unknown): unknown {
   return inner
 }
 
-/** How a plugin call is written in content: `short`, `long` or as a `command`. See `ContentTools.calls`. */
+/** The form a plugin call is written in, `short`, `long` or `command`. See `ContentTools.calls`. */
 export type CallForm = 'short' | 'long' | 'command'
 
-/** A plugin call as `ContentTools.calls` hands it over: its full name, its arguments as written, and how it was written. */
-export type RawCall = { name: string; with: unknown; form: CallForm }
+/** A plugin call passed to a `ContentTools.calls` rewrite. */
+export type RawCall = {
+  /** The call's full name, such as `'places/at'`. */
+  name: string
+  /** The call's arguments, unchanged from the pack. */
+  with: unknown
+  /** The call's form in the pack. */
+  form: CallForm
+}
 
 /**
- * What a plugin's content step is given besides the pack: ways to rewrite
- * what a pack holds without walking it by hand. Each returns a new pack.
- * `objects` and `calls` leave words and code (`prose`, `strings`,
- * `variants`, `custom`) as they are, and `words` rewrites only those words.
+ * The tools a plugin's content step gets beside the pack, which rewrite a pack without walking it by hand. Each returns
+ * a new pack.
+ *
+ * `objects` and `calls` leave words and code (`prose`, `strings`, `variants`, `custom`) unchanged, and `words` rewrites
+ * only those words.
  */
 export type ContentTools = {
-  /** Every object the pack's content holds, rewritten from the innermost out. */
+  /** Returns the pack with every object in its content rewritten by `rewrite`, from the innermost out. */
   objects: (pack: RawPack, rewrite: (value: Record<string, unknown>) => Record<string, unknown>) => RawPack
   /**
-   * Every call to a condition, effect or command by name, however it is
-   * written: `short`, `{ 'places/at': { location } }` (any key with a `/`,
-   * so check the name); `long`, `{ custom: 'places/at', with }` or
-   * `{ kind: 'custom', name, with }`; or a `command`,
-   * `{ type: 'custom', name, with }`. Return its name and arguments: a call
-   * given back as it came stays as it was. A value (`{ value, with }`) is
-   * not a call; reach it with `objects`.
+   * Returns the pack with every call to a condition, effect or command by name rewritten by `rewrite`. A call returned
+   * with the same name and arguments stays as it was.
+   *
+   * The forms are `short` (`{ 'places/at': { location } }`, any key with a `/`, so check the name), `long`
+   * (`{ custom: 'places/at', with }` or `{ kind: 'custom', name, with }`) and `command`
+   * (`{ type: 'custom', name, with }`). A value (`{ value, with }`) is not a call, so reach it with `objects`.
    */
   calls: (pack: RawPack, rewrite: (call: RawCall) => { name: string; with: unknown }) => RawPack
-  /** Every line of the pack's `prose` and `strings`, given with its key. */
+  /** Returns the pack with every line of its `prose` and `strings` rewritten by `rewrite`, which gets each line's key. */
   words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
   /**
-   * Every key of the pack's `words` table, the translation's other words for
-   * a field (`quests/quests.settle.title`), renamed: for a step that renames a
-   * field the table names. The words are kept.
+   * Returns the pack with every key of its words table (`quests/quests.settle.title`) renamed by `rename`, keeping the
+   * words. A step that renames a field uses it.
    */
   wordKeys: (pack: RawPack, rename: (key: string) => string) => RawPack
   /**
-   * Each entry of one list of a plugin's `data`, named `<plugin>/<list>`
-   * (`'quests/quests'` is `data.quests.quests`), rewritten. A pack without
-   * the list comes back as it is.
+   * Returns the pack with each entry of one plugin `data` list rewritten by `rewrite`. The list is named
+   * `<plugin>/<list>` (`'quests/quests'` is `data.quests.quests`), and a pack without it comes back unchanged.
    */
   entries: (pack: RawPack, list: string, rewrite: (entry: Record<string, unknown>) => Record<string, unknown>) => RawPack
   /**
-   * A line of prose by key, as written: the pack's own, else the game's
-   * under it (its content's and the packs' before it). Undefined if neither
-   * has it. For a step that writes words in place that were a prose key.
+   * Returns a prose key's line, the pack's own or else the game's under it, or undefined when neither has it. A step
+   * that turns a prose key into words in place uses it.
    */
   prose: (key: string) => string | undefined
   /**
-   * Every effect the pack holds, in plugin `data` and traits too, in the form
-   * this engine reads: one written while effects were told apart by `kind`
-   * (`{ kind: 'stat', stat, by }`, before schema 21) in the keyed form
-   * (`{ stat, by }`). One already keyed is left as it is. For a plugin whose
-   * content holds effects somewhere the engine's own step can't see.
+   * Returns the pack with every effect written with a `kind` field (before schema 21) in the keyed form, in plugin
+   * `data` and traits too.
+   *
+   * `{ kind: 'stat', stat, by }` becomes `{ stat, by }`. A plugin whose content holds effects the engine's own step
+   * can't reach uses it.
    */
   effects: (pack: RawPack) => RawPack
 }
 
 /**
- * One step of a plugin's `contentMigrations`: the whole pack as the version
- * it upgrades from wrote it, as the next version writes it. It usually
- * changes only the plugin's own `data`, calls, strings and traits. It returns
- * a new pack and never changes the one it was given.
+ * A step of a plugin's `contentMigrations`, which returns the whole pack reshaped from one content version to the
+ * next. It returns a new pack and never changes the one it was given.
+ *
+ * A step changes only the plugin's own `data`, calls, strings and traits as a rule.
  */
 export type ContentStep = (pack: RawPack, tools: ContentTools) => RawPack
 
-/** A command as a log from an older engine or plugin kept it: some version's shape, with its `type`. */
-export type RawCommand = Record<string, unknown> & { type: string }
+/** A command from a command log, in the shape of the engine or plugin version that wrote it. */
+export type RawCommand = Record<string, unknown> & {
+  /** The command's type, such as `choose` or a plugin's `quests/track`. */
+  type: string
+}
 
 /**
- * One step of a plugin's `commandMigrations`: a command from a log, as the
- * version it upgrades from wrote it, as the next version takes it. It is
- * given every command, the engine's and other plugins' too, so it checks the
- * type and name and gives back the ones that aren't its own as they came.
+ * A step of a plugin's `commandMigrations`, which returns a log's command reshaped from one command version to the
+ * next. It gets every command, so it returns the ones that aren't its own unchanged.
  */
 export type CommandStep = (command: RawCommand) => RawCommand
 
@@ -1272,10 +1279,10 @@ const TOOLS: Omit<ContentTools, 'prose'> = {
 }
 
 /**
- * The engine's steps that reshape a command from a command log, keyed by the
- * schema each upgrades *from*, as `PACK_STEPS` are. Sparse: a schema with no
- * step changed no command. A plugin's commands are its own to carry forward,
- * with its `commandMigrations`.
+ * The engine's steps that reshape a command from a command log, keyed by the schema each upgrades from. A schema with
+ * no step changed no command.
+ *
+ * Each plugin carries its own commands forward with its `commandMigrations`.
  */
 export const COMMAND_STEPS: Record<number, (command: RawCommand) => RawCommand> = {
   // 5 → 6: the naming rule. `use`'s `itemId` is `id`, and `setting` and `input` set with `to`.
@@ -1344,20 +1351,16 @@ const contentVersion = (plugin: Plugin) => plugin.contentVersion ?? 1
 const commandVersion = (plugin: Plugin) => plugin.commandVersion ?? 1
 
 /**
- * A pack brought up to `SCHEMA` and to each of `plugins`' content versions,
- * step by step, or why it can't be: it was written for a newer engine or a
- * newer version of a plugin, or for an engine so old there is no step from
- * it. Pass the game's plugins (`game.plugins`, or the base's), so what each
- * one reads is carried forward with the rest.
+ * Returns the pack upgraded to `SCHEMA` and to each plugin's content version. Returns a failed `Result` when the pack
+ * was written for a newer engine or plugin, or for a schema older than any step.
  *
- * The engine's step from each schema runs after every plugin step keyed by
- * that schema or below, so a first-party plugin's step meets the pack as the
- * engine had it then. Then each plugin's later steps run. A pack that records
- * no version for a plugin is read as written for its schema, or for the
- * plugin's own version if that is lower. The result records every plugin's
- * version in `plugins`. A pack with nothing to do comes back as it is.
- * `context` is what a step needs of the game besides the pack (see
- * `PackContext`); `loadGame` gives it.
+ * Pass the game's plugins (`game.plugins`, or the base's), so each one's content is carried forward too. The engine's
+ * step from each schema runs after every plugin step keyed by that schema or below, so a first-party plugin's step
+ * meets the pack as the engine had it then. Each plugin's later steps run after.
+ *
+ * A pack that records no version for a plugin is read as written for its schema, or for the plugin's own version if
+ * that is lower. The result records every plugin's version in `plugins`, and a pack with nothing to upgrade comes back
+ * unchanged. `loadGame` passes `context` (see `PackContext`).
  */
 export function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[], context: PackContext = {}): Result<Pack> {
   const from = pack.schema
@@ -1398,22 +1401,26 @@ export function upgradePack(pack: { schema: number; plugins?: Record<string, num
   return ok(out as unknown as Pack)
 }
 
-/** What a command log records of the versions it was written with: the engine's `SCHEMA`, and each plugin's command version. */
-export type CommandVersions = { schema: number; plugins: Record<string, number> }
+/** The versions a command log records, the engine's `SCHEMA` and each plugin's command version. */
+export type CommandVersions = {
+  /** The engine's `SCHEMA` when the log was written. */
+  schema: number
+  /** Each plugin's command version when the log was written, by plugin id. */
+  plugins: Record<string, number>
+}
 
-/** The versions a command log made now records, for a game with these plugins. */
+/** Returns the versions a command log written now records, for a game with these plugins. */
 export function commandVersions(plugins: readonly Plugin[]): CommandVersions {
   return { schema: SCHEMA, plugins: Object.fromEntries(plugins.map((plugin) => [plugin.id, commandVersion(plugin)])) }
 }
 
 /**
- * How to bring a log's commands up to this engine and these plugins, given
- * the versions the log records (none, for a log from before logs kept them,
- * which is read as the oldest, so every step runs), or why its commands can't
- * be read. Each command goes through the engine's `COMMAND_STEPS` from the
- * log's schema and each plugin's `commandMigrations` from its version,
- * interleaved as `upgradePack` interleaves content. A command already in
- * this shape comes back as it is.
+ * Returns a function that upgrades a log's commands to this engine and these plugins, from the versions the log
+ * records. Returns a failed `Result` when the log was written for a newer engine or plugin.
+ *
+ * A log that records no versions is read as the oldest, so every step runs. Each command goes through the engine's
+ * `COMMAND_STEPS` from the log's schema and each plugin's `commandMigrations` from its version, interleaved as
+ * `upgradePack` interleaves content. A command already in this shape comes back unchanged.
  */
 export function commandUpgrade(plugins: readonly Plugin[], from: Partial<CommandVersions> = {}): Result<<C>(command: C) => C> {
   const schema = from.schema ?? 1

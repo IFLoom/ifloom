@@ -17,13 +17,24 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 import { configLoader, sourcePlugin } from './source.ts'
 import { UNLOCKS_DIR, isLockedModule, lockedFiles, lockedScript } from './unlocks.ts'
 
+/** Settings for `ifloom()`, the Vite preset. Each is optional. */
 export type IfloomViteOptions = {
-  /** Put everything in the one HTML file, or leave the JS and CSS beside it. One file if left out. */
+  /** True to put the JS and CSS inside the one HTML file, rather than beside it. True if left out. */
   singleFile?: boolean
-  /** Merged over the preset: the game's framework plugin and anything else it needs go in `vite.plugins`. */
+  /**
+   * The game's own Vite config, which the preset builds on. The preset keeps `base` at `'./'` and adds its plugins after
+   * the game's `plugins`, where the game's framework plugin goes.
+   */
   vite?: UserConfig
 }
 
+/**
+ * Returns the Vite config every IFLoom game builds with, which writes one HTML file with relative paths. It names no
+ * UI framework, so a game adds its framework's Vite plugin in `vite.plugins`.
+ *
+ * The preset's plugins come after the game's. Inside the IFLoom checkout it reads the `@ifloom` packages' source, and
+ * it encrypts a game's `src/unlocks/` packs into the page.
+ */
 export function ifloom(options: IfloomViteOptions = {}): UserConfig {
   const { singleFile = true, vite = {} } = options
   return {

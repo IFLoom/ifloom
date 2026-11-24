@@ -11,9 +11,11 @@ Generated from the source of `@ifloom/plugin-generators` and its TSDoc by `npm r
 
 Function. Explained in [Generators](/docs/plugins/generators#drawentity).
 
-What a template draws for the `n`th entity of its kind made in play, in
-this save. The plugin's effect passes the number the next one will get, so
-each is different and the same on every replay.
+Returns the values a template draws for the `n`th entity of its kind made in play in this save. The same save,
+template and `n` always draw the same values.
+
+The `generators/generate` effect passes the number the engine's `create` gives the next entity, so each new entity
+differs and a replay makes the same ones.
 
 ```ts shape
 import { drawEntity } from '@ifloom/plugin-generators'
@@ -26,12 +28,14 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Generators](/docs/plugins/generators#fielddef).
 
-Where one field of a new entity comes from:
+A field of a template, which gives one value of a new entity. Each form is told apart by its shape.
 
-- a fixed value, as written: `'visitor'`, `3`, `true`;
-- `{ pool: 'first-names' }`, one value picked from a pool by weight;
-- `{ between: [1, 5] }`, a whole number from the first to the second, both included;
-- `{ join: [...], with?: ' ' }`, several fields drawn and joined into one string.
+The forms are:
+
+- a fixed value, as written, such as `'visitor'`, `3` or `true`
+- `{ pool: 'first-names' }`, one value drawn from a pool by weight
+- `{ between: [1, 5] }`, a whole number from the first to the second, both included
+- `{ join: [...], with?: ' ' }`, several fields drawn and joined into one string, with a space if `with` is left out
 
 ```ts shape
 import type { FieldDef } from '@ifloom/plugin-generators'
@@ -44,7 +48,8 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 Type. Explained in [Generators](/docs/plugins/generators#generatedentity).
 
-What a template draws for one entity: the fields of the engine's `create` effect that come from pools and ranges.
+The values a template draws for one entity, as `drawEntity` returns them. They're the fields of the engine's
+`create` effect that come from pools and ranges.
 
 ```ts shape
 import type { GeneratedEntity } from '@ifloom/plugin-generators'
@@ -57,12 +62,22 @@ type GeneratedEntity = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `name` | `string` | yes |  | The drawn name, left out when the template gives none. |
+| `description` | `string` | yes |  | The drawn description, left out when the template gives none. |
+| `image` | `string` | yes |  | The drawn picture's path, left out when the template gives none. |
+| `stats` | `Record<string, number>` |  |  | The drawn stats by id. A field that draws no finite number is left out. |
+| `kv` | `Record<string,` [`KvValue`](/docs/api/engine#kvvalue)`>` |  |  | The drawn kv values by key. |
+
 ## generators
 
 Function. Explained in [Generators](/docs/plugins/generators#generators).
 
-The plugin, with its helpers on it: `generators()` makes the plugin for the
-game's `plugins`, and content is written with `generators.generate('regular')`.
+Returns the generators plugin, for the game's `plugins`. Content declares pools and templates in
+`data.generators.pools` and `data.generators.templates`.
+
+Its helper writes its effect, such as `generators.generate('regular')`.
 
 ```ts shape
 import { generators } from '@ifloom/plugin-generators'
@@ -73,13 +88,13 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin).
 
 | Helper | Signature | Description |
 |---|---|---|
-| `generators.generate` | `(template: string, count?: number):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `generators.generate` | `(template: string, count?: number):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `generators/generate` effect, which makes `count` new entities from the template, 1 if left out. |
 
 ## PoolDef
 
 Type. Explained in [Generators](/docs/plugins/generators#pooldef).
 
-A named list of values to pick from.
+A pool the game declares in `data.generators.pools`, a named list of values a template picks from. At least one entry must weigh more than 0.
 
 ```ts shape
 import type { PoolDef } from '@ifloom/plugin-generators'
@@ -89,11 +104,16 @@ type PoolDef = {
 }
 ```
 
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The pool's id, which a field's `{ pool }` names. |
+| `values` | [`PoolEntry[]`](#poolentry) |  |  | The pool's entries, each picked by its weight. |
+
 ## PoolEntry
 
 Type. Explained in [Generators](/docs/plugins/generators#poolentry).
 
-One value in a pool: the value, or the value with a weight (1 if left out).
+An entry of a pool, a value or a value with a weight. A bare value, or a weight left out, weighs 1.
 
 ```ts shape
 import type { PoolEntry } from '@ifloom/plugin-generators'
@@ -106,7 +126,7 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 Function. Explained in [Generators](/docs/plugins/generators#poolsof-and-templatesof).
 
-The game's pools: `data.generators.pools`, from its content and packs.
+Returns the game's pools, `data.generators.pools` from its content and packs, in declared order.
 
 ```ts shape
 import { poolsOf } from '@ifloom/plugin-generators'
@@ -119,7 +139,8 @@ Uses: [`Game`](/docs/api/engine#game), [`PoolDef`](#pooldef).
 
 Type. Explained in [Generators](/docs/plugins/generators#templatedef).
 
-How to make one entity of a kind, as the engine's `create` effect makes it.
+A template the game declares in `data.generators.templates`, which makes entities of one kind through the engine's
+`create` effect. It needs an `of` or a `like`, and a `name` or a `like`.
 
 ```ts shape
 import type { TemplateDef } from '@ifloom/plugin-generators'
@@ -140,23 +161,23 @@ type TemplateDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `of` | `string` | yes |  | The kind of entity it makes. The `like`'s kind if left out. |
-| `like` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | An entity it is made like: what it isn't given (name, picture, traits, stats) is read from that one. |
-| `name` | [`FieldDef`](#fielddef) | yes |  | Its name. The `like`'s if left out. |
-| `description` | [`FieldDef`](#fielddef) | yes |  | A line or two about it, drawn as the name is. |
-| `image` | [`FieldDef`](#fielddef) | yes |  | Its picture, through `artSrc`, drawn as the name is: `{ pool: 'faces' }`. |
-| `tags` | `string[]` | yes |  | Words it has, after its kind's and its `like`'s. |
-| `traits` | `Record<string, unknown>` | yes |  | Trait data, by trait id, over its `like`'s or its kind's: `{ 'cast/person': { home: 'park' } }`. |
-| `at` | [`Placement`](/docs/api/engine#placement) | yes |  | Who holds it once made: a holder, or how many each holds. Nobody if left out. |
-| `stats` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | Its stats, by id: stats the game declares for the kind. Left out, a stat reads its `like`'s, else its `start`. |
-| `kv` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | Its kv keys, by name. |
+| `id` | `string` |  |  | The template's id, which `generators/generate` names. |
+| `of` | `string` | yes |  | The kind of entity the template makes. The `like`'s kind if left out. |
+| `like` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | The entity the new ones are made like. Fields the template doesn't give, such as the name, picture, traits and stats, are read from it. |
+| `name` | [`FieldDef`](#fielddef) | yes |  | The new entity's name. The `like`'s name if left out. |
+| `description` | [`FieldDef`](#fielddef) | yes |  | The new entity's description, drawn as the name is. |
+| `image` | [`FieldDef`](#fielddef) | yes |  | The new entity's picture, a path in the game's `art/` folder, drawn as the name is, such as `{ pool: 'faces' }`. |
+| `tags` | `string[]` | yes |  | The new entity's tags, added after its kind's and its `like`'s. |
+| `traits` | `Record<string, unknown>` | yes |  | The new entity's trait data by trait id, over its `like`'s or its kind's, such as `{ 'cast/person': { home: 'park' } }`. |
+| `at` | [`Placement`](/docs/api/engine#placement) | yes |  | The holder of the new entity once made, or how many each holder holds. Nobody holds it if left out. |
+| `stats` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | The new entity's stats by id, each a stat the game declares for the kind. A stat left out reads the `like`'s value, else its `start`. |
+| `kv` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | The new entity's kv keys by name. |
 
 ## templateKind
 
 Function. Explained in [Generators](/docs/plugins/generators#templatekind).
 
-The kind a template makes: its `of`, else its `like`'s.
+Returns the kind a template makes, its `of`, else its `like`'s kind. It's undefined when the template has neither.
 
 ```ts shape
 import { templateKind } from '@ifloom/plugin-generators'
@@ -169,7 +190,7 @@ Uses: [`TemplateDef`](#templatedef).
 
 Function. Explained in [Generators](/docs/plugins/generators#poolsof-and-templatesof).
 
-The game's templates: `data.generators.templates`, from its content and packs.
+Returns the game's templates, `data.generators.templates` from its content and packs, in declared order.
 
 ```ts shape
 import { templatesOf } from '@ifloom/plugin-generators'

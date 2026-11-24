@@ -1,12 +1,9 @@
 /**
- * @ifloom/plugin-statuses: timed statuses. A coffee that perks the player up
- * for a couple of turns, a cold that saps their energy for a week.
+ * The statuses plugin, which adds timed statuses, such as a coffee that perks the player up for two turns.
  *
- * A status lasts a number of turns. While it lasts it can change what the
- * player's stats read (through the engine's stat modifiers, so nothing is
- * written) and run effects as it starts, at the end of each turn and as it
- * ends. Applying one that is already active refreshes it or adds a stack, as
- * the status says.
+ * A status lasts a number of turns. While it lasts, it changes the values the player's stats read through the
+ * engine's stat modifiers, which write nothing. It can run effects as it starts, at the end of each turn and as it
+ * ends, and applying an active status again refreshes it or adds a stack, as its `reapply` says.
  */
 import { inRange, stringOf, type Condition, type EffectRef, type Game, type GameState, type Range } from '@ifloom/engine'
 import {
@@ -25,60 +22,71 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** What applying a status that is already active does: start its turns again, or add another stack. */
+/** The rule for applying a status that is already active. `'refresh'` starts its turns again, and `'stack'` adds another stack. */
 export type Reapply = 'refresh' | 'stack'
 
-/** A change a status makes to what one of the player's stats reads, per stack. */
+/** A change a status makes to the value one of the player's stats reads, per stack. */
 export type StatusModifier = StatModifier
 
-/** A timed status in the game's content: one entry of `data.statuses.statuses`, the plugin's list of statuses. */
+/** A timed status the game declares in `data.statuses.statuses`. It lasts `turns` turns from the turn it is applied in. */
 export type StatusDef = {
+  /** The status's id. */
   id: string
-  /** What the player reads: "Caffeinated". */
+  /** The status's name, such as "Caffeinated". */
   name: string
-  /** A line about it, for the UI. */
+  /** The status's description, a line for the UI to show. */
   description?: string
-  /** How many turns it lasts, counting the end of the turn it was applied in. */
+  /** The number of turns the status lasts, counting the end of the turn it was applied in. */
   turns: number
-  /** What it does to the player's stats while it lasts, per stack. Never written. */
+  /** The status's changes to the player's stats while it lasts, per stack. The plugin never writes them to the stats. */
   modifiers?: StatusModifier[]
   /**
-   * What it does as it goes: `start` when it starts, and each time a stack is
-   * added; `turn` at the end of each turn it is active, once per stack, before
-   * its turns go down; `end` when it runs out, once per stack that ran out.
+   * The status's effects as it runs. `start` runs as the status starts, `turn` once per stack at the end of each turn,
+   * and `end` once per stack that runs out.
+   *
+   * `start` also runs for each stack added, but not for a refresh or a stack that replaces the oldest at `max`. The
+   * `turn` effects run before the status's turns go down.
    */
   effects?: { start?: EffectRef[]; turn?: EffectRef[]; end?: EffectRef[] }
-  /** What applying it again does while it is active. `'refresh'` if left out. */
+  /** The rule for applying the status again while it is active. `'refresh'` if left out. */
   reapply?: Reapply
-  /** With `reapply: 'stack'`, the most stacks it can have. No limit if left out. */
+  /** The most stacks the status can have, with `reapply: 'stack'`. A new stack past it replaces the oldest, and there is no limit if left out. */
   max?: number
 }
 
-/** One active status as the save keeps it: its id, and the turns left on each stack, oldest first. */
-export type ActiveRecord = { id: string; left: number[] }
+/** The record a save keeps for one active status, in {@link StatusesState}'s `active`. The status's definition is read from content. */
+export type ActiveRecord = {
+  /** The status's id. */
+  id: string
+  /** The turns left on each stack, oldest stack first. */
+  left: number[]
+}
 
-/** What the plugin keeps in a save. */
+/** The active statuses a save keeps for the player. Statuses themselves are read from content. */
 export type StatusesState = {
-  /** Active statuses, in the order they were first applied. */
+  /** The active statuses, in the order they were first applied. */
   active: ActiveRecord[]
 }
 
-/** An active status as the UI shows it. */
+/** An active status as the player sees it, in `view.plugins.statuses.active`. */
 export type ActiveStatus = {
+  /** The status's id. */
   id: string
+  /** The status's name. */
   name: string
-  /** What it does, as the player reads it; `''` with none. */
+  /** The status's description, or `''` when it has none. */
   description: string
-  /** The turns left on its longest stack. */
+  /** The turns left on the status's longest stack. */
   turnsLeft: number
-  /** How many times it's applied and still running: 1 unless the status stacks. */
+  /** The number of the status's stacks still running, 1 unless it stacks. */
   stacks: number
-  /** What it does to the stats right now, all its stacks together, one entry per stat. */
+  /** The status's changes to the stats now, all its stacks together, one entry per stat. */
   modifiers: StatModifier[]
 }
 
+/** The active statuses as the player sees them, in `view.plugins.statuses`. */
 export type StatusesView = {
-  /** Active statuses, in the order they were first applied. */
+  /** The active statuses, in the order they were first applied. */
   active: ActiveStatus[]
 }
 
@@ -125,12 +133,12 @@ function emptyState(): StatusesState {
   return { active: [] }
 }
 
-/** The game's timed statuses: `data.statuses.statuses`, from its content and packs. */
+/** Returns the game's timed statuses, from `data.statuses.statuses` in its content and packs. */
 export function statusesOf(game: Game): StatusDef[] {
   return DATA.statuses.all(game)
 }
 
-/** One of the game's statuses, by id. */
+/** Returns the status with this id, or undefined when the game has none. */
 export function statusOf(game: Game, id: string): StatusDef | undefined {
   return DATA.statuses.get(game, id)
 }
@@ -234,10 +242,7 @@ function endTurn(state: GameState, context: PluginContext<StatusesState>): GameS
   return next
 }
 
-/**
- * The plugin. Add it to the game's `plugins`, and put statuses in the content's
- * `data.statuses.statuses`.
- */
+/** Returns the statuses plugin for the game's `plugins`. The game declares its statuses in `data.statuses.statuses`. */
 function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
   return definePlugin<StatusesState, StatusesView, typeof CALLS>({
     id: ID,
@@ -308,15 +313,22 @@ function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
   })
 }
 
-/** A condition: the status is active, with a number of stacks in this range if given. */
+/** Returns the `statuses/active` condition, which holds while the status is active, with a number of stacks in the range if given. */
 const statusActive = (id: string, stacks?: Range): Condition => CALLS.conditions.active(stacks ? { status: id, stacks } : { status: id })
-/** An effect: apply the status, refreshing or stacking it if it's already active. */
+/** Returns the `statuses/apply` effect, which starts the status, or refreshes or stacks it if it's already active. */
 const applyStatus = (id: string): EffectRef => CALLS.effects.apply({ status: id })
-/** An effect: take every stack of the status off. `runEnd` runs its `end` effects once per stack. */
+/** Returns the `statuses/remove` effect, which takes every stack of the status off. With `runEnd`, its `end` effects run once per stack. */
 const removeStatus = (id: string, runEnd = false): EffectRef => CALLS.effects.remove(runEnd ? { status: id, runEnd } : { status: id })
 
 /**
- * The plugin, with its helpers on it: `statuses()` makes the plugin for the
- * game's `plugins`, and content is written with `statuses.apply('caffeinated')`.
+ * The statuses plugin's factory, with its helpers as properties. `statuses()` returns the plugin for the game's
+ * `plugins`, and content calls helpers such as `statuses.apply('caffeinated')`.
  */
-export const statuses = Object.assign(statusesPlugin, { active: statusActive, apply: applyStatus, remove: removeStatus })
+export const statuses = Object.assign(statusesPlugin, {
+  /** Returns the `statuses/active` condition, which holds while the status is active, with a number of stacks in the range if given. */
+  active: statusActive,
+  /** Returns the `statuses/apply` effect, which starts the status, or refreshes or stacks it if it's already active. */
+  apply: applyStatus,
+  /** Returns the `statuses/remove` effect, which takes every stack of the status off, running its `end` effects with `runEnd`. */
+  remove: removeStatus,
+})

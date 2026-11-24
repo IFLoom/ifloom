@@ -129,6 +129,10 @@ export const DONE: string[] = [
   'how-to/render/phone-plugins.md',
   'how-to/render/player-tools.md',
   'reference/react/components.md',
+  'reference/react/index.md',
+  'reference/react/kit.md',
+  'reference/react/hints.md',
+  'reference/react/parts.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

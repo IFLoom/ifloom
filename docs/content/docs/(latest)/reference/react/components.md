@@ -1,12 +1,12 @@
 ---
 title: "Components"
-description: "Reference for every component and hook @ifloom/react exports, from GameShell down to a button: what each renders, its parts, and a link to its props."
+description: "Reference for every component and hook @ifloom/react exports, from GameShell to the pages around the game: what each renders, its parts, and a link to its props."
 ---
 This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
 
-Every game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it renders only inside a [`GameProvider`](#gameprovider), and [`GameShell`](#gameshell) is one. A game replaces any of them by name in [`components`](#components), and each entry names the `data-part`s it renders, which [React UI parts](/docs/reference/react/parts) lists. Each plugin's own React UI, such as the shop's counter, is under `## React UI` on that plugin's page. The [shadcn/ui primitives](#shadcnui-primitives) at the end need no provider. In the showcase: `examples/showcase/src/layout.tsx`.
+Every game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it renders only inside a [`GameProvider`](#gameprovider), and [`GameShell`](#gameshell) is one. A game replaces any of them by name in [`components`](#components), and each entry names the `data-part`s it renders, which [React UI parts](/docs/reference/react/parts) lists. Each plugin's own React UI, such as the shop's counter, is under `## React UI` on that plugin's page. The [shadcn/ui primitives](/docs/reference/react/kit#shadcnui-primitives) are on the kit's page and need no provider. In the showcase: `examples/showcase/src/layout.tsx`.
 
-Every component that takes `className` merges it over its own classes with [`cn`](#cn), so a later Tailwind class wins: `<Scene className="gap-8" />`.
+Every component that takes `className` merges it over its own classes with [`cn`](/docs/reference/react/kit#cn), so a later Tailwind class wins: `<Scene className="gap-8" />`.
 
 ## The game
 
@@ -174,7 +174,7 @@ The runner covers what the view doesn't, such as `runner.undo()`, `runner.save(.
 
 `InlineComponents` is a game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, by name, for the provider's `inline`. Its type is in [`InlineComponents`](/docs/api/react#inlinecomponents).
 
-One piece's component is an [`InlineComponent`](/docs/api/react#inlinecomponent), and its props are [`InlineProps`](/docs/api/react#inlineprops): the piece's `name`, its words as `text`, and its `args`, typed by what [`InlineUi`](/docs/reference/ui-hints#inlineui) declares for that name. Type a component as `InlineComponent<'stamp'>` to have its `args` typed. [The hints page](/docs/reference/react/hints#inline-pieces) lists the built-in pieces.
+One piece's component is an [`InlineComponent`](/docs/api/react#inlinecomponent), and its props are [`InlineProps`](/docs/api/react#inlineprops): the piece's `name`, its words as `text`, and its `args`, typed by what [`InlineUi`](/docs/reference/ui-hints#inlineui) declares for that name. Type a component as `InlineComponent<'stamp'>` to have its `args` typed. [The hints page](/docs/reference/react/hints#inlineui) lists the built-in pieces.
 
 ### PluginSectionComponent
 
@@ -253,7 +253,7 @@ const components: Components = {
 
 ### Classes
 
-`Classes` is Tailwind classes for parts, by `data-part` name. Its type is in [`Classes`](/docs/api/react#classes). A string is merged with the built-in classes as [`cn`](#cn) merges them, so yours win where they clash. A function gets the built-in classes and returns the ones to use, so `() => 'font-serif'` replaces them.
+`Classes` is Tailwind classes for parts, by `data-part` name. Its type is in [`Classes`](/docs/api/react#classes). A string is merged with the built-in classes as [`cn`](/docs/reference/react/kit#cn) merges them, so yours win where they clash. A function gets the built-in classes and returns the ones to use, so `() => 'font-serif'` replaces them.
 
 ```ts
 import type { Classes } from '@ifloom/react'
@@ -448,7 +448,7 @@ Parts: `tip` and `tip-content`.
 
 ### InlineTrigger
 
-`InlineTrigger` renders the words of an [inline piece](/docs/reference/react/hints#inline-pieces) as a button in the line that opens something over the page. Its props are in [`InlineTrigger`](/docs/api/react#inlinetrigger). It has the part `inline-ui`, `data-ui` set to `name`, `aria-haspopup="dialog"` and `aria-expanded` from `open`, and focus returns to it when `open` goes back to false. The built-in `modal` and `image` use it.
+`InlineTrigger` renders the words of an [inline piece](/docs/reference/react/hints#inlineui) as a button in the line that opens something over the page. Its props are in [`InlineTrigger`](/docs/api/react#inlinetrigger). It has the part `inline-ui`, `data-ui` set to `name`, `aria-haspopup="dialog"` and `aria-expanded` from `open`, and focus returns to it when `open` goes back to false. The built-in `modal` and `image` use it.
 
 ### InlineModal
 
@@ -541,7 +541,7 @@ Parts: `hotspot` (with `data-hotspot`) and `hotspot-warning`.
 
 ### MediaViewer
 
-`MediaViewer` renders a picture or a clip from the story large over the page, in a [`Dialog`](#dialog). Its props are in [`MediaViewerProps`](/docs/api/react#mediaviewerprops), and what it shows is a [`ViewerMedia`](/docs/api/react#viewermedia), an `image` or `video` beat.
+`MediaViewer` renders a picture or a clip from the story large over the page, in a [`Dialog`](/docs/reference/react/kit#dialog). Its props are in [`MediaViewerProps`](/docs/api/react#mediaviewerprops), and what it shows is a [`ViewerMedia`](/docs/api/react#viewermedia), an `image` or `video` beat.
 
 [`Beat`](#beat) opens it when the player clicks a picture or a clip in a scene, the backlog, a message or a post. A layered picture's layers don't open it. Escape, a click outside and the close button (`ui.closeViewer`) close it. `viewer: false` in [`UiOptions`](#uioptions) turns it off for the whole game.
 
@@ -747,7 +747,7 @@ function QuickSave() {
 
 ### Backlog
 
-`Backlog` renders the runner's [backlog](/docs/reference/runner#backlogentry), oldest first, in a [`ScrollArea`](#scrollarea). Its props are in [`Backlog`](/docs/api/react#backlog). Each entry shows its title and its beats as [`Beat`](#beat)s, then **You chose: …** (`ui.chose`) when the player made a choice there. It shows `ui.backlogEmpty` while empty, which it always is unless the runner was made with `backlog`.
+`Backlog` renders the runner's [backlog](/docs/reference/runner#backlogentry), oldest first, in a [`ScrollArea`](/docs/reference/react/kit#scrollarea). Its props are in [`Backlog`](/docs/api/react#backlog). Each entry shows its title and its beats as [`Beat`](#beat)s, then **You chose: …** (`ui.chose`) when the player made a choice there. It shows `ui.backlogEmpty` while empty, which it always is unless the runner was made with `backlog`.
 
 Parts: `backlog`, `backlog-entry` (with `data-backlog`), `backlog-title`, `backlog-choice` and `backlog-empty`.
 
@@ -1081,7 +1081,7 @@ The first-party plugins' panels are on their pages: `shop`, `jobs`, `wardrobe`, 
 
 ### PartDialog
 
-`PartDialog` renders a [`Dialog`](#dialog) with the UI's `dialog` parts, as the menu, `PanelHost` and the plugin UIs do, from `@ifloom/react/kit`. Its props are in [`PartDialog`](/docs/api/react-kit#partdialog). It's open while `open` is true, titled `title`, and calls `onClose` when the player closes it.
+`PartDialog` renders a [`Dialog`](/docs/reference/react/kit#dialog) with the UI's `dialog` parts, as the menu, `PanelHost` and the plugin UIs do, from `@ifloom/react/kit`. Its props are in [`PartDialog`](/docs/api/react-kit#partdialog). It's open while `open` is true, titled `title`, and calls `onClose` when the player closes it.
 
 ```tsx
 import { useState } from 'react'
@@ -1131,7 +1131,7 @@ export const App = () => (
 
 ### `UiStringKey`, `Words` and `Say`
 
-`UiStringKey` is a key of the UI's own English words, without the `ui.` prefix, and [The React UI](/docs/reference/react#words) lists them. Their types are in [`UiStringKey`](/docs/api/react#uistringkey), [`Words`](/docs/api/react#words) and [`Say`](/docs/api/react#say). A `Words` is a table of words by key, such as a plugin UI's `SHOP_WORDS`. A `Say` is the function that words a key with its `{name}` values filled in.
+`UiStringKey` is a key of the UI's own English words, without the `ui.` prefix, and [The React UI](/docs/reference/react#strings) lists them. Their types are in [`UiStringKey`](/docs/api/react#uistringkey), [`Words`](/docs/api/react#words) and [`Say`](/docs/api/react#say). A `Words` is a table of words by key, such as a plugin UI's `SHOP_WORDS`. A `Say` is the function that words a key with its `{name}` values filled in.
 
 ### useWords
 
@@ -1145,123 +1145,4 @@ function JournalHeading() {
   const words = useWords(QUESTS_WORDS)
   return <h3>{words('quests')}</h3>
 }
-```
-
-## shadcn/ui primitives
-
-The primitives are [shadcn/ui](https://ui.shadcn.com)'s components, exported from `@ifloom/react/kit` so a game's own screens match, and styled by the same theme tokens. shadcn/ui's documentation for each applies. The game components render plain elements with [`buttonVariants`](#button) and [`badgeVariants`](#badge) classes through [`usePart`](#usepart), so `classes` and `unstyled` reach every one. [Add panels, sections, components and hints](/docs/how-to/react/extend-the-react-ui) adds a primitive this package lacks.
-
-### Button
-
-`Button` renders a button with a `variant` and a `size`. Its props are in [`ButtonProps`](/docs/api/react-kit#buttonprops). [`buttonVariants`](/docs/api/react-kit#buttonvariants) returns the classes, for an element that should look like one, and `asChild` puts the look on its one child.
-
-```tsx given
-import { Button, buttonVariants } from '@ifloom/react/kit'
-
-<>
-  <Button variant="outline" size="sm" onClick={() => runner.undo()}>Undo</Button>
-  <a className={buttonVariants({ variant: 'link' })} href="https://example.com/credits">Credits</a>
-</>
-```
-
-### Badge
-
-`Badge` renders a small pill for a count or a status. Its props are in [`BadgeProps`](/docs/api/react-kit#badgeprops), and [`badgeVariants`](/docs/api/react-kit#badgevariants) returns its classes.
-
-```tsx
-import { Badge } from '@ifloom/react/kit'
-
-<Badge variant="secondary">Open till 6</Badge>
-```
-
-### Card
-
-`Card` renders a bordered box, with `CardHeader`, `CardTitle` (an `h3`), `CardDescription` (a `p`), `CardContent` and `CardFooter` for its parts. Their props are in [`Card`](/docs/api/react-kit#card).
-
-```tsx
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@ifloom/react/kit'
-
-<Card>
-  <CardHeader>
-    <CardTitle>The bakery</CardTitle>
-    <CardDescription>Fresh at seven.</CardDescription>
-  </CardHeader>
-  <CardContent>Two loaves left.</CardContent>
-  <CardFooter><Button size="sm">Buy one</Button></CardFooter>
-</Card>
-```
-
-### Dialog
-
-`Dialog` renders a modal on Radix's Dialog, with `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription` and `DialogClose`. Its props are in [`Dialog`](/docs/api/react-kit#dialog), and the box's in [`DialogContentProps`](/docs/api/react-kit#dialogcontentprops).
-
-`DialogContent` is the box, with an overlay and a close button, and needs a `DialogTitle` for screen readers. Its `bare` drops the built-in classes on all three, and `overlayProps` and `closeProps` pass attributes to the overlay and the close button. The [`GameMenu`](#gamemenu) and [`DeviceDialog`](/docs/reference/plugins/devices#devicedialog) use `bare` with [`usePart`](#usepart).
-
-```tsx
-import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@ifloom/react/kit'
-
-<Dialog>
-  <DialogTrigger asChild><Button variant="outline">Map</Button></DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Small Town</DialogTitle>
-      <DialogDescription>Your flat, the high street, the café, the park and the office.</DialogDescription>
-    </DialogHeader>
-    <DialogClose asChild><Button>Close</Button></DialogClose>
-  </DialogContent>
-</Dialog>
-```
-
-### ScrollArea
-
-`ScrollArea` renders a box that scrolls with a slim scrollbar, and needs a height. Its props are in [`ScrollArea`](/docs/api/react-kit#scrollarea).
-
-```tsx given
-import { ScrollArea } from '@ifloom/react/kit'
-
-<ScrollArea className="h-64">{runner.snapshot().backlog.map((entry, index) => <p key={index}>{entry.title}</p>)}</ScrollArea>
-```
-
-### Separator
-
-`Separator` renders a thin rule, `'horizontal'` unless its `orientation` says `'vertical'`. Its props are in [`Separator`](/docs/api/react-kit#separator).
-
-### Tabs
-
-`Tabs` renders tabs on Radix's Tabs, with `TabsList`, `TabsTrigger` and `TabsContent`, each trigger sharing a `value` with its content. Its props are in [`Tabs`](/docs/api/react-kit#tabs).
-
-```tsx
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ifloom/react/kit'
-
-<Tabs defaultValue="today">
-  <TabsList>
-    <TabsTrigger value="today">Today</TabsTrigger>
-    <TabsTrigger value="week">This week</TabsTrigger>
-  </TabsList>
-  <TabsContent value="today">Market day.</TabsContent>
-  <TabsContent value="week">The café shuts early on Sunday.</TabsContent>
-</Tabs>
-```
-
-### Tooltip
-
-`Tooltip` renders a hint on hover or focus on Radix's Tooltip, with `TooltipTrigger` and `TooltipContent`. Its props are in [`Tooltip`](/docs/api/react-kit#tooltip). Each tooltip needs a `TooltipProvider` above it, and [`GameShell`](#gameshell) adds none, since the game components use no tooltips.
-
-```tsx
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@ifloom/react/kit'
-
-<Tooltip>
-  <TooltipTrigger asChild><Button size="icon" variant="ghost">?</Button></TooltipTrigger>
-  <TooltipContent>The café's hours are on the door.</TooltipContent>
-</Tooltip>
-```
-
-### cn
-
-`cn` returns class names joined, skipping falsy ones, with a later Tailwind class winning over an earlier one that sets the same thing. Its signature is in [`cn`](/docs/api/react-kit#cn). It's shadcn/ui's `cn`.
-
-```ts
-import { cn } from '@ifloom/react/kit'
-
-cn('p-4 text-sm', false, 'p-2') // 'text-sm p-2'
 ```

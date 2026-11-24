@@ -224,7 +224,7 @@ const classes: Classes = {
 mountGame(module.build(), { classes })
 ```
 
-A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/docs/reference/react/components#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
+A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/docs/reference/react/kit#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
 
 Every part named in the [reference](#the-data-part-reference) takes classes. When several elements share a name, such as `button` or `beat`, the classes go on all of them.
 

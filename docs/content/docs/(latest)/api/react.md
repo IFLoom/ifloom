@@ -1029,7 +1029,7 @@ Uses: [`GameShellProps`](#gameshellprops).
 
 ## GameShellProps
 
-Type. Explained in [The React UI](/docs/reference/react#gameshellprops).
+Type.
 
 The props of `GameShell`, the `GameProviderProps` without `children`, with a layout, pages and sound.
 
@@ -2167,7 +2167,7 @@ const Picture: ComponentType<ClassAttributes<HTMLImageElement> & ImgHTMLAttribut
 
 ## Plugins
 
-Component. Explained in [The React UI](/docs/reference/react#plugins).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#plugins).
 
 Renders the components the game's plugin UIs place at one spot of the layout, in `plugins` order. The `room` spot
 renders nothing while a minigame runs, since the minigame replaces the room.
@@ -2227,7 +2227,7 @@ Uses: [`Price`](/docs/api/engine#price).
 
 ## Reveal
 
-Type.
+Type. Explained in [Presentation hints](/docs/reference/react/hints#reveal-1).
 
 The value of a block's `ui.reveal` hint, which holds the block back and then brings it in.
 

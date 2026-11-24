@@ -183,7 +183,7 @@ export function Layout() {
 
 A layout is a React component inside the game's provider, so it can hold anything: your own components, hooks, JSX conditionals. The side column on the right is only CSS (see [Rearrange the parts in layout.tsx](/docs/reference/react/customising#5-rearrange-the-parts-in-layouttsx)), and a header bar or another shape of page is plain markup between the regions (see [Change the shape of the page](/docs/reference/react/customising#7-change-the-shape-of-the-page)).
 
-You don't have to use the regions at all. Without `GameShell`, wrap your page in a [`GameProvider`](/docs/reference/react/components#gameprovider), and add a [`TooltipProvider`](/docs/reference/react/components#tooltip) if anything in it uses tooltips:
+You don't have to use the regions at all. Without `GameShell`, wrap your page in a [`GameProvider`](/docs/reference/react/components#gameprovider), and add a [`TooltipProvider`](/docs/reference/react/kit#tooltip) if anything in it uses tooltips:
 
 ```tsx given
 import { createRoot } from 'react-dom/client'
@@ -276,7 +276,7 @@ A game that sets `components.StatList` gets its own component wherever `StatsBar
 
 ## More shadcn/ui components
 
-The UI exports the primitives it uses: [`Button`](/docs/reference/react/components#button), [`Badge`](/docs/reference/react/components#badge), [`Card`](/docs/reference/react/components#card), [`Dialog`](/docs/reference/react/components#dialog), [`ScrollArea`](/docs/reference/react/components#scrollarea), [`Separator`](/docs/reference/react/components#separator), [`Tabs`](/docs/reference/react/components#tabs) and [`Tooltip`](/docs/reference/react/components#tooltip). For anything else shadcn/ui has, such as a slider, a select or a sheet, add it to your own project the shadcn/ui way, with its CLI or by copying the component in.
+The UI exports the primitives it uses: [`Button`](/docs/reference/react/kit#button), [`Badge`](/docs/reference/react/kit#badge), [`Card`](/docs/reference/react/kit#card), [`Dialog`](/docs/reference/react/kit#dialog), [`ScrollArea`](/docs/reference/react/kit#scrollarea), [`Separator`](/docs/reference/react/kit#separator), [`Tabs`](/docs/reference/react/kit#tabs) and [`Tooltip`](/docs/reference/react/kit#tooltip). For anything else shadcn/ui has, such as a slider, a select or a sheet, add it to your own project the shadcn/ui way, with its CLI or by copying the component in.
 
 It'll match the UI without extra work. shadcn/ui components are styled by the same CSS variables, and [`@ifloom/react/styles.css`](/docs/reference/react/customising#2-set-tokens-and-colours) already defines them all and maps them to Tailwind colours.
 
@@ -291,5 +291,5 @@ This writes `src/components/ui/slider.tsx` and installs the Radix package it nee
 **Gotchas.**
 
 - **Keep your stylesheet's variables.** `shadcn init` writes its own `:root` and `.dark` variables and an `@theme` block into the stylesheet you point it at. `@ifloom/react/styles.css` already has them, so delete the ones it wrote, or keep only those you mean to override, after the import.
-- **Either `cn` will do.** The CLI writes its own `lib/utils.ts` with `cn`. It's the same function as the UI's [`cn`](/docs/reference/react/components#cn), so use either.
+- **Either `cn` will do.** The CLI writes its own `lib/utils.ts` with `cn`. It's the same function as the UI's [`cn`](/docs/reference/react/kit#cn), so use either.
 - **Import Tailwind once.** If the CLI adds `@import "tailwindcss"` to your stylesheet, remove it. The UI's stylesheet already imports it. If you'd rather keep your own import, use `@ifloom/react/theme.css` in place of `styles.css` (see [Bringing your own Tailwind](/docs/reference/react/customising#bringing-your-own-tailwind)).

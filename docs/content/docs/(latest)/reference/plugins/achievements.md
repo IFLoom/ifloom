@@ -180,7 +180,7 @@ A secret achievement not yet earned shows as `???`. One with progress not yet ea
 
 Renders a button labelled **Achievements** with the count earned on a badge. Its props are in [`AchievementsButton`](/docs/api/plugin-achievements#achievementsbutton).
 
-With pages on and the achievements page present, it goes to the [`AchievementsPage`](#achievementspage). Otherwise it opens an `AchievementList` in a [`Dialog`](/docs/reference/react/components#dialog). Opening it sends no command, and it renders nothing in a game without the plugin. A game replaces it as `AchievementsButton` in `components`. Its parts are `achievements-button` and `badge`, and its dialog's are `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
+With pages on and the achievements page present, it goes to the [`AchievementsPage`](#achievementspage). Otherwise it opens an `AchievementList` in a [`Dialog`](/docs/reference/react/kit#dialog). Opening it sends no command, and it renders nothing in a game without the plugin. A game replaces it as `AchievementsButton` in `components`. Its parts are `achievements-button` and `badge`, and its dialog's are `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
 ### AchievementsPage
 

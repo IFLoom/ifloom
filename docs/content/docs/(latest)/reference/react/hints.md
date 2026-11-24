@@ -1,95 +1,74 @@
 ---
 title: "Presentation hints"
-description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, dice drawn above a line, a countdown under one, stat bars and pips, the colour of a person's lines, and inline pieces in prose such as a popup or a picture to open. With checkUiHints to catch typos."
+description: "Reference for the ui hints and inline pieces the React UI reads from content: transitions, reveals, dice, countdowns, tilted pictures, folds, stat bars and pips, speaker colours, ui settings, and checkUiHints with its types."
 ---
-This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
+This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 
-How a game looks and moves is the UI's business, not the engine's. Content says what it would like in a `ui` field on a scene, a choice, a block, a stat, a kind, an entity, a place or the game, and the engine carries that to the view as written. [Presentation hints](/docs/reference/ui-hints) in the reference explains the mechanism. This page lists the hints the React UI reads.
+A ui hint is a `ui` field content writes on a scene, a choice, a block, a stat, a kind, an entity, a location or the game, which the engine carries to the view as written. [Presentation hints](/docs/reference/ui-hints) explains the mechanism, and this page lists the hints the React UI reads. [Add a transition or reveal lines](/docs/how-to/add-a-transition) uses them. In the showcase: `examples/showcase/src/story/moving-day.ts`.
 
-| Hint | Written on | What the React UI does |
-|---|---|---|
-| [`transition`](#transition) | A scene, a place, the game | How the screen comes on and goes off. |
-| [`transition`](#transition-on-a-choice) | A choice, an action | How the screen it leads to comes in. |
-| [`reveal`](#reveal) | A block | The block waits, then comes in. |
-| [`dice`](#dice) | A block | The roll under that key is drawn above the block, which waits for the dice to settle. |
-| [`timer`](#timer) | A block | The running timer by that id counts down under the block. |
-| [`tilt`](#tilt) | A block | Its picture sits at a slight angle. |
-| [`fold`](#fold) | A section | Its beats are one part the player opens and shuts. |
-| [your own](#your-own-hints) | A section | Its beats are one `group` part, with the hint as a `data-*` attribute. |
-| [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
-| [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
-| [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
-| [`settings`](#settings) | The game | The ui settings the React UI honours itself: a text size and a pictures switch. |
+| Key | Meaning |
+|---|---|
+| [`transition`](#transition) | On a scene, a location or the game, how the screen comes on and goes off. On a choice or an action, how the screen it leads to comes in. |
+| [`transitionNames`](#transitionnames) | On the game, the transition names of the game's own. |
+| [`reveal`](#reveal) | On a block, a wait before the block comes in. |
+| [`dice`](#dice) | On a block, the roll rendered above it, which the block waits for. |
+| [`timer`](#timer) | On a block, the running timer that counts down under it. |
+| [`tilt`](#tilt) | On a block, its picture set at a slight angle. |
+| [`fold`](#fold) | On a section, the words the player opens and shuts its beats by. |
+| [`display`](#display) | On a stat, a number, a bar or pips. |
+| [`hue`](#hue) | On an entity or a kind, the colour of their spoken lines. |
+| [`settings`](#settings) | On the game, the ui settings the React UI applies itself. |
 
-Prose can also hold [inline pieces](#inline-pieces), `[[ui:name|words|arg]]`, which the React UI draws by name: a popup with a prose line, a picture to open, a letter, a note, a sign, or a component of your own.
+Importing `@ifloom/react` anywhere in a game types these hints, so `ui: { display: 'dial' }` on a stat is a type error. A hint the React UI doesn't know still compiles, so another UI or a mod can add its own, and [`checkUiHints`](#checkuihints) reports one the types let through. Prose holds [inline pieces](#inlineui) too, `[[ui:name|words|arg]]`, which the React UI renders by name.
 
-Importing `@ifloom/react` anywhere in your game types them: `ui: { display: 'bar' }` on a stat is checked, and `display: 'dial'` is a type error. A hint the React UI doesn't know still compiles, so another UI or a mod can add its own. [`checkUiHints`](#checkuihints) catches a typo the types let through.
-
-The [Transitions recipe](/docs/recipes/transitions) walks through transitions and reveals, and how to draw the same hints with another framework.
+[`Scene`](/docs/reference/react/components#scene) renders the beats of a section with any hint, the React UI's or the game's own, as one `group` part. It copies each of the section's hints that's a string, a number or `true`/`false` onto the group as a `data-*` attribute, its camel-case name written in dashes, so `ui: { card: 'result' }` renders `data-card="result"`. A hint on a single block makes no group, and a hint that's an object or a list isn't copied. [Add panels, sections, components and hints](/docs/how-to/react/extend-the-react-ui) declares and styles a hint of the game's own.
 
 ## transition
 
-```ts fragment
-{
-  id: 'ava.river',
-  title: 'By the river',
-  ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
-  body: [{ prose: 'ava.river' }],
-  choices: [/* ... */],
-}
-```
+`transition` sets how a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. Its value is a [`Transition`](#transition-1) or a [`TransitionName`](#transitionname), and a name on its own means the same both ways.
 
-How a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. A name on its own means the same both ways, so `ui: { transition: 'fade' }` is `{ in: 'fade', out: 'fade' }`. On a [scene](/docs/reference/scenes#datascene) it's that scene's. On a [place](/docs/reference/plugins/places#the-location-trait) it's the room's while no scene is open, so walking between places can slide. In the content's `ui`, the game's own hints, it's the default for every screen that says nothing, part by part: a scene that sets only `in` takes `out` and `ms` from the game's.
+On a [scene](/docs/reference/scenes#datascene) it is that scene's. On a [location](/docs/reference/plugins/places#place) it is the room's while no scene is open. In the content's own `ui` it is the default for every screen that sets none, field by field, so a scene that sets only `in` takes `out` and `ms` from the game's. With no hint anywhere, a screen swaps at once with `'none'`, and `ms` is 300 when nothing sets it.
+
+On a choice or an [action](/docs/reference/actions), `transition` sets how the screen it leads to comes in, over whatever that screen says. A bare name there is only the `in`, and an `out` changes how the screen the choice leaves goes off. The runner records the choice that led to the screen in its snapshot's [`pressed`](/docs/reference/runner#runnersnapshot), so a click, a number key, an inline action and a hotspot all count.
+
+`Scene` plays a transition only when [`view.scene.key`](/docs/reference/view#view) changes: a new scene, a minigame or another room. A choice that keeps the same scene open plays nothing. The scene before stays on the page, inert and hidden from screen readers, for its `out`, and the new one comes in by its `in`. [`useScene`](/docs/reference/react/components#usescene) returns the same transition for a part of your own.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
-export const town: Content = {
+export const flat: Content = {
   ui: { transition: { in: 'fade', ms: 250 } },
-  scenes: [/* ... */],
+  scenes: [
+    {
+      id: 'flat.window',
+      title: 'By the window',
+      ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
+      body: [{ text: 'The high street is waking up.' }],
+      choices: [{ id: 'unpack', label: 'Unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ scene: null }] }],
+    },
+  ],
 }
 ```
 
-With no hint anywhere, a screen comes in and goes out with `'none'`, which is an instant swap. `ms` is 300 when nothing says.
-
-`Scene` plays a transition only when [`view.scene.key`](/docs/reference/view#the-scene) changes: a new scene, a minigame, or another room. A choice that keeps the same scene open plays nothing. The scene before is kept on the page, inert and hidden from screen readers, for its `out`, then the new one comes in by its `in`.
-
 ### TransitionName
 
-```ts shape
-import { TRANSITIONS, type TransitionName, type Transition } from '@ifloom/react'
+`TransitionName` is one of the built-in transitions in `TRANSITIONS`, or a name of the game's own from [`transitionNames`](#transitionnames). Its type is in [`TransitionName`](/docs/api/react#transitionname), and the list in [`TRANSITIONS`](/docs/api/react#transitions).
 
-const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
-type TransitionName = (typeof TRANSITIONS)[number] | (string & {})
-```
-
-| Name | Coming in | Going out |
-|---|---|---|
-| `fade` | Fades up from nothing. | Fades away. |
-| `slide-up` | Rises into place from a little below. | Rises and fades. |
-| `slide-left` | Slides in from the right. | Slides off to the left. |
-| `zoom` | Grows slightly into place. | Grows slightly and fades. |
-| `none` | Appears at once. | Goes at once. |
-
-A transition takes 300 milliseconds when nothing says.
+| Key | Meaning |
+|---|---|
+| `fade` | The screen fades up from nothing, and fades away. |
+| `slide-up` | The screen rises into place from a little below, and rises and fades. |
+| `slide-left` | The screen slides in from the right, and slides off to the left. |
+| `zoom` | The screen grows slightly into place, and grows slightly and fades. |
+| `none` | The screen appears and goes at once. |
 
 ### Transition
 
-The value of a `transition` hint, on a scene, a choice or the game.
+`Transition` is the object form of a `transition` hint. Every field is in [`Transition`](/docs/api/react#transition). `in` and `out` are the game's, else `'none'`, if left out, and `ms` is 300.
 
-```ts shape
-type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
-```
+## transitionNames
 
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `in` | `TransitionName` | the game's, else `'none'` | How the screen comes in. |
-| `out` | `TransitionName` | the game's, else `'none'` | How it goes out when the next one comes. |
-| `ms` | `number` | `300` | How long each takes, in milliseconds. |
-
-### Your own transition names
-
-List names of your own in the content's `ui.transitionNames` and draw them with CSS keyed on `data-transition-in`, `data-transition-out` and `data-reveal`. The recipe has [an example](/docs/recipes/transitions#your-own-names). A name is lower-case letters, digits and `-`.
+`transitionNames` on the game lists transition names of its own, which a stylesheet renders with CSS keyed on `data-transition-in`, `data-transition-out` and `data-reveal`. A name is lower-case letters, digits and `-`. [Add a transition or reveal lines](/docs/how-to/add-a-transition) styles one.
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -97,230 +76,139 @@ import type { Content } from '@ifloom/engine'
 export const town: Content = { ui: { transitionNames: ['curtain'] } }
 ```
 
-### transition on a choice
-
-```ts fragment
-{ id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ scene: null }] }
-```
-
-How the screen this choice leads to comes in, whatever that screen says. A bare name is only the `in`. An `out` changes how the screen the choice leaves goes off. It works the same on an [action](/docs/reference/actions), a room's button.
-
-The runner says which choice led to the screen, in its snapshot's [`pressed`](/docs/reference/runner#what-led-here), from the command it ran, so a click, a number key, an inline action and a hotspot all count. It plays the hint once, for the screen the choice leads to. When the choice keeps the same screen, nothing plays.
-
-To animate a part of your own as the scene does, read the screen's transition from [`useScene`](/docs/reference/react/components#usescene):
-
-```tsx
-import { useScene } from '@ifloom/react'
-
-function Heading() {
-  const { view, transition, motion } = useScene()
-  return (
-    <h2 key={transition.key} data-transition-in={motion ? transition.in : undefined}>
-      {view.scene.title}
-    </h2>
-  )
-}
-```
-
 ## reveal
 
+`reveal` on a [block](/docs/reference/scenes#block) makes it wait `delay` milliseconds after the reveal before it, or after the scene comes on, then come in with `as`. Its value is a [`Reveal`](/docs/api/react#reveal). `delay` is 800 and `as` is `'fade'` if left out.
+
+The hint arrives on the first beat the block makes, and every beat from there waits, up to the next block with a reveal. `Scene` renders each revealed run in a `reveal` part with `data-reveal` and `--ifloom-reveal-at`, and holds the choices back until the last. Every word is in the page from the start, so a screen reader reads it. A click on the scene or any key shows the rest at once, and a player who asks for reduced motion sees it all at once.
+
+Delays add up, so blocks with delays of 800 and 1500 come in at 800 and 2300. [`useScene`](/docs/reference/react/components#usescene) returns the runs with these times, for a `Scene` of your own.
+
 ```ts
-body: [
+import type { Block } from '@ifloom/engine'
+
+export const body: Block[] = [
   { prose: 'intro' },
   { prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } },
   { prose: 'intro.cat', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): it waits `delay` milliseconds after the reveal before it, or after the scene comes on, then comes in with `as`. `delay` is 800 and `as` is `'fade'` if left out. A paragraph that should wait goes in a block of its own. The block's hint arrives on the first beat it makes, and everything from there waits, up to the next block with a reveal.
+### Reveal
 
-```ts shape
-import { type Reveal } from '@ifloom/react'
-
-type Reveal = { delay?: number; as?: TransitionName }
-```
-
-`Scene` draws each revealed run of beats in a `reveal` part with `data-reveal` and `--ifloom-reveal-at`, and holds the choices back until the last. Every word is in the page from the start, so a screen reader reads it. A click on the scene or any key shows the rest at once, and a player who asks for reduced motion gets it all at once.
-
-[`useScene`](/docs/reference/react/components#usescene) gives the runs as `Scene` times them, with when each comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. Use it in a `Scene` of your own to keep the same timing.
+`Reveal` is the value of a `reveal` hint, its `delay` and its `as`. Every field is in [`Reveal`](/docs/api/react#reveal).
 
 ## dice
 
+`dice` on a [block](/docs/reference/scenes#block) is the key of a [roll](/docs/reference/rolls). When the last command rolled under that key, `Scene` renders the roll's [`DiceRoll`](/docs/reference/react/components#diceroll) above the block.
+
+The dice tumble for a second and settle on the faces rolled, then the total and Passed or Failed come in. The block and everything after it wait in a `reveal` part, so the words don't give the result away, and the choices wait too. A roll made before the last command shows settled. A roll no block names, such as a [trigger](/docs/reference/triggers)'s, shows for a moment over the scene in a [`DiceOverlay`](/docs/reference/react/components#diceoverlay). With motion off or reduced motion, the dice show settled at once, and a screen reader hears the result either way. [Roll dice for a check](/docs/how-to/roll-dice) builds a whole check.
+
 ```ts
-body: [
-  { prose: 'place.park.stones' },   // 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].'
+import type { Block } from '@ifloom/engine'
+
+export const body: Block[] = [
+  { prose: 'place.park.stones' },
   { prose: 'park.skim.passed', when: { roll: 'skim', passed: true }, ui: { dice: 'skim' } },
   { prose: 'park.skim.failed', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `Scene` draws the roll's [`DiceRoll`](/docs/reference/react/components#diceroll) just above the block. The dice tumble for a second and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
-
-A roll the player made before the last command is drawn settled, with nothing held back. A roll no block names, such as one a [trigger](/docs/reference/triggers) made, shows for a moment over the scene in a [`DiceOverlay`](/docs/reference/react/components#diceoverlay). With motion off, or a player who asks for reduced motion, the dice show settled at once. Either way a screen reader hears the result.
-
-The [Dice rolls and checks](/docs/recipes/dice) recipe builds the whole check.
-
 ## timer
 
+`timer` on a [block](/docs/reference/scenes#block) is the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `Scene` renders its [`Countdown`](/docs/reference/react/components#countdown) under the block.
+
+The countdown shows the timer's label, a bar that empties with each tick and the seconds left, and carries `data-urgent` with a quarter or less to go. With motion off or reduced motion it shows only the seconds. It goes when the timer runs out or stops. The hint only renders the timer, which runs out on time whether anything renders it or not, and [`Timers`](/docs/reference/react/components#timers) renders every running one elsewhere. [Add a countdown](/docs/how-to/add-a-countdown) builds a timed choice.
+
 ```ts
-body: [
-  { prose: 'flat.ring', ui: { timer: 'flat.ring' } },   // 'Your phone is ringing on the sill. Ava. Answer before it stops.'
-]
+import type { Block } from '@ifloom/engine'
+
+export const body: Block[] = [{ prose: 'flat.ring', ui: { timer: 'flat.ring' } }]
 ```
-
-On a [block](/docs/reference/scenes#block): the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `Scene` draws its [`Countdown`](/docs/reference/react/components#countdown) just under the block: the timer's label, a bar that empties with each tick, and the seconds left. With a quarter or less to go, the countdown is marked `data-urgent`. With motion off, or a player who asks for reduced motion, it shows only the seconds. Once the timer runs out or is stopped, the countdown goes.
-
-The hint only draws the timer. The game's clock runs whether or not anything draws it, so a timer no block names still runs out on time. To show one elsewhere, put `Countdown` or `Timers` in your layout.
-
-The [Timed choices and countdowns](/docs/recipes/timers) recipe builds a whole timed choice.
 
 ## tilt
 
+`tilt` on a [block](/docs/reference/scenes#block) set to `true` sets the block's picture at a slight angle, like a photo dropped on a table. The engine's picture markup has no flag for it, since the angle is presentation.
+
 ```ts
-body: [{ prose: 'flat.photo', ui: { tilt: true } }]   // '[[img:photo/ava.svg|Ava at the café]]'
+import type { Block } from '@ifloom/engine'
+
+export const body: Block[] = [{ prose: 'flat.photo', ui: { tilt: true } }]
 ```
 
-On a [block](/docs/reference/scenes#block): `true` sets the block's picture at a slight angle, like a photo dropped on a table. The engine's picture markup has no flag for it, since how a picture sits is the UI's.
-
 ## fold
+
+`fold` on a section, `{ blocks }`, is the words the player opens its beats by. The engine's [`fold`](/docs/reference/flows#fold) builder writes it.
+
+The engine carries a section's hints on every beat it makes, as the beat's `section`. `Scene` renders those beats in a `<details>` with the words as its summary, shut at first, inside the section's `group` part. A fold is presentation only and keeps no state.
 
 ```ts
 import { fold, text } from '@ifloom/engine'
 
-fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chips are good. J.`)])
-// { blocks: [{ text: '…' }], ui: { fold: 'Read the postcard' } }
+export const postcard = fold('Read the postcard', [text('Wish you were here. The sea is cold and the chips are good. J.')])
 ```
-
-On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `Scene` draws the beats together in a `<details>` with these words as its summary, shut to begin with, inside the section's `group` part (see [Your own hints](#your-own-hints)). A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).
-
-## Your own hints
-
-A section with any hint on it, the React UI's or one of your own, is drawn as one `group` part around its beats. Each of its hints that's a string, a number or `true`/`false` is copied onto the group as a `data-*` attribute, with a camel-case name written in dashes. So a hint of your own is enough to style a whole section as a card, with no component to write.
-
-Say the café wants the end of a shift drawn as a result card. Declare the hint, so content using it is typed:
-
-```ts
-// src/rules.ts, or any file the game imports
-declare module '@ifloom/engine' {
-  interface BlockUi {
-    /** Draw the section as a card of this kind. */
-    card?: 'result' | 'nudge'
-  }
-}
-```
-
-Write it on a section:
-
-```ts
-import { text } from '@ifloom/engine'
-
-body: [
-  text('The lunch rush comes and goes.'),
-  { blocks: [text('You made 30 coins.'), text('Ava says thanks.')], ui: { card: 'result' } },
-]
-```
-
-`Scene` draws the section as `<div data-part="group" data-card="result">` holding both beats. Style it in your stylesheet:
-
-```css
-[data-part='group'][data-card='result'] {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-  padding: 1rem;
-}
-```
-
-Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read. A plugin UI that reads a hint of its own [declares it](#uihint) instead:
-
-```ts given
-import { checkUiHints } from '@ifloom/react'
-import { expect } from 'vitest'
-
-expect(checkUiHints(game, { allow: ['card'] })).toEqual([])
-```
-
-A hint on a single block, not a section, makes no group, since the beat is one element already. Wrap the block in `{ blocks: [...] }` to give it one. A hint that's an object or a list isn't copied, so it stays out of the markup.
 
 ## display
 
+`display` on a [stat](/docs/reference/stats#statdef) sets how the [`StatList`](/docs/reference/react/components#statlist) and the cast UI's [`Relationships`](/docs/reference/plugins/cast#relationships) render it. Its value is a [`StatDisplay`](#statdisplay).
+
+`'number'`, the default, is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, and a range over 20 renders as a bar and `checkUiHints` reports it. [`StatGauge`](/docs/reference/react/kit#statgauge) renders the bar and the pips.
+
 ```ts
-stats: [
+import type { StatDef } from '@ifloom/engine'
+
+export const stats: StatDef[] = [
   { id: 'energy', label: 'Energy', start: 80, max: 100, ui: { display: 'bar' } },
   { id: 'charm', label: 'Charm', start: 1, max: 20, ui: { display: 'pips' } },
 ]
 ```
 
-On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/reference/react/components#statlist) and [`Relationships`](/docs/reference/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of 20 or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
-
 ### StatDisplay
 
-The value of a stat's `display` hint.
-
-```ts shape
-import type { StatDisplay } from '@ifloom/react'
-
-type StatDisplay = 'number' | 'bar' | 'pips'
-```
+`StatDisplay` is the value of a stat's `display` hint, `'number'`, `'bar'` or `'pips'`. Its type is in [`StatDisplay`](/docs/api/react#statdisplay).
 
 ## hue
+
+`hue` on an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/reference/entities#kinddef) for all its entities, is a colour as a hue from 0 to 360. While a scene's [speaker](/docs/reference/view#speakerview) has one, `Scene` colours their spoken lines with it, lighter in dark mode.
+
+`Scene` also sets `data-speaker-hue` and `--ifloom-speaker-hue` on the scene, for a stylesheet's own rules.
 
 ```ts
 import { cast } from '@ifloom/plugin-cast'
 
-cast.person({ id: 'ava', name: 'Ava', ui: { hue: 20 }, home: 'park', talk: 'ava.hi' })
-```
-
-On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/reference/entities#kinddef) for all of its entities: a colour as a hue from 0 to 360. While a scene's [speaker](/docs/reference/view#speakerview) has one, `Scene` colours their spoken lines with it, lighter in dark mode. It sets `data-speaker-hue` and `--ifloom-speaker-hue` on the scene for your own CSS too:
-
-```css
-[data-speaker-hue] [data-part="scene-title"] {
-  color: oklch(0.5 0.12 var(--ifloom-speaker-hue));
-}
+export const ava = cast.person({ id: 'ava', name: 'Ava', ui: { hue: 20 }, home: 'park', talk: 'ava.hi' })
 ```
 
 ## settings
+
+`settings` on the game names the [ui settings](/docs/reference/settings) the React UI applies itself, by each setting's id. The settings page renders them as it renders any other.
+
+- **`textSize`** names a ui `choice` setting. [`TextSize`](/docs/reference/react/components#textsize), which `GameShell` renders, copies its value to `data-text-size` on `<html>`. The styles size the page from its root for `small` (87.5%), `normal` (the browser's own), `large` (118.75%) and `larger` (137.5%), and the UI is sized in `rem`, so everything scales.
+- **`images`** names a ui `toggle` setting. While it's off, [`Picture`](/docs/reference/react/components#picture) and [`Video`](/docs/reference/react/components#video) render nothing. A [`LayeredPicture`](/docs/reference/react/components#layeredpicture) stays, since its hotspots are part of play.
+
+A sound switch is the engine's, since the audio player reads it too, and the game names it in [`audio.sound`](/docs/reference/audio#gameaudio) or `audio.mute`.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
 export const settings: Content = {
   settings: [
-    {
-      id: 'textSize',
-      label: 'Text size',
-      type: 'choice',
-      affects: 'ui',
-      options: [
-        { value: 'normal', label: 'Normal' },
-        { value: 'large', label: 'Large' },
-      ],
-      default: 'normal',
-    },
+    { id: 'textSize', label: 'Text size', type: 'choice', affects: 'ui', options: [{ value: 'normal', label: 'Normal' }, { value: 'large', label: 'Large' }], default: 'normal' },
     { id: 'pictures', label: 'Show pictures', type: 'toggle', affects: 'ui', default: true },
   ],
   ui: { settings: { textSize: 'textSize', images: 'pictures' } },
 }
 ```
 
-On the game: which of its [ui settings](/docs/reference/settings) the React UI honours itself, by the setting's id. The settings page draws them as it draws any other, and nothing else is needed:
-
-- **`textSize`** names a ui `choice`. [`TextSize`](/docs/reference/react/components#textsize), which `GameShell` draws, copies its value to `data-text-size` on `<html>`, now and whenever it changes, so it applies on every page, the title's included. The styles size the page from its root for `small` (87.5%), `normal` (the browser's own), `large` (118.75%) and `larger` (137.5%). Everything is sized in `rem`, so the whole page scales. An option of another name needs CSS of your own, `:root[data-text-size="huge"] { font-size: 150%; }`.
-- **`images`** names a ui `toggle`. While it's off, [`Picture`](/docs/reference/react/components#picture) and [`Video`](/docs/reference/react/components#video) draw nothing: a scene's picture, pictures in the prose, portraits, a place's picture. A [`LayeredPicture`](/docs/reference/react/components#layeredpicture) stays, since its hotspots are part of play.
-
 ### TEXT_SIZES
 
-```ts shape
-const TEXT_SIZES: readonly ['small', 'normal', 'large', 'larger']
-```
-
-The `textSize` options the styles draw, in order. Use it for the options of your own text-size setting, so each one is a size the React UI knows:
+`TEXT_SIZES` is the `textSize` options the styles size, in order: `small`, `normal`, `large` and `larger`. Its value is in [`TEXT_SIZES`](/docs/api/react#text_sizes). An option of another name needs CSS of the game's own, such as `:root[data-text-size="huge"] { font-size: 150%; }`.
 
 ```ts
 import { TEXT_SIZES } from '@ifloom/react'
 import type { SettingDef } from '@ifloom/engine'
 
-const textSize: SettingDef = {
+export const textSize: SettingDef = {
   id: 'textSize',
   label: 'Text size',
   type: 'choice',
@@ -330,99 +218,47 @@ const textSize: SettingDef = {
 }
 ```
 
-A sound switch is the engine's, since the audio player reads it too: name it in the game's [`audio.sound`](/docs/reference/audio#gameaudio) (on is sound) or `audio.mute` (on is silence).
+## InlineUi
 
-## Inline pieces
+An inline piece is a [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…]]`, which the React UI renders with the component of that name. The React UI declares five names in the engine's [`InlineUi`](/docs/reference/ui-hints#inlineui):
 
-A [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…]]`, is drawn by the component of that name. The React UI has five:
-
-| Markup | What the player sees |
+| Key | Meaning |
 |---|---|
-| `[[ui:modal\|words\|key]]`, `[[ui:modal\|words\|key\|title]]` | The words as a link that opens a dialog with the prose line `key`, titled `title` or the words. See [`InlineModal`](/docs/reference/react/components#inlinemodal). |
-| `[[ui:image\|words\|path]]`, `[[ui:image\|words\|path\|alt]]` | The words as a link that opens the picture at `path` in the viewer, as a story's pictures open. See [`InlineImage`](/docs/reference/react/components#inlineimage). |
-| `[[ui:mail\|body\|From: Ava\|Subject: Hello]]` | A letter or an email as a card: the header lines as written, then the body. See [`InlineMail`](/docs/reference/react/components#inlinemail). |
-| `[[ui:prop\|words\|sticky]]` | A note in the story's world in a dashed box, by its face: `sticky`, `clip` or `diary`. See [`InlineProp`](/docs/reference/react/components#inlineprop). |
-| `[[ui:mono\|words]]` | The words in a monospace face, for a sign or a screen. See [`InlineMono`](/docs/reference/react/components#inlinemono). |
+| `modal` | `[[ui:modal\|words\|key\|title]]` renders the words as a link that opens a dialog with the prose line `key`, titled `title` or the words. [`InlineModal`](/docs/reference/react/components#inlinemodal) renders it. |
+| `image` | `[[ui:image\|words\|path\|alt]]` renders the words as a link that opens the picture at `path` in the viewer. [`InlineImage`](/docs/reference/react/components#inlineimage) renders it. |
+| `mail` | `[[ui:mail\|body\|From: Ava\|Subject: Hello]]` renders a letter as a card, the header lines as written and then the body. [`InlineMail`](/docs/reference/react/components#inlinemail) renders it. |
+| `prop` | `[[ui:prop\|words\|sticky]]` renders a note in a dashed box by its face, `sticky`, `clip` or `diary`. [`InlineProp`](/docs/reference/react/components#inlineprop) renders it. |
+| `mono` | `[[ui:mono\|words]]` renders the words in a monospace face, for a sign or a screen. [`InlineMono`](/docs/reference/react/components#inlinemono) renders it. |
+
+`mail`, `prop` and `mono` open nothing, and a `mail` or `prop` written as a paragraph of its own renders as one. The modal and the image render as buttons in the line, with the part `inline-ui` and `data-ui` set to the name. Escape, the close button or a click outside closes what they opened, and focus goes back to the words.
+
+A modal shows words and can't change the game. A dialog with buttons that change the game is a [panel](/docs/reference/panels) opened from an [inline action](/docs/reference/prose#inline-actions-and-tooltips), and [Show a popup](/docs/how-to/show-a-popup) writes both. A game adds pieces of its own, or replaces a built-in one, with [`inline`](/docs/reference/react/components#inlinecomponents). A name that neither `inline` nor the built-ins have shows its words as plain text.
 
 ```ts
-const prose = {
-  'place.flat':
-    "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it.",
-  'notice.welcome': 'Welcome to the building! Bins go out Thursday. The radiator knocks; ignore it. Sam, flat 2',
+export const prose = {
+  'place.flat': "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it.",
+  'notice.welcome': 'Welcome to the building! Bins go out Thursday. Sam, flat 2',
 }
 ```
 
-`mail`, `prop` and `mono` draw words and open nothing, and a `mail` or `prop` written as a paragraph of its own draws as one. A letter's body can run over blank lines. The modal and the image are buttons in the line, with the part [`inline-ui`](/docs/reference/react/customising#scenes) and `data-ui` set to the name, so a screen reader announces them as buttons that open a dialog. Escape, the close button or a click outside closes what they opened, and focus goes back to the words. Each preset styles the words differently from an inline action or a tooltip, and the dialog's text has the part `inline-modal`.
+## Functions
 
-A modal shows words and nothing else. It can't change the game, so it suits a note, a letter or a sign. For a dialog with buttons that do something, open a [panel](/docs/reference/panels) from an [inline action](/docs/reference/prose#inline-actions-and-tooltips). [Popups and modals](/docs/recipes/modals) shows both.
+### checkUiHints
 
-### Your own pieces
+`checkUiHints` returns the problems with a game's hints and inline pieces for the React UI, as `where: what` lines, or an empty list. Its signature is in [`checkUiHints`](/docs/api/react#checkuihints).
 
-Give the shell or the provider an `inline` object with a component per name. Each gets the piece's `name`, its words as `text` and its arguments as `args`. One with a built-in name replaces it:
-
-```tsx
-// src/main.tsx
-import { mountGame, InlineTrigger, type InlineComponents, type InlineProps } from '@ifloom/react'
-import { PartDialog } from '@ifloom/react/kit'
-import { useState } from 'react'
-import module from './game.ts'
-
-declare module '@ifloom/engine' {
-  interface InlineUi {
-    /** `[[ui:map|words|place]]`: the words open the town map with `place` marked. */
-    map: [place: string]
-  }
-}
-
-function TownMap({ text, args: [place] }: InlineProps<'map'>) {
-  const [open, setOpen] = useState(false)
-  return (
-    <>
-      <InlineTrigger name="map" open={open} onOpen={() => setOpen(true)}>
-        {text}
-      </InlineTrigger>
-      <PartDialog open={open} onClose={() => setOpen(false)} title="Small Town">
-        <img src={`art/map/${place}.svg`} alt={`The town map, with ${place} marked`} />
-      </PartDialog>
-    </>
-  )
-}
-
-// Outside any component, so it's the same object on every render.
-const inline: InlineComponents = { map: TownMap }
-
-mountGame(module.build(), { inline })
-// 'park.gate': 'A sign by the gate shows [[ui:map|where you are|park]].'
-```
-
-The `declare module` block types `args` for `map`. A name nothing declares still works, with `args` as text. A name that neither `inline` nor the built-ins have shows its words as plain text, so the line still reads.
-
-Nothing about a piece goes in a save or the log: the engine carries the markup and never sees it open. A piece's words are what the backlog and a screen reader keep. A piece can read the game with [`useGame`](/docs/reference/react/components#usegame), but anything it sends with `send` is a command like any other, so a piece that changes the game is better written as an inline action.
-
-**Gotcha.** The picture an `image` piece opens is only a piece of text to the engine, so `ifloom build` doesn't check the file is there, as it does for `[[img:…]]`. Open it once in the game.
-
-## checkUiHints
-
-```ts shape
-import { checkUiHints, type CheckUiOptions } from '@ifloom/react'
-import type { Game } from '@ifloom/engine'
-
-function checkUiHints(game: Game, options?: CheckUiOptions): string[]
-```
-
-What's wrong with a game's hints for the React UI, as `where: what` lines, or nothing when all is well. The engine's [content checker](/docs/reference/checks) only makes sure a hint is data, so this is where these are caught:
+The engine's [content checker](/docs/reference/checks) only makes sure a hint is data, so `checkUiHints` catches these:
 
 - a hint the React UI doesn't read, such as `ui.transiton`, or one written where it isn't read, such as a `reveal` on a scene
-- a transition name that is neither built in nor in the game's `ui.transitionNames`, or a negative `ms`
+- a transition name neither built in nor in `transitionNames`, or a negative `ms`
 - a reveal `delay` that isn't whole milliseconds
-- a `display` that isn't `'number'`, `'bar'` or `'pips'`, or pips on a range over 20
+- a `display` other than `'number'`, `'bar'` and `'pips'`, or pips on a range over 20
 - a `hue` outside 0 to 360
-- a block's `dice` that isn't a roll's key (letters, digits and `_`)
-- a block's `timer` that isn't one of the game's `timers`
-- a game's `settings` with a key other than `textSize` and `images`, a `textSize` that isn't a ui `choice` setting the game has or has an option the styles don't size, and an `images` that isn't a ui `toggle`
-- an [inline piece](#inline-pieces) in the prose whose name is neither built in, nor a plugin UI's, nor in `inline`, a `modal` with no prose key or one whose key has no prose, an `image` with no path, and either with more than two arguments
+- a block's `dice` that isn't a roll's key, or a block's `timer` that isn't one of the game's timers
+- a `settings` key other than `textSize` and `images`, a `textSize` that isn't a ui `choice` setting with options the styles size, or an `images` that isn't a ui `toggle`
+- an inline piece whose name is neither built in, nor a plugin UI's, nor in `inline`, a `modal` with no prose key or a missing one, an `image` with no path, and either with more than two arguments
 
-It finds every `ui` field and line of words with the engine's [`uiInContent`](/docs/reference/ui-hints#uiincontent), the same walk the content checker makes. So it reads scenes, choices, blocks and sections, actions, stats, kinds, entities, the game's own hints, whatever a plugin's content holds (a place's room and its body), every prose line, and every block of words written in place. A problem in a block names its scene, as `scene park block: ui.dice …`. Put it in a test beside the engine's checks:
+It walks the content with the engine's [`uiInContent`](/docs/reference/ui-hints#uiincontent), as the content checker does, so it reads every `ui` field, every prose line and every block of words written in place, a plugin's content included. A problem in a block names its scene, as `scene park block: ui.dice …`.
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -432,69 +268,41 @@ import module from '../src/game.ts'
 const { game } = module.build()
 
 describe('the content', () => {
-  it("has hints the React UI can draw", () => {
+  it('has hints the React UI can render', () => {
     expect(checkUiHints(game)).toEqual([])
   })
 })
 ```
 
-### UiHint
+### CheckUiOptions
 
-```ts shape
-import type { UiHint, HintCheckContext } from '@ifloom/react/kit'
-import type { Game } from '@ifloom/engine'
+`CheckUiOptions` is the settings for `checkUiHints`, naming the hints and pieces that aren't built in. Every field is in [`CheckUiOptions`](/docs/api/react#checkuioptions).
 
-type UiHint = {
-  name: string
-  on: readonly UiTarget[]
-  check?: (value: unknown, cx: HintCheckContext) => string | readonly string[] | undefined
-}
-```
-
-| Field | Type | What it is |
-|---|---|---|
-| `name` | `string` | The hint's key under `ui`. |
-| `on` | `readonly UiTarget[]` | Where content writes it: `'scene'`, `'choice'`, `'block'`, `'stat'`, `'entity'` or `'game'`. |
-| `check` | `(value, cx) => string \| readonly string[] \| undefined` | What's wrong with a value, or nothing. |
-
-Each hint on this page is declared once inside the React UI as a `UiHint`: its name, where content writes it, and a `check` that returns what's wrong with a value. `checkUiHints` is built from those declarations, so a hint is known only on the places its `on` names. Each inline piece is declared once the same way, with its name, its component and its check. The check is told the game, what the hint is on, that thing's `id` (a stat's, a scene's, a choice's, a kind's or an entity's reference) and the transition names the game has. Each problem it returns is worded to follow the place, such as `ui.timer "kettle" is not a timer the game has`.
-
-A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/reference/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
+| Field | Meaning |
+|---|---|
+| `plugins` | The plugin UIs the game gives `mountGame`, whose hints and inline pieces count as known. |
+| `inline` | The game's own inline pieces, the object it gives `mountGame`. |
+| `allow` | Hint and piece names not to report, such as the game's own hints or another UI's. |
 
 ```ts given
 import { checkUiHints } from '@ifloom/react'
 import { shopUi } from '@ifloom/plugin-shop/react'
 import { expect } from 'vitest'
 
-expect(checkUiHints(game, { plugins: [shopUi] })).toEqual([])
+expect(checkUiHints(game, { plugins: [shopUi], allow: ['card'] })).toEqual([])
 ```
+
+### UiHint
+
+`UiHint` is a hint's declaration: its `name` under `ui`, the places content writes it in `on`, and a `check` that returns the problems with a value. Every field is in [`UiHint`](/docs/api/react-kit#uihint).
+
+The React UI declares each hint on this page once as a `UiHint`, and `checkUiHints` is built from those declarations, so a hint is known only where its `on` names. Each inline piece is declared the same way, with its name, its component and its check. A plugin UI declares the hints its components read in its [`PluginUi`](/docs/reference/react/kit#pluginui)'s `hints`. Each problem a `check` returns follows the place, such as `ui.timer "kettle" is not a timer the game has`.
 
 ### HintCheckContext
 
-What a hint's `check` is told: the game, what the hint is on, that thing's `id` and the game's transition names.
+`HintCheckContext` is what a hint's `check` is told: the game, what the hint is on, that thing's `id` and the game's transition names. Every field is in [`HintCheckContext`](/docs/api/react-kit#hintcheckcontext).
 
-```ts shape
-type HintCheckContext = { game: Game; on: UiTarget; id?: string; transitions: ReadonlySet<string> }
-```
+## Caveats
 
-### CheckUiOptions
-
-What `checkUiHints` is told about the game's UI, so it knows the hints and pieces that aren't built in.
-
-```ts shape
-type CheckUiOptions = {
-  plugins?: readonly PluginUi[]
-  inline?: InlineComponents
-  allow?: readonly string[]
-}
-```
-
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `plugins` | `readonly PluginUi[]` | none | The plugin UIs you give `mountGame`. Their hints and inline pieces are known. |
-| `inline` | `InlineComponents` | none | Your own inline pieces, the same object you give `mountGame`. |
-| `allow` | `readonly string[]` | none | Hint and inline piece names not to report, such as another UI's. |
-
-## See it in the showcase
-
-Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). At the park, skimming a stone draws its dice above the line that says how it went (`story/park.ts`). At home, Ava's call counts down under the line that says the phone is ringing (`story/flat.ts`). In the flat, "the radiator knocks" opens Sam's welcome note in a dialog, and at the café Ava's name opens her photo (`story/flat.ts`, `story/ava.prose.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.
+- The picture an `image` piece opens is text to the engine, so `ifloom build` doesn't check the file exists as it does for `[[img:…]]`.
+- Nothing about an inline piece goes in a save or the log, and anything a piece sends with `useGame().send` is a command like any other, so a piece that changes the game is better written as an inline action.

@@ -22,7 +22,7 @@ function BackButton(): JSX.Element
 
 ## Badge
 
-Component. Explained in [Components](/docs/reference/react/components#badge).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#badge).
 
 Renders shadcn/ui's badge, a small rounded label in a `<span>`.
 
@@ -65,7 +65,7 @@ function badgeVariants(props?: (ConfigVariants<{ variant: { default: string; sec
 
 ## Button
 
-Component. Explained in [Components](/docs/reference/react/components#button).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#button).
 
 Renders shadcn/ui's button, a `<button>` styled by `buttonVariants`.
 
@@ -112,7 +112,7 @@ function buttonVariants(props?: (ConfigVariants<{ variant: { default: string; se
 
 ## Card
 
-Component. Explained in [Components](/docs/reference/react/components#card).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#card).
 
 Renders shadcn/ui's card, a bordered `<div>` on the card colour.
 
@@ -178,7 +178,7 @@ function CardTitle(props: ComponentProps<'h3'>): JSX.Element
 
 ## cn
 
-Function. Explained in [Components](/docs/reference/react/components#cn).
+Function. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#cn).
 
 Returns class names joined into one string, a later Tailwind class winning over an earlier one that conflicts. It's shadcn/ui's `cn`.
 
@@ -188,7 +188,7 @@ function cn(...inputs: ClassValue[]): string
 
 ## Dialog
 
-Component. Explained in [Components](/docs/reference/react/components#dialog).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#dialog).
 
 Renders a dialog's root, Radix's `Dialog.Root`, which holds whether the dialog is open.
 
@@ -631,7 +631,7 @@ const PROSE: 'w-full max-w-(--width-prose) mx-(--margin-prose)'
 
 ## ScrollArea
 
-Component. Explained in [Components](/docs/reference/react/components#scrollarea).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#scrollarea).
 
 Renders shadcn/ui's scroll area, a box that scrolls its children vertically with a thin styled scrollbar.
 
@@ -641,7 +641,7 @@ function ScrollArea(props: ScrollAreaProps & RefAttributes<HTMLDivElement>): JSX
 
 ## Separator
 
-Component. Explained in [Components](/docs/reference/react/components#separator).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#separator).
 
 Renders shadcn/ui's separator, a one-pixel line. It's horizontal and decorative unless the props say otherwise.
 
@@ -651,7 +651,7 @@ function Separator(props: SeparatorProps & RefAttributes<HTMLDivElement>): JSX.E
 
 ## Tabs
 
-Component. Explained in [Components](/docs/reference/react/components#tabs).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#tabs).
 
 Renders a set of tabs, Radix's `Tabs.Root`, which holds the open tab's value.
 
@@ -691,7 +691,7 @@ function TabsTrigger(props: TabsTriggerProps & RefAttributes<HTMLButtonElement>)
 
 ## Tooltip
 
-Component. Explained in [Components](/docs/reference/react/components#tooltip).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#tooltip).
 
 Renders a tooltip's root, Radix's `Tooltip.Root`, which holds whether it's open.
 

@@ -35,6 +35,7 @@ export type DebugView = {
   locks: { reason: string; deny: string[] }[]
   /** Triggers that have fired, with the turn each last did. */
   fired: Record<string, number>
+  /** The save's seed, which every random draw is hashed from. */
   seed: number
 }
 

@@ -16,7 +16,9 @@ import { byId, defineFeature, listWords, mergedById, type FeatureContext } from 
  */
 export type TriggerDef = {
   id: string
+  /** The trigger fires the first time this holds after a command. */
   when: Condition
+  /** What it applies when it fires. */
   effects: EffectRef[]
   /** Fire once in the whole game (`{ per: 'game' }`, the default), or at most once a turn (`{ per: 'turn' }`). */
   once?: { per: 'game' | 'turn' }

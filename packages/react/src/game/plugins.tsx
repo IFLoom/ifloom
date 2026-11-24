@@ -40,6 +40,7 @@ export type PluginPanel = {
 export type PluginPage = {
   /** The title screen's button for it: a key of the module's words (or the UI's). */
   label: string
+  /** What the page shows. It's drawn inside the game, so `useGame()` works in it. */
   component: ComponentType
   /** Whether the title screen offers it. On unless set false. */
   showOnTitle?: boolean

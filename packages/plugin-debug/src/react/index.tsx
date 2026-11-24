@@ -82,9 +82,13 @@ export type DebugControls = DebugView & {
   state: GameState
   /** The commands run since the start, in order. */
   log: Command[]
+  /** Whether there's a state to go back to. */
   canUndo: boolean
+  /** Whether there's an undone state to go forward to. */
   canRedo: boolean
+  /** Go back a state, as `runner.undo()`. */
   undo: () => void
+  /** Go forward a state, as `runner.redo()`. */
   redo: () => void
 }
 

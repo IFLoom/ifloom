@@ -19,6 +19,7 @@ export type { EntitiesView, EntityView } from './features/entities.ts'
 
 /** The view's fields the core fills itself. The features' (stats, settings, audio) are in `features/`. */
 type ViewBase = {
+  /** The game's title. */
   title: string
   /** Where the game is in time, in plugins' words ("Day 3 · Wednesday morning"), or null if none says. */
   when: string | null
@@ -43,6 +44,10 @@ type ViewBase = {
     /** The scene's presentation hints (the room scene's, when no scene is open), as written; left out with none. See `SceneUi`. */
     ui?: Ui<SceneUi>
   }
+  /**
+   * The buttons on offer besides the scene's choices: the game's actions and the plugins' (wait, sleep, travel), each
+   * ready to draw.
+   */
   actions: RenderedChoice[]
   /** What each plugin gives the UI, by plugin id: typed for each plugin that declares its view in `ViewRegistry`. */
   plugins: ViewsIn

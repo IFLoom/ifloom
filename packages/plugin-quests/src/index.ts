@@ -71,15 +71,21 @@ export type QuestsState = {
 export type QuestEntry = {
   id: string
   name: string
+  /** A line about it; `''` with none. */
   description: string
+  /** The storyline it belongs to, for a UI that groups quests by person, or null. */
   storyline: string | null
   /** The hint for the stage the player is on; empty once the quest is done. */
   hint: string
   /** Stages done, and how many there are. */
   stage: number
+  /** How many stages it has. */
   stages: number
+  /** The turn it started. */
   startedOn: number
+  /** The turn it was done, or null while it isn't. */
   doneOn: number | null
+  /** Whether it's the quest the player tracks. */
   tracked: boolean
   /** Started or moved on since the player last looked. */
   updated: boolean

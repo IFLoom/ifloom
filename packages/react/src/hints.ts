@@ -36,10 +36,22 @@ export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as
 export type TransitionName = (typeof TRANSITIONS)[number] | (string & {})
 
 /** How something comes on screen (`in`) and goes off it (`out`), over `ms` milliseconds each. A name on its own means both. */
-export type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
+export type Transition = {
+  /** How the new screen comes in. */
+  in?: TransitionName
+  /** How the screen before goes out. */
+  out?: TransitionName
+  /** How long each takes, in milliseconds. */
+  ms?: number
+}
 
 /** How a block of prose is revealed: `delay` milliseconds after the reveal before it (or the scene coming on), coming in with `as`. */
-export type Reveal = { delay?: number; as?: TransitionName }
+export type Reveal = {
+  /** Milliseconds to wait after the reveal before it, or after the scene comes on. */
+  delay?: number
+  /** How the block comes in. */
+  as?: TransitionName
+}
 
 /** How the sidebar draws a stat: its number, a bar from `min` to `max`, or pips, one per point. */
 export type StatDisplay = 'number' | 'bar' | 'pips'
@@ -117,7 +129,9 @@ export const MAX_PIPS = 20
 
 /** What a hint's check is told: the game, what the hint is written on (and its id, where it has one), and the transition names the game has. */
 export type HintCheckContext = {
+  /** The loaded game, for a hint that names something in it. */
   game: Game
+  /** What the hint is written on: a scene, a choice, a block, a stat, an entity or the game. */
   on: UiTarget
   /** The id of what it's written on: a stat's, a scene's, a choice's, a kind's or an entity's reference. */
   id?: string

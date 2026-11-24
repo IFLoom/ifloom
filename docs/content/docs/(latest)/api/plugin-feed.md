@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-feed"
-description: "Every export of @ifloom/plugin-feed and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-feed and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-feed` and `@ifloom/plugin-feed/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -22,11 +22,6 @@ type Comment = {
   text: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `from` | `string` |  |  |  |
-| `text` | `string` |  |  |  |
 
 ### feed
 
@@ -58,11 +53,6 @@ type FeedDef = {
   name: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
 
 ### feedsOf
 
@@ -110,11 +100,6 @@ type FeedsView = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `feeds` | `FeedView[]` |  |  |  |
-| `unread` | `number` |  |  |  |
-
 ### FeedView
 
 Type. Explained in [Feed](/docs/plugins/feed#feedview).
@@ -136,8 +121,8 @@ type FeedView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `posts` | `PostView[]` |  |  |  |
-| `unread` | `number` |  |  |  |
+| `posts` | `PostView[]` |  |  | Its posts, newest first, the player's own among them. |
+| `unread` | `number` |  |  | How many of its posts the player hasn't seen. |
 | `seen` | `RenderedChoice \| null` |  |  | The button that marks the feed seen (the `feed/allSeen` string, `Mark all seen`), or null while nothing in it is new. |
 
 ### OwnPost
@@ -163,13 +148,13 @@ type OwnPost = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `feed` | `string` |  |  |  |
+| `feed` | `string` |  |  | The feed it was posted to. |
 | `turn` | `number` |  |  | The turn it was posted. |
 | `text` | `string` | yes |  | Its words, as written; tokens are filled as it is shown. |
-| `image` | `string` | yes |  |  |
-| `video` | `string` | yes |  |  |
-| `likes` | `number` |  |  |  |
-| `comments` | `Comment[]` |  |  |  |
+| `image` | `string` | yes |  | Its picture, as written. |
+| `video` | `string` | yes |  | Its video clip, as written. |
+| `likes` | `number` |  |  | How many likes it has. |
+| `comments` | `Comment[]` |  |  | The comments on it, in order. |
 
 ### PostDef
 
@@ -194,7 +179,7 @@ type PostDef = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `feed` | `string` |  |  |  |
+| `feed` | `string` |  |  | The feed it appears in, by id. |
 | `from` | `string` |  |  | A character id, or any name the game's prose uses. |
 | `when` | `Condition` |  |  | It appears the first time this holds after a command. |
 | `body` | `Block[]` |  |  | Its words, as prose blocks. |
@@ -238,7 +223,7 @@ type PostView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `from` | `string` |  |  |  |
+| `from` | `string` |  |  | Who posted it, as written: a character id or a name; `''` for the player's own. |
 | `name` | `string` |  |  |  |
 | `portrait` | `string \| null` |  |  | The poster's face, for an avatar: a person's `portrait` with the cast, else their entity's picture, through `artSrc`; null for the player's own and for a name as written. |
 | `text` | `string` |  |  | The words, filled in, with any picture and video markup in them. |
@@ -246,8 +231,8 @@ type PostView = {
 | `image` | `string \| null` |  |  | The post's picture's path, through `artSrc`, or null. |
 | `video` | `string \| null` |  |  | The post's video clip's path, through `artSrc`, or null. Drawn like a GIF: playing, looping, muted. |
 | `turn` | `number` |  |  | The turn it appeared, or was posted. |
-| `likes` | `number` |  |  |  |
-| `comments` | `{ from: string; name: string; text: string }[]` |  |  |  |
+| `likes` | `number` |  |  | How many likes it has. |
+| `comments` | `{ from: string; name: string; text: string }[]` |  |  | The comments on it, in order, each with who wrote it and their name. |
 | `mine` | `boolean` |  |  | The player's own. |
 
 ## @ifloom/plugin-feed/react

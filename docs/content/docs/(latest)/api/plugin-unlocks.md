@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-unlocks"
-description: "Every export of @ifloom/plugin-unlocks and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-unlocks and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-unlocks` and `@ifloom/plugin-unlocks/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/plugin-unlocks` and `@ifloom/plugin-unlock
 
 ### codeFits
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 Whether this is the unlock's code.
 
@@ -23,7 +23,7 @@ function codeFits(code: string, game: string, def: UnlockDef): Promise<boolean>
 
 ### contentScript
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 The script `ifloom build` puts in the page's head: the encrypted content, by unlock.
 
@@ -71,7 +71,7 @@ type Entered = {
 
 ### envName
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 The environment variable `ifloom build` reads an unlock's code from: `IFLOOM_UNLOCK_SUPPORTER` for `supporter`.
 
@@ -93,7 +93,7 @@ const ITERATIONS: 600000
 
 ### lockContent
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 Encrypt an unlock's packs under its code, for the page: what `ifloom build`
 does with each file in `src/unlocks/`. The packs must be data, as a mod's
@@ -124,7 +124,7 @@ type LockedContent = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ifloomUnlock` | `1` |  |  |  |
+| `ifloomUnlock` | `1` |  |  | The format of this file: 1. |
 | `game` | `string` |  |  | The game's id. |
 | `unlock` | `string` |  |  | The unlock's id. |
 | `iv` | `string` |  |  | AES-GCM's nonce, in base64. |
@@ -132,7 +132,7 @@ type LockedContent = {
 
 ### lockedContent
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 The encrypted content the page holds, by unlock: what `ifloom build` put there. Empty in a page without any.
 
@@ -215,7 +215,7 @@ function unlockedPacks(game: string, profile: Profile, content?: Readonly<Record
 
 ### unlockHash
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 The hash of a code for an unlock, in hex: what goes in the unlock's `hash`.
 `ifloom unlock-hash` prints it, so you never write the code into the game.
@@ -244,7 +244,7 @@ function unlocks(): DefinedPlugin<UnlocksState, UnlocksView>
 
 ### unlocksOf
 
-Function.
+Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
 The game's unlocks: `data.unlocks.unlocks`, from its packs.
 
@@ -266,10 +266,6 @@ type UnlocksProfile = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `unlocked` | `Record<string, { proof: string }>` |  |  |  |
-
 ### UnlocksState
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksstate).
@@ -282,10 +278,6 @@ type UnlocksState = {
   unlocked: string[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `unlocked` | `string[]` |  |  |  |
 
 ### UnlockStatus
 
@@ -328,7 +320,7 @@ type UnlocksView = {
 |---|---|---|---|---|
 | `unlocks` | `UnlockView[]` |  |  | Every unlock, in the order the game declares them. |
 | `unlocked` | `number` |  |  | How many are unlocked. |
-| `total` | `number` |  |  |  |
+| `total` | `number` |  |  | How many unlocks the game declares. |
 
 ### UnlockView
 
@@ -350,7 +342,7 @@ type UnlockView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `description` | `string` |  |  |  |
+| `description` | `string` |  |  | What it opens, as the player reads it; `''` with none. |
 | `unlocked` | `boolean` |  |  | Recorded in this save. |
 
 ## @ifloom/plugin-unlocks/react
@@ -380,18 +372,6 @@ const UNLOCKS_WORDS: {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `checkingCode` | `'Checking…'` |  |  |  |
-| `code` | `'Code'` |  |  |  |
-| `enterCode` | `'Enter a code'` |  |  |  |
-| `locked` | `'Locked'` |  |  |  |
-| `restartForUnlock` | `'Restart to add it'` |  |  |  |
-| `unlock` | `'Unlock'` |  |  |  |
-| `unlocked` | `'Unlocked'` |  |  |  |
-| `unlockedAlready` | `'{label} was unlocked already.'` |  |  |  |
-| `unlockedNow` | `'Unlocked: {label}.'` |  |  |  |
-
 ### UnlocksControls
 
 Type.
@@ -418,7 +398,7 @@ type UnlocksControls = {
 |---|---|---|---|---|
 | `unlocks` | `UnlockView[]` |  |  | Every unlock, in the order the game declares them. |
 | `unlocked` | `number` |  |  | How many are unlocked. |
-| `total` | `number` |  |  |  |
+| `total` | `number` |  |  | How many unlocks the game declares. |
 | `available` | `boolean` |  |  | Whether codes can be entered: codes have started on the runner (the unlocks UI starts them). |
 | `enter` | `(code: string) => Promise<boolean>` |  |  | Try a code with `enterCode`. True if it unlocked something; `entered` says what, or `message` why not. |
 | `checking` | `boolean` |  |  | True while a code is being checked, which takes a moment on purpose: the snapshot's `helpers.unlocks.status`. |

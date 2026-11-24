@@ -17,7 +17,14 @@ export type PanelComponent = ComponentType<{ data: unknown }>
  * `name`, the `text` to show and the `args` after the words, typed by what
  * `InlineUi` declares for that name.
  */
-export type InlineProps<N extends string = string> = { name: N; text: string; args: InlineUiArgs<N> }
+export type InlineProps<N extends string = string> = {
+  /** The piece's name, as `[[ui:name|…]]` wrote it. */
+  name: N
+  /** Its words, the second part. */
+  text: string
+  /** The parts after its words, typed by the name's entry in `InlineUi`. */
+  args: InlineUiArgs<N>
+}
 
 /** A component that draws an inline piece of the prose named `N`. */
 export type InlineComponent<N extends string = string> = ComponentType<InlineProps<N>>
@@ -34,6 +41,9 @@ export type PluginSectionComponent = ComponentType<{ data: unknown; with: Record
 
 /** The game's mods, for the mod manager: the store, what the loader said about them, and how to start over with a change. */
 export type ModsOption = {
+  /**
+   * Where the player's mods are kept: `mods(game.id, driver)` from `@ifloom/engine`, over the same driver as the saves.
+   */
   store: Mods
   /** The loader's problems, as `describeProblem` writes them; the ones starting `mod:<id> ` are shown under that mod. */
   problems?: string[]
@@ -42,7 +52,9 @@ export type ModsOption = {
 }
 
 export type GameContextValue = {
+  /** The runner the game was mounted with. */
   runner: Runner
+  /** The mods option the game was mounted with, for the mods page; undefined for a game without mods. */
   mods?: ModsOption
   /** Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. */
   snapshot: RunnerSnapshot
@@ -54,9 +66,11 @@ export type GameContextValue = {
    * so a caller can show a refusal.
    */
   send: (command: CommandRef) => Result<GameState>
+  /** The panels the UI draws by name: the plugin UIs' with the game's own over them. */
   panels: Record<string, PanelComponent>
   /** The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. */
   inline: InlineComponents
+  /** The renderers for plugin sections in apps, by plugin id: the plugin UIs' with the game's own over them. */
   sections: Record<string, PluginSectionComponent>
   /** The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. */
   plugins: readonly PluginUi[]
@@ -65,6 +79,7 @@ export type GameContextValue = {
 const GameContext = createContext<GameContextValue | null>(null)
 
 export type GameProviderProps = UiOptions & {
+  /** The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. */
   runner: Runner
   /**
    * The plugin UIs to draw, each from a plugin's `/react` subpath, such as

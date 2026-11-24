@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-cheats"
-description: "Every export of @ifloom/plugin-cheats and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-cheats and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-cheats` and `@ifloom/plugin-cheats/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -127,11 +127,6 @@ type CheatUse = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `cheat` | `string` |  |  |  |
-| `turn` | `number` |  |  |  |
-
 ### CheatView
 
 Type. Explained in [Cheats](/docs/plugins/cheats#cheatview).
@@ -155,7 +150,7 @@ type CheatView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `description` | `string` |  |  |  |
+| `description` | `string` |  |  | What it does, as the player reads it; `''` with none. |
 | `group` | `string \| null` |  |  | The heading it goes under, or null. |
 | `once` | `'game' \| 'turn' \| null` |  |  | How often it can be used, as its `once` says: `'game'`, `'turn'`, or null for any number of times. |
 | `used` | `number` |  |  | How many times this save has used it. |
@@ -180,11 +175,6 @@ type CheatGroup = {
   cheats: CheatView[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `name` | `string \| null` |  |  |  |
-| `cheats` | `CheatView[]` |  |  |  |
 
 ### CheatPanel
 
@@ -214,12 +204,6 @@ const CHEATS_WORDS: {
   cheats: 'Cheats'
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `cheatUsedOnce` | `'Used once'` |  |  |  |
-| `cheatUsedTimes` | `'Used {n} times'` |  |  |  |
-| `cheats` | `'Cheats'` |  |  |  |
 
 ### CheatsButton
 

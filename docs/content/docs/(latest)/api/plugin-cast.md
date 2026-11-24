@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-cast"
-description: "Every export of @ifloom/plugin-cast and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-cast and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-cast` and `@ifloom/plugin-cast/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -79,7 +79,7 @@ type CastView = {
 
 ### peopleOf
 
-Function.
+Function. Explained in [Cast](/docs/plugins/cast#helpers).
 
 Everyone in the game now with the `cast/person` trait, as references: the
 people content declares, in its order, then those made in play.
@@ -161,11 +161,11 @@ Plugins add fields of their own to it, which their pages list.
 | `storyline` | `string` | yes |  | Their storyline: while it is closed, they will not talk or pick up. |
 | `met` | `Condition` | yes |  | Whether the player has met them. Having seen one of their talk or call scenes, if left out. |
 | `portrait` | `string` | yes |  | A face for avatars, beside the entity's `image`: a path in the game's `art/` folder, as an image's is. Where a UI draws someone small (a thread, a post, a contact), it uses this. Their `image` if left out. |
-| `of` | `string` | yes |  |  |
+| `of` | `string` | yes |  | Their kind: the cast's own (`character`, or the `kind` option) if left out. |
 
 ### personOf
 
-Function.
+Function. Explained in [Cast](/docs/plugins/cast#helpers).
 
 The `cast/person` trait of someone in the game, read through what they were made `like`; undefined for anyone else.
 
@@ -203,14 +203,14 @@ type PersonView = {
 | `id` | `string` |  |  | Their id, as `cast.talk('ava')` names them; the whole reference for a person of another kind than the cast's. |
 | `ref` | `EntityRef` |  |  | As content names them: `'character:ava'`. |
 | `name` | `string` |  |  |  |
-| `fullName` | `string` |  |  |  |
+| `fullName` | `string` |  |  | Their full name, or their name when they have none. |
 | `description` | `string \| null` |  |  | Their entity's `description`, tokens filled: "Runs the café". |
 | `ui` | `Ui<EntityUi>` | yes |  | Their entity's presentation hints, as written (the React UI's `hue`, say); left out with none. |
 | `image` | `string \| null` |  |  | Their picture's path: the entity's `image`, else `<kind>/<id>`, through `artSrc`. Typed as every plugin's picture is, though the cast always gives one. |
 | `portrait` | `string \| null` |  |  | Their face, for avatars: the trait's `portrait`, else their `image`, through `artSrc`. |
 | `here` | `boolean` |  |  | In the room with the player. |
 | `closed` | `boolean` |  |  | Their storyline is closed for now. |
-| `met` | `boolean` |  |  |  |
+| `met` | `boolean` |  |  | Whether the player has met them, as their `met` condition says, else whether they've seen one of their talk or call scenes. |
 | `actions` | `RenderedChoice[]` |  |  | The talk button, greyed out with its reason when it is. |
 
 ### TalkOption
@@ -227,12 +227,6 @@ type TalkOption = {
   label?: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `scene` | `string` |  |  |  |
-| `when` | `Condition` | yes |  |  |
-| `label` | `string` | yes |  |  |
 
 ## @ifloom/plugin-cast/react
 

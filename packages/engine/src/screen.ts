@@ -50,9 +50,13 @@ export type Price = {
 export type RenderedChoice = {
   id: string
   label: string
+  /** What pressing it costs, worked out for this state, with its words in `text`. Left out when it's free. */
   price?: Price
+  /** Why it can't be pressed now, as the player reads it. Left out when it can. */
   disabled?: string
+  /** The choice's or button's tags, for a UI to style or filter it by. */
   tags?: string[]
+  /** A warning that it can't be undone, for the UI to show on it. */
   irreversible?: string
   /** The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. */
   ui?: Ui<ChoiceUi>
@@ -62,6 +66,7 @@ export type RenderedChoice = {
    * same, so a UI shows the warning and offers something else.
    */
   warning?: string
+  /** What to send when the player presses it: `runner.apply(choice.command)`. */
   command: Command
 }
 
@@ -81,8 +86,11 @@ export type ScreenScene = {
    * place, by its id), and `room` with none. It changes when the screen does, and only then.
    */
   key: string
+  /** The heading: the scene's title, or the room's. */
   title: string
+  /** The words as content wrote them, markup and all. Draw `beats`, which is this parsed. */
   body: string
+  /** The body parsed into paragraphs, speech, pictures and past picks, ready to draw. See `SceneBeat`. */
   beats: SceneBeat[]
   /**
    * The first of `beats` the flow's last step brought, from its `chose` on:
@@ -106,7 +114,10 @@ export type Screen = {
   scene: ScreenScene
   /** The open scene's visible choices, each with its effects, availability and price. Empty for the room, and while a minigame is played. */
   choices: ScreenChoice[]
-  /** The room's buttons while no scene is open and no lock stops everything: plugins' first, then the game's. */
+  /**
+   * The room's buttons while no scene is open and no lock stops everything: the `actions` providers' (the game's
+   * rules' first, then each plugin's), then the game's own `actions`.
+   */
   actions: ScreenChoice[]
   /** The open scene's layered picture and its hotspots, or null. */
   picture: PictureView | null
@@ -344,8 +355,10 @@ function hidden(state: GameState, game: Game, action: Action, rendered: Renderin
 }
 
 /**
- * The buttons offered while no scene is open: plugins' first, then the
- * game's. One a hiding lock stops is left off the screen.
+ * The buttons offered while no scene is open: those the `actions` providers
+ * give, the game's rules' first (the engine runs them as the first plugin) and
+ * then each plugin's in order, then the game's own `actions` from content.
+ * One a hiding lock stops is left off the screen.
  */
 function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoice[] {
   // The game's own actions with a label are its buttons; one with none is done only by a command.

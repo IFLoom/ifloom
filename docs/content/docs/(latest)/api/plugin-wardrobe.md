@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-wardrobe"
-description: "Every export of @ifloom/plugin-wardrobe and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-wardrobe and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-wardrobe` and `@ifloom/plugin-wardrobe/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -93,10 +93,6 @@ type WardrobeState = {
   worn: Record<string, Record<string, EntityRef | null>>
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `worn` | `Record<string, Record<string, EntityRef \| null>>` |  |  |  |
 
 ### WardrobeView
 

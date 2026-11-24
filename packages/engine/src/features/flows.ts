@@ -30,6 +30,10 @@ export type FlowStep = { chose: string } | { point: string } | { minigame: strin
 export type FlowState = {
   /** The scene this visit is of. */
   scene: string
+  /**
+   * The picks made, the points jumped to and the minigames and panels done with, in order: what the view replays to
+   * draw the visit.
+   */
   path: FlowStep[]
   /** The minigame being played or the panel open where the flow stands, until it is done; null while it waits on nothing. */
   waiting: { minigame: string } | { panel: string } | null

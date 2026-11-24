@@ -80,7 +80,7 @@ type GameModule = {
 | `start` | `(game: Game) => GameState` | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
 | `probes` | `(game: Game) => Probe[]` | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
 | `policy` | `Policy` | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
-| `build` | `(options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }` |  |  |  |
+| `build` | `(options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }` |  |  | Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. |
 
 ## GameModuleDef
 
@@ -132,8 +132,8 @@ type Probe = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  |  |
-| `state` | `GameState` |  |  |  |
+| `name` | `string` |  |  | What the problems it finds are named by: `'evening, after the café'`. |
+| `state` | `GameState` |  |  | The state to render every scene against. |
 
 ## probe
 

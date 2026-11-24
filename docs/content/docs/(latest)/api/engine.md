@@ -198,14 +198,14 @@ type AudioChannelView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `mode` | `'background' \| 'cue'` |  |  |  |
+| `mode` | `'background' \| 'cue'` |  |  | `background` plays a track or playlist until told otherwise; `cue` plays one-shot sounds, listed in `cues`. |
 | `track` | `string \| null` |  |  | The track or playlist playing; null for silence, and always null on a cue channel. |
 | `src` | `string \| null` |  |  | The file to play, through `audioSrc`; a playlist's first. Null for silence. |
 | `loop` | `boolean` |  |  | Whether it repeats. A playlist repeats as a whole unless its order is `'inOrder'`. |
 | `volume` | `number` |  |  | The track's own volume, 0 to 1; a playlist's first track's. Multiply by the setting's value. |
 | `volumeSetting` | `string \| null` |  |  | The ui setting that sets this channel's volume, or null for none. |
 | `crossfade` | `number` |  |  | Milliseconds to fade between tracks. 0 on a cue channel. |
-| `duck` | `{ under: string[]; to: number } \| null` |  |  |  |
+| `duck` | `{ under: string[]; to: number } \| null` |  |  | Quieten this channel to `to` (0 to 1) while any channel in `under` plays; null when it doesn't duck. |
 | `playlist` | `{ tracks: string[]; srcs: string[]; volumes: number[]; order: 'inOrder' \| 'loop' \| 'shuff…` | yes |  | A playlist's files, volumes and order, already shuffled when it shuffles. |
 
 ## AudioCue
@@ -228,10 +228,10 @@ type AudioCue = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `key` | `string` |  |  | The same for the same sound in the same showing, across view calls and reloads. |
-| `channel` | `string` |  |  |  |
-| `track` | `string` |  |  |  |
-| `src` | `string` |  |  |  |
-| `volume` | `number` |  |  |  |
+| `channel` | `string` |  |  | The cue channel it plays on: `sfx` or `voice` unless the game declares others. |
+| `track` | `string` |  |  | The track's id in `game.audio.tracks`. |
+| `src` | `string` |  |  | The file to play, through `audioSrc`. |
+| `volume` | `number` |  |  | The track's own volume, 0 to 1. Multiply by the channel's volume setting. |
 
 ## audioSrc
 
@@ -334,9 +334,9 @@ type BacklogEntry = {
 |---|---|---|---|---|
 | `turn` | `number` |  |  | The turn it was shown in. |
 | `when` | `string \| null` |  |  | Where the game was in time, in plugins' words (`view.when`), or null if none says. |
-| `sceneId` | `string` |  |  |  |
-| `title` | `string` |  |  |  |
-| `beats` | `SceneBeat[]` |  |  |  |
+| `sceneId` | `string` |  |  | The scene's id. The backlog keeps scenes only, not the room. |
+| `title` | `string` |  |  | The scene's heading as it was shown. |
+| `beats` | `SceneBeat[]` |  |  | What the player read, as the view's beats. |
 | `chose` | `string` | yes |  | The label of the choice the player made in this scene, once they made one. |
 
 ## BacklogOptions
@@ -423,11 +423,6 @@ type BlockExtras = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `when` | `Condition` | yes |  |  |
-| `ui` | `Ui<BlockUi>` | yes |  |  |
-
 ## BlockUi
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
@@ -458,11 +453,6 @@ type BrokenSave = {
   broken: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `slot` | `string` |  |  |  |
-| `broken` | `string` |  |  |  |
 
 ## buildEffects
 
@@ -565,13 +555,13 @@ type CarryOver = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stats` | `string[]` | yes |  |  |
+| `stats` | `string[]` | yes |  | The player's stats to carry, by id. |
 | `kv` | `string[]` | yes |  | kv keys, by name. |
 | `held` | `string[] \| 'all'` | yes |  | Things the player holds, by reference (`'food:apple'`), or `'all'` for everything the player holds. A thing made in play comes with them. |
 
 ## cases
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 The first block that fits: each of `blocks` is tried in order, and only the
 first whose own `when` holds, or that has none, is shown. Leave the last
@@ -644,10 +634,6 @@ type ChangesDef = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `stats` | `string[]` |  |  |  |
-
 ## ChangeView
 
 Type. Explained in [Changes](/docs/reference/changes#changeview).
@@ -719,9 +705,9 @@ type Checked = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `problems` | `Problem[]` |  |  |  |
+| `problems` | `Problem[]` |  |  | What's wrong with the content: a broken reference, a key declared twice, a call with the wrong arguments. Any problem fails `ifloom check`. |
 | `warnings` | `Problem[]` |  |  | What may go wrong in play but isn't a problem, such as a token that may be unset with no fallback. A warning fails no check. |
-| `files` | `FileRef[]` |  |  |  |
+| `files` | `FileRef[]` |  |  | Every file the content names (pictures, videos, sounds) and where, for a build to check they exist. |
 
 ## checkGame
 
@@ -785,7 +771,7 @@ type Choice = {
 
 ## choice
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 A choice at a decision, or among a scene's ending choices. `label` is its
 words. Everything a `Choice` has goes in `fields`: its `effects`, `cost`,
@@ -881,9 +867,9 @@ type CommandLog = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `string` |  |  |  |
-| `start` | `GameState` |  |  |  |
-| `commands` | `Command[]` |  |  |  |
+| `game` | `string` |  |  | The game's id, so a log isn't played against another game. |
+| `start` | `GameState` |  |  | The state the commands were applied to, in order. |
+| `commands` | `Command[]` |  |  | Every command applied, in order, refused ones included. |
 | `schema` | `number` | yes |  | The engine's `SCHEMA` the commands were written in. A log from before logs kept it has none, and is read as the oldest. |
 | `plugins` | `Record<string, number>` | yes |  | Each plugin's `commandVersion` the commands were written in, by plugin id. |
 
@@ -1157,7 +1143,7 @@ type CustomContext = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `Game` |  |  |  |
+| `game` | `Game` |  |  | The loaded game. |
 | `query` | `Query` |  |  | Ask a plugin something by its full name: `query('places/here')`. Undefined when the game does not have that plugin. |
 | `value` | `(name: string, args?: PluginArgs) => string \| number \| undefined` |  |  | A value by name, a plugin's (`messages/unread`) or the game's own, asked with `args`. Undefined when nobody has it. |
 | `roll` | `(max: number, name: string) => number` |  |  | A whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`: the same save and turn always draw the same. |
@@ -1193,19 +1179,19 @@ type DataScene = {
 | `when` | `Condition` | yes |  | Only drawn while this holds. It gates draws only: a `scene` command or effect naming the scene opens it regardless. |
 | `minigame` | `string` | yes |  | A minigame that starts when the scene is entered. The scene shows again once it ends. |
 | `id` | `string` |  |  |  |
-| `title` | `string` | yes |  |  |
-| `speaker` | `string` | yes |  |  |
+| `title` | `string` | yes |  | Its heading, the view's `scene.title`. The room's title, else the game's, if left out. |
+| `speaker` | `string` | yes |  | Who the scene is with, by entity id or reference (`'ava'`, `'character:ava'`): the view's `scene.speaker` and `scene.image`. |
 | `tags` | `string[]` | yes |  | Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. |
 | `panel` | `ScenePanel` | yes |  | A panel open for as long as the scene is: `{ panel: 'counter', with: { vendor: 'cafe' } }`. It is `view.panel`, as one the `panel` effect opens is, with the scene's id in `scene`. A panel needing worked-out data reads it from the view or a value. See `ScenePanel`. |
 | `audio` | `Record<string, string \| null>` | yes |  | What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. |
 | `picture` | `PictureDef` | yes |  | A layered picture with hotspots, drawn over the scene. See `view.scene.picture`. |
 | `ui` | `Ui<SceneUi>` | yes |  | Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. |
-| `body` | `Block[]` |  |  |  |
-| `choices` | `Choice[]` |  |  |  |
+| `body` | `Block[]` |  |  | What the scene shows, top to bottom: prose, text, speech, media, decisions and the rest. See `Block`. |
+| `choices` | `Choice[]` |  |  | The buttons under the body. A flowing scene's picks are in its decisions instead. |
 
 ## decide
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 A decision: the flow waits here until the player picks one of `choices`.
 The pick's `then` comes next, then the blocks after the decision. Its id
@@ -1422,8 +1408,8 @@ type EntitiesView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | The kind's id: `'character'`. |
-| `label` | `string` |  |  |  |
-| `plural` | `string` |  |  |  |
+| `label` | `string` |  |  | The kind's name for one: `'Character'`. |
+| `plural` | `string` |  |  | The kind's name for several, for a heading: `'Characters'`. Its `label` if the kind gives none. |
 | `unique` | `boolean` |  |  | The kind's `unique`: each one is one particular thing. |
 | `entries` | `EntityView[]` |  |  | Its entities that are listed and visible, declared ones first, then the ones created in play. |
 
@@ -1678,7 +1664,7 @@ type Explanation = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `holds` | `boolean` |  |  |  |
+| `holds` | `boolean` |  |  | Whether this part holds. |
 | `why` | `string` |  |  | One line: what this part checked, what it found. |
 | `parts` | `Explanation[]` | yes |  | The parts of an `all`, `any` or `not`. |
 
@@ -1699,9 +1685,9 @@ type FileRef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `path` | `string` |  |  |  |
-| `type` | `'picture' \| 'video' \| 'audio'` |  |  |  |
-| `where` | `string` |  |  |  |
+| `path` | `string` |  |  | The file, as the page asks for it. |
+| `type` | `'picture' \| 'video' \| 'audio'` |  |  | What sort of file it is. |
+| `where` | `string` |  |  | Where the content names it, as a `Problem`'s `where` is written. |
 
 ## FillPart
 
@@ -1808,7 +1794,7 @@ type FlowState = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `scene` | `string` |  |  | The scene this visit is of. |
-| `path` | `FlowStep[]` |  |  |  |
+| `path` | `FlowStep[]` |  |  | The picks made, the points jumped to and the minigames and panels done with, in order: what the view replays to draw the visit. |
 | `waiting` | `{ minigame: string } \| { panel: string } \| null` |  |  | The minigame being played or the panel open where the flow stands, until it is done; null while it waits on nothing. |
 
 ## FlowStep
@@ -1826,7 +1812,7 @@ type FlowStep = { chose: string } | { point: string } | { minigame: string } | {
 
 ## fold
 
-Function. Explained in [Presentation hints](/docs/react/hints#fold).
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 Blocks the player can open and shut, under `label`: a letter to read, a
 long aside. It is presentation only, a section with the React UI's `fold`
@@ -1902,11 +1888,11 @@ type Game = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `title` | `string` |  |  |  |
+| `title` | `string` |  |  | The game's name, as a title screen shows it. |
 | `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `migrations` carry an older save forward. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself: your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out. |
 | `packs` | `string[]` | yes |  | The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. |
-| `prose` | `ProseStore` | yes |  |  |
-| `rules` | `GameRules` | yes |  |  |
+| `prose` | `ProseStore` | yes |  | The words read by key: `prose`, `variants` and their weights, filled in for a save. `loadGame` makes it from the content's `prose`. |
+| `rules` | `GameRules` | yes |  | The game's own code: its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
 | `strings` | `Record<string, string>` | yes |  | The game's words for anything the engine or a plugin says to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Packs can add theirs; a later pack's line wins. |
 | `plugins` | `readonly Plugin<any>[]` | yes |  | The plugins the game is built with, in the order their hooks run. |
 | `data` | `Record<string, Record<string, readonly PluginEntry[]>>` | yes |  | Content for plugins, by plugin id and then list: `data.quests.quests`. Merged from packs by id, as scenes are. |
@@ -1954,7 +1940,7 @@ type GameAudio = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `tracks` | `Record<string, TrackDef \| PlaylistDef>` |  |  |  |
+| `tracks` | `Record<string, TrackDef \| PlaylistDef>` |  |  | Every track and playlist, by id: a file with its volume, or a list of tracks to play in turn. |
 | `channels` | `Record<string, ChannelDef>` | yes |  | Merged over the defaults: `music` and `ambience` (background), `sfx` and `voice` (cue). |
 | `mute` | `string` | yes |  | A ui setting (a toggle) that mutes everything while it is on: a "Mute" box. |
 | `sound` | `string` | yes |  | A ui setting (a toggle) that plays sound only while it is on: a "Sound" box, the other way round from `mute`. |
@@ -1982,10 +1968,10 @@ type GameBase = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `title` | `string` |  |  |  |
+| `title` | `string` |  |  | The game's name, as a title screen shows it. |
 | `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `migrations` carry an older save forward. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself: your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out. |
 | `plugins` | `readonly Plugin<any>[]` | yes |  | The plugins the game is built with, in the order their hooks run. |
-| `rules` | `GameRules` | yes |  |  |
+| `rules` | `GameRules` | yes |  | The game's own code: its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
 
 ## GameMedia
 
@@ -2128,7 +2114,7 @@ type GameState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `version` | `typeof SAVE_VERSION` |  |  |  |
+| `version` | `typeof SAVE_VERSION` |  |  | The save format's version, `SAVE_VERSION`: `loadState` carries an older one forward. |
 | `seed` | `number` |  |  | Fixed per save. Keeps variant variants from dealing identically every run. |
 | `plugins` | `Record<string, PluginSlice>` |  |  | Each plugin's own state, by plugin id. |
 | `gameVersion` | `number` | yes |  | The game's own version (`game.version`) the save was made with. Only there when the game declares a version; a save without it is version 1. |
@@ -2389,7 +2375,7 @@ type HotspotDef = {
 | `label` | `string` |  |  | What a screen reader reads, and the tooltip. |
 | `command` | `CommandRef` | yes |  | What it sends, as an action's `command`. |
 | `choice` | `string` | yes |  | A choice of the open scene, by id. |
-| `when` | `Condition` | yes |  |  |
+| `when` | `Condition` | yes |  | Only there while this holds. |
 | `layer` | `string` | yes |  | Only there while the layer with this id is shown. |
 
 ## HotspotView
@@ -2414,16 +2400,16 @@ type HotspotView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `rect` | `[ number, number, number, number ]` |  |  |  |
+| `rect` | `[ number, number, number, number ]` |  |  | Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. |
 | `label` | `string` |  |  |  |
-| `command` | `Command` |  |  |  |
+| `command` | `Command` |  |  | What pressing it sends: its own `command`, or the command that takes its `choice`. |
 | `disabled` | `string` | yes |  | Why it cannot be pressed now, as a button's `disabled`. |
 | `warning` | `string` | yes |  | Pressable, but a plugin warns against it, as a button's `warning`. |
-| `layer` | `string` | yes |  |  |
+| `layer` | `string` | yes |  | The layer it goes with, by id; left out for one on the picture as a whole. |
 
 ## image
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 A picture or a video in the flow, where it stands: `image('cafe/cup', { alt: 'A cup of tea' })`.
 
@@ -2554,12 +2540,12 @@ type InputDef = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  | What the field is called. |
-| `type` | `'text' \| 'number' \| 'choice'` |  |  |  |
+| `type` | `'text' \| 'number' \| 'choice'` |  |  | What the player enters: `text` (typed words), `number` or `choice` (one of `options`). |
 | `key` | `string` | yes |  | The kv key it writes. The input's id if left out. |
 | `when` | `Condition` | yes |  | Only on offer while this holds. |
 | `maxLength` | `number` | yes |  | Text: the most characters, after trimming. 40 if left out. |
 | `min` | `number` | yes |  | Number: the range, inclusive. |
-| `max` | `number` | yes |  |  |
+| `max` | `number` | yes |  | Number: the highest it takes. |
 | `options` | `{ value: KvValue; label: string }[]` | yes |  | Choice: the values on offer, with what the player reads for each. |
 
 ## InputView
@@ -2584,11 +2570,11 @@ type InputView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  |  |
-| `type` | `InputDef['type']` |  |  |  |
-| `maxLength` | `number \| null` |  |  |  |
-| `min` | `number \| null` |  |  |  |
-| `max` | `number \| null` |  |  |  |
-| `options` | `{ value: KvValue; label: string }[]` |  |  |  |
+| `type` | `InputDef['type']` |  |  | What the player enters: `text`, `number` or `choice`. |
+| `maxLength` | `number \| null` |  |  | Text: the most characters it takes, after trimming (40 unless the input says). Null for a number or a choice. |
+| `min` | `number \| null` |  |  | Number: the lowest it takes, or null with no bound (and for text or a choice). |
+| `max` | `number \| null` |  |  | Number: the highest it takes, or null with no bound (and for text or a choice). |
+| `options` | `{ value: KvValue; label: string }[]` |  |  | Choice: the values on offer, with what the player reads for each. Empty for text or a number. |
 | `value` | `KvValue \| null` |  |  | What its key holds now, if anything. |
 
 ## inRange
@@ -2626,10 +2612,10 @@ type InstalledMod = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `version` | `string` | yes |  |  |
-| `description` | `string` | yes |  |  |
+| `version` | `string` | yes |  | The mod's own version, as its author writes it. |
+| `description` | `string` | yes |  | A line for the mods screen. |
 | `enabled` | `boolean` |  |  | Off mods stay installed and are left out of the game. |
-| `pack` | `Pack` |  |  |  |
+| `pack` | `Pack` |  |  | The content it adds, as the mod file wrote it. |
 
 ## isUnique
 
@@ -2644,7 +2630,7 @@ function isUnique(game: Pick<Game, 'kinds' | 'plugins'>, ref: string): boolean
 
 ## jump
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 A choice's effect that carries the flow on from a point instead of after
 its decision, once its `then` is done: `{ point: id }`. The point can be
@@ -2730,10 +2716,10 @@ type Loaded = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `Game` |  |  |  |
-| `prose` | `Record<string, string>` |  |  |  |
-| `variants` | `Record<string, string[]>` |  |  |  |
-| `problems` | `Problem[]` |  |  |  |
+| `game` | `Game` |  |  | The game, ready to run. |
+| `prose` | `Record<string, string>` |  |  | Every line of prose by key, merged from the content and the packs. |
+| `variants` | `Record<string, string[]>` |  |  | Every variants list by name, with its members' keys. |
+| `problems` | `Problem[]` |  |  | What's wrong with the content and the packs, each naming the one it came from. Empty for a game that's fine. |
 
 ## LoadedSave
 
@@ -2753,9 +2739,9 @@ type LoadedSave = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `meta` | `SaveMeta` |  |  |  |
-| `state` | `GameState` |  |  |  |
-| `missingPacks` | `string[]` |  |  |  |
+| `meta` | `SaveMeta` |  |  | What the save says about itself. |
+| `state` | `GameState` |  |  | The state, carried forward to this game's version through `loadState`. |
+| `missingPacks` | `string[]` |  |  | Packs the save was made with that the game wasn't loaded with, such as a mod since turned off. |
 | `missingPlugins` | `string[]` |  |  | Plugins the save was made with that this game does not have. Their state is kept, unused. |
 
 ## loadGame
@@ -2900,7 +2886,7 @@ type MinigameDef = {
 | `start` | `string` |  |  | The state it starts in. |
 | `kv` | `Record<string, number>` | yes |  | Its kv store and where each key starts, numbers all: `{ score: 0 }`. Content reads and writes them with `of: 'minigame'`, and a key it uses must be declared here. |
 | `keys` | `Record<string, string[]>` | yes |  | The keys a UI maps to each input, by input name: `{ up: ['ArrowUp', 'w'] }`. Key names as `KeyboardEvent.key` gives them. A UI picks its own if left out. |
-| `states` | `Record<string, MinigameStateDef>` |  |  |  |
+| `states` | `Record<string, MinigameStateDef>` |  |  | Its states, by name. See `MinigameStateDef`. |
 
 ## MinigameInput
 
@@ -3079,13 +3065,13 @@ type ModFile = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ifloomMod` | `1` |  |  |  |
+| `ifloomMod` | `1` |  |  | The format of this file: 1. |
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `version` | `string` | yes |  |  |
+| `version` | `string` | yes |  | The mod's own version, as its author writes it: `'1.2'`. |
 | `game` | `string` |  |  | The game it was made for, by id. |
-| `description` | `string` | yes |  |  |
-| `pack` | `Pack` |  |  |  |
+| `description` | `string` | yes |  | A line for the mods screen. |
+| `pack` | `Pack` |  |  | The content it adds: a `Pack`, laid over the game's content. |
 
 ## Mods
 
@@ -3182,7 +3168,7 @@ type Notice = {
 | `image` | `string` | yes |  | A picture, as a path in the game's `art/` folder (`'notes/bins.jpg'`) or a URL. |
 | `tag` | `string` | yes |  | What it is about, for badges: `'messages'`, `'quests'`. |
 | `turn` | `number` |  |  | The turn it was raised. |
-| `seen` | `boolean` |  |  |  |
+| `seen` | `boolean` |  |  | Whether the player has dismissed it. |
 
 ## NoticesView
 
@@ -3220,10 +3206,10 @@ type NoticeView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `title` | `string` |  |  |  |
+| `title` | `string` |  |  | A short line, as written. |
 | `text` | `string` |  |  | The notice's words, tokens filled in; empty if it has none. |
 | `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
-| `tag` | `string \| null` |  |  |  |
+| `tag` | `string \| null` |  |  | What it's about, for badges: `'messages'`. Null with none. |
 | `turn` | `number` |  |  | The turn it was raised. |
 
 ## notify
@@ -3255,8 +3241,8 @@ type Once = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `per` | `'game' \| 'turn'` |  |  |  |
-| `reason` | `Reason` | yes |  |  |
+| `per` | `'game' \| 'turn'` |  |  | Once in the whole game, or at most once a turn. |
+| `reason` | `Reason` | yes |  | What the player reads on it once it's spent. The `done` string if left out. |
 
 ## OpenPanel
 
@@ -3420,11 +3406,6 @@ type PhraseRow = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `when` | `Condition` | yes |  |  |
-| `text` | `string` |  |  |  |
-
 ## Phrases
 
 Type. Explained in [Phrases](/docs/reference/phrases#phrases).
@@ -3457,11 +3438,6 @@ type PhraseWithArgs = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `args` | `string[]` |  |  |  |
-| `rows` | `PhraseRow[]` |  |  |  |
-
 ## PictureDef
 
 Type. Explained in [Media](/docs/reference/media#picturedef).
@@ -3480,7 +3456,7 @@ type PictureDef = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `layers` | `PictureLayer[]` |  |  | Bottom first. |
-| `hotspots` | `HotspotDef[]` | yes |  |  |
+| `hotspots` | `HotspotDef[]` | yes |  | The clickable areas on it, each a button the UI draws over the picture. |
 | `aspect` | `string` | yes |  | Width over height, as CSS writes it: `'16/9'`. The UI's own if left out. |
 
 ## PictureLayer
@@ -3508,10 +3484,10 @@ type PictureLayer = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` | yes |  | What hotspots name to go with this layer. |
-| `src` | `string` | yes |  |  |
-| `pool` | `string` | yes |  |  |
-| `tags` | `string[]` | yes |  |  |
-| `when` | `Condition` | yes |  |  |
+| `src` | `string` | yes |  | The file, in the game's `art/` folder or a URL. Give this or `pool`. |
+| `pool` | `string` | yes |  | A pool in `game.media.pools` to pick the file from, kept for the save once picked. |
+| `tags` | `string[]` | yes |  | The tags the pool's pick should have, most important first. |
+| `when` | `Condition` | yes |  | Shown only while this holds. |
 | `video` | `boolean` | yes |  | Draw it as a video. A `.mp4` or `.webm` file is one anyway. |
 | `controls` | `boolean` | yes |  | Show the player's controls. It then waits to be started instead of playing by itself. |
 | `once` | `boolean` | yes |  | Play once instead of looping. |
@@ -3536,7 +3512,7 @@ type PictureLayerView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string \| null` |  |  |  |
-| `src` | `string` |  |  |  |
+| `src` | `string` |  |  | The file to draw, through `artSrc` (a pool's pick resolved). |
 | `video` | `VideoView` | yes |  | How it plays, when it is a video. |
 
 ## PictureView
@@ -3553,12 +3529,6 @@ type PictureView = {
   hotspots: HotspotView[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `aspect` | `string \| null` |  |  |  |
-| `layers` | `PictureLayerView[]` |  |  |  |
-| `hotspots` | `HotspotView[]` |  |  |  |
 
 ## Placement
 
@@ -3661,12 +3631,6 @@ type PoolFile = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `src` | `string` |  |  |  |
-| `tags` | `string[]` | yes |  |  |
-| `weight` | `number` | yes |  |  |
-
 ## Price
 
 Type. Explained in [The view](/docs/reference/view#price).
@@ -3706,8 +3670,8 @@ type Probe = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` |  |  |  |
-| `state` | `GameState` |  |  |  |
+| `name` | `string` |  |  | What the problems it finds are named by: `'evening, after the café'`. |
+| `state` | `GameState` |  |  | The state to render every scene against. |
 
 ## Problem
 
@@ -3726,9 +3690,9 @@ type Problem = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `pack` | `string` |  |  |  |
-| `where` | `string` |  |  |  |
-| `what` | `string` |  |  |  |
+| `pack` | `string` |  |  | The content or pack it came from, by name or id: `game` for a hand-built game. |
+| `where` | `string` |  |  | What in it: `scene cafe.counter`, `finished`. |
+| `what` | `string` |  |  | What's wrong: `unknown storyline "tides"`. |
 
 ## Profile
 
@@ -3807,7 +3771,7 @@ type ProseStore = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `line` | `(key: string, state?: GameState) => string \| undefined` |  |  | The words for a key, with `{{playerName}}` and friends filled in. |
-| `variants` | `(name: string) => string[]` |  |  |  |
+| `variants` | `(name: string) => string[]` |  |  | The members of a variants list, by its name, in declaration order. |
 | `weight` | `(name: string, key: string) => number` | yes |  | A member's weight in a variants list, 1 if it has none. Left out, every member weighs 1. |
 | `keys` | `() => string[]` | yes |  | Every key the store has words for, so the content checker can read all the prose's markup. Left out, it reads only the keys content names. |
 
@@ -3895,10 +3859,10 @@ type Range = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `gte` | `Amount` | yes |  |  |
-| `gt` | `Amount` | yes |  |  |
-| `lte` | `Amount` | yes |  |  |
-| `lt` | `Amount` | yes |  |  |
+| `gte` | `Amount` | yes |  | The number is this or more. |
+| `gt` | `Amount` | yes |  | The number is more than this. |
+| `lte` | `Amount` | yes |  | The number is this or less. |
+| `lt` | `Amount` | yes |  | The number is less than this. |
 
 ## RawPack
 
@@ -3914,10 +3878,6 @@ type RawPack = {
 ```
 
 It also takes any other key: `[key: string]: unknown`.
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `schema` | `number` |  |  |  |
 
 ## Reason
 
@@ -3968,13 +3928,13 @@ type RenderedChoice = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  |  |
-| `price` | `Price` | yes |  |  |
-| `disabled` | `string` | yes |  |  |
-| `tags` | `string[]` | yes |  |  |
-| `irreversible` | `string` | yes |  |  |
+| `price` | `Price` | yes |  | What pressing it costs, worked out for this state, with its words in `text`. Left out when it's free. |
+| `disabled` | `string` | yes |  | Why it can't be pressed now, as the player reads it. Left out when it can. |
+| `tags` | `string[]` | yes |  | The choice's or button's tags, for a UI to style or filter it by. |
+| `irreversible` | `string` | yes |  | A warning that it can't be undone, for the UI to show on it. |
 | `ui` | `Ui<ChoiceUi>` | yes |  | The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. |
 | `warning` | `string` | yes |  | Pressable, but the game would rather you didn't, and says why: a plugin guard's soft refusal: running past dawn, say. The reducer refuses it all the same, so a UI shows the warning and offers something else. |
-| `command` | `Command` |  |  |  |
+| `command` | `Command` |  |  | What to send when the player presses it: `runner.apply(choice.command)`. |
 
 ## replay
 
@@ -4148,9 +4108,9 @@ type RunnerOptions = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `saves` | `Saves` | yes |  | Where `save`, `load` and autosave write. Needed for any of them. |
-| `history` | `HistoryOptions \| boolean` | yes |  |  |
-| `backlog` | `BacklogOptions \| boolean` | yes |  |  |
-| `autosave` | `AutosaveOptions` | yes |  |  |
+| `history` | `HistoryOptions \| boolean` | yes |  | Keep states for undo and redo: `true` for 50 steps back, or a `HistoryOptions`. Off if left out. |
+| `backlog` | `BacklogOptions \| boolean` | yes |  | Keep what was shown, scene by scene, for a backlog screen: `true` for 200 entries, or a `BacklogOptions`. Off if left out. |
+| `autosave` | `AutosaveOptions` | yes |  | Save to a slot of its own (`'auto'`) after every command, or when the scene or the turn changes. Needs `saves`. Off if left out. |
 | `now` | `() => number` | yes |  | The clock for time played. `Date.now` if left out; tests pass their own. |
 | `onSaveError` | `(error: unknown) => void` | yes |  | Told when an autosave, `save` or profile write fails. Later writes still run; without this, a failure is dropped. |
 | `profile` | `Profile` | yes |  | What outlives a save: settings, `finished`, plugins' namespaces. Without one, nothing is written there, and a `ui` setting can't be changed. |
@@ -4256,9 +4216,9 @@ type SaveDriver = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `name` | `string` |  |  | For diagnostics and the debug panel: "localStorage", "indexedDB"… |
-| `get` | `(key: string) => Promise<string \| null>` |  |  |  |
-| `set` | `(key: string, value: string) => Promise<void>` |  |  |  |
-| `remove` | `(key: string) => Promise<void>` |  |  |  |
+| `get` | `(key: string) => Promise<string \| null>` |  |  | The text stored under a key, or null if there's none. |
+| `set` | `(key: string, value: string) => Promise<void>` |  |  | Store text under a key, replacing what was there. |
+| `remove` | `(key: string) => Promise<void>` |  |  | Delete a key. Nothing happens if it isn't there. |
 | `keys` | `(prefix: string) => Promise<string[]>` |  |  | Every key that starts with this prefix. |
 
 ## SaveExtra
@@ -4299,12 +4259,6 @@ type SaveFile = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `ifloom` | `1` |  |  |  |
-| `meta` | `SaveMeta` |  |  |  |
-| `state` | `GameState` |  |  |  |
-
 ## SaveListing
 
 Type. Explained in [Saves](/docs/reference/saves#savelisting).
@@ -4342,7 +4296,7 @@ type SaveMeta = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `game` | `string` |  |  | The game it belongs to; another game's save is refused on import. |
-| `slot` | `string` |  |  |  |
+| `slot` | `string` |  |  | The slot it's in: `'1'`, `'auto'`, or the game's own name for one. |
 | `name` | `string` |  |  | The player's name for it, or one made from where and when. |
 | `savedAt` | `number` |  |  | When it was written, epoch milliseconds. |
 | `played` | `number` |  |  | Time played, in milliseconds, as the runner counted it. |
@@ -4422,7 +4376,7 @@ type SavingView = {
 
 ## say
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 A spoken line, under who says it, by id as `@id: "…"` in prose names them:
 an entity, by reference or by bare id as a scene's `speaker` is (`'ava'` is
@@ -4509,11 +4463,6 @@ type ScenePanel = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `panel` | `string` |  |  |  |
-| `with` | `PluginArgs` | yes |  |  |
-
 ## SceneUi
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#sceneui-choiceui-blockui-entityui-statui-and-gameui).
@@ -4564,7 +4513,7 @@ type Screen = {
 |---|---|---|---|---|
 | `scene` | `ScreenScene` |  |  | The open scene as rendered, or the room when none is open. A minigame being played is drawn over either: see `view.minigame`. |
 | `choices` | `ScreenChoice[]` |  |  | The open scene's visible choices, each with its effects, availability and price. Empty for the room, and while a minigame is played. |
-| `actions` | `ScreenChoice[]` |  |  | The room's buttons while no scene is open and no lock stops everything: plugins' first, then the game's. |
+| `actions` | `ScreenChoice[]` |  |  | The room's buttons while no scene is open and no lock stops everything: the `actions` providers' (the game's rules' first, then each plugin's), then the game's own `actions`. |
 | `picture` | `PictureView \| null` |  |  | The open scene's layered picture and its hotspots, or null. |
 | `plugins` | `Record<string, unknown>` |  |  | Every plugin's view, by plugin id. |
 | `picks` | `Record<string, string>` |  |  | The pool picks this screen made that the save doesn't hold yet, by pick key. The reducer records them. |
@@ -4613,13 +4562,13 @@ type ScreenChoice = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  |  |
-| `price` | `Price` | yes |  |  |
-| `disabled` | `string` | yes |  |  |
-| `tags` | `string[]` | yes |  |  |
-| `irreversible` | `string` | yes |  |  |
+| `price` | `Price` | yes |  | What pressing it costs, worked out for this state, with its words in `text`. Left out when it's free. |
+| `disabled` | `string` | yes |  | Why it can't be pressed now, as the player reads it. Left out when it can. |
+| `tags` | `string[]` | yes |  | The choice's or button's tags, for a UI to style or filter it by. |
+| `irreversible` | `string` | yes |  | A warning that it can't be undone, for the UI to show on it. |
 | `ui` | `Ui<ChoiceUi>` | yes |  | The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. |
 | `warning` | `string` | yes |  | Pressable, but the game would rather you didn't, and says why: a plugin guard's soft refusal: running past dawn, say. The reducer refuses it all the same, so a UI shows the warning and offers something else. |
-| `command` | `Command` |  |  |  |
+| `command` | `Command` |  |  | What to send when the player presses it: `runner.apply(choice.command)`. |
 | `effects` | `Effect[]` |  |  | What it would apply, as `effectsOf` says: a choice's effects, an action's cost and effects. |
 
 ## ScreenScene
@@ -4648,9 +4597,9 @@ type ScreenScene = {
 |---|---|---|---|---|
 | `id` | `string \| null` |  |  | The open scene's id, or null for the room. |
 | `key` | `string` |  |  | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a minigame is played, `room:<id>` for a plugin's room scene (a place, by its id), and `room` with none. It changes when the screen does, and only then. |
-| `title` | `string` |  |  |  |
-| `body` | `string` |  |  |  |
-| `beats` | `SceneBeat[]` |  |  |  |
+| `title` | `string` |  |  | The heading: the scene's title, or the room's. |
+| `body` | `string` |  |  | The words as content wrote them, markup and all. Draw `beats`, which is this parsed. |
+| `beats` | `SceneBeat[]` |  |  | The body parsed into paragraphs, speech, pictures and past picks, ready to draw. See `SceneBeat`. |
 | `fresh` | `number` |  |  | The first of `beats` the flow's last step brought, from its `chose` on: what a pick, a jump or a minigame or panel done with added, so a UI can animate only that. 0 when the visit has taken no step, and for the room. |
 | `tags` | `string[]` |  |  | The scene's tags, for the UI to style it by. |
 | `speaker` | `SpeakerView \| null` |  |  | Who is speaking: the scene's `speaker`, as their entity is. Null with none, or one that names no entity. |
@@ -4723,13 +4672,13 @@ type SettingView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  |  |
-| `type` | `'toggle' \| 'choice' \| 'range'` |  |  |  |
-| `affects` | `'play' \| 'ui'` |  |  |  |
+| `type` | `'toggle' \| 'choice' \| 'range'` |  |  | How the player sets it: a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. |
+| `affects` | `'play' \| 'ui'` |  |  | `play` settings live in the save and change the game; `ui` settings live in the profile and only change how it's shown. |
 | `options` | `{ value: string; label: string }[]` | yes |  | A choice's options. |
 | `min` | `number` | yes |  | A range's bounds and step. |
-| `max` | `number` | yes |  |  |
-| `step` | `number` | yes |  |  |
-| `default` | `KvValue` |  |  |  |
+| `max` | `number` | yes |  | A range's highest value. |
+| `step` | `number` | yes |  | A range's step. 1 if the setting gives none. |
+| `default` | `KvValue` |  |  | The value it has until the player changes it, as the game declares it. |
 | `value` | `KvValue \| null` |  |  | A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. |
 
 ## SpeakerView
@@ -4968,12 +4917,12 @@ type StatView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `key` | `StatKey` |  |  |  |
+| `key` | `StatKey` |  |  | The stat's id. |
 | `label` | `string` |  |  |  |
-| `value` | `number` |  |  |  |
+| `value` | `number` |  |  | Its value as play reads it: kept or derived, with the plugins' modifiers, rounded and held to its range. |
 | `min` | `number` |  |  | The lowest it can go. |
 | `max` | `number` |  |  | The highest it can go right now. |
-| `text` | `string` |  |  |  |
+| `text` | `string` |  |  | The value written out with the stat's `format`: `'12 coins'`, `'80%'`. The number itself with no format. |
 | `level` | `{ level: number; next: number \| null; progress: number }` | yes |  | Where a stat with `levels` stands: its level, the value the next level starts at (null at the top), and how far it is towards it, 0 to 1. Left out for a stat with no levels. |
 | `ui` | `Ui<StatUi>` | yes |  | The stat's presentation hints, as written; left out with none. See `StatUi`. |
 
@@ -5024,11 +4973,6 @@ type StorylineDef = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-
 ## storylineOpen
 
 Function. Explained in [Storylines](/docs/reference/storylines#storylineopen).
@@ -5055,7 +4999,7 @@ type StorylineState = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `closedUntil` | `number \| null` |  |  | The turn it opens again, or null while it is open. |
-| `kv` | `Record<string, KvValue>` |  |  |  |
+| `kv` | `Record<string, KvValue>` |  |  | The storyline's own kv keys, read and written with `of: 'storyline:<id>'`. |
 
 ## StringKey
 
@@ -5265,57 +5209,6 @@ It also takes any other key: `[key: string]: string`.
 
 Its fields are the keys of `Partial<Record<StringKey, string>> & Record<string, string>`, so they grow when a game or a plugin adds to those.
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `you` | `string` | yes |  |  |
-| `done` | `string` | yes |  |  |
-| `finishFirst` | `string` | yes |  |  |
-| `notSupported` | `string` | yes |  |  |
-| `noSuchAction` | `string` | yes |  |  |
-| `notEnough` | `string` | yes |  |  |
-| `noSuchScene` | `string` | yes |  |  |
-| `nothingToChoose` | `string` | yes |  |  |
-| `notOnOffer` | `string` | yes |  |  |
-| `noSuchThing` | `string` | yes |  |  |
-| `badArgument` | `string` | yes |  |  |
-| `noSuchInput` | `string` | yes |  |  |
-| `notNow` | `string` | yes |  |  |
-| `enterSomething` | `string` | yes |  |  |
-| `enterNumber` | `string` | yes |  |  |
-| `tooLong` | `string` | yes |  |  |
-| `between` | `string` | yes |  |  |
-| `atLeast` | `string` | yes |  |  |
-| `atMost` | `string` | yes |  |  |
-| `notAnOption` | `string` | yes |  |  |
-| `noMinigame` | `string` | yes |  |  |
-| `noPanel` | `string` | yes |  |  |
-| `notLive` | `string` | yes |  |  |
-| `noTimer` | `string` | yes |  |  |
-| `tickLength` | `string` | yes |  |  |
-| `noSuchSetting` | `string` | yes |  |  |
-| `notAGameSetting` | `string` | yes |  |  |
-| `noProfile` | `string` | yes |  |  |
-| `onOrOff` | `string` | yes |  |  |
-| `inSteps` | `string` | yes |  |  |
-| `lookAround` | `string` | yes |  |  |
-| `priceSeparator` | `string` | yes |  |  |
-| `minigame.up` | `string` | yes |  |  |
-| `minigame.down` | `string` | yes |  |  |
-| `minigame.left` | `string` | yes |  |  |
-| `minigame.right` | `string` | yes |  |  |
-| `minigame.space` | `string` | yes |  |  |
-| `momentPassed` | `string` | yes |  |  |
-| `notASave` | `string` | yes |  |  |
-| `otherGame` | `string` | yes |  |  |
-| `saveTooOld` | `string` | yes |  |  |
-| `pluginNewer` | `string` | yes |  |  |
-| `gameNewer` | `string` | yes |  |  |
-| `pluginUnreadable` | `string` | yes |  |  |
-| `noSaves` | `string` | yes |  |  |
-| `emptySlot` | `string` | yes |  |  |
-| `notSaved` | `string` | yes |  |  |
-| `turnLabel` | `string` | yes |  |  |
-
 ## take
 
 Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
@@ -5329,7 +5222,7 @@ function take(ref: string, n?: number): Effect
 
 ## text
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 Words as written: a paragraph, or several. The indentation every line
 shares is taken off, so the words can sit indented in your code, and
@@ -5357,11 +5250,6 @@ type TextLine = {
   text: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `where` | `string` |  |  |  |
-| `text` | `string` |  |  |  |
 
 ## TimerDef
 
@@ -5425,12 +5313,6 @@ type Times = {
   last: number
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `n` | `number` |  |  |  |
-| `first` | `number` |  |  |  |
-| `last` | `number` |  |  |  |
 
 ## TrackDef
 
@@ -5587,8 +5469,8 @@ type TriggerDef = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `when` | `Condition` |  |  |  |
-| `effects` | `EffectRef[]` |  |  |  |
+| `when` | `Condition` |  |  | The trigger fires the first time this holds after a command. |
+| `effects` | `EffectRef[]` |  |  | What it applies when it fires. |
 | `once` | `{ per: 'game' \| 'turn' }` | yes |  | Fire once in the whole game (`{ per: 'game' }`, the default), or at most once a turn (`{ per: 'turn' }`). |
 
 ## Ui
@@ -5621,13 +5503,6 @@ type UiField = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `on` | `UiTarget` |  |  |  |
-| `id` | `string` | yes |  |  |
-| `where` | `string` |  |  |  |
-| `ui` | `unknown` |  |  |  |
-
 ## UiInContent
 
 Type. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent-1).
@@ -5641,11 +5516,6 @@ type UiInContent = {
   lines: TextLine[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `fields` | `UiField[]` |  |  |  |
-| `lines` | `TextLine[]` |  |  |  |
 
 ## uiInContent
 
@@ -5717,11 +5587,6 @@ type ValueRef = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `value` | `string` |  |  |  |
-| `with` | `PluginArgs` | yes |  |  |
-
 ## VariantMember
 
 Type. Explained in [Prose and markup](/docs/reference/prose#variantmember).
@@ -5777,11 +5642,11 @@ type VideoView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `autoplay` | `boolean` |  |  |  |
-| `loop` | `boolean` |  |  |  |
-| `muted` | `boolean` |  |  |  |
-| `controls` | `boolean` |  |  |  |
-| `poster` | `string` | yes |  |  |
+| `autoplay` | `boolean` |  |  | Start playing as soon as it's shown: true unless it has controls. |
+| `loop` | `boolean` |  |  | Play it again when it ends. |
+| `muted` | `boolean` |  |  | Without sound: true unless its flags ask for sound. |
+| `controls` | `boolean` |  |  | Show the player's play, pause and volume controls. |
+| `poster` | `string` | yes |  | A still to show before it plays, through `artSrc`. |
 
 ## View
 
@@ -5817,10 +5682,10 @@ type View = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `title` | `string` |  |  |  |
+| `title` | `string` |  |  | The game's title. |
 | `when` | `string \| null` |  |  | Where the game is in time, in plugins' words ("Day 3 · Wednesday morning"), or null if none says. |
 | `scene` | `{ id: string \| null; key: string; title: string; body: string; beats: SceneBeat[]; fresh:…` |  |  |  |
-| `actions` | `RenderedChoice[]` |  |  |  |
+| `actions` | `RenderedChoice[]` |  |  | The buttons on offer besides the scene's choices: the game's actions and the plugins' (wait, sleep, travel), each ready to draw. |
 | `plugins` | `ViewsIn` |  |  | What each plugin gives the UI, by plugin id: typed for each plugin that declares its view in `ViewRegistry`. |
 | `entities` | `EntitiesView[]` |  |  | Each listed kind with its listed entities, in the order the kinds are declared. |
 | `held` | `HeldView[]` |  |  | What you hold, in the game's order of its entities: the protagonist's things while one is played, then the player's. |
@@ -5872,10 +5737,6 @@ type ViewOptions = {
   profile?: Readonly<Record<string, unknown>>
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `profile` | `Readonly<Record<string, unknown>>` | yes |  |  |
 
 ## ViewRegistry
 
@@ -5929,7 +5790,7 @@ function weighted<T>(items: readonly T[], weightOf: (item: T) => number | undefi
 
 ## when
 
-Function.
+Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
 
 Blocks shown only while `condition` holds: a section, which can hold anything a body can.
 

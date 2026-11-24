@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-achievements"
-description: "Every export of @ifloom/plugin-achievements and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-achievements and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-achievements` and `@ifloom/plugin-achievements/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -64,8 +64,8 @@ type AchievementEntry = {
 | `name` | `string` |  |  | Its name, or `???` while it's secret and not earned. |
 | `description` | `string` |  |  | Its description, or `''` while it's secret and not earned. |
 | `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none, or while it's secret and not earned. |
-| `secret` | `boolean` |  |  |  |
-| `earned` | `boolean` |  |  |  |
+| `secret` | `boolean` |  |  | Hidden until earned: its name, description and picture read `???`, `''` and null until then. |
+| `earned` | `boolean` |  |  | Earned in this save, or in any save the profile remembers. |
 | `earnedOn` | `number \| null` |  |  | The turn this save earned it, or null. Null too for one earned only in another save. |
 | `progress` | `{ value: number; target: number } \| null` |  |  | How far towards it, or null if it has no progress or is a secret not yet earned. Earned, it reads as full. |
 
@@ -110,10 +110,6 @@ type AchievementsProfile = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `earned` | `string[]` |  |  |  |
-
 ### AchievementsState
 
 Type. Explained in [Achievements](/docs/plugins/achievements#achievementsstate).
@@ -148,7 +144,7 @@ type AchievementsView = {
 |---|---|---|---|---|
 | `achievements` | `AchievementEntry[]` |  |  | Every achievement, in the order the game declares them. |
 | `earned` | `number` |  |  | How many are earned. |
-| `total` | `number` |  |  |  |
+| `total` | `number` |  |  | How many the game declares, secret ones included. |
 
 ### ProgressDef
 
@@ -165,11 +161,6 @@ type ProgressDef = {
   target: number
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `value` | `Amount` |  |  |  |
-| `target` | `number` |  |  |  |
 
 ## @ifloom/plugin-achievements/react
 
@@ -206,14 +197,6 @@ const ACHIEVEMENTS_WORDS: {
   noAchievements: 'No achievements yet.'
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `achievementEarned` | `'Earned'` |  |  |  |
-| `achievementProgress` | `'{value} of {target}'` |  |  |  |
-| `achievements` | `'Achievements'` |  |  |  |
-| `achievementsCount` | `'{earned} of {total}'` |  |  |  |
-| `noAchievements` | `'No achievements yet.'` |  |  |  |
 
 ### AchievementsButton
 

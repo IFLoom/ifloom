@@ -41,6 +41,7 @@ export type GameModuleDef = {
 
 /** A game module, as `defineGame` returns it: `build` may be called with no options, as a page does. */
 export type GameModule = Omit<GameModuleDef, 'build'> & {
+  /** Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. */
   build: (options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }
 }
 

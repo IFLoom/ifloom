@@ -19,8 +19,11 @@ export type BacklogEntry = {
   turn: number
   /** Where the game was in time, in plugins' words (`view.when`), or null if none says. */
   when: string | null
+  /** The scene's id. The backlog keeps scenes only, not the room. */
   sceneId: string
+  /** The scene's heading as it was shown. */
   title: string
+  /** What the player read, as the view's beats. */
   beats: SceneBeat[]
   /** The label of the choice the player made in this scene, once they made one. */
   chose?: string

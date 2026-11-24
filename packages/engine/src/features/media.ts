@@ -35,9 +35,13 @@ export type MediaState = {
 export type PictureLayer = {
   /** What hotspots name to go with this layer. */
   id?: string
+  /** The file, in the game's `art/` folder or a URL. Give this or `pool`. */
   src?: string
+  /** A pool in `game.media.pools` to pick the file from, kept for the save once picked. */
   pool?: string
+  /** The tags the pool's pick should have, most important first. */
   tags?: string[]
+  /** Shown only while this holds. */
   when?: Condition
   /** Draw it as a video. A `.mp4` or `.webm` file is one anyway. */
   video?: boolean
@@ -57,6 +61,7 @@ export type HotspotDef = {
   command?: CommandRef
   /** A choice of the open scene, by id. */
   choice?: string
+  /** Only there while this holds. */
   when?: Condition
   /** Only there while the layer with this id is shown. */
   layer?: string
@@ -66,6 +71,7 @@ export type HotspotDef = {
 export type PictureDef = {
   /** Bottom first. */
   layers: PictureLayer[]
+  /** The clickable areas on it, each a button the UI draws over the picture. */
   hotspots?: HotspotDef[]
   /** Width over height, as CSS writes it: `'16/9'`. The UI's own if left out. */
   aspect?: string
@@ -74,6 +80,7 @@ export type PictureDef = {
 /** A picture layer as the UI draws it. */
 export type PictureLayerView = {
   id: string | null
+  /** The file to draw, through `artSrc` (a pool's pick resolved). */
   src: string
   /** How it plays, when it is a video. */
   video?: VideoView
@@ -82,13 +89,16 @@ export type PictureLayerView = {
 /** A hotspot as the UI draws it: a button over the picture. */
 export type HotspotView = {
   id: string
+  /** Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. */
   rect: [number, number, number, number]
   label: string
+  /** What pressing it sends: its own `command`, or the command that takes its `choice`. */
   command: Command
   /** Why it cannot be pressed now, as a button's `disabled`. */
   disabled?: string
   /** Pressable, but a plugin warns against it, as a button's `warning`. */
   warning?: string
+  /** The layer it goes with, by id; left out for one on the picture as a whole. */
   layer?: string
 }
 

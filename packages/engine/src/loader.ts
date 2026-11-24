@@ -170,9 +170,13 @@ function declarations(content: Content): Declared[] {
 const contentName = (content: Content) => content.name ?? 'content'
 
 export type Loaded = {
+  /** The game, ready to run. */
   game: Game
+  /** Every line of prose by key, merged from the content and the packs. */
   prose: Record<string, string>
+  /** Every variants list by name, with its members' keys. */
   variants: Record<string, string[]>
+  /** What's wrong with the content and the packs, each naming the one it came from. Empty for a game that's fine. */
   problems: Problem[]
 }
 

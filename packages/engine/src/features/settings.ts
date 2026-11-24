@@ -30,14 +30,22 @@ export type SettingDef = {
 export type SettingView = {
   id: string
   label: string
+  /** How the player sets it: a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. */
   type: 'toggle' | 'choice' | 'range'
+  /**
+   * `play` settings live in the save and change the game; `ui` settings live in the profile and only change how it's
+   * shown.
+   */
   affects: 'play' | 'ui'
   /** A choice's options. */
   options?: { value: string; label: string }[]
   /** A range's bounds and step. */
   min?: number
+  /** A range's highest value. */
   max?: number
+  /** A range's step. 1 if the setting gives none. */
   step?: number
+  /** The value it has until the player changes it, as the game declares it. */
   default: KvValue
   /** A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. */
   value: KvValue | null

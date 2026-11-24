@@ -98,7 +98,11 @@ declare module '@ifloom/engine' {
  * its `image` their picture) and the `cast/person` trait's (its `portrait`
  * their face, for avatars), side by side.
  */
-export type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
+export type PersonDef = Omit<EntityDef, 'of'> &
+  Person & {
+    /** Their kind: the cast's own (`character`, or the `kind` option) if left out. */
+    of?: string
+  }
 
 export type CastOptions = {
   /** The kind the plugin brings for its people, and the kind a bare id names (`'ava'` is `'character:ava'`). `character` if left out. */
@@ -112,6 +116,7 @@ export type PersonView = {
   /** As content names them: `'character:ava'`. */
   ref: EntityRef
   name: string
+  /** Their full name, or their name when they have none. */
   fullName: string
   /** Their entity's `description`, tokens filled: "Runs the café". */
   description: string | null
@@ -125,6 +130,7 @@ export type PersonView = {
   here: boolean
   /** Their storyline is closed for now. */
   closed: boolean
+  /** Whether the player has met them, as their `met` condition says, else whether they've seen one of their talk or call scenes. */
   met: boolean
   /** The talk button, greyed out with its reason when it is. */
   actions: RenderedChoice[]

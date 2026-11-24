@@ -67,9 +67,11 @@ export type StatusesState = {
 export type ActiveStatus = {
   id: string
   name: string
+  /** What it does, as the player reads it; `''` with none. */
   description: string
   /** The turns left on its longest stack. */
   turnsLeft: number
+  /** How many times it's applied and still running: 1 unless the status stacks. */
   stacks: number
   /** What it does to the stats right now, all its stacks together, one entry per stat. */
   modifiers: StatModifier[]

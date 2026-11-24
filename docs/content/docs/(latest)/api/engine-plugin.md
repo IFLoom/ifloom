@@ -37,13 +37,6 @@ type AnyCalls = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `conditions` | `Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>` |  |  |  |
-| `effects` | `Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>` |  |  |  |
-| `commands` | `Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>` |  |  |  |
-
 ## anyOf
 
 Function. Explained in [Entities](/docs/reference/entities#anyof).
@@ -213,11 +206,6 @@ type Asked = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `command` | `Command` |  |  |  |
-| `effects` | `readonly Effect[]` |  |  |  |
-
 ## bindCurrent
 
 Function. Explained in [Entities](/docs/reference/entities#bindcurrent).
@@ -283,12 +271,6 @@ type CallShapes = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `conditions` | `Readonly<Record<string, ArgShape>>` | yes |  |  |
-| `effects` | `Readonly<Record<string, ArgShape>>` | yes |  |  |
-| `commands` | `Readonly<Record<string, ArgShape>>` | yes |  |  |
-
 ## CallTable
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
@@ -333,9 +315,9 @@ type CastContact = {
 |---|---|---|---|---|
 | `id` | `string` |  |  | Their id, as the cast names them: `'ava'`. |
 | `name` | `string` |  |  |  |
-| `description` | `string \| null` |  |  |  |
-| `image` | `string \| null` |  |  |  |
-| `portrait` | `string \| null` |  |  |  |
+| `description` | `string \| null` |  |  | A line about them, or null. |
+| `image` | `string \| null` |  |  | Their picture, through `artSrc`, or null. |
+| `portrait` | `string \| null` |  |  | Their face, for a small avatar, or null. |
 | `command` | `CommandRef` |  |  | The cast's `cast/call` command for them, in short. |
 | `disabled` | `string \| undefined` |  |  | Why the call can't go through now; undefined when it can. |
 
@@ -410,12 +392,6 @@ type ContentReferences = {
   refs: readonly Reference[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `list` | `string` |  |  |  |
-| `id` | `string` |  |  |  |
-| `refs` | `readonly Reference[]` |  |  |  |
 
 ## ContentStep
 
@@ -766,7 +742,7 @@ type Lock = {
 | `id` | `string` | yes |  | A name for it, so a later pack can replace it: a pack's lock with the same id takes its place. Left out, a lock is simply added. |
 | `when` | `Condition` |  |  | While this holds, the lock is on. |
 | `deny` | `readonly LockTarget[]` |  |  | Commands it stops, by type. `'*'` stops everything not in `except`. A plugin's commands can be named one by one (`'quests/track'`) or all at once (`'quests/*'`); `'custom'` stops every plugin command. |
-| `except` | `readonly LockTarget[]` | yes |  |  |
+| `except` | `readonly LockTarget[]` | yes |  | Commands it lets through all the same, by the same names as `deny`. |
 | `effect` | `string` | yes |  | Only commands that would apply this effect: the engine's by its key (`'turn'`) or a plugin's by name (`'calendar/pass'`). See `effectsOf`. |
 | `hide` | `boolean` | yes |  | Leave a button this lock stops off the screen instead of greying it out: an exit, a room's action, a game or plugin button. Not one that ignores locks. |
 | `reason` | `string` |  |  | Why. The refusal and the disabled text are this same line. |
@@ -840,12 +816,6 @@ type PackContext = {
   prose?: Readonly<Record<string, string>>
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `entities` | `readonly unknown[]` | yes |  |  |
-| `you` | `readonly string[]` | yes |  |  |
-| `prose` | `Readonly<Record<string, string>>` | yes |  |  |
 
 ## panelOf
 
@@ -937,7 +907,7 @@ Its members follow one naming rule (ADR 0009). A hook runs at an event and
 returns the next state, and is named `on` and the event: `onTurn`,
 `onCommand`. A provider answers a question and never changes the state, and
 is named by the noun it gives: `guard`, `price`, `label`, `scene`,
-`buttons`, `audio`, `statModifiers`, `view`, `profile`. Tables of
+`actions`, `audio`, `statModifiers`, `view`, `profile`. Tables of
 named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
 are plural nouns. Nothing is nested: there is no `hooks: {}`.
 
@@ -1063,13 +1033,6 @@ type PluginCalls<Id extends string = string, D extends CallShapes = CallShapes> 
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `Id` |  |  |  |
-| `conditions` | `Writers<Id, Table<D, 'conditions'>>` |  |  |  |
-| `effects` | `Writers<Id, Table<D, 'effects'>>` |  |  |  |
-| `commands` | `Writers<Id, Table<D, 'commands'>>` |  |  |  |
-
 ## PluginCommand
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincommand).
@@ -1089,7 +1052,7 @@ type PluginCommand<S = any, A = PluginArgs> = {
 |---|---|---|---|---|
 | `ignoresLocks` | `boolean` | yes |  | Run even while a lock would stop it. For tools that stand outside the story — a debugger — never for something the player does in it. |
 | `whyNot` | `((state: GameState, args: A, context: PluginContext<S>) => string \| undefined)` | yes |  | Why it cannot be done now, as the player reads it; undefined if it can. |
-| `run` | `(state: GameState, args: A, context: PluginContext<S>) => GameState` |  |  |  |
+| `run` | `(state: GameState, args: A, context: PluginContext<S>) => GameState` |  |  | Run it: the state after the command. Called only when `whyNot` gave no reason. |
 | `effectsOf` | `(state: GameState, args: A, context: PluginContext<S>) => Effect[]` | yes |  | The effects running it would apply, for guards, prices and locks to see. None if left out. |
 | `spends` | `((state: GameState, args: A, context: PluginContext<S>) => Record<string, number> \| undef…` | yes |  | The stats it spends, by id, for its button's price, as an action's `cost.stats` gives them: `{ coins: 4 }`. Only the price shows it; `run` does the spending, and `whyNot` says when there isn't enough. None if left out. |
 
@@ -1121,7 +1084,7 @@ type PluginContext<S> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `Game` |  |  |  |
+| `game` | `Game` |  |  | The loaded game. |
 | `query` | `Query` |  |  | Ask a plugin something by its full name: `query('places/here')`. Undefined when the game does not have that plugin. |
 | `value` | `(name: string, args?: PluginArgs) => string \| number \| undefined` |  |  | A value by name, a plugin's (`messages/unread`) or the game's own, asked with `args`. Undefined when nobody has it. |
 | `roll` | `(max: number, name: string) => number` |  |  | A whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`: the same save and turn always draw the same. |
@@ -1246,10 +1209,6 @@ type PluginEntry = {
 
 It also takes any other key: `[key: string]: unknown`.
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-
 ## PluginProblem
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginproblem).
@@ -1264,12 +1223,6 @@ type PluginProblem = {
   what: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `list` | `string` |  |  |  |
-| `id` | `string` |  |  |  |
-| `what` | `string` |  |  |  |
 
 ## PluginReferences
 
@@ -1307,11 +1260,6 @@ type PluginSlice = {
   state: unknown
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `version` | `number` |  |  |  |
-| `state` | `unknown` |  |  |  |
 
 ## priceView
 
@@ -1363,12 +1311,6 @@ type RawCall = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `name` | `string` |  |  |  |
-| `with` | `unknown` |  |  |  |
-| `form` | `CallForm` |  |  |  |
-
 ## RawCommand
 
 Type. Explained in [Writing a plugin](/docs/reference/plugins#rawcommand).
@@ -1383,10 +1325,6 @@ type RawCommand = {
 ```
 
 It also takes any other key: `[key: string]: unknown`.
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `type` | `string` |  |  |  |
 
 ## Reference
 
@@ -1519,12 +1457,6 @@ type SenderView = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `name` | `string` |  |  |  |
-| `image` | `string \| null` |  |  |  |
-| `portrait` | `string \| null` |  |  |  |
-
 ## setTraitState
 
 Function. Explained in [Entities](/docs/reference/entities#settraitstate).
@@ -1582,7 +1514,7 @@ type StatModifier = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stat` | `string` |  |  |  |
+| `stat` | `string` |  |  | The stat it changes, by id. |
 | `add` | `number` | yes |  | Added to the value. 0 if left out. |
 | `multiply` | `number` | yes |  | What the value, with the adds, is multiplied by. 1 if left out. |
 
@@ -1645,10 +1577,6 @@ type TraitEntityDef<K extends string> = {
   of?: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `of` | `string` | yes |  |  |
 
 ## TraitKind
 
@@ -1737,11 +1665,6 @@ type TraitTools = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `game` | `Game` |  |  |  |
-| `ref` | `EntityRef` |  |  |  |
-
 ## TurnContext
 
 Type. Explained in [Rules and hooks](/docs/reference/rules#turncontext).
@@ -1771,7 +1694,7 @@ type TurnContext<S = any> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `Game` |  |  |  |
+| `game` | `Game` |  |  | The loaded game. |
 | `query` | `Query` |  |  | Ask a plugin something by its full name: `query('places/here')`. Undefined when the game does not have that plugin. |
 | `value` | `(name: string, args?: PluginArgs) => string \| number \| undefined` |  |  | A value by name, a plugin's (`messages/unread`) or the game's own, asked with `args`. Undefined when nobody has it. |
 | `roll` | `(max: number, name: string) => number` |  |  | A whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`: the same save and turn always draw the same. |

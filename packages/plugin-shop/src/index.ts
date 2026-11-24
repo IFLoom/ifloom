@@ -120,6 +120,7 @@ export type Vendor = {
    * writes opening hours as one, with the calendar). Open everywhere if left out.
    */
   blocked?: Blocked[]
+  /** What it sells, in the order shown. */
   goods: GoodDef[]
   /** The fraction of a thing's price it pays to take one back. It takes nothing back if left out. */
   buysBack?: number
@@ -138,7 +139,11 @@ declare module '@ifloom/engine' {
  * What `shop.vendor()` takes: an entity's fields (its `of` is `'vendor'` if left
  * out) and the `shop/vendor` trait's, side by side.
  */
-export type VendorDef = Omit<EntityDef, 'of'> & Vendor & { of?: string }
+export type VendorDef = Omit<EntityDef, 'of'> &
+  Vendor & {
+    /** Its kind: the plugin's own, `vendor`, if left out. */
+    of?: string
+  }
 
 /**
  * When a vendor's stock of a good was last topped up: the turn or day it

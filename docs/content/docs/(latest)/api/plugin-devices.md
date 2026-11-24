@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-devices"
-description: "Every export of @ifloom/plugin-devices and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-devices and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-devices` and `@ifloom/plugin-devices/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -36,7 +36,7 @@ type AppDef = {
 | `when` | `Condition` | yes |  | Installed: off the home screen until this holds. |
 | `blocked` | `Blocked[]` | yes |  | On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. |
 | `badge` | `Amount \| { when: Condition }` | yes |  | A count, as an `Amount`: a value asked with its arguments (`{ value: 'messages/unread', with: { channel: 'texts' } }`), a stat or a kv key's number. Or a dot while a condition holds (`{ when }`). |
-| `sections` | `Section[]` |  |  |  |
+| `sections` | `Section[]` |  |  | What the app shows, top to bottom: words, actions, inputs, or a plugin's list (messages, a feed). See `Section`. |
 
 ### appsOf
 
@@ -70,10 +70,10 @@ type AppView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `icon` | `string` |  |  |  |
+| `icon` | `string` |  |  | A name the UI maps to a picture. |
 | `badge` | `number \| boolean` |  |  | A count, a dot (`true`), or nothing (`0`). |
 | `disabled` | `string` | yes |  | Why it can't be opened now, if it can't. |
-| `command` | `Command` |  |  |  |
+| `command` | `Command` |  |  | What opening it sends: `devices/open`. |
 | `sections` | `SectionView[]` |  |  | Filled in for the open app only. |
 
 ### DeviceDef
@@ -144,10 +144,6 @@ type DevicesState = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `shown` | `Record<string, string \| null>` |  |  |  |
-
 ### DevicesView
 
 Type. Explained in [Devices](/docs/plugins/devices#devicesview).
@@ -158,10 +154,6 @@ type DevicesView = {
   devices: DeviceView[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `devices` | `DeviceView[]` |  |  |  |
 
 ### DeviceView
 
@@ -188,9 +180,9 @@ type DeviceView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `frame` | `string` |  |  |  |
-| `sidebar` | `boolean` |  |  |  |
-| `wallpaper` | `string \| null` |  |  |  |
+| `frame` | `string` |  |  | How the UI draws it: `'phone'`, `'laptop'`, or the game's own. The device's id if it gives none. |
+| `sidebar` | `boolean` |  |  | Whether the sidebar offers it. |
+| `wallpaper` | `string \| null` |  |  | The picture behind its home screen, through `artSrc`, or null. |
 | `badge` | `number` |  |  | Every count, plus one for each dot: what the sidebar button shows. |
 | `apps` | `AppView[]` |  |  | Installed apps, in order. |
 | `shown` | `boolean` |  |  | Out: on its home screen, or on an app. A UI draws a device that's shown, and none that isn't. |
@@ -346,11 +338,6 @@ type OpenAppState = {
   app: AppView
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `device` | `DeviceView` |  |  |  |
-| `app` | `AppView` |  |  |  |
 
 ### useDevice
 

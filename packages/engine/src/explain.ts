@@ -12,6 +12,7 @@ import { withAmounts } from './amount.ts'
  * true or false, each leaf saying what it read and what it wanted.
  */
 export type Explanation = {
+  /** Whether this part holds. */
   holds: boolean
   /** One line: what this part checked, what it found. */
   why: string

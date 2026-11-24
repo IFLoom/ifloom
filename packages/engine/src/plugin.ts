@@ -127,7 +127,7 @@ export type Asked = { command: Command; effects: readonly Effect[] }
  * returns the next state, and is named `on` and the event: `onTurn`,
  * `onCommand`. A provider answers a question and never changes the state, and
  * is named by the noun it gives: `guard`, `price`, `label`, `scene`,
- * `buttons`, `audio`, `statModifiers`, `view`, `profile`. Tables of
+ * `actions`, `audio`, `statModifiers`, `view`, `profile`. Tables of
  * named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
  * are plural nouns. Nothing is nested: there is no `hooks: {}`.
  *
@@ -367,6 +367,7 @@ export type Plugin<S = any, V = unknown> = {
  * together, and it reads `(value + adds) × multipliers`, held to its range.
  */
 export type StatModifier = {
+  /** The stat it changes, by id. */
   stat: string
   /** Added to the value. 0 if left out. */
   add?: number
@@ -442,6 +443,7 @@ export type PluginCommand<S = any, A = PluginArgs> = {
   ignoresLocks?: boolean
   /** Why it cannot be done now, as the player reads it; undefined if it can. */
   whyNot?: (state: GameState, args: A, context: PluginContext<S>) => string | undefined
+  /** Run it: the state after the command. Called only when `whyNot` gave no reason. */
   run: (state: GameState, args: A, context: PluginContext<S>) => GameState
   /** The effects running it would apply, for guards, prices and locks to see. None if left out. */
   effectsOf?: (state: GameState, args: A, context: PluginContext<S>) => Effect[]

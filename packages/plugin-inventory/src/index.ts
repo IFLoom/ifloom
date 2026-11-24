@@ -84,6 +84,7 @@ export type InventoryThing = {
   /** How content names it: `'food:apple'`. */
   ref: EntityRef
   name: string
+  /** Its entity's `description`, tokens filled; null with none. */
   description: string | null
   /** Its picture's path, through `artSrc`; null with none. */
   image: string | null

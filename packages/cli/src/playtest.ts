@@ -28,11 +28,21 @@ export type PlaytestOptions = {
 }
 
 /** One turn's numbers, as the turn ended: the player's stats and a count of each kind of entity. `turn` counts from 1. */
-export type TurnMetrics = { turn: number; stats: Record<string, number>; scenes: string[]; refused: number }
+export type TurnMetrics = {
+  /** The turn, from 1. */
+  turn: number
+  /** The player's stats as it ended, by id. */
+  stats: Record<string, number>
+  /** The scenes shown during it, by id, in order. */
+  scenes: string[]
+  /** How many commands the policy chose that were refused during it. */
+  refused: number
+}
 
 export type Playtest = {
   /** Every screen, and the command taken on it, as plain text. */
   transcript: string
+  /** Each turn's numbers, in order. */
   turns: TurnMetrics[]
   /** Commands the policy chose that were refused, with why: each one a policy or game bug. */
   refusals: { turn: number; command: Command; reason: string }[]

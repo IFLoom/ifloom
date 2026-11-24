@@ -113,6 +113,7 @@ export type CheatsState = {
 export type CheatView = {
   id: string
   name: string
+  /** What it does, as the player reads it; `''` with none. */
   description: string
   /** The heading it goes under, or null. */
   group: string | null

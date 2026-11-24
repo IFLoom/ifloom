@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-shop"
-description: "Every export of @ifloom/plugin-shop and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-shop and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-shop` and `@ifloom/plugin-shop/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -204,11 +204,6 @@ type StockRecord = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `at` | `number` |  |  |  |
-| `left` | `number` | yes |  |  |
-
 ### Vendor
 
 Type. Explained in [Shop](/docs/plugins/shop#vendor-1).
@@ -229,7 +224,7 @@ type Vendor = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `blocked` | `Blocked[]` | yes |  | Refused while one of these holds, with its reason: what buying and selling are refused with, the first that holds winning. An entry with `hide` says where the vendor is: while it holds, the vendor isn't `here` (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])` writes opening hours as one, with the calendar). Open everywhere if left out. |
-| `goods` | `GoodDef[]` |  |  |  |
+| `goods` | `GoodDef[]` |  |  | What it sells, in the order shown. |
 | `buysBack` | `number` | yes |  | The fraction of a thing's price it pays to take one back. It takes nothing back if left out. |
 | `discounts` | `DiscountDef` | yes |  | Goods marked down each day. None if left out. |
 
@@ -257,10 +252,10 @@ Plugins add fields of their own to it, which their pages list.
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `blocked` | `Blocked[]` | yes |  | Refused while one of these holds, with its reason: what buying and selling are refused with, the first that holds winning. An entry with `hide` says where the vendor is: while it holds, the vendor isn't `here` (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])` writes opening hours as one, with the calendar). Open everywhere if left out. |
-| `goods` | `GoodDef[]` |  |  |  |
+| `goods` | `GoodDef[]` |  |  | What it sells, in the order shown. |
 | `buysBack` | `number` | yes |  | The fraction of a thing's price it pays to take one back. It takes nothing back if left out. |
 | `discounts` | `DiscountDef` | yes |  | Goods marked down each day. None if left out. |
-| `of` | `string` | yes |  |  |
+| `of` | `string` | yes |  | Its kind: the plugin's own, `vendor`, if left out. |
 
 ### vendorOf
 
@@ -341,15 +336,6 @@ const SHOP_WORDS: {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `buy` | `'Buy'` |  |  |  |
-| `sellFor` | `'Sell for {price}'` |  |  |  |
-| `stockLeft` | `'{n} left'` |  |  |  |
-| `owned` | `'You have {n}'` |  |  |  |
-| `percentOff` | `'{percent}% off'` |  |  |  |
-| `noGoods` | `'Nothing for sale.'` |  |  |  |
-
 ### ShopControls
 
 Type.
@@ -403,11 +389,6 @@ type ShopCounterProps = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `vendor` | `VendorView` |  |  |  |
-| `className` | `string` | yes |  |  |
-
 ### ShopDialog
 
 Const. Explained in [Shop](/docs/plugins/shop#shopdialog).
@@ -430,11 +411,6 @@ type ShopDialogProps = {
   onClose: () => void
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `vendorId` | `string \| null` |  |  |  |
-| `onClose` | `() => void` |  |  |  |
 
 ### shopUi
 

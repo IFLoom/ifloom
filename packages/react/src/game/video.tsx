@@ -7,14 +7,19 @@ import { overridable, usePart } from './overrides.tsx'
 import { useSetting } from './pages.tsx'
 
 export type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 'loop' | 'muted' | 'controls'> & {
+  /** The file, through `artSrc`. */
   src: string
+  /** A picture to show before it plays. */
   poster?: string
   /** What the clip shows, for a screen reader. */
   alt?: string
+  /** Start playing as soon as it's shown. */
   autoplay: boolean
+  /** Play it again when it ends. */
   loop: boolean
   /** False asks for sound, which then follows the game's audio settings. */
   muted: boolean
+  /** Show the browser's play, pause and volume controls. */
   controls: boolean
 }
 

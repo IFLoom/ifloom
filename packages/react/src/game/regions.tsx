@@ -56,7 +56,9 @@ function useWide(): boolean {
 const SidebarSlot = createContext<((present: boolean) => void) | null>(null)
 
 export type GameProps = {
+  /** Classes added to its own. */
   className?: string
+  /** The regions: a `Sidebar`, a `Story`, an `Overlay` and whatever else the page has. */
   children?: ReactNode
 }
 
@@ -90,7 +92,12 @@ function GameImpl({ className, children }: GameProps) {
  */
 export const Game = overridable('Game', GameImpl)
 
-export type SidebarProps = { className?: string; children?: ReactNode }
+export type SidebarProps = {
+  /** Classes added to its own. */
+  className?: string
+  /** What the sidebar holds: sections, stats, plugins' spots. */
+  children?: ReactNode
+}
 
 function DrawerImpl({ className, children }: SidebarProps) {
   const { view, runner } = useGame()
@@ -282,6 +289,7 @@ function useDrewNothing(): [RefObject<HTMLDivElement | null>, boolean] {
 export type SectionProps = {
   /** What it's called for the profile: the open or folded state is kept under it. */
   id: string
+  /** Its heading, as the player reads it. */
   title: string
   /** Fold in place with a button on its title. The player's choice is remembered. */
   collapsible?: boolean

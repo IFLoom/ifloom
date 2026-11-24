@@ -139,10 +139,15 @@ export type VideoFlags = {
 
 /** How a video plays, worked out from its flags. */
 export type VideoView = {
+  /** Start playing as soon as it's shown: true unless it has controls. */
   autoplay: boolean
+  /** Play it again when it ends. */
   loop: boolean
+  /** Without sound: true unless its flags ask for sound. */
   muted: boolean
+  /** Show the player's play, pause and volume controls. */
   controls: boolean
+  /** A still to show before it plays, through `artSrc`. */
   poster?: string
 }
 

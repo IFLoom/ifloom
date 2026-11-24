@@ -26,8 +26,11 @@ export type { HistoryOptions } from './runner/history.ts'
 export type RunnerOptions = {
   /** Where `save`, `load` and autosave write. Needed for any of them. */
   saves?: Saves
+  /** Keep states for undo and redo: `true` for 50 steps back, or a `HistoryOptions`. Off if left out. */
   history?: HistoryOptions | boolean
+  /** Keep what was shown, scene by scene, for a backlog screen: `true` for 200 entries, or a `BacklogOptions`. Off if left out. */
   backlog?: BacklogOptions | boolean
+  /** Save to a slot of its own (`'auto'`) after every command, or when the scene or the turn changes. Needs `saves`. Off if left out. */
   autosave?: AutosaveOptions
   /** The clock for time played. `Date.now` if left out; tests pass their own. */
   now?: () => number
@@ -50,8 +53,11 @@ export type RunnerOptions = {
  * versions of a game played the same way and compared.
  */
 export type CommandLog = {
+  /** The game's id, so a log isn't played against another game. */
   game: string
+  /** The state the commands were applied to, in order. */
   start: GameState
+  /** Every command applied, in order, refused ones included. */
   commands: Command[]
   /**
    * The engine's `SCHEMA` the commands were written in. A log from before

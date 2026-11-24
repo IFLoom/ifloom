@@ -84,6 +84,7 @@ export type MinigameDef = {
    * Key names as `KeyboardEvent.key` gives them. A UI picks its own if left out.
    */
   keys?: Record<string, string[]>
+  /** Its states, by name. See `MinigameStateDef`. */
   states: Record<string, MinigameStateDef>
 }
 

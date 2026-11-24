@@ -126,7 +126,11 @@ declare module '@ifloom/engine' {
  * picture) and the `places/location` trait's, side by side. `ui` is the
  * trait's: the room's hints, as a scene's.
  */
-export type PlaceDef = Omit<EntityDef, 'of' | 'ui'> & Place & { of?: string }
+export type PlaceDef = Omit<EntityDef, 'of' | 'ui'> &
+  Place & {
+    /** Its kind: the plugin's own, `location`, if left out. */
+    of?: string
+  }
 
 /** What happens as the player walks into a place: effects, while `when` holds. */
 export type Arrival = { when?: Condition; effects: EffectRef[] }
@@ -178,6 +182,7 @@ export type PlaceView = {
   name: string
   /** The line under its name, its entity's `description`; null with none. */
   description: string | null
+  /** Its entity's tags, for the UI to style it by. */
   tags: string[]
   /** Its picture's path, its entity's `image` through `artSrc`; null with none. */
   image: string | null

@@ -58,6 +58,7 @@ export type ChannelDef = {
 
 /** The game's sounds, the channels they play on and the settings that set their volume. */
 export type GameAudio = {
+  /** Every track and playlist, by id: a file with its volume, or a list of tracks to play in turn. */
   tracks: Record<string, TrackDef | PlaylistDef>
   /** Merged over the defaults: `music` and `ambience` (background), `sfx` and `voice` (cue). */
   channels?: Record<string, ChannelDef>
@@ -85,6 +86,7 @@ export type AudioState = {
 
 /** One channel as a player needs it. */
 export type AudioChannelView = {
+  /** `background` plays a track or playlist until told otherwise; `cue` plays one-shot sounds, listed in `cues`. */
   mode: 'background' | 'cue'
   /** The track or playlist playing; null for silence, and always null on a cue channel. */
   track: string | null
@@ -98,6 +100,7 @@ export type AudioChannelView = {
   volumeSetting: string | null
   /** Milliseconds to fade between tracks. 0 on a cue channel. */
   crossfade: number
+  /** Quieten this channel to `to` (0 to 1) while any channel in `under` plays; null when it doesn't duck. */
   duck: { under: string[]; to: number } | null
   /** A playlist's files, volumes and order, already shuffled when it shuffles. */
   playlist?: { tracks: string[]; srcs: string[]; volumes: number[]; order: 'inOrder' | 'loop' | 'shuffle' }
@@ -107,9 +110,13 @@ export type AudioChannelView = {
 export type AudioCue = {
   /** The same for the same sound in the same showing, across view calls and reloads. */
   key: string
+  /** The cue channel it plays on: `sfx` or `voice` unless the game declares others. */
   channel: string
+  /** The track's id in `game.audio.tracks`. */
   track: string
+  /** The file to play, through `audioSrc`. */
   src: string
+  /** The track's own volume, 0 to 1. Multiply by the channel's volume setting. */
   volume: number
 }
 

@@ -9,11 +9,13 @@ import { defineFeature } from './feature.ts'
 
 export type NoticeView = {
   id: string
+  /** A short line, as written. */
   title: string
   /** The notice's words, tokens filled in; empty if it has none. */
   text: string
   /** Its picture's path, through `artSrc`; null with none. */
   image: string | null
+  /** What it's about, for badges: `'messages'`. Null with none. */
   tag: string | null
   /** The turn it was raised. */
   turn: number

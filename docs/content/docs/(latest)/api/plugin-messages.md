@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-messages"
-description: "Every export of @ifloom/plugin-messages and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-messages and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-messages` and `@ifloom/plugin-messages/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -48,11 +48,6 @@ type Channel = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-
 ### channelsOf
 
 Function. Explained in [Messages](/docs/plugins/messages#channelsof).
@@ -84,7 +79,7 @@ type ChannelView = {
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
 | `threads` | `ThreadView[]` |  |  | Newest activity first. |
-| `unread` | `number` |  |  |  |
+| `unread` | `number` |  |  | How many of its messages the player hasn't read. |
 | `read` | `RenderedChoice \| null` |  |  | The button that marks the whole channel read (the `messages/allRead` string, `Mark all read`), or null while nothing in it is unread. |
 
 ### MessageDef
@@ -112,7 +107,7 @@ type MessageDef = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
-| `channel` | `string` |  |  |  |
+| `channel` | `string` |  |  | The channel it arrives in, by id. |
 | `from` | `string` |  |  | Who sent it: a character id, or any name the game's prose uses. |
 | `thread` | `string` | yes |  | The thread it belongs in. The sender if left out. |
 | `when` | `Condition` | yes |  | It arrives the first time this holds after a command; left out, after the first command. For a message drawn from a pool, it can be drawn only while this holds; left out, any time. |
@@ -197,8 +192,8 @@ type MessagesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `channels` | `ChannelView[]` |  |  |  |
-| `unread` | `number` |  |  |  |
+| `channels` | `ChannelView[]` |  |  | Every channel the game declares, in order, with its threads. |
+| `unread` | `number` |  |  | How many messages are unread, in all channels. |
 | `waiting` | `boolean` |  |  | Whether a message with `after` is waiting to arrive, in any thread. |
 
 ### MessageView
@@ -225,12 +220,12 @@ type MessageView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  | The message's id. A message drawn twice shows twice, with one id and two keys. |
 | `key` | `string` |  |  | This arrival's key, for a UI's list key: see `Arrival`. |
-| `from` | `string` |  |  |  |
+| `from` | `string` |  |  | Who sent it, as written: a character id or a name. |
 | `name` | `string` |  |  | The sender's name if they are a character, else `from` as written. |
 | `text` | `string` |  |  | The words, filled in, with any picture and video markup in them. |
 | `beats` | `SceneBeat[]` |  |  | The words as beats, as a scene's are: paragraphs, and the pictures and videos in them in the order written, from markup or `{ media }` blocks. |
 | `turn` | `number` |  |  | The turn it arrived. |
-| `read` | `boolean` |  |  |  |
+| `read` | `boolean` |  |  | Whether the player has read it. |
 | `replies` | `RenderedChoice[]` |  |  | Replies on offer, until one is sent: buttons like any other, each sending its `command`. |
 | `replied` | `string \| null` |  |  | The label of the reply sent, if one was. |
 
@@ -255,7 +250,7 @@ type ReplyDef = {
 | `id` | `string` |  |  |  |
 | `label` | `string` | yes |  | Its words, as written, with tokens filled: "On my way". Its id if left out. |
 | `when` | `Condition` | yes |  | Only on offer while this holds. |
-| `effects` | `EffectRef[]` | yes |  |  |
+| `effects` | `EffectRef[]` | yes |  | What sending it does, besides recording the reply. |
 
 ### ThreadView
 
@@ -282,7 +277,7 @@ type ThreadView = {
 | `image` | `string \| null` |  |  | The sender's picture: their entity's `image`, through `artSrc`; null for a name as written. |
 | `portrait` | `string \| null` |  |  | The sender's face, for an avatar: a person's `portrait` with the cast, else their `image`. |
 | `messages` | `MessageView[]` |  |  | Oldest first. |
-| `unread` | `number` |  |  |  |
+| `unread` | `number` |  |  | How many of its messages the player hasn't read. |
 | `read` | `RenderedChoice \| null` |  |  | The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. |
 | `typing` | `boolean` |  |  | Whether the other side is typing: a message with `after` is waiting to arrive in this thread, and its `typing` isn't false. |
 
@@ -307,12 +302,6 @@ const MESSAGES_WORDS: {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `noMessages` | `'No messages yet.'` |  |  |  |
-| `typing` | `'{name} is typing'` |  |  |  |
-| `typingShort` | `'typing…'` |  |  |  |
-
 ### MessagesControls
 
 Type.
@@ -331,8 +320,8 @@ type MessagesControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `channels` | `ChannelView[]` |  |  |  |
-| `unread` | `number` |  |  |  |
+| `channels` | `ChannelView[]` |  |  | Every channel the game declares, in order, with its threads. |
+| `unread` | `number` |  |  | How many messages are unread, in all channels. |
 | `waiting` | `boolean` |  |  | Whether a message with `after` is waiting to arrive, in any thread. |
 | `read` | `(channel: string) => Result<GameState>` |  |  | Mark a channel's messages read: sends `messages/read`. |
 

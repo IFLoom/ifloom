@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-debug"
-description: "Every export of @ifloom/plugin-debug and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-debug and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-debug` and `@ifloom/plugin-debug/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -48,7 +48,7 @@ type DebugView = {
 |---|---|---|---|---|
 | `locks` | `{ reason: string; deny: string[] }[]` |  |  | Every lock whose `when` holds now, with what it stops and why. |
 | `fired` | `Record<string, number>` |  |  | Triggers that have fired, with the turn each last did. |
-| `seed` | `number` |  |  |  |
+| `seed` | `number` |  |  | The save's seed, which every random draw is hashed from. |
 
 ## @ifloom/plugin-debug/react
 
@@ -87,29 +87,6 @@ const DEBUG_WORDS: {
   set: 'Set'
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `closeScene` | `'Close the scene'` |  |  |  |
-| `debug` | `'Debug'` |  |  |  |
-| `debugGo` | `'Go'` |  |  |  |
-| `debugHeld` | `'Held'` |  |  |  |
-| `debugKv` | `'kv key'` |  |  |  |
-| `debugLog` | `'Log'` |  |  |  |
-| `debugScene` | `'Scene'` |  |  |  |
-| `debugSet` | `'Set'` |  |  |  |
-| `debugStat` | `'Stat'` |  |  |  |
-| `debugStatOf` | `'Stat of'` |  |  |  |
-| `debugState` | `'State'` |  |  |  |
-| `debugTime` | `'Time'` |  |  |  |
-| `debugTurn` | `'Turn'` |  |  |  |
-| `debugWhy` | `'Why not'` |  |  |  |
-| `greyedOut` | `'Greyed out'` |  |  |  |
-| `locksOn` | `'Locks on'` |  |  |  |
-| `noneOn` | `'None.'` |  |  |  |
-| `nothingGreyed` | `'Nothing.'` |  |  |  |
-| `seed` | `'seed {seed}'` |  |  |  |
-| `set` | `'Set'` |  |  |  |
 
 ### DebugCard
 
@@ -153,14 +130,14 @@ type DebugControls = {
 |---|---|---|---|---|
 | `locks` | `{ reason: string; deny: string[] }[]` |  |  | Every lock whose `when` holds now, with what it stops and why. |
 | `fired` | `Record<string, number>` |  |  | Triggers that have fired, with the turn each last did. |
-| `seed` | `number` |  |  |  |
+| `seed` | `number` |  |  | The save's seed, which every random draw is hashed from. |
 | `greyed` | `RenderedChoice[]` |  |  | Every greyed-out button on screen: the actions, the scene's choices and each person's buttons. |
 | `state` | `GameState` |  |  | The whole game state. |
 | `log` | `Command[]` |  |  | The commands run since the start, in order. |
-| `canUndo` | `boolean` |  |  |  |
-| `canRedo` | `boolean` |  |  |  |
-| `undo` | `() => void` |  |  |  |
-| `redo` | `() => void` |  |  |  |
+| `canUndo` | `boolean` |  |  | Whether there's a state to go back to. |
+| `canRedo` | `boolean` |  |  | Whether there's an undone state to go forward to. |
+| `undo` | `() => void` |  |  | Go back a state, as `runner.undo()`. |
+| `redo` | `() => void` |  |  | Go forward a state, as `runner.redo()`. |
 
 ### debugUi
 

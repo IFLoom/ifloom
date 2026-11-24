@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-quests"
-description: "Every export of @ifloom/plugin-quests and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-quests and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-quests` and `@ifloom/plugin-quests/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -77,14 +77,14 @@ type QuestEntry = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `description` | `string` |  |  |  |
-| `storyline` | `string \| null` |  |  |  |
+| `description` | `string` |  |  | A line about it; `''` with none. |
+| `storyline` | `string \| null` |  |  | The storyline it belongs to, for a UI that groups quests by person, or null. |
 | `hint` | `string` |  |  | The hint for the stage the player is on; empty once the quest is done. |
 | `stage` | `number` |  |  | Stages done, and how many there are. |
-| `stages` | `number` |  |  |  |
-| `startedOn` | `number` |  |  |  |
-| `doneOn` | `number \| null` |  |  |  |
-| `tracked` | `boolean` |  |  |  |
+| `stages` | `number` |  |  | How many stages it has. |
+| `startedOn` | `number` |  |  | The turn it started. |
+| `doneOn` | `number \| null` |  |  | The turn it was done, or null while it isn't. |
+| `tracked` | `boolean` |  |  | Whether it's the quest the player tracks. |
 | `updated` | `boolean` |  |  | Started or moved on since the player last looked. |
 | `track` | `RenderedChoice \| null` |  |  | The button that tracks it, or stops tracking it once it's tracked (labelled with the `quests/track` or `quests/untrack` string), or null once the quest is done. |
 
@@ -234,12 +234,6 @@ const QUESTS_WORDS: {
   quests: 'Quests'
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `questNew` | `'New'` |  |  |  |
-| `questStage` | `'{stage} of {stages}'` |  |  |  |
-| `quests` | `'Quests'` |  |  |  |
 
 ### QuestsControls
 

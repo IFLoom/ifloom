@@ -47,6 +47,7 @@ export type FeedDef = { id: string; name: string }
 /** Someone else's post. */
 export type PostDef = {
   id: string
+  /** The feed it appears in, by id. */
   feed: string
   /** A character id, or any name the game's prose uses. */
   from: string
@@ -68,14 +69,19 @@ export type Comment = { from: string; text: string }
 /** A post the player made, as the state keeps it. */
 export type OwnPost = {
   id: string
+  /** The feed it was posted to. */
   feed: string
   /** The turn it was posted. */
   turn: number
   /** Its words, as written; tokens are filled as it is shown. */
   text?: string
+  /** Its picture, as written. */
   image?: string
+  /** Its video clip, as written. */
   video?: string
+  /** How many likes it has. */
   likes: number
+  /** The comments on it, in order. */
   comments: Comment[]
 }
 
@@ -93,6 +99,7 @@ export type FeedState = {
 
 export type PostView = {
   id: string
+  /** Who posted it, as written: a character id or a name; `''` for the player's own. */
   from: string
   name: string
   /** The poster's face, for an avatar: a person's `portrait` with the cast, else their entity's picture, through `artSrc`; null for the player's own and for a name as written. */
@@ -107,7 +114,9 @@ export type PostView = {
   video: string | null
   /** The turn it appeared, or was posted. */
   turn: number
+  /** How many likes it has. */
   likes: number
+  /** The comments on it, in order, each with who wrote it and their name. */
   comments: { from: string; name: string; text: string }[]
   /** The player's own. */
   mine: boolean
@@ -117,7 +126,9 @@ export type PostView = {
 export type FeedView = {
   id: string
   name: string
+  /** Its posts, newest first, the player's own among them. */
   posts: PostView[]
+  /** How many of its posts the player hasn't seen. */
   unread: number
   /** The button that marks the feed seen (the `feed/allSeen` string, `Mark all seen`), or null while nothing in it is new. */
   seen: RenderedChoice | null

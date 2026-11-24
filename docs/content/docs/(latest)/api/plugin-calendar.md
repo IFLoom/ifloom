@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-calendar"
-description: "Every export of @ifloom/plugin-calendar and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-calendar and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-calendar` and `@ifloom/plugin-calendar/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -71,11 +71,6 @@ type CalendarState = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `day` | `number` |  |  |  |
-| `period` | `string` |  |  |  |
-
 ### CalendarView
 
 Type. Explained in [Calendar](/docs/plugins/calendar#calendarview).
@@ -98,10 +93,10 @@ type CalendarView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `day` | `number` |  |  | From 1, as the player counts. |
-| `weekday` | `string` |  |  |  |
+| `weekday` | `string` |  |  | The day's name: `'Wednesday'`. |
 | `weekdayIndex` | `number` |  |  | From 0. |
-| `period` | `string` |  |  |  |
-| `periodLabel` | `string` |  |  |  |
+| `period` | `string` |  |  | The period's id: `'morning'`. |
+| `periodLabel` | `string` |  |  | The period's name as the player reads it: `'Morning'`. |
 | `label` | `string` |  |  | The whole of it, as the header shows it: "Day 3 · Wednesday morning". |
 | `curfew` | `boolean` |  |  | The last period, with no scene open, while the curfew binds: time for bed. |
 
@@ -118,11 +113,6 @@ type PeriodDef = {
   label?: string
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `label` | `string` | yes |  |  |
 
 ## @ifloom/plugin-calendar/react
 

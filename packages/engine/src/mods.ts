@@ -9,13 +9,17 @@ import { upgradePack } from './upgrade.ts'
  * nothing a pack can't, and nothing runs that the game didn't ship.
  */
 export type ModFile = {
+  /** The format of this file: 1. */
   ifloomMod: 1
   id: string
   name: string
+  /** The mod's own version, as its author writes it: `'1.2'`. */
   version?: string
   /** The game it was made for, by id. */
   game: string
+  /** A line for the mods screen. */
   description?: string
+  /** The content it adds: a `Pack`, laid over the game's content. */
   pack: Pack
 }
 
@@ -23,10 +27,13 @@ export type ModFile = {
 export type InstalledMod = {
   id: string
   name: string
+  /** The mod's own version, as its author writes it. */
   version?: string
+  /** A line for the mods screen. */
   description?: string
   /** Off mods stay installed and are left out of the game. */
   enabled: boolean
+  /** The content it adds, as the mod file wrote it. */
   pack: Pack
 }
 

@@ -104,6 +104,9 @@ export type AppDef = {
    * kv key's number. Or a dot while a condition holds (`{ when }`).
    */
   badge?: Amount | { when: Condition }
+  /**
+   * What the app shows, top to bottom: words, actions, inputs, or a plugin's list (messages, a feed). See `Section`.
+   */
   sections: Section[]
 }
 
@@ -128,11 +131,13 @@ export type SectionView =
 export type AppView = {
   id: string
   name: string
+  /** A name the UI maps to a picture. */
   icon: string
   /** A count, a dot (`true`), or nothing (`0`). */
   badge: number | boolean
   /** Why it can't be opened now, if it can't. */
   disabled?: string
+  /** What opening it sends: `devices/open`. */
   command: Command
   /** Filled in for the open app only. */
   sections: SectionView[]
@@ -141,8 +146,11 @@ export type AppView = {
 export type DeviceView = {
   id: string
   name: string
+  /** How the UI draws it: `'phone'`, `'laptop'`, or the game's own. The device's id if it gives none. */
   frame: string
+  /** Whether the sidebar offers it. */
   sidebar: boolean
+  /** The picture behind its home screen, through `artSrc`, or null. */
   wallpaper: string | null
   /** Every count, plus one for each dot: what the sidebar button shows. */
   badge: number

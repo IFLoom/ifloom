@@ -42,6 +42,7 @@ function signed(n: number): string {
 }
 
 export type DiceRollProps = {
+  /** The roll to draw, from `view.rolls`: its dice, each die's face and its total. */
   roll: Roll
   /** Tumble before settling. True if left out; the motion option or a player's reduced-motion setting turns it off whatever this says. */
   animate?: boolean

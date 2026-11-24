@@ -60,11 +60,13 @@ export type ReplyDef = {
   label?: string
   /** Only on offer while this holds. */
   when?: Condition
+  /** What sending it does, besides recording the reply. */
   effects?: EffectRef[]
 }
 
 export type MessageDef = {
   id: string
+  /** The channel it arrives in, by id. */
   channel: string
   /** Who sent it: a character id, or any name the game's prose uses. */
   from: string
@@ -148,6 +150,7 @@ export type MessageView = {
   id: string
   /** This arrival's key, for a UI's list key: see `Arrival`. */
   key: string
+  /** Who sent it, as written: a character id or a name. */
   from: string
   /** The sender's name if they are a character, else `from` as written. */
   name: string
@@ -160,6 +163,7 @@ export type MessageView = {
   beats: SceneBeat[]
   /** The turn it arrived. */
   turn: number
+  /** Whether the player has read it. */
   read: boolean
   /** Replies on offer, until one is sent: buttons like any other, each sending its `command`. */
   replies: RenderedChoice[]
@@ -176,6 +180,7 @@ export type ThreadView = {
   portrait: string | null
   /** Oldest first. */
   messages: MessageView[]
+  /** How many of its messages the player hasn't read. */
   unread: number
   /** The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. */
   read: RenderedChoice | null
@@ -188,13 +193,16 @@ export type ChannelView = {
   name: string
   /** Newest activity first. */
   threads: ThreadView[]
+  /** How many of its messages the player hasn't read. */
   unread: number
   /** The button that marks the whole channel read (the `messages/allRead` string, `Mark all read`), or null while nothing in it is unread. */
   read: RenderedChoice | null
 }
 
 export type MessagesView = {
+  /** Every channel the game declares, in order, with its threads. */
   channels: ChannelView[]
+  /** How many messages are unread, in all channels. */
   unread: number
   /** Whether a message with `after` is waiting to arrive, in any thread. */
   waiting: boolean

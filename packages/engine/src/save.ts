@@ -10,6 +10,7 @@ import { fail, ok, type Result } from './result.ts'
 export type SaveMeta = {
   /** The game it belongs to; another game's save is refused on import. */
   game: string
+  /** The slot it's in: `'1'`, `'auto'`, or the game's own name for one. */
   slot: string
   /** The player's name for it, or one made from where and when. */
   name: string
@@ -49,8 +50,11 @@ export type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 
 /** A save read back: what it says about itself, and the state, carried forward. */
 export type LoadedSave = {
+  /** What the save says about itself. */
   meta: SaveMeta
+  /** The state, carried forward to this game's version through `loadState`. */
   state: GameState
+  /** Packs the save was made with that the game wasn't loaded with, such as a mod since turned off. */
   missingPacks: string[]
   /** Plugins the save was made with that this game does not have. Their state is kept, unused. */
   missingPlugins: string[]

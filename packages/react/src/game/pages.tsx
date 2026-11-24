@@ -33,6 +33,7 @@ export type Credit = string | { label: string; href: string }
 
 /** A notice the player confirms once before the title screen. Every word of it is the game's. */
 export type GateOptions = {
+  /** The gate's heading. */
   title: string
   /** Paragraphs, split on blank lines. */
   text: string

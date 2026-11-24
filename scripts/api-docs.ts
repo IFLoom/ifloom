@@ -127,6 +127,9 @@ function programOf(): { program: ts.Program; probe: string } {
 /** The package folder a file is in, such as `/…/packages/engine/`. */
 const packageOf = (file: string) => /^.*\/packages\/[^/]+\//.exec(file)?.[0] ?? file
 
+/** The first column of a table that lists exports, each row explained under the heading the table is in. */
+const LISTING = new Set(['Builder', 'Helper', 'Hook', 'Function', 'Component', 'Export', 'Name'])
+
 /** A heading the hand-written pages have, for the "Explained in" link. */
 type Heading = { page: string; url: string; title: string; slug: string; depth: number }
 
@@ -150,6 +153,8 @@ function handWritten(): Map<string, Heading[]> {
     const url = '/docs/' + page.replace(/\.md$/, '').replace(/(^|\/)index$/, '')
     const slugger = new GithubSlugger()
     let fence = ''
+    let header = ''
+    let last: Heading | undefined
     for (const line of source.split('\n')) {
       const open = /^\s*(`{3,}|~{3,})/.exec(line)?.[1]
       if (open && (!fence || open.startsWith(fence))) {
@@ -157,9 +162,18 @@ function handWritten(): Map<string, Heading[]> {
         continue
       }
       if (fence) continue
+      // A table that lists exports (`| Builder | Writes |`) explains each row's under the heading above it.
+      const row = /^\|\s*`([A-Za-z_$][\w$]*)`\s*\|/.exec(line)?.[1]
+      if (row && LISTING.has(header) && last) headings.set(row, [...(headings.get(row) ?? []), { ...last, depth: 9 }])
+      if (line.startsWith('|')) {
+        if (!/^\|\s*[`-]/.test(line) && !/^\|[\s|:-]*$/.test(line)) header = /^\|\s*([^|]*?)\s*\|/.exec(line)?.[1] ?? ''
+        continue
+      }
+      header = ''
       const heading = /^(#{2,4})\s+(.+?)\s*$/.exec(line)
       if (!heading) continue
       const slug = slugger.slug(heading[2])
+      last = { page, url: url.replace(/\/$/, ''), title: title.replace(/\\"/g, '"'), slug, depth: heading[1].length }
       for (const name of heading[2].replace(/`/g, '').split(/\s*,\s*|\s+and\s+/)) {
         if (!/^[A-Za-z_$][\w$]*$/.test(name)) continue
         headings.set(name, [
@@ -362,7 +376,7 @@ class Writer {
       rows.push(`| \`${property.name}\` | ${typeCell(text)} | ${optional ? 'yes' : ''} | ${fallback ? cell(fallback) : ''} | ${cell(description)} |`)
     }
     const table = rows.length ? ['| Field | Type | Optional | Default | Description |', '|---|---|---|---|---|', ...rows] : []
-    return { lines, table: documented || rows.length ? table : [], more, extra }
+    return { lines, table: documented ? table : [], more, extra }
   }
 
   /** The names a piece of code uses, and those it declares itself (type parameters, parameters, its own name). */
@@ -728,7 +742,12 @@ export function apiDocs(): { files: Map<string, string>; exports: number } {
   const counts = new Map<PageSpec, number>()
   for (const each of SPECS) {
     // A plugin with nothing for the player has no `/react` subpath.
-    const spec = { ...each, entries: each.entries.filter((entry) => modules.has(entry)) }
+    const entries = each.entries.filter((entry) => modules.has(entry))
+    const spec = {
+      ...each,
+      entries,
+      description: each.description.replace(' and its /react subpath, if it has one', entries.length > 1 ? ' and its /react subpath' : ''),
+    }
     files.set(`${spec.slug}.md`, pageOf(writer, spec, modules))
     counts.set(
       spec,

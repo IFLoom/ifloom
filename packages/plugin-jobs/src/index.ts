@@ -100,9 +100,11 @@ export type JobDef = {
   days?: number[]
   /** The periods a shift can start in, with the calendar plugin. Any if left out. */
   hours?: string[]
+  /** What a shift costs, pays and takes. See `ShiftDef`. */
   shift: ShiftDef
   /** The ladder, lowest first. The player is hired at the first. */
   ranks: RankDef[]
+  /** When the player is fired for missing shifts. Never, if left out. */
   fire?: FireDef
 }
 
@@ -135,7 +137,9 @@ export type RankView = { id: string; name: string; pay: Price | null }
 export type JobView = {
   id: string
   name: string
+  /** A line or two about it; `''` with none. */
   description: string
+  /** Whether the player holds it now. */
   hired: boolean
   /** The day the player was fired, or null. */
   firedOn: number | null
@@ -145,7 +149,9 @@ export type JobView = {
   next: (RankView & { shiftsToGo: number }) | null
   /** What a shift pays now: the rank's pay, or the first rank's for a job not held. */
   pay: Price | null
+  /** Shifts worked in all. */
   shifts: number
+  /** Shifts missed in all. */
   missed: number
   /** The next day with a shift: `inDays` 0 for today. Null when not hired or nothing is due in the next two weeks. */
   nextShift: { day: number; inDays: number } | null

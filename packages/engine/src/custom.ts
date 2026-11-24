@@ -26,6 +26,7 @@ import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type Quer
  * draws. `PluginContext` is this and the rest.
  */
 export type CustomContext = {
+  /** The loaded game. */
   game: Game
   /**
    * Ask a plugin something by its full name: `query('places/here')`.

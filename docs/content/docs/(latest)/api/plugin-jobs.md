@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-jobs"
-description: "Every export of @ifloom/plugin-jobs and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-jobs and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-jobs` and `@ifloom/plugin-jobs/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -82,9 +82,9 @@ type JobDef = {
 | `blocked` | `Blocked[]` | yes |  | Why an application is refused: the first entry whose `when` holds gives its reason. |
 | `days` | `number[]` | yes |  | The weekdays it has shifts on, with the calendar plugin, from 0. Every day if left out. |
 | `hours` | `string[]` | yes |  | The periods a shift can start in, with the calendar plugin. Any if left out. |
-| `shift` | `ShiftDef` |  |  |  |
+| `shift` | `ShiftDef` |  |  | What a shift costs, pays and takes. See `ShiftDef`. |
 | `ranks` | `RankDef[]` |  |  | The ladder, lowest first. The player is hired at the first. |
-| `fire` | `FireDef` | yes |  |  |
+| `fire` | `FireDef` | yes |  | When the player is fired for missing shifts. Never, if left out. |
 
 ### jobOf
 
@@ -199,14 +199,14 @@ type JobView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `description` | `string` |  |  |  |
-| `hired` | `boolean` |  |  |  |
+| `description` | `string` |  |  | A line or two about it; `''` with none. |
+| `hired` | `boolean` |  |  | Whether the player holds it now. |
 | `firedOn` | `number \| null` |  |  | The day the player was fired, or null. |
 | `rank` | `RankView \| null` |  |  | The rank held, or null when not hired. |
 | `next` | `(RankView & { shiftsToGo: number }) \| null` |  |  | The next rank up, and how many more shifts it needs (0 when shifts aren't what's missing), or null at the top or when not hired. |
 | `pay` | `Price \| null` |  |  | What a shift pays now: the rank's pay, or the first rank's for a job not held. |
-| `shifts` | `number` |  |  |  |
-| `missed` | `number` |  |  |  |
+| `shifts` | `number` |  |  | Shifts worked in all. |
+| `missed` | `number` |  |  | Shifts missed in all. |
 | `nextShift` | `{ day: number; inDays: number } \| null` |  |  | The next day with a shift: `inDays` 0 for today. Null when not hired or nothing is due in the next two weeks. |
 | `apply` | `RenderedChoice \| null` |  |  | The button that applies, or null once hired or fired. Its `disabled` says what's missing. |
 | `work` | `RenderedChoice \| null` |  |  | The button that works a shift, or null when not hired. Its `price` is the shift's cost. |
@@ -249,12 +249,6 @@ type RankView = {
   pay: Price | null
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `name` | `string` |  |  |  |
-| `pay` | `Price \| null` |  |  |  |
 
 ### ShiftDef
 
@@ -326,22 +320,6 @@ const JOBS_WORDS: {
   workShift: 'Work a shift'
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `applyJob` | `'Apply'` |  |  |  |
-| `jobFired` | `'Let go'` |  |  |  |
-| `jobMissed` | `'Missed: {n}'` |  |  |  |
-| `jobNextRank` | `'Next: {title}, after {n} more shifts'` |  |  |  |
-| `jobNextRankOne` | `'Next: {title}, after 1 more shift'` |  |  |  |
-| `jobNextRankSoon` | `'Next: {title}'` |  |  |  |
-| `jobPay` | `'Pays {pay} a shift'` |  |  |  |
-| `jobShifts` | `'Shifts worked: {n}'` |  |  |  |
-| `jobs` | `'Jobs'` |  |  |  |
-| `shiftInDays` | `'Next shift: in {n} days'` |  |  |  |
-| `shiftToday` | `'Next shift: today'` |  |  |  |
-| `shiftTomorrow` | `'Next shift: tomorrow'` |  |  |  |
-| `workShift` | `'Work a shift'` |  |  |  |
 
 ### JobsControls
 

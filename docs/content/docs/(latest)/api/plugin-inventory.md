@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-inventory"
-description: "Every export of @ifloom/plugin-inventory and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-inventory and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-inventory` and `@ifloom/plugin-inventory/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -80,7 +80,7 @@ type InventoryThing = {
 |---|---|---|---|---|
 | `ref` | `EntityRef` |  |  | How content names it: `'food:apple'`. |
 | `name` | `string` |  |  |  |
-| `description` | `string \| null` |  |  |  |
+| `description` | `string \| null` |  |  | Its entity's `description`, tokens filled; null with none. |
 | `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
 | `count` | `number` |  |  | How many are held. |
 | `at` | `Holder` |  |  | Who holds it: the protagonist being played, or `'player'`. |

@@ -11,8 +11,11 @@
 export type SaveDriver = {
   /** For diagnostics and the debug panel: "localStorage", "indexedDB"… */
   name: string
+  /** The text stored under a key, or null if there's none. */
   get: (key: string) => Promise<string | null>
+  /** Store text under a key, replacing what was there. */
   set: (key: string, value: string) => Promise<void>
+  /** Delete a key. Nothing happens if it isn't there. */
   remove: (key: string) => Promise<void>
   /** Every key that starts with this prefix. */
   keys: (prefix: string) => Promise<string[]>

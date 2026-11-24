@@ -60,10 +60,13 @@ export type CalendarState = { day: number; period: string }
 export type CalendarView = {
   /** From 1, as the player counts. */
   day: number
+  /** The day's name: `'Wednesday'`. */
   weekday: string
   /** From 0. */
   weekdayIndex: number
+  /** The period's id: `'morning'`. */
   period: string
+  /** The period's name as the player reads it: `'Morning'`. */
   periodLabel: string
   /** The whole of it, as the header shows it: "Day 3 · Wednesday morning". */
   label: string

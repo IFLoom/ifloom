@@ -21,22 +21,42 @@ import type { UiTarget } from './features/ui.ts'
 
 /** Something wrong with a game's content: the pack it came from (`game` for a hand-built game), where, and what. */
 export type Problem = {
+  /** The content or pack it came from, by name or id: `game` for a hand-built game. */
   pack: string
+  /** What in it: `scene cafe.counter`, `finished`. */
   where: string
+  /** What's wrong: `unknown storyline "tides"`. */
   what: string
 }
 
 /** A file the game names, as the page asks for it (after `artSrc` or `audioSrc`), with where it is named. */
-export type FileRef = { path: string; type: 'picture' | 'video' | 'audio'; where: string }
+export type FileRef = {
+  /** The file, as the page asks for it. */
+  path: string
+  /** What sort of file it is. */
+  type: 'picture' | 'video' | 'audio'
+  /** Where the content names it, as a `Problem`'s `where` is written. */
+  where: string
+}
 
 /** A state to render every scene against, named for the problems it finds. */
-export type Probe = { name: string; state: GameState }
+export type Probe = {
+  /** What the problems it finds are named by: `'evening, after the café'`. */
+  name: string
+  /** The state to render every scene against. */
+  state: GameState
+}
 
 /** What `checkGame` finds. */
 export type Checked = {
+  /**
+   * What's wrong with the content: a broken reference, a key declared twice, a call with the wrong arguments. Any
+   * problem fails `ifloom check`.
+   */
   problems: Problem[]
   /** What may go wrong in play but isn't a problem, such as a token that may be unset with no fallback. A warning fails no check. */
   warnings: Problem[]
+  /** Every file the content names (pictures, videos, sounds) and where, for a build to check they exist. */
   files: FileRef[]
 }
 

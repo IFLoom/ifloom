@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-generators"
-description: "Every export of @ifloom/plugin-generators and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-generators: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-generators` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -53,14 +53,6 @@ type GeneratedEntity = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes |  |  |
-| `description` | `string` | yes |  |  |
-| `image` | `string` | yes |  |  |
-| `stats` | `Record<string, number>` |  |  |  |
-| `kv` | `Record<string, KvValue>` |  |  |  |
-
 ## generators
 
 Function. Explained in [Generators](/docs/plugins/generators#generators).
@@ -90,11 +82,6 @@ type PoolDef = {
   values: PoolEntry[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `values` | `PoolEntry[]` |  |  |  |
 
 ## PoolEntry
 

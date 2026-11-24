@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-statuses"
-description: "Every export of @ifloom/plugin-statuses and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-statuses and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-statuses` and `@ifloom/plugin-statuses/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -22,11 +22,6 @@ type ActiveRecord = {
   left: number[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  |  |
-| `left` | `number[]` |  |  |  |
 
 ### ActiveStatus
 
@@ -50,9 +45,9 @@ type ActiveStatus = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `description` | `string` |  |  |  |
+| `description` | `string` |  |  | What it does, as the player reads it; `''` with none. |
 | `turnsLeft` | `number` |  |  | The turns left on its longest stack. |
-| `stacks` | `number` |  |  |  |
+| `stacks` | `number` |  |  | How many times it's applied and still running: 1 unless the status stacks. |
 | `modifiers` | `StatModifier[]` |  |  | What it does to the stats right now, all its stacks together, one entry per stat. |
 
 ### Reapply
@@ -207,15 +202,6 @@ const STATUSES_WORDS: {
   turnsLeft: '{n} turns left'
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `modifierAdd` | `'{n} {stat}'` |  |  |  |
-| `modifierMultiply` | `'×{n} {stat}'` |  |  |  |
-| `statusStacks` | `'×{n}'` |  |  |  |
-| `statuses` | `'Statuses'` |  |  |  |
-| `turnLeft` | `'1 turn left'` |  |  |  |
-| `turnsLeft` | `'{n} turns left'` |  |  |  |
 
 ### statusesUi
 

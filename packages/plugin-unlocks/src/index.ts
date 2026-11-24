@@ -88,6 +88,7 @@ export type UnlocksProfile = { unlocked: Record<string, { proof: string }> }
 
 /** An unlock's content, encrypted, as `ifloom build` writes it into the page. */
 export type LockedContent = {
+  /** The format of this file: 1. */
   ifloomUnlock: 1
   /** The game's id. */
   game: string
@@ -103,6 +104,7 @@ export type LockedContent = {
 export type UnlockView = {
   id: string
   name: string
+  /** What it opens, as the player reads it; `''` with none. */
   description: string
   /** Recorded in this save. */
   unlocked: boolean
@@ -114,6 +116,7 @@ export type UnlocksView = {
   unlocks: UnlockView[]
   /** How many are unlocked. */
   unlocked: number
+  /** How many unlocks the game declares. */
   total: number
 }
 

@@ -10,8 +10,11 @@ import { useWords } from './words.ts'
 export type ViewerMedia = Extract<SceneBeat, { type: 'image' } | { type: 'video' }>
 
 export type MediaViewerProps = {
+  /** The picture or video to show. */
   media: ViewerMedia
+  /** Whether it's showing. */
   open: boolean
+  /** Called with false when the player closes it. */
   onOpenChange: (open: boolean) => void
 }
 

@@ -17,6 +17,7 @@ export type InputDef = {
   id: string
   /** What the field is called. */
   label: string
+  /** What the player enters: `text` (typed words), `number` or `choice` (one of `options`). */
   type: 'text' | 'number' | 'choice'
   /** The kv key it writes. The input's id if left out. */
   key?: string
@@ -26,6 +27,7 @@ export type InputDef = {
   maxLength?: number
   /** Number: the range, inclusive. */
   min?: number
+  /** Number: the highest it takes. */
   max?: number
   /** Choice: the values on offer, with what the player reads for each. */
   options?: { value: KvValue; label: string }[]
@@ -34,10 +36,15 @@ export type InputDef = {
 export type InputView = {
   id: string
   label: string
+  /** What the player enters: `text`, `number` or `choice`. */
   type: InputDef['type']
+  /** Text: the most characters it takes, after trimming (40 unless the input says). Null for a number or a choice. */
   maxLength: number | null
+  /** Number: the lowest it takes, or null with no bound (and for text or a choice). */
   min: number | null
+  /** Number: the highest it takes, or null with no bound (and for text or a choice). */
   max: number | null
+  /** Choice: the values on offer, with what the player reads for each. Empty for text or a number. */
   options: { value: KvValue; label: string }[]
   /** What its key holds now, if anything. */
   value: KvValue | null

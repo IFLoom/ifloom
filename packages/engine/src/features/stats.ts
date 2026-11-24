@@ -128,13 +128,16 @@ export type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 /** A stat as the UI shows it: its value, its range, the value written out, and its hints. */
 export type StatView = {
+  /** The stat's id. */
   key: StatKey
   label: string
+  /** Its value as play reads it: kept or derived, with the plugins' modifiers, rounded and held to its range. */
   value: number
   /** The lowest it can go. */
   min: number
   /** The highest it can go right now. */
   max: number
+  /** The value written out with the stat's `format`: `'12 coins'`, `'80%'`. The number itself with no format. */
   text: string
   /**
    * Where a stat with `levels` stands: its level, the value the next level

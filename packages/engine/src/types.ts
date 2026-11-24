@@ -22,6 +22,7 @@ export type Stats = Record<StatKey, number>
 export type StorylineState = {
   /** The turn it opens again, or null while it is open. */
   closedUntil: number | null
+  /** The storyline's own kv keys, read and written with `of: 'storyline:<id>'`. */
   kv: Record<string, KvValue>
 }
 
@@ -30,6 +31,7 @@ export type Flat<T> = { [K in keyof T]: T[K] }
 
 /** The fields of the save the core keeps itself. The features' are in `features/`. */
 type CoreState = {
+  /** The save format's version, `SAVE_VERSION`: `loadState` carries an older one forward. */
   version: typeof SAVE_VERSION
   /** Fixed per save. Keeps variant variants from dealing identically every run. */
   seed: number
@@ -107,7 +109,16 @@ export type Amount =
  * is 3 or more. Each bound is an `Amount`, so it can be another number in
  * the game: `{ gte: { stat: 'rent' } }`.
  */
-export type Range = { gte?: Amount; gt?: Amount; lte?: Amount; lt?: Amount }
+export type Range = {
+  /** The number is this or more. */
+  gte?: Amount
+  /** The number is more than this. */
+  gt?: Amount
+  /** The number is this or less. */
+  lte?: Amount
+  /** The number is less than this. */
+  lt?: Amount
+}
 
 /** The conditions the core keeps itself, by the key that tells each apart. The features' are in `features/`. */
 export type CoreConditions = {

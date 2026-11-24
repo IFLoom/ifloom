@@ -27,7 +27,12 @@ export type Reason = string | { string: string }
  * `reason` is what the player reads on a button once it is spent; the
  * engine's `done` string ("Already done.") if left out.
  */
-export type Once = { per: 'game' | 'turn'; reason?: Reason }
+export type Once = {
+  /** Once in the whole game, or at most once a turn. */
+  per: 'game' | 'turn'
+  /** What the player reads on it once it's spent. The `done` string if left out. */
+  reason?: Reason
+}
 
 /**
  * Why something the player could do is refused for now: a choice, an action,
@@ -156,6 +161,7 @@ export type SceneMedia = {
 export type ProseStore = {
   /** The words for a key, with `{{playerName}}` and friends filled in. */
   line: (key: string, state?: GameState) => string | undefined
+  /** The members of a variants list, by its name, in declaration order. */
   variants: (name: string) => string[]
   /** A member's weight in a variants list, 1 if it has none. Left out, every member weighs 1. */
   weight?: (name: string, key: string) => number
@@ -216,6 +222,7 @@ export type GameRules<S = any> = Omit<
 
 /** What a New Game+ takes from the game before: player stats, kv keys and what the player holds. */
 export type CarryOver = {
+  /** The player's stats to carry, by id. */
   stats?: string[]
   /** kv keys, by name. */
   kv?: string[]
@@ -229,6 +236,7 @@ export type CarryOver = {
 /** The fields of a game the core reads itself. The features' (settings, stats, audio, media, the ending) are in `features/`. */
 type CoreGame = {
   id: string
+  /** The game's name, as a title screen shows it. */
   title: string
   /**
    * The game's own version, a whole number from 1. Saves record it, and
@@ -239,7 +247,12 @@ type CoreGame = {
   version?: number
   /** The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. */
   packs?: string[]
+  /**
+   * The words read by key: `prose`, `variants` and their weights, filled in for a save. `loadGame` makes it from the
+   * content's `prose`.
+   */
   prose?: ProseStore
+  /** The game's own code: its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. */
   rules?: GameRules
   /**
    * The game's words for anything the engine or a plugin says to the player,

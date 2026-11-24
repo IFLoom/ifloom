@@ -30,6 +30,7 @@ export type Lock = {
    * (`'quests/*'`); `'custom'` stops every plugin command.
    */
   deny: readonly LockTarget[]
+  /** Commands it lets through all the same, by the same names as `deny`. */
   except?: readonly LockTarget[]
   /**
    * Only commands that would apply this effect: the engine's by its key

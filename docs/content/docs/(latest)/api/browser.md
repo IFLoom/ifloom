@@ -90,10 +90,6 @@ type IndexedDbLike = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `open` | `(name: string, version?: number \| undefined) => OpenRequest` |  |  |  |
-
 ## KeysOptions
 
 Type. Explained in [Browser helpers](/docs/browser#keysoptions).
@@ -249,11 +245,3 @@ type StorageLike = {
   readonly length: number
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `getItem` | `(key: string) => string \| null` |  |  |  |
-| `setItem` | `(key: string, value: string) => void` |  |  |  |
-| `removeItem` | `(key: string) => void` |  |  |  |
-| `key` | `(index: number) => string \| null` |  |  |  |
-| `length` | `number` |  |  |  |

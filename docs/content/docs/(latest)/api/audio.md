@@ -27,17 +27,6 @@ type AudioLike = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `play` | `() => void \| Promise<void>` |  |  |  |
-| `pause` | `() => void` |  |  |  |
-| `volume` | `number` |  |  |  |
-| `loop` | `boolean` |  |  |  |
-| `currentTime` | `number` |  |  |  |
-| `ended` | `boolean` |  |  |  |
-| `onended` | `((event: Event) => void) \| null` |  |  |  |
-| `src` | `string` |  |  |  |
-
 ## AudioOptions
 
 Type. Explained in [The audio player](/docs/browser/audio-player#audiooptions).

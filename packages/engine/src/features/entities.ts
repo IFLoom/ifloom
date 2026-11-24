@@ -71,7 +71,9 @@ export type EntityView = {
 export type EntitiesView = {
   /** The kind's id: `'character'`. */
   id: string
+  /** The kind's name for one: `'Character'`. */
   label: string
+  /** The kind's name for several, for a heading: `'Characters'`. Its `label` if the kind gives none. */
   plural: string
   /** The kind's `unique`: each one is one particular thing. */
   unique: boolean

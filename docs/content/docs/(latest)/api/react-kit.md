@@ -43,10 +43,6 @@ type BadgeProps = {
 
 Plugins add fields of their own to it, which their pages list.
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `variant` | `'default' \| 'secondary' \| 'outline' \| 'destructive' \| null` | yes |  |  |
-
 ## badgeVariants
 
 Function.
@@ -79,12 +75,6 @@ type ButtonProps = {
 ```
 
 Plugins add fields of their own to it, which their pages list.
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `variant` | `'link' \| 'default' \| 'secondary' \| 'outline' \| 'ghost' \| 'destructive' \| null` | yes |  |  |
-| `size` | `'default' \| 'sm' \| 'lg' \| 'icon' \| null` | yes |  |  |
-| `asChild` | `boolean` | yes |  |  |
 
 ## buttonVariants
 
@@ -259,8 +249,8 @@ type HintCheckContext = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `Game` |  |  |  |
-| `on` | `UiTarget` |  |  |  |
+| `game` | `Game` |  |  | The loaded game, for a hint that names something in it. |
+| `on` | `UiTarget` |  |  | What the hint is written on: a scene, a choice, a block, a stat, an entity or the game. |
 | `id` | `string` | yes |  | The id of what it's written on: a stat's, a scene's, a choice's, a kind's or an entity's reference. |
 | `transitions` | `ReadonlySet<string>` |  |  | `TRANSITIONS` and the game's own `ui.transitionNames`. |
 
@@ -480,7 +470,7 @@ type PluginPage = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `label` | `string` |  |  | The title screen's button for it: a key of the module's words (or the UI's). |
-| `component` | `ComponentType` |  |  |  |
+| `component` | `ComponentType` |  |  | What the page shows. It's drawn inside the game, so `useGame()` works in it. |
 | `showOnTitle` | `boolean` | yes |  | Whether the title screen offers it. On unless set false. |
 
 ## PluginPanel

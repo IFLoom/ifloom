@@ -1,6 +1,6 @@
 ---
 title: "@ifloom/plugin-places"
-description: "Every export of @ifloom/plugin-places and its /react subpath, if it has one: its signature and its fields."
+description: "Every export of @ifloom/plugin-places and its /react subpath: its signature and its fields."
 ---
 Generated from the source of `@ifloom/plugin-places` and `@ifloom/plugin-places/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
@@ -23,11 +23,6 @@ type Arrival = {
   effects: EffectRef[]
 }
 ```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `when` | `Condition` | yes |  |  |
-| `effects` | `EffectRef[]` |  |  |  |
 
 ### ExitView
 
@@ -53,14 +48,14 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `tags` | `string[]` |  |  | The place's tags, its entity's. |
+| `tags` | `string[]` |  |  | The choice's or button's tags, for a UI to style or filter it by. The place's tags, its entity's. |
 | `ref` | `EntityRef` |  |  | The place's entity: `'location:park'`. |
 | `description` | `string \| null` |  |  | The place's line under its name, its entity's `description`; null with none. |
 | `image` | `string \| null` |  |  | The place's picture's path, its entity's `image` through `artSrc`; null with none. |
 
 ### LOCATION
 
-Const.
+Const. Explained in [Places](/docs/plugins/places#helpers).
 
 The kind the plugin brings for its places, so each can hold things: `'location:park'`.
 
@@ -71,7 +66,7 @@ const LOCATION: 'location'
 
 ### locationOf
 
-Function.
+Function. Explained in [Places](/docs/plugins/places#helpers).
 
 The `places/location` trait of a place, named by its id (`'park'`) or its
 reference: one content declares, or one made in play, read through what
@@ -84,7 +79,7 @@ function locationOf(state: GameState, game: Game, ref: string | null | undefined
 
 ### locationsOf
 
-Function.
+Function. Explained in [Places](/docs/plugins/places#helpers).
 
 Every place in the game now, as references: every entity with the
 `places/location` trait, the ones content declares in its order, then
@@ -194,7 +189,7 @@ Plugins add fields of their own to it, which their pages list.
 | `audio` | `Record<string, string \| null>` | yes |  | What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`. Null silences a channel. An open scene's audio and an `audio` effect's win over it. |
 | `ui` | `Ui<SceneUi>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
 | `arrive` | `Arrival` | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
-| `of` | `string` | yes |  |  |
+| `of` | `string` | yes |  | Its kind: the plugin's own, `location`, if left out. |
 
 ### places
 
@@ -249,10 +244,6 @@ type PlacesState = {
 }
 ```
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `at` | `string \| null` |  |  |  |
-
 ### PlacesView
 
 Type. Explained in [Places](/docs/plugins/places#placesview).
@@ -299,7 +290,7 @@ type PlaceView = {
 | `ref` | `EntityRef` |  |  | Its entity: `'location:park'`. |
 | `name` | `string` |  |  |  |
 | `description` | `string \| null` |  |  | The line under its name, its entity's `description`; null with none. |
-| `tags` | `string[]` |  |  |  |
+| `tags` | `string[]` |  |  | Its entity's tags, for the UI to style it by. |
 | `image` | `string \| null` |  |  | Its picture's path, its entity's `image` through `artSrc`; null with none. |
 | `picture` | `PictureView \| null` |  |  | The place's picture as the engine's `pictureView` draws it, or null when it has none. Its hotspots are left out while a scene is open or a lock holds everything, as the exits are. |
 

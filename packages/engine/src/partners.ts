@@ -20,8 +20,11 @@ export type CastContact = {
   /** Their id, as the cast names them: `'ava'`. */
   id: string
   name: string
+  /** A line about them, or null. */
   description: string | null
+  /** Their picture, through `artSrc`, or null. */
   image: string | null
+  /** Their face, for a small avatar, or null. */
   portrait: string | null
   /** The cast's `cast/call` command for them, in short. */
   command: CommandRef

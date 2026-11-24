@@ -127,7 +127,9 @@ export type FlowChoice = Choice & {
 export type DataScene = StoryletFields &
   MinigameSceneFields & {
     id: string
+    /** Its heading, the view's `scene.title`. The room's title, else the game's, if left out. */
     title?: string
+    /** Who the scene is with, by entity id or reference (`'ava'`, `'character:ava'`): the view's `scene.speaker` and `scene.image`. */
     speaker?: string
     /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
     tags?: string[]
@@ -144,7 +146,9 @@ export type DataScene = StoryletFields &
     picture?: PictureDef
     /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
     ui?: Ui<SceneUi>
+    /** What the scene shows, top to bottom: prose, text, speech, media, decisions and the rest. See `Block`. */
     body: Block[]
+    /** The buttons under the body. A flowing scene's picks are in its decisions instead. */
     choices: Choice[]
   }
 

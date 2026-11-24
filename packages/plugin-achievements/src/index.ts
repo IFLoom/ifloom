@@ -69,7 +69,9 @@ export type AchievementEntry = {
   description: string
   /** Its picture's path, through `artSrc`; null with none, or while it's secret and not earned. */
   image: string | null
+  /** Hidden until earned: its name, description and picture read `???`, `''` and null until then. */
   secret: boolean
+  /** Earned in this save, or in any save the profile remembers. */
   earned: boolean
   /** The turn this save earned it, or null. Null too for one earned only in another save. */
   earnedOn: number | null
@@ -82,6 +84,7 @@ export type AchievementsView = {
   achievements: AchievementEntry[]
   /** How many are earned. */
   earned: number
+  /** How many the game declares, secret ones included. */
   total: number
 }
 

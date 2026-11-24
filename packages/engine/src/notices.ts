@@ -20,6 +20,7 @@ export type Notice = {
   tag?: string
   /** The turn it was raised. */
   turn: number
+  /** Whether the player has dismissed it. */
   seen: boolean
 }
 

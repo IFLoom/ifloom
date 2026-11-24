@@ -553,354 +553,6 @@ type Classes = {
 
 Its fields are the keys of `Partial<Record<PartKey, string | ((defaults: string) => string)>>`, so they grow when a game or a plugin adds to those.
 
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `entities` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `actions` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inputs` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `settings` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stats` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `timers` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `changes` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `setting` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `scene` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `timer` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievements` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `picture` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `video` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `input` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `minigame` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `channel` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `bold` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheats` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheat` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `devices` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `feed` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `jobs` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `message` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `exits` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quests` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quest` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `shop` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `goods` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `statuses` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `status` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlocks` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `wardrobe` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inventory` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `viewer` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `sidebar` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `story` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `overlay` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `clock` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `section` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `section-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `section-toggle` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `section-body` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `section-badge` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `top-bar` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `top-bar-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `drawer-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `drawer` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `drawer-overlay` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-value` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-level` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-progress` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-bar` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-pips` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `stat-pip` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `scene-transition` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `scene-header` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `scene-portrait` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `scene-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `scene-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `beats` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `beat` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `speaker-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `reveal` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inline-mail` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mail-header` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mail-body` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inline-prop` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inline-mono` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `voice-replay` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `group` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `fold` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `fold-summary` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `fold-beats` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `change` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `change-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `change-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inline-action` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `tip` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `tip-content` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inline-ui` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inline-modal` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `italic` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `picture-layer` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `hotspot` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `hotspot-warning` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `viewer-open` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `viewer-close` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choices` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice-key` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice-warning` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice-price` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice-irreversible` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `choice-reason` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `badge` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notices` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notices-more` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice-dismiss` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice-strip` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `notice-strip-item` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-faces` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-face` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-plus` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-total` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-outcome` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-critical` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-overlay` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dice-dismiss` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `timer-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `timer-bar` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `timer-left` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `minigame-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `minigame-state` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `minigame-timer` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `minigame-inputs` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `minigame-input` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `menu` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `menu-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dialog` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dialog-overlay` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dialog-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `dialog-close` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `saves` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `saves-actions` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `save-slot` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `save-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `save-details` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `saves-message` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `saves-blocked` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `saves-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `file-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `backlog` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `backlog-entry` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `backlog-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `backlog-choice` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `backlog-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mod` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mod-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mod-version` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mod-state` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mod-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mod-problem` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods-message` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods-restart` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods-changed` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `inventory-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thing` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thing-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thing-count` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thing-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-table` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-heading` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-columns` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-column` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-row` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-desc` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `entity-value` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `input-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `input-field` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `input-options` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `input-submit` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `input-error` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title-page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title-art` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title-subtitle` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title-buttons` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `title-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `page-heading` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `page-back` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `settings-page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `setting-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `setting-control` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `setting-value` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `settings-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `settings-message` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `settings-mods` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `mods-hint` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `load-page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `credits-page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `credits` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `credit` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `credit-link` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `gate-page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `gate-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `gate-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `gate-buttons` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `gate-confirm` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `gate-decline` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement-earned` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement-progress` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement-progress-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievement-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievements-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievements-count` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievements-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievements-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `achievements-page` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `people` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `person` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `person-actions` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `person-desc` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `person-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `person-portrait` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `relationship` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `relationship-header` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `relationship-stats` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `relationships` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheat-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheat-used` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheats-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheats-group` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `cheats-group-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-error` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-field` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-form` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-header` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-heading` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-list` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-log` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-section` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-seed` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-state` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `debug-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-back` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-entries` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-entry` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-entry-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-entry-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-entry-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-header` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-icon` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-launcher` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-prose` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `device-badge` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `device-button` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `device-screen` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `app-badge` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-author` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-comment` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-comment-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-meta` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-portrait` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `post-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thing-drop` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-actions` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-details` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-fired` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-next` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-pay` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-rank` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-record` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-shift` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `job-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `jobs-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `bubble` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `conversation` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `conversation-last` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `conversation-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `conversation-portrait` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `conversation-unread` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `conversations` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `messages-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thread` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thread-back` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thread-portrait` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `thread-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `typing` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `exit` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location-thing` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location-thing-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location-thing-pick` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `location-things` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quest-done` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quest-hint` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quest-stage` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quest-summary` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quest-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quests-done` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `quests-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `shop-closed` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `shop-empty` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-desc` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-image` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-details` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-off` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-full-price` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-stock` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-owned` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `good-actions` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `status-label` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `status-modifiers` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `status-stacks` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `status-summary` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `status-turns` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `statuses-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock-form` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock-input` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock-problem` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock-state` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlock-text` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlocks-entered` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlocks-list` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlocks-message` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `unlocks-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `wardrobe-slot` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `wardrobe-slot-name` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `wardrobe-title` | `string \| ((defaults: string) => string)` | yes |  |  |
-| `wardrobe-worn` | `string \| ((defaults: string) => string)` | yes |  |  |
-
 ## Clock
 
 Const. Explained in [Components](/docs/react/components#clock).
@@ -993,59 +645,6 @@ type Components = {
 ```
 
 Plugins add fields of their own to it, which their pages list.
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `Game` | `Override<GameProps> \| undefined` | yes |  |  |
-| `Sidebar` | `Override<SidebarProps> \| undefined` | yes |  |  |
-| `Story` | `Override<StoryProps> \| undefined` | yes |  |  |
-| `Overlay` | `Override<{ className?: string; children?: ReactNode; }> \| undefined` | yes |  |  |
-| `Section` | `Override<SectionProps> \| undefined` | yes |  |  |
-| `When` | `Override<{ condition: Condition; children?: ReactNode; }> \| undefined` | yes |  |  |
-| `Title` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `Clock` | `Override<object> \| undefined` | yes |  |  |
-| `StatList` | `Override<object> \| undefined` | yes |  |  |
-| `RoomActions` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `Scene` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `Beat` | `Override<{ beat: SceneBeat; }> \| undefined` | yes |  |  |
-| `SceneHeader` | `Override<{ scene: { id: string \| null; key: string; title: string; body: string; beats: S…` | yes |  |  |
-| `BeatGroup` | `Override<{ section: BlockUi & { readonly [hint: string]: unknown; }; children: ReactNode;…` | yes |  |  |
-| `Fold` | `Override<{ label: string; children: ReactNode; }> \| undefined` | yes |  |  |
-| `InlineAction` | `Override<{ text: string; choice: RenderedChoice; className?: string; }> \| undefined` | yes |  |  |
-| `Tip` | `Override<{ text: string; tip: string; className?: string; }> \| undefined` | yes |  |  |
-| `ChoiceList` | `Override<{ choices: RenderedChoice[]; className?: string; part?: 'actions' \| 'choices'; }…` | yes |  |  |
-| `ChoiceButton` | `Override<{ choice: RenderedChoice; className?: string; }> \| undefined` | yes |  |  |
-| `PriceTag` | `Override<{ price: Price; className?: string; }> \| undefined` | yes |  |  |
-| `Notices` | `Override<{ className?: string; limit?: number; }> \| undefined` | yes |  |  |
-| `Notice` | `Override<{ notice: NoticeView; }> \| undefined` | yes |  |  |
-| `NoticeStrip` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `MinigameCard` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `DiceRoll` | `Override<DiceRollProps> \| undefined` | yes |  |  |
-| `DiceOverlay` | `Override<{ rolls: readonly Roll[]; className?: string; }> \| undefined` | yes |  |  |
-| `Countdown` | `Override<CountdownProps> \| undefined` | yes |  |  |
-| `Timers` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `Changes` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `ChangeItem` | `Override<{ change: ChangeView; }> \| undefined` | yes |  |  |
-| `GameMenu` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `SavesMenu` | `Override<{ className?: string; onLoaded?: (() => void); }> \| undefined` | yes |  |  |
-| `Backlog` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `ModManager` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `Inventory` | `Override<InventoryProps> \| undefined` | yes |  |  |
-| `PanelHost` | `Override<object> \| undefined` | yes |  |  |
-| `EntityTable` | `Override<{ kinds?: string[]; className?: string; }> \| undefined` | yes |  |  |
-| `InputFields` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `InputField` | `Override<{ input: InputView; }> \| undefined` | yes |  |  |
-| `Picture` | `Override<ClassAttributes<HTMLImageElement> & ImgHTMLAttributes<HTMLImageElement> & { 'dat…` | yes |  |  |
-| `Video` | `Override<VideoProps \| (Omit<DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTML…` | yes |  |  |
-| `LayeredPicture` | `Override<{ picture: PictureView; className?: string; }> \| undefined` | yes |  |  |
-| `Hotspot` | `Override<{ hotspot: HotspotView; }> \| undefined` | yes |  |  |
-| `MediaViewer` | `Override<MediaViewerProps> \| undefined` | yes |  |  |
-| `Icon` | `Override<{ name: IconName; label?: string; }> \| undefined` | yes |  |  |
-| `TitlePage` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `SettingsPage` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `LoadPage` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `CreditsPage` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
-| `GatePage` | `Override<{ className?: string; }> \| undefined` | yes |  |  |
 
 ## Countdown
 
@@ -1164,7 +763,7 @@ type DiceRollProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `roll` | `Roll` |  |  |  |
+| `roll` | `Roll` |  |  | The roll to draw, from `view.rolls`: its dice, each die's face and its total. |
 | `animate` | `boolean` | yes |  | Tumble before settling. True if left out; the motion option or a player's reduced-motion setting turns it off whatever this says. |
 | `className` | `string` | yes |  |  |
 
@@ -1233,14 +832,14 @@ type GameContextValue = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `runner` | `Runner` |  |  |  |
-| `mods` | `ModsOption` | yes |  |  |
+| `runner` | `Runner` |  |  | The runner the game was mounted with. |
+| `mods` | `ModsOption` | yes |  | The mods option the game was mounted with, for the mods page; undefined for a game without mods. |
 | `snapshot` | `RunnerSnapshot` |  |  | Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. |
 | `view` | `View` |  |  | The view, as `snapshot.view`. |
 | `send` | `(command: CommandRef) => Result<GameState>` |  |  | Run a command, a plain one or a plugin's in short as its helpers write it (`shop.buy('counter', 'food:bun')`). Returns what `runner.apply` returned, so a caller can show a refusal. |
-| `panels` | `Record<string, PanelComponent>` |  |  |  |
+| `panels` | `Record<string, PanelComponent>` |  |  | The panels the UI draws by name: the plugin UIs' with the game's own over them. |
 | `inline` | `InlineComponents` |  |  | The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. |
-| `sections` | `Record<string, PluginSectionComponent>` |  |  |  |
+| `sections` | `Record<string, PluginSectionComponent>` |  |  | The renderers for plugin sections in apps, by plugin id: the plugin UIs' with the game's own over them. |
 | `plugins` | `readonly PluginUi[]` |  |  | The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. |
 
 ## GameMenu
@@ -1274,8 +873,8 @@ type GameProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `className` | `string` | yes |  |  |
-| `children` | `ReactNode` | yes |  |  |
+| `className` | `string` | yes |  | Classes added to its own. |
+| `children` | `ReactNode` | yes |  | The regions: a `Sidebar`, a `Story`, an `Overlay` and whatever else the page has. |
 
 ## GameProvider
 
@@ -1317,7 +916,7 @@ type GameProviderProps = {
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
 | `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `runner` | `Runner` |  |  |  |
+| `runner` | `Runner` |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
 | `plugins` | `readonly PluginUi[]` | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
 | `panels` | `Record<string, PanelComponent>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
 | `inline` | `InlineComponents` | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
@@ -1377,7 +976,7 @@ type GameShellProps = {
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
 | `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `runner` | `Runner` |  |  |  |
+| `runner` | `Runner` |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
 | `panels` | `Record<string, PanelComponent>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
 | `mods` | `ModsOption` | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
 | `layout` | `ComponentType` | yes |  | The page, as a component: a `Game` with a `Sidebar`, a `Story` and the rest, as in your `src/layout.tsx`, or any component of your own, since `useGame()` and every built-in component work in it. `DefaultLayout` if left out. |
@@ -1402,7 +1001,7 @@ type GateOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `title` | `string` |  |  |  |
+| `title` | `string` |  |  | The gate's heading. |
 | `text` | `string` |  |  | Paragraphs, split on blank lines. |
 | `confirm` | `string` |  |  | The button that moves on. |
 | `decline` | `{ label: string; href?: string }` | yes |  | A button that doesn't: it goes to `href` if given, otherwise it stays. |
@@ -1586,9 +1185,9 @@ type InlineProps<N extends string = string> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `N` |  |  |  |
-| `text` | `string` |  |  |  |
-| `args` | `InlineUiArgs<N>` |  |  |  |
+| `name` | `N` |  |  | The piece's name, as `[[ui:name\|…]]` wrote it. |
+| `text` | `string` |  |  | Its words, the second part. |
+| `args` | `InlineUiArgs<N>` |  |  | The parts after its words, typed by the name's entry in `InlineUi`. |
 
 ## InlineTrigger
 
@@ -1743,9 +1342,9 @@ type MediaViewerProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `media` | `ViewerMedia` |  |  |  |
-| `open` | `boolean` |  |  |  |
-| `onOpenChange` | `(open: boolean) => void` |  |  |  |
+| `media` | `ViewerMedia` |  |  | The picture or video to show. |
+| `open` | `boolean` |  |  | Whether it's showing. |
+| `onOpenChange` | `(open: boolean) => void` |  |  | Called with false when the player closes it. |
 
 ## MinigameCard
 
@@ -1813,7 +1412,7 @@ type ModsOption = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `store` | `Mods` |  |  |  |
+| `store` | `Mods` |  |  | Where the player's mods are kept: `mods(game.id, driver)` from `@ifloom/engine`, over the same driver as the saves. |
 | `problems` | `string[]` | yes |  | The loader's problems, as `describeProblem` writes them; the ones starting `mod:<id> ` are shown under that mod. |
 | `onChange` | `() => void` | yes |  | Build the game again with the mods as they now are — usually `() => location.reload()`. |
 
@@ -2034,59 +1633,6 @@ type OverridableComponents = {
 ```
 
 Plugins add fields of their own to it, which their pages list.
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `Game` | `Override<GameProps>` |  |  |  |
-| `Sidebar` | `Override<SidebarProps>` |  |  |  |
-| `Story` | `Override<StoryProps>` |  |  |  |
-| `Overlay` | `Override<{ className?: string; children?: ReactNode; }>` |  |  |  |
-| `Section` | `Override<SectionProps>` |  |  |  |
-| `When` | `Override<{ condition: Condition; children?: ReactNode; }>` |  |  |  |
-| `Title` | `Override<{ className?: string; }>` |  |  |  |
-| `Clock` | `Override<object>` |  |  |  |
-| `StatList` | `Override<object>` |  |  |  |
-| `RoomActions` | `Override<{ className?: string; }>` |  |  |  |
-| `Scene` | `Override<{ className?: string; }>` |  |  |  |
-| `Beat` | `Override<{ beat: SceneBeat; }>` |  |  |  |
-| `SceneHeader` | `Override<{ scene: { id: string \| null; key: string; title: string; body: string; beats: S…` |  |  |  |
-| `BeatGroup` | `Override<{ section: BlockUi & { readonly [hint: string]: unknown; }; children: ReactNode;…` |  |  |  |
-| `Fold` | `Override<{ label: string; children: ReactNode; }>` |  |  |  |
-| `InlineAction` | `Override<{ text: string; choice: RenderedChoice; className?: string; }>` |  |  |  |
-| `Tip` | `Override<{ text: string; tip: string; className?: string; }>` |  |  |  |
-| `ChoiceList` | `Override<{ choices: RenderedChoice[]; className?: string; part?: 'actions' \| 'choices'; }>` |  |  |  |
-| `ChoiceButton` | `Override<{ choice: RenderedChoice; className?: string; }>` |  |  |  |
-| `PriceTag` | `Override<{ price: Price; className?: string; }>` |  |  |  |
-| `Notices` | `Override<{ className?: string; limit?: number; }>` |  |  |  |
-| `Notice` | `Override<{ notice: NoticeView; }>` |  |  |  |
-| `NoticeStrip` | `Override<{ className?: string; }>` |  |  |  |
-| `MinigameCard` | `Override<{ className?: string; }>` |  |  |  |
-| `DiceRoll` | `Override<DiceRollProps>` |  |  |  |
-| `DiceOverlay` | `Override<{ rolls: readonly Roll[]; className?: string; }>` |  |  |  |
-| `Countdown` | `Override<CountdownProps>` |  |  |  |
-| `Timers` | `Override<{ className?: string; }>` |  |  |  |
-| `Changes` | `Override<{ className?: string; }>` |  |  |  |
-| `ChangeItem` | `Override<{ change: ChangeView; }>` |  |  |  |
-| `GameMenu` | `Override<{ className?: string; }>` |  |  |  |
-| `SavesMenu` | `Override<{ className?: string; onLoaded?: (() => void); }>` |  |  |  |
-| `Backlog` | `Override<{ className?: string; }>` |  |  |  |
-| `ModManager` | `Override<{ className?: string; }>` |  |  |  |
-| `Inventory` | `Override<InventoryProps>` |  |  |  |
-| `PanelHost` | `Override<object>` |  |  |  |
-| `EntityTable` | `Override<{ kinds?: string[]; className?: string; }>` |  |  |  |
-| `InputFields` | `Override<{ className?: string; }>` |  |  |  |
-| `InputField` | `Override<{ input: InputView; }>` |  |  |  |
-| `Picture` | `Override<ClassAttributes<HTMLImageElement> & ImgHTMLAttributes<HTMLImageElement> & { 'dat…` |  |  |  |
-| `Video` | `Override<VideoProps \| (Omit<DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTML…` |  |  |  |
-| `LayeredPicture` | `Override<{ picture: PictureView; className?: string; }>` |  |  |  |
-| `Hotspot` | `Override<{ hotspot: HotspotView; }>` |  |  |  |
-| `MediaViewer` | `Override<MediaViewerProps>` |  |  |  |
-| `Icon` | `Override<{ name: IconName; label?: string; }>` |  |  |  |
-| `TitlePage` | `Override<{ className?: string; }>` |  |  |  |
-| `SettingsPage` | `Override<{ className?: string; }>` |  |  |  |
-| `LoadPage` | `Override<{ className?: string; }>` |  |  |  |
-| `CreditsPage` | `Override<{ className?: string; }>` |  |  |  |
-| `GatePage` | `Override<{ className?: string; }>` |  |  |  |
 
 ## Page
 
@@ -2512,8 +2058,8 @@ type Reveal = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `delay` | `number` | yes |  |  |
-| `as` | `TransitionName` | yes |  |  |
+| `delay` | `number` | yes |  | Milliseconds to wait after the reveal before it, or after the scene comes on. |
+| `as` | `TransitionName` | yes |  | How the block comes in. |
 
 ## RevealBeat
 
@@ -2533,8 +2079,8 @@ type RevealBeat = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `beat` | `SceneBeat` |  |  |  |
-| `index` | `number` |  |  |  |
-| `roll` | `Roll` | yes |  |  |
+| `index` | `number` |  |  | Its index in `view.scene.beats`. |
+| `roll` | `Roll` | yes |  | The roll its `ui.dice` names, drawn settled, when it isn't new. |
 
 ## RevealGroup
 
@@ -2553,9 +2099,9 @@ type RevealGroup = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `reveal` | `RevealPoint \| null` |  |  |  |
+| `reveal` | `RevealPoint \| null` |  |  | The reveal that holds this run back, or null for the first run, shown with the screen. |
 | `dice` | `Roll` | yes |  | A new roll whose dice tumble before this run, which waits for them to settle: the one its first beat's `ui.dice` names. |
-| `beats` | `RevealBeat[]` |  |  |  |
+| `beats` | `RevealBeat[]` |  |  | The run's beats, in order. |
 
 ## RevealPoint
 
@@ -2574,9 +2120,9 @@ type RevealPoint = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `delay` | `number` |  |  |  |
-| `as` | `TransitionName` |  |  |  |
-| `at` | `number` |  |  |  |
+| `delay` | `number` |  |  | Milliseconds since the run before. |
+| `as` | `TransitionName` |  |  | How the run comes in. |
+| `at` | `number` |  |  | When it comes, in milliseconds from the screen coming on. |
 
 ## RoomActions
 
@@ -2728,9 +2274,9 @@ type SceneRolls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `all` | `readonly Roll[]` |  |  |  |
-| `fresh` | `readonly Roll[]` |  |  |  |
-| `at` | `number` |  |  |  |
+| `all` | `readonly Roll[]` |  |  | The rolls the last command made: `view.rolls`. |
+| `fresh` | `readonly Roll[]` |  |  | The rolls the command that led here made, whose dice tumble. Empty for a screen that wasn't new. |
+| `at` | `number` |  |  | A count that moves on with each new set of rolls: key the dice by it, so a new set tumbles again. |
 
 ## SceneTiming
 
@@ -2787,10 +2333,10 @@ type ScreenTransition = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `key` | `string` |  |  |  |
-| `in` | `TransitionName` |  |  |  |
-| `out` | `TransitionName` |  |  |  |
-| `ms` | `number` |  |  |  |
+| `key` | `string` |  |  | `view.scene.key`: key the screen's element by it, so a new screen is a new element. |
+| `in` | `TransitionName` |  |  | How this screen comes in. |
+| `out` | `TransitionName` |  |  | How it goes out. |
+| `ms` | `number` |  |  | How long each takes, in milliseconds. |
 
 ## Section
 
@@ -2833,7 +2379,7 @@ type SectionProps = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | What it's called for the profile: the open or folded state is kept under it. |
-| `title` | `string` |  |  |  |
+| `title` | `string` |  |  | Its heading, as the player reads it. |
 | `collapsible` | `boolean` | yes |  | Fold in place with a button on its title. The player's choice is remembered. |
 | `dialog` | `boolean` | yes |  | Draw a button that opens the children in a dialog, instead of the children. |
 | `open` | `boolean` | yes |  | Open at first, for a folding section: true if left out. The player's last choice wins. |
@@ -2888,8 +2434,8 @@ type SidebarProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `className` | `string` | yes |  |  |
-| `children` | `ReactNode` | yes |  |  |
+| `className` | `string` | yes |  | Classes added to its own. |
+| `children` | `ReactNode` | yes |  | What the sidebar holds: sections, stats, plugins' spots. |
 
 ## StatDisplay
 
@@ -3080,9 +2626,9 @@ type Transition = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `in` | `TransitionName` | yes |  |  |
-| `out` | `TransitionName` | yes |  |  |
-| `ms` | `number` | yes |  |  |
+| `in` | `TransitionName` | yes |  | How the new screen comes in. |
+| `out` | `TransitionName` | yes |  | How the screen before goes out. |
+| `ms` | `number` | yes |  | How long each takes, in milliseconds. |
 
 ## TransitionName
 
@@ -3510,13 +3056,13 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `src` | `string` |  |  |  |
-| `poster` | `string` | yes |  |  |
+| `src` | `string` |  |  | The file, through `artSrc`. |
+| `poster` | `string` | yes |  | A picture to show before it plays. |
 | `alt` | `string` | yes |  | What the clip shows, for a screen reader. |
-| `autoplay` | `boolean` |  |  |  |
-| `loop` | `boolean` |  |  |  |
+| `autoplay` | `boolean` |  |  | Start playing as soon as it's shown. |
+| `loop` | `boolean` |  |  | Play it again when it ends. |
 | `muted` | `boolean` |  |  | False asks for sound, which then follows the game's audio settings. |
-| `controls` | `boolean` |  |  |  |
+| `controls` | `boolean` |  |  | Show the browser's play, pause and volume controls. |
 
 ## ViewerMedia
 

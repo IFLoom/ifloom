@@ -15,24 +15,55 @@ import { useMotion, useSkipKey } from './motion.tsx'
 export const REVEAL_MS = 400
 
 /** The screen on show, and how it comes in and goes out. */
-export type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
+export type ScreenTransition = {
+  /** `view.scene.key`: key the screen's element by it, so a new screen is a new element. */
+  key: string
+  /** How this screen comes in. */
+  in: TransitionName
+  /** How it goes out. */
+  out: TransitionName
+  /** How long each takes, in milliseconds. */
+  ms: number
+}
 
 /** A reveal as the React UI plays it: where the prose holds back, how long since the run before (`delay`), how it comes in (`as`), and when, from the screen coming on (`at`). */
-export type RevealPoint = { delay: number; as: TransitionName; at: number }
+export type RevealPoint = {
+  /** Milliseconds since the run before. */
+  delay: number
+  /** How the run comes in. */
+  as: TransitionName
+  /** When it comes, in milliseconds from the screen coming on. */
+  at: number
+}
 
 /** One beat of a run, with its index in the scene's beats, and the roll drawn settled before it, if its `ui.dice` names one that isn't new. */
-export type RevealBeat = { beat: SceneBeat; index: number; roll?: Roll }
+export type RevealBeat = {
+  beat: SceneBeat
+  /** Its index in `view.scene.beats`. */
+  index: number
+  /** The roll its `ui.dice` names, drawn settled, when it isn't new. */
+  roll?: Roll
+}
 
 /** A run of a scene's beats, and the reveal that holds it back (null for the first, shown with the screen). */
 export type RevealGroup = {
+  /** The reveal that holds this run back, or null for the first run, shown with the screen. */
   reveal: RevealPoint | null
   /** A new roll whose dice tumble before this run, which waits for them to settle: the one its first beat's `ui.dice` names. */
   dice?: Roll
+  /** The run's beats, in order. */
   beats: RevealBeat[]
 }
 
 /** The rolls on screen: all the last command made, the new ones that tumble, and `at`, which counts each new set. */
-export type SceneRolls = { all: readonly Roll[]; fresh: readonly Roll[]; at: number }
+export type SceneRolls = {
+  /** The rolls the last command made: `view.rolls`. */
+  all: readonly Roll[]
+  /** The rolls the command that led here made, whose dice tumble. Empty for a screen that wasn't new. */
+  fresh: readonly Roll[]
+  /** A count that moves on with each new set of rolls: key the dice by it, so a new set tumbles again. */
+  at: number
+}
 
 /** Everything `Scene` works out before it draws: see `useScene`. */
 export type SceneTiming = {

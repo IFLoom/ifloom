@@ -67,7 +67,7 @@ const GROUP = 'framework'
 const DRAWING = ['React UI']
 
 /** Pages that may show a UI snippet in one framework only. */
-const ALLOWED = [/\/(?:reference|how-to)\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/, /\/api\//]
+const ALLOWED = [/\/(?:reference|how-to)\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/how-to\/build-with-next\.md$/, /\/api\//]
 
 const IMPORTS_UI = /from\s+['"](?:@ifloom\/react|react|react-dom|vue|svelte)(?:\/[^'"]*)?['"]/
 const CALLS_UI = /\bmountGame\(|\bdocument\.(?:createElement|querySelector|getElementById)\b/

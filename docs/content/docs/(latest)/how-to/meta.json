@@ -2,5 +2,26 @@
   "title": "How-to guides",
   "description": "Recipes for one task each",
   "root": true,
-  "pages": ["---Render it yourself---", "render"]
+  "pages": [
+    "---Set up---",
+    "create-a-game",
+    "add-to-a-project",
+    "organise-your-files",
+    "add-a-plugin",
+    "use-a-coding-agent",
+    "work-in-the-repository",
+    "move-from-twine",
+    "---Write the story---",
+    "---Build the world---",
+    "---Screens around the game---",
+    "---Render it yourself---",
+    "render",
+    "---The React UI---",
+    "---Write code---",
+    "---Test, fix and ship---",
+    "ship-your-game",
+    "build-with-next",
+    "build-with-webpack",
+    "build-with-esbuild"
+  ]
 }

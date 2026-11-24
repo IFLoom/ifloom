@@ -149,6 +149,17 @@ export const DONE: string[] = [
   'tutorial/town/people-and-time.md',
   'tutorial/town/buy-something.md',
   'tutorial/town/check-and-build.md',
+  'how-to/create-a-game.md',
+  'how-to/add-to-a-project.md',
+  'how-to/organise-your-files.md',
+  'how-to/add-a-plugin.md',
+  'how-to/use-a-coding-agent.md',
+  'how-to/work-in-the-repository.md',
+  'how-to/move-from-twine.md',
+  'how-to/ship-your-game.md',
+  'how-to/build-with-next.md',
+  'how-to/build-with-webpack.md',
+  'how-to/build-with-esbuild.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

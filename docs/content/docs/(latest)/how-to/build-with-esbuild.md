@@ -1,10 +1,10 @@
 ---
-title: "esbuild"
-description: "Build an IFLoom game with esbuild: no set-up for the packages, Tailwind's CLI or the prebuilt stylesheet for the React UI, a dev server, ifloom check and playtest beside it, and a short script for the single offline index.html."
+title: "Build with esbuild"
+description: "How-to for building an IFLoom game with esbuild: no set-up for the packages, Tailwind's CLI or the prebuilt stylesheet for the React UI, a dev server, ifloom check and playtest beside it, and a short script for the single offline index.html."
 ---
 Use esbuild if you want a small build set-up. It compiles TypeScript and JSX itself, so your game needs no loader, and a build script of about twenty lines makes the one `index.html` that opens from disk. `ifloom check` and `ifloom playtest` work beside it.
 
-## Install
+## Install esbuild
 
 Besides the `@ifloom` packages your game uses, add esbuild as a dev dependency:
 
@@ -14,11 +14,11 @@ npm install --save-dev esbuild
 
 For the React UI, also add `tailwindcss` and `@tailwindcss/cli`, and `react` and `react-dom` if npm hasn't installed them with `@ifloom/react`.
 
-## TypeScript
+## Compile TypeScript
 
 There's nothing to set up. The @ifloom packages are compiled JavaScript with type declarations, and esbuild compiles your own `.ts` and `.tsx` files itself. Pass `--jsx=automatic` if your own code has JSX, as the `react` template's `src/layout.tsx` does.
 
-## Styles
+## Add the styles
 
 esbuild bundles plain CSS you import from your code, so the `vanilla`, `vue` and `svelte` templates' stylesheet needs nothing more. esbuild writes it beside the script as `main.css`.
 
@@ -40,7 +40,7 @@ import '@ifloom/react/styles.min.css'
 import '@ifloom/react/themes/paper.min.css'
 ```
 
-## The page and the dev server
+## Set up the page and the dev server
 
 `index.html` points at the files esbuild and Tailwind write:
 
@@ -98,7 +98,7 @@ startClock(runner)
 startKeys(runner)
 
 const root = document.querySelector<HTMLElement>('#root')!
-// ...draw runner.view() into root, as in "A UI from scratch"
+// ...render runner.view() into root, as in "Start your own UI"
 ```
 
 ```ts tab="React" tab-group="framework"
@@ -136,7 +136,7 @@ TypeScript doesn't know what importing a `.css` file gives. Declare it once, in 
 declare module '*.css'
 ```
 
-## The single offline file
+## Build the single offline file
 
 esbuild can make the one `index.html` that opens from disk. Bundle without writing files, then put the script and the styles inside the page:
 
@@ -176,4 +176,11 @@ console.log(`dist/index.html  ${(html.length / 1024).toFixed(1)} kB`)
 
 `ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with esbuild, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/reference/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them.
 
-`import.meta.env.DEV`, which the docs use to leave the [debug plugin](/docs/reference/plugins/debug#leave-it-out-of-release-builds) out of a release, is Vite's. Under esbuild, set your own with `--define:DEV=true` in `dev` and `false` in `build.js` (`define: { DEV: 'false' }`), and declare it in TypeScript with `declare const DEV: boolean`.
+`import.meta.env.DEV`, which the docs use to leave the [debug plugin](/docs/how-to/debug-a-game) out of a release, is Vite's. Under esbuild, set your own with `--define:DEV=true` in `dev` and `false` in `build.js` (`define: { DEV: 'false' }`), and declare it in TypeScript with `declare const DEV: boolean`.
+
+Run `npm run check`, which prints `No problems.`, then `npm run build` and open `dist/index.html` from disk: the game starts with no server.
+
+For more, see:
+
+- [The game module](/docs/reference/cli#the-game-module) and [`checkBuild`](/docs/api/cli#checkbuild).
+- [Ship your game](/docs/how-to/ship-your-game), for saves and what goes in the folder.

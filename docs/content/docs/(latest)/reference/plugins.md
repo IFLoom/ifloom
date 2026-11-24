@@ -302,17 +302,19 @@ type PluginContext<S> = CustomContext & {
 
 Every plugin function gets this alongside the game state, and so does every function in the game's own [`rules`](/docs/reference/rules#the-context), whose `slice` is the game's own state. It has what every [called function](/docs/reference/custom#customcontext) gets, and more:
 
-- `game` is the game.
-- `value(name, args?)` reads a [value](/docs/reference/custom#values) by name, a plugin's or the game's own, about the state the function was handed.
-- `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`.
-- `slice` is the plugin's own state, typed. If the save has none yet, it's `start(game)`, or `undefined` for a plugin with no `start`.
-- `get(on?)` reads the plugin's state from `on`, which defaults to the state the function was handed, so `get()` is `slice`. Like `slice`, it's `start(game)` when that state has none yet.
-- `set(next, on?)` returns a game state with the plugin's state replaced by `next`. It writes onto `on`, which defaults to the state the function was handed.
-- `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
-- `apply(effects, on?)` applies a list of [effects](/docs/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
-- `picks` is only there in [`view`](#the-view). It's where the view's new pool picks go, for the reducer to record. See [The view](#the-view).
-- `beats(blocks, id)` draws [blocks](/docs/reference/scenes#block) as [beats](/docs/reference/prose#scenebeat), as a scene's body is drawn. See [beats](#beats).
-- `profile` is only there in `view`, and only when a [runner](/docs/reference/runner#the-view-cache) with a profile builds it. It's what the plugin's own namespace in the [profile](/docs/reference/profile) holds, frozen so you can't change it, or `undefined` while nothing is stored. See [The profile](#the-profile).
+| Member | What it is |
+|---|---|
+| `game` | The game. |
+| `value(name, args?)` | Reads a [value](/docs/reference/custom#values) by name, a plugin's or the game's own, about the state the function was handed. |
+| `roll(max, name)` | Draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`. |
+| `slice` | The plugin's own state, typed. If the save has none yet, it's `start(game)`, or `undefined` for a plugin with no `start`. |
+| `get(on?)` | Reads the plugin's state from `on`, which defaults to the state the function was handed, so `get()` is `slice`. Like `slice`, it's `start(game)` when that state has none yet. |
+| `set(next, on?)` | Returns a game state with the plugin's state replaced by `next`. It writes onto `on`, which defaults to the state the function was handed. |
+| `query(name, args?)` | Asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out. |
+| `apply(effects, on?)` | Applies a list of [effects](/docs/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects). |
+| `picks` | Only there in [`view`](#the-view). It's where the view's new pool picks go, for the reducer to record. |
+| `beats(blocks, id)` | Draws [blocks](/docs/reference/scenes#block) as [beats](/docs/reference/prose#scenebeat), as a scene's body is drawn. See [beats](#beats). |
+| `profile` | Only there in `view`, and only when a [runner](/docs/reference/runner#the-view-cache) with a profile builds it. It's what the plugin's own namespace in the [profile](/docs/reference/profile) holds, frozen so you can't change it, or `undefined` while nothing is stored. See [The profile](#the-profile). |
 
 **Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/docs/reference/effects#applyeffects):
 
@@ -531,7 +533,7 @@ const arg: {
 }
 ```
 
-The arguments a call can take. Each [`Arg<In, Out>`](#arg) reads what content wrote (`In`) into what the function is handed (`Out`), whatever it was, and the checker reports a value of the wrong shape.
+The arguments a call can take. Each [`Arg<In, Out>`](#the-arg-type) reads what content wrote (`In`) into what the function is handed (`Out`), whatever it was, and the checker reports a value of the wrong shape.
 
 | Argument | Content writes | Handed | Named to the checker |
 |---|---|---|---|
@@ -553,6 +555,153 @@ Each has three methods that return a new argument:
 - `.optional()` lets content leave it out: the function is handed `undefined` then. `.optional(1)` hands `1` instead.
 - `.naming(fn)` adds what a value names, as [references](#references): `arg.string().naming((id): Reference[] => [{ scene: id }])`.
 - `.rule(fn)` adds a rule of the plugin's own about a value, in the checker's words, or `undefined` when nothing is wrong: `.rule((count) => (count >= 1 ? undefined : 'count must be 1 or more'))`.
+
+#### The Arg type
+
+```ts shape
+import type { Arg } from '@ifloom/engine/plugin'
+
+type Arg<In = unknown, Out = In, Optional extends boolean = boolean> = {
+  readonly kind: string
+  readonly isOptional: Optional
+  readonly words?: WordPart
+  read(value: unknown): Out
+  fits(value: unknown): boolean
+  refs(value: Out, game: Game): readonly Reference[]
+  optional(): Arg<In, Out | undefined, true>
+  optional<F extends Out>(fallback: F): Arg<In, Out, true>
+  naming(refs: (value: Exclude<Out, undefined>, game: Game) => readonly Reference[]): Arg<In, Out, Optional>
+  rule(problem: (value: Exclude<Out, undefined>) => string | undefined): Arg<In, Out, Optional>
+  readonly _in?: In
+}
+```
+
+One argument of a call, as `arg` makes it. You write `Arg` yourself only to type a helper that makes arguments, as a [trait kind](#trait-kinds)'s `arg()` does. Everything else reads it through `defineCalls`.
+
+| Member | What it is |
+|---|---|
+| `kind` | What a value must be, in the checker's words: `'text'`, `'a number'`. |
+| `isOptional` | Whether content may leave it out. |
+| `words` | Set when content's value is words a player reads, so a translation reaches it. |
+| `read(value)` | What the function is handed for whatever content wrote. |
+| `fits(value)` | Whether content's value has the right shape. Asked only of a value content wrote. |
+| `refs(value, game)` | What a value names, for the checker. |
+| `optional`, `naming`, `rule` | The methods above, each returning a new argument. |
+| `_in` | Only there for the type of what content writes. Never set. |
+
+### The declaration's types
+
+The types `defineCalls` works with. A plugin rarely names them, since `typeof CALLS` and the registries carry them, but they're what you reach for when you write a helper that takes a call's arguments, or a function that works on any plugin's calls.
+
+#### ArgShape and CallShapes
+
+```ts shape
+import type { ArgShape, CallShapes } from '@ifloom/engine/plugin'
+
+type ArgShape = Readonly<Record<string, Arg<any, any, boolean>>>
+
+type CallShapes = {
+  conditions?: Readonly<Record<string, ArgShape>>
+  effects?: Readonly<Record<string, ArgShape>>
+  commands?: Readonly<Record<string, ArgShape>>
+}
+```
+
+An `ArgShape` is what one call takes, its arguments by name. `{}` is a call that takes none, written `true`. `CallShapes` is what `defineCalls` is given: an `ArgShape` per call, by table.
+
+#### ArgIn, ArgOut, ArgsIn and ArgsOut
+
+```ts shape
+import type { ArgIn, ArgOut, ArgsIn, ArgsOut } from '@ifloom/engine/plugin'
+
+type ArgIn<A> = A extends Arg<infer In, any, any> ? In : never
+type ArgOut<A> = A extends Arg<any, infer Out, any> ? Out : never
+
+type ArgsIn<S extends ArgShape> = { [K in keyof S as S[K] extends Arg<any, any, true> ? never : K]: ArgIn<S[K]> } & {
+  [K in keyof S as S[K] extends Arg<any, any, true> ? K : never]?: ArgIn<S[K]>
+}
+type ArgsOut<S extends ArgShape> = { [K in keyof S]: ArgOut<S[K]> }
+```
+
+The two sides of an argument and of a whole call. `ArgIn` and `ArgsIn` are what content writes, with an optional argument optional. `ArgOut` and `ArgsOut` are what the function is handed, every argument read. Use `ArgsIn<typeof CALLS.effects.stamp.args>` to type a helper's parameter, and `ArgsOut` for code that reads a call's arguments as the plugin's function would.
+
+#### WrittenAs
+
+```ts shape
+import type { WrittenAs } from '@ifloom/engine/plugin'
+
+type WrittenAs<S extends ArgShape> = [keyof S] extends [never]
+  ? true | Record<string, never>
+  : [{ [K in keyof S]: S[K] extends Arg<any, any, true> ? never : K }[keyof S]] extends [never]
+    ? ArgsIn<S> | true
+    : ArgsIn<S>
+```
+
+What content writes as a call's value: `true` (or `{}`) for a call that takes nothing, its arguments or `true` when every argument may be left out, and its arguments otherwise. It's what each registry entry is.
+
+#### CallWriter
+
+```ts shape
+import type { CallWriter } from '@ifloom/engine/plugin'
+
+type CallWriter<Name extends string, S extends ArgShape> = ((args: ArgsIn<S>) => { [N in Name]: WrittenAs<S> }) & {
+  readonly call: Name
+  readonly args: S
+  read(args: unknown): ArgsOut<S>
+}
+```
+
+One call's writer, such as `CALLS.effects.stamp`. Called with the arguments, it returns the call in short. `args` may be left out when every argument is optional. `call` is the full name, `args` what it takes, and `read` reads arguments as content wrote them the way the call's function is handed them.
+
+#### PluginCalls and AnyCalls
+
+```ts shape
+import type { AnyCalls, PluginCalls } from '@ifloom/engine/plugin'
+
+type PluginCalls<Id extends string = string, D extends CallShapes = CallShapes> = {
+  readonly id: Id
+  readonly conditions: { readonly [K in keyof NonNullable<D['conditions']> & string]: CallWriter<`${Id}/${K}`, NonNullable<D['conditions']>[K]> }
+  readonly effects: { readonly [K in keyof NonNullable<D['effects']> & string]: CallWriter<`${Id}/${K}`, NonNullable<D['effects']>[K]> }
+  readonly commands: { readonly [K in keyof NonNullable<D['commands']> & string]: CallWriter<`${Id}/${K}`, NonNullable<D['commands']>[K]> }
+}
+
+type AnyCalls = {
+  readonly id: string
+  readonly conditions: Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>
+  readonly effects: Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>
+  readonly commands: Readonly<Record<string, { readonly call: string; readonly args: ArgShape }>>
+}
+```
+
+`PluginCalls` is what `defineCalls` returns: the plugin's id and a [`CallWriter`](#callwriter) for each call, by table. `AnyCalls` is what every plugin's `PluginCalls` fits. It's the type of a plugin's `calls` field, and what to take in code that works on any plugin's declaration, such as a test that walks every call.
+
+#### ConditionsOf, EffectsOf and CommandsOf
+
+```ts shape
+import type { CommandsOf, ConditionsOf, EffectsOf } from '@ifloom/engine/plugin'
+
+type ConditionsOf<C> =
+  C extends PluginCalls<infer Id, infer D>
+    ? { [K in keyof NonNullable<D['conditions']> & string as `${Id}/${K}`]: WrittenAs<NonNullable<D['conditions']>[K]> }
+    : never
+type EffectsOf<C> =
+  C extends PluginCalls<infer Id, infer D> ? { [K in keyof NonNullable<D['effects']> & string as `${Id}/${K}`]: WrittenAs<NonNullable<D['effects']>[K]> } : never
+type CommandsOf<C> =
+  C extends PluginCalls<infer Id, infer D> ? { [K in keyof NonNullable<D['commands']> & string as `${Id}/${K}`]: WrittenAs<NonNullable<D['commands']>[K]> } : never
+```
+
+A declaration's registry entries for one table: each call by full name, with what content writes as its value. Extend the [registries](#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry) with them, as [Declaring calls](#declaring-calls) shows, and never write those entries by hand.
+
+#### CallArgs
+
+```ts shape
+import type { CallArgs } from '@ifloom/engine/plugin'
+
+type CallArgs<C, T extends keyof CallShapes> =
+  C extends PluginCalls<string, infer D> ? { [K in keyof NonNullable<D[T]>]: ArgsOut<NonNullable<D[T]>[K]> } : {}
+```
+
+What each call's function in one table is handed, by name: `CallArgs<typeof CALLS, 'conditions'>['stamps']` is `{ card: string; gte: number }`. Use it to type a function written apart from `definePlugin`, such as a condition kept in a file of its own.
 
 ## Data lists
 
@@ -579,8 +728,36 @@ Give it to `definePlugin` as `data`, so a translation reaches each list's words,
 ```ts shape
 function defineData<const L extends Record<string, ListSpec>>(plugin: string, lists: L): PluginData<L>
 function list<T extends { id: string }>(spec: { noun: string; words?: WordShape }): ListSpec<T>
+```
 
-type DataList<T> = {
+`defineData` declares the plugin's lists by name, each made with `list<T>`, whose type argument is an entry's type. It returns a [`PluginData`](#plugindata), a [`DataList`](#datalist) for each.
+
+#### ListSpec
+
+```ts shape
+import type { ListSpec } from '@ifloom/engine/plugin'
+
+type ListSpec<T extends { id: string } = PluginEntry> = {
+  noun: string
+  words?: WordShape
+  readonly _entry?: T
+}
+```
+
+One list as `list<T>` declares it, before `defineData` makes it a `DataList`.
+
+| Field | What it is |
+|---|---|
+| `noun` | What one entry is called in a problem: `unknown card "gold"`. |
+| `words` | Which fields of an entry are words a player reads, as a [`WordShape`](/docs/reference/words#wordshape), for a translation's [words table](/docs/reference/words). |
+| `_entry` | Only there for the entry's type. Never set. |
+
+#### DataList
+
+```ts shape
+import type { DataList } from '@ifloom/engine/plugin'
+
+type DataList<T extends { id: string } = PluginEntry> = {
   readonly plugin: string
   readonly list: string
   readonly noun: string
@@ -593,15 +770,29 @@ type DataList<T> = {
 }
 ```
 
-`defineData` declares the plugin's lists by name, each made with `list<T>`, whose type argument is an entry's type. It returns a `PluginData`, a `DataList` for each:
+One of the plugin's lists, as `defineData` declares it: where it is, its noun and words, and its lookups. Take a `DataList` in a helper that works on any of the plugin's lists.
 
 | Member | What it is |
 |---|---|
+| `plugin`, `list` | Where it is: `data.<plugin>.<list>`. |
+| `noun`, `words` | As its [`ListSpec`](#listspec) gave them. |
 | `all(game)` | Every entry of `data.<plugin>.<list>`, in order, typed. Anything in the list that isn't an object with an id is left out. |
 | `get(game, id)` | One entry by id, which may be anything content wrote: `undefined` for an id that isn't text or that the game hasn't. |
 | `ref(id)` | The [reference](#references) to one entry, so the checker reports `unknown card "gold"`. |
 | `content(game, fn)` | What each entry names, for [`references.content`](#references), at `cards <id>`. |
 | `problem(id, what)` | A [`PluginProblem`](#pluginproblem) about one entry, for [`check`](#check). |
+
+#### PluginData
+
+```ts shape
+import type { PluginData } from '@ifloom/engine/plugin'
+
+type PluginData<L extends Readonly<Record<string, ListSpec<any>>> = Readonly<Record<string, ListSpec<any>>>> = {
+  readonly [K in keyof L & string]: DataList<L[K] extends ListSpec<infer T> ? T : PluginEntry>
+}
+```
+
+What `defineData` returns: a `DataList` for each list, by name, typed by its entry. It's what a plugin's [`data`](#plugin) field takes.
 
 ## Typed calls, queries and views
 
@@ -685,7 +876,51 @@ type EffectCall = CallIn<EffectRegistry>
 type CommandCall = CallIn<CommandRegistry>
 ```
 
-A call in short, checked against its registry when its name is declared there, and loose otherwise. `CallIn<R>` is that rule for any registry `R`, from `@ifloom/engine/plugin`. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`. They're empty in the engine, except that `QueryRegistry` holds [`PartnerQueries`](#partnerqueries).
+A call in short, checked against its registry when its name is declared there, and loose otherwise. `CallIn<R>` is that rule for any registry `R`. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`.
+
+#### CallIn
+
+```ts shape
+import type { CallIn } from '@ifloom/engine/plugin'
+
+type CallIn<R> =
+  | { [K in keyof R & `${string}/${string}`]: { [P in K]: R[K] } }[keyof R & `${string}/${string}`]
+  | (PluginCall & { [K in keyof R & `${string}/${string}`]?: never })
+```
+
+One call in short per name `R` declares, with what that name takes, or a [`PluginCall`](/docs/reference/custom#plugincall) to any name `R` doesn't declare. Use it to type content against a registry of your own, as the engine types `ConditionCall` against `ConditionRegistry`.
+
+### ConditionRegistry, EffectRegistry, CommandRegistry, QueryRegistry and ViewRegistry
+
+```ts shape
+import type { CommandRegistry, ConditionRegistry, EffectRegistry, QueryRegistry, ViewRegistry } from '@ifloom/engine'
+
+interface ConditionRegistry {
+  // …
+}
+interface EffectRegistry {
+  // …
+}
+interface CommandRegistry {
+  // …
+}
+interface QueryRegistry extends PartnerQueries {
+  // …
+}
+interface ViewRegistry {
+  // …
+}
+```
+
+The interfaces a plugin, or the game, adds to so that what content writes for its calls is typed, from `@ifloom/engine`. Each is keyed by full name, except `ViewRegistry`, which is keyed by plugin id. They're empty in the engine, except that `QueryRegistry` holds [`PartnerQueries`](#partnerqueries).
+
+| Registry | Each entry is |
+|---|---|
+| `ConditionRegistry` | A condition, with what content writes as its value. A plugin extends it with [`ConditionsOf`](#conditionsof-effectsof-and-commandsof). |
+| `EffectRegistry` | An effect, the same way, with `EffectsOf`. |
+| `CommandRegistry` | A command, the same way, with `CommandsOf`. |
+| `QueryRegistry` | A query, as a function from its arguments to its answer: `'loyalty/stampsLeft': () => number`. |
+| `ViewRegistry` | A plugin's slice of [`view.plugins`](/docs/reference/view#plugins), by its id: `loyalty: LoyaltyView`. The game's own `rules.view` is `game`. |
 
 ### Query
 
@@ -696,7 +931,26 @@ type Query = {
 }
 ```
 
-What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it. `QueryArgs<K>` and `QueryAnswer<K>`, from `@ifloom/engine/plugin`, are a query's arguments and answer by name: what `QueryRegistry` declares, or anything for a name it doesn't. [`pluginQuery`](#pluginquery) is typed the same way.
+What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it. [`pluginQuery`](#pluginquery) is typed the same way.
+
+#### QueryArgs and QueryAnswer
+
+```ts shape
+import type { QueryAnswer, QueryArgs } from '@ifloom/engine/plugin'
+
+type QueryArgs<K extends PropertyKey> = K extends keyof QueryRegistry
+  ? QueryRegistry[K] extends (...args: infer A) => unknown
+    ? A
+    : [PluginArgs?]
+  : [PluginArgs?]
+type QueryAnswer<K extends PropertyKey> = K extends keyof QueryRegistry
+  ? QueryRegistry[K] extends (...args: never[]) => infer R
+    ? R
+    : unknown
+  : unknown
+```
+
+A query's arguments and answer by name: what [`QueryRegistry`](#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry) declares, or anything for a name it doesn't. Use them to type a function that passes a query on, such as a test helper that asks one by name.
 
 ### ViewsIn
 
@@ -769,8 +1023,26 @@ interface PartnerQueries {
   'cast/contacts': () => CastContact[]
   'cast/sender': (args: { from: string }) => SenderView
 }
+```
 
-type SenderView = { name: string; image: string | null; portrait: string | null }
+A plugin never imports its partner, so the partner's own declarations aren't in its program. The answers first-party plugins ask each other for are declared in the engine instead, as types only, and `QueryRegistry` extends `PartnerQueries`. So `query('places/here')` is a `string | null | undefined` in any plugin, a game's own code or a tool, with no type to restate. The queries are still asked by name, and answer `undefined` in a game without that plugin. A plugin's other queries, such as `places/all`, are declared in its own package.
+
+#### PartnerQueries
+
+The interface above. Each entry is documented on its plugin's page: [calendar](/docs/plugins/calendar#queries), [places](/docs/plugins/places#queries) and [cast](/docs/plugins/cast#queries).
+
+Nothing in `PartnerQueries` runs. The answer and any fallback stay with the plugins: an asker writes what it does without the partner after `??`, as the shop does to count days without a calendar:
+
+```ts fragment
+const day = query('calendar/now')?.day ?? state.turn
+```
+
+A plugin that shows who sent something asks `cast/sender`, and falls back to [`speakerOf`](#speakerof) without the cast, as the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins do.
+
+#### CastContact and SenderView
+
+```ts shape
+import type { CastContact, SenderView } from '@ifloom/engine/plugin'
 
 type CastContact = {
   id: string
@@ -781,21 +1053,21 @@ type CastContact = {
   command: CommandRef
   disabled: string | undefined
 }
+
+type SenderView = { name: string; image: string | null; portrait: string | null }
 ```
 
-A plugin never imports its partner, so the partner's own declarations aren't in its program. The answers first-party plugins ask each other for are declared in the engine instead, as types only, and `QueryRegistry` extends `PartnerQueries`. So `query('places/here')` is a `string | null | undefined` in any plugin, a game's own code or a tool, with no type to restate. The queries are still asked by name, and answer `undefined` in a game without that plugin. A plugin's other queries, such as `places/all`, are declared in its own package.
+`CastContact` is what `cast/contacts` answers for each person the player can call, for a plugin that lists them, such as a phone's contacts app.
 
-#### PartnerQueries
+| Field | What it is |
+|---|---|
+| `id` | Their id, as the cast names them: `'ava'`. |
+| `name`, `description`, `image` | Their entity's. |
+| `portrait` | Their face, for a small picture beside a name. |
+| `command` | The cast's `cast/call` for them in short, ready for an action's `command`. |
+| `disabled` | Why the call can't go through now, or `undefined` when it can. |
 
-The interface above. Each entry is documented on its plugin's page: [calendar](/docs/plugins/calendar#queries), [places](/docs/plugins/places#queries) and [cast](/docs/plugins/cast#queries). `CastContact` is what `cast/contacts` answers for each person the player can call. Its `command` is the cast's `cast/call` in short, ready for an action's `command`. `SenderView` is what `cast/sender` answers: who a message or a post is from.
-
-Nothing in `PartnerQueries` runs. The answer and any fallback stay with the plugins: an asker writes what it does without the partner after `??`, as the shop does to count days without a calendar:
-
-```ts fragment
-const day = query('calendar/now')?.day ?? state.turn
-```
-
-A plugin that shows who sent something asks `cast/sender`, and falls back to [`speakerOf`](#speakerof) without the cast, as the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins do.
+`SenderView` is what `cast/sender` answers: who a message or a post is from, with their name, picture and face.
 
 ## Cooperates
 
@@ -842,11 +1114,7 @@ Inside an action, every effect runs after its command and its cost and after eve
 
 ## State and migrations
 
-```ts shape
-type PluginSlice = { version: number; state: unknown }
-```
-
-Each plugin's state lives in [`state.plugins`](/docs/reference/state#plugins), keyed by plugin id, along with the version of its shape. For the card, `state.plugins.loyalty` is `{ version: 2, state: { stamps: 0, free: 0 } }`. [`startingState`](/docs/reference/commands#startingstate) fills it from each plugin's `start`. Like the rest of the [state](/docs/reference/state), it must be plain JSON.
+Each plugin's state lives in [`state.plugins`](/docs/reference/state#plugins), keyed by plugin id, as a [`PluginSlice`](#pluginslice) that holds the version of its shape beside it. [`startingState`](/docs/reference/commands#startingstate) fills it from each plugin's `start`. Like the rest of the [state](/docs/reference/state), it must be plain JSON.
 
 When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/docs/reference/saves#loadstate) follow the same rule. A step gets the plugin's old state and the same [`MigrationTools`](/docs/reference/saves#migrationtools) a game's own migration gets, and returns the plugin's new state.
 
@@ -858,6 +1126,21 @@ migrations: {
 ```
 
 `tools.fill()` gives the whole game state with what the game declares and the save lacks filled in, for a step that needs to read the game: a stat's start value, say.
+
+### PluginSlice
+
+```ts shape
+import type { PluginSlice } from '@ifloom/engine/plugin'
+
+type PluginSlice = { version: number; state: unknown }
+```
+
+One plugin's state as a save keeps it. For the card, `state.plugins.loyalty` is `{ version: 2, state: { stamps: 0, free: 0 } }`. Read and write it through the context's `get` and `set`, or [`read` and `write`](#defineplugin) outside the plugin, never by hand.
+
+| Field | What it is |
+|---|---|
+| `version` | The plugin's `version` when the state was written, so [`loadState`](/docs/reference/saves#loadstate) knows which migrations to run. |
+| `state` | The plugin's own state, its `S`. |
 
 ### When a save loads
 
@@ -932,7 +1215,7 @@ const pack: Pack = { id: 'mod:double-stamps', schema: SCHEMA, plugins: { loyalty
 
 Write it in any pack that has content for your plugin, and ask the people making mods for your game to do the same. [`upgradePack`](/docs/reference/loader#upgradepack) runs the plugin's steps from that version up to the plugin's own, and records where it got to.
 
-A pack that doesn't record a version for a plugin is read as written for its `schema`, or for the plugin's own version if that's lower, and at least version 1. For a pack written today without a record, that's the plugin's current version, so nothing runs. The first-party plugins number their content versions by the engine's schema, because the engine used to carry their content forward itself: the shop's content is at version 13 because it last changed when the engine went from schema 12 to 13. So a pack from before packs recorded versions lines up with their steps.
+A pack that doesn't record a version for a plugin is read as written for its `schema`, or for the plugin's own version if that's lower, and at least version 1. For a pack written today without a record, that's the plugin's current version, so nothing runs. The first-party plugins number their content versions by the engine's schema, because the engine used to carry their content forward itself: each one's content version is the schema at which its content last changed. So a pack from before packs recorded versions lines up with their steps.
 
 A pack written for a newer version of a plugin than the game has is refused, as one for a newer engine is: `loadGame` skips it with the problem `written for version 3 of the loyalty plugin's content, this game's reads 2`.
 
@@ -943,18 +1226,27 @@ A pack written for a newer version of a plugin than the game has is refused, as 
 1. every plugin's steps keyed by that schema or below, in the order of the game's `plugins`;
 2. then the engine's own step from that schema.
 
-Then each plugin's remaining steps run. A plugin's step for schema 12 therefore meets the pack as the engine had it at schema 12, which is what the first-party plugins' history needs. A plugin that numbers its versions from 1 has its steps run early in an old pack, and then on its way.
+Then each plugin's remaining steps run. A plugin's step keyed by a schema therefore meets the pack as the engine had it at that schema, which is what the first-party plugins' history needs. A plugin that numbers its versions from 1 has its steps run early in an old pack, and then on its way.
 
 [`loadGame`](/docs/reference/loader#loadgame) upgrades every pack it's given with the game's plugins, and that includes installed [mods](/docs/reference/mods), which the store keeps as their files wrote them. So when you release a new version of a plugin with a content step, every mod your players have installed is carried forward the next time the game loads.
 
 ### ContentStep
 
 ```ts shape
-type RawPack = Record<string, unknown> & { schema: number }
 type ContentStep = (pack: RawPack, tools: ContentTools) => RawPack
 ```
 
-A step is given the whole pack, as the version it upgrades from wrote it, and returns the pack as the next version writes it. It usually changes only the plugin's own `data`, calls, strings and traits. A `RawPack` is some version's shape, not necessarily this engine's, so its fields are `unknown` until you check them. Return a new pack and never change the one you were given.
+A step is given the whole pack, as the version it upgrades from wrote it, and returns the pack as the next version writes it. It usually changes only the plugin's own `data`, calls, strings and traits. Return a new pack and never change the one you were given.
+
+#### RawPack
+
+```ts shape
+import type { RawPack } from '@ifloom/engine'
+
+type RawPack = Record<string, unknown> & { schema: number }
+```
+
+A pack as it came in, from `@ifloom/engine`: some version's shape, not necessarily this engine's, so its fields are `unknown` until you check them. Only its `schema` is known.
 
 ### ContentTools
 
@@ -975,21 +1267,30 @@ Ways to rewrite a pack without walking it by hand. Each returns a new pack.
 | Tool | What it rewrites |
 |---|---|
 | `objects` | Every object the pack's content holds, from the innermost out. It skips `prose`, `strings`, `variants` and `custom`, which hold words and code. |
-| `calls` | Every call by name, however it's written. `short` is `{ 'loyalty/stamp': { by: 1 } }`, and it is handed every key with a `/` in it, so check the name. `long` is a form packs wrote before schema 18 and 21, `{ custom: 'loyalty/stamp', with }` or `{ kind: 'custom', name, with }`. `command` is `{ type: 'custom', name, with }`. Return the call's name and arguments; give a call back as it came and it stays as it was. It skips the same keys as `objects`. A value, `{ value: 'loyalty/stamps', with }`, isn't a call: reach it with `objects`. |
+| `calls` | Every call by name, however it's written. `short` is `{ 'loyalty/stamp': { by: 1 } }`, and it is handed every key with a `/` in it, so check the name. `long` is a form older packs wrote, `{ custom: 'loyalty/stamp', with }` or `{ kind: 'custom', name, with }`. `command` is `{ type: 'custom', name, with }`. Return the call's name and arguments; give a call back as it came and it stays as it was. It skips the same keys as `objects`. A value, `{ value: 'loyalty/stamps', with }`, isn't a call: reach it with `objects`. |
 | `words` | Every line of the pack's `prose` and `strings`, handed with its key, for a token such as <code v-pre>{{loyalty/stamps}}</code> that changed. |
-| `prose` | A line of prose by key, as written: the pack's own, else the game's under it (its content's and the packs' loaded before it). `undefined` if neither has it. For a step that writes words in place that were a prose key, as the messages plugin's step to version 25 gives a reply the words of its old `<message>#<reply>` prose. |
-| `effects` | Every effect the pack holds, in plugin `data` and traits too, in the keyed form: one still written with `kind`, as before schema 21, becomes `{ stat, by }` and the rest. For a plugin whose content holds effects where the engine's own step can't see them, as the first-party plugins' steps to version 21 do. |
-| `wordKeys` | Every key of the pack's [`words` table](/docs/reference/words), renamed, the words kept: for a step that renames a field the table names, as the quests plugin's step to version 26 makes `quests/quests.settle.title` `quests/quests.settle.name`. |
+| `prose` | A line of prose by key, as written: the pack's own, else the game's under it (its content's and the packs' loaded before it). `undefined` if neither has it. For a step that writes words in place that were a prose key, as one of the messages plugin's steps gives a reply the words of its old `<message>#<reply>` prose. |
+| `effects` | Every effect the pack holds, in plugin `data` and traits too, in the keyed form: one still written with `kind`, as older packs wrote it, becomes `{ stat, by }` and the rest. For a plugin whose content holds effects where the engine's own step can't see them, as some of the first-party plugins' own steps do. |
+| `wordKeys` | Every key of the pack's [`words` table](/docs/reference/words), renamed, the words kept: for a step that renames a field the table names, as one of the quests plugin's steps makes `quests/quests.settle.title` `quests/quests.settle.name`. |
 | `entries` | Each entry of one list of the plugin's `data`, named `<plugin>/<list>`: `'loyalty/cards'` is `data.loyalty.cards`. A pack without the list comes back as it is. |
 
 ### CommandStep
 
 ```ts shape
-type RawCommand = Record<string, unknown> & { type: string }
 type CommandStep = (command: RawCommand) => RawCommand
 ```
 
 A step of `commandMigrations` is given every command in an older log, the engine's and other plugins' too, so check the `type` and `name` and give back the ones that aren't yours as they came. A log records each plugin's `commandVersion` (see [`CommandLog`](/docs/reference/runner#commandlog)), and [`replay`](/docs/reference/runner#replay) runs only the steps from there. A log from before logs kept versions is read as the oldest, so every step runs on it.
+
+#### RawCommand
+
+```ts shape
+import type { RawCommand } from '@ifloom/engine/plugin'
+
+type RawCommand = Record<string, unknown> & { type: string }
+```
+
+A command as an older log wrote it: only its `type` is known, so check the rest before you read it.
 
 ## Hooks and providers
 
@@ -1207,9 +1508,6 @@ With three, Bake bread is greyed out with `Not with the sink this full.` Wash up
 
 ```ts fragment
 guard?: (state: GameState, asked: Asked, context: PluginContext<S>) => Refusal | undefined
-
-type Asked = { command: Command; effects: readonly Effect[] }
-type Refusal = string | { reason: string; soft: true }
 ```
 
 Whether a command may go ahead. `asked.command` is the [command](/docs/reference/commands#command), and `asked.effects` is what it would apply, from [`effectsOf`](/docs/reference/actions#effectsof). `state` and the context are the state before the command. Return one of these:
@@ -1224,6 +1522,17 @@ The game's own `rules.guard`, then every plugin's guard, is asked about every co
 - `effects` is empty for a built-in command whose effects can't be known before it runs, such as `scene`, `leave` or `input`. Test `command` for those. A plugin command's list is what its [`effectsOf`](#saying-what-a-command-does) says. The calendar's `calendar.sleep()` gives the `calendar/pass` it makes, but not the turns that pass ends.
 - Every button shows a guard's refusal and its warning. That includes the game's and plugins' buttons, scene choices (after the choice's own `disabled`), the [cast](/docs/plugins/cast)'s Talk buttons and the [places plugin](/docs/plugins/places#exitview)'s exits.
 - An effect applied inside another effect isn't in the list. The turn `dishes/wash` ends isn't there, only `dishes/wash` itself.
+
+#### Asked and Refusal
+
+```ts shape
+import type { Asked, Refusal } from '@ifloom/engine/plugin'
+
+type Asked = { command: Command; effects: readonly Effect[] }
+type Refusal = string | { reason: string; soft: true }
+```
+
+`Asked` is what a guard is asked about: the command and the effects it would apply. `Refusal` is what it answers when it won't let the command through: a string refuses, and `{ reason, soft: true }` warns. Name them when you write a guard apart from `definePlugin`, or the game's own [`rules.guard`](/docs/reference/rules#gamerules).
 
 ### Prices
 
@@ -1330,23 +1639,11 @@ Inline actions and tooltips stay in the words as written, because only a scene o
 
 ```ts fragment
 scene?: (state: GameState, context: PluginContext<S>) => RoomScene | undefined
-
-type RoomScene = {
-  title: string
-  body?: readonly Block[]
-  id?: string
-  ui?: Ui<SceneUi>
-}
 ```
 
 What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks the game's own `rules.scene`, then each plugin in the order `game.plugins` lists them, and the first that returns a `RoomScene` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (its words, lines by key, variants and conditions), with `id: null` and no choices. Return `undefined` to let the next plugin answer.
 
-| Field | What it is |
-|---|---|
-| `title` | The heading, such as a room's name. |
-| `body` | What's written there, as [blocks](/docs/reference/scenes#block). Left out, the body is empty. |
-| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that shows several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also in the room's [`view.scene.key`](/docs/reference/view#the-scene), `room:<id>`. |
-| `ui` | [Presentation hints](/docs/reference/ui-hints) for the room, carried to `view.scene.ui` as a scene's are. Name it in [`references`](#references) as `{ ui }` so the checker sees it's data. |
+The [`RoomScene`](#roomscene) below says what each field holds.
 
 With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/docs/plugins/places#the-room-scene)'s room scene is the room the player is in, with its name and its `body`.
 
@@ -1390,6 +1687,28 @@ view(stall.write(state, { open: false }), game).scene.title // the next plugin's
 - A scene with no title of its own takes the room scene's title, then the game's. The stall's scenes are headed The market stall while it's open.
 - Only `view.scene` changes. In a game with the [places plugin](/docs/plugins/places) listed after the stall, the stall covers the room's description, but `view.plugins.places` still says where the player is and the exits are still drawn.
 - The content checker doesn't see a room scene's blocks, because they're worked out in play. Say what they name in [`references`](#references), as `{ blocks }`.
+
+### RoomScene
+
+```ts shape
+import type { RoomScene } from '@ifloom/engine/plugin'
+
+type RoomScene = {
+  title: string
+  body?: readonly Block[]
+  id?: string
+  ui?: Ui<SceneUi>
+}
+```
+
+What a `scene` provider answers, and the game's own [`rules.scene`](/docs/reference/rules#gamerules) too.
+
+| Field | What it is |
+|---|---|
+| `title` | The heading, such as a room's name. |
+| `body` | What's written there, as [blocks](/docs/reference/scenes#block). Left out, the body is empty. |
+| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that shows several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also in the room's [`view.scene.key`](/docs/reference/view#the-scene), `room:<id>`. |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the room, carried to `view.scene.ui` as a scene's are. Name it in [`references`](#references) as `{ ui }` so the checker sees it's data. |
 
 ## Actions
 
@@ -1587,19 +1906,60 @@ const machine = (def: TraitEntityDef<'laundry/machine'>): EntityDef => MACHINES.
 
 ```ts shape
 function defineTraitKind<K extends string>(spec: TraitKindSpec<K>): TraitKind<K>
+```
+
+Takes a [`TraitKindSpec`](#traitkindspec) and returns a [`TraitKind`](#traitkind).
+
+#### TraitKindSpec
+
+```ts shape
+import type { TraitKindSpec } from '@ifloom/engine/plugin'
 
 type TraitKindSpec<K extends string> = {
   kind: string
   trait: K
   fields: { readonly [F in keyof Required<TraitData<K>>]: true }
 }
+```
+
+| Field | What it is |
+|---|---|
+| `kind` | The kind a bare id names: `'machine'`, so `'big'` is `'machine:big'`. |
+| `trait` | The trait that makes an entity one: `'laundry/machine'`. |
+| `fields` | Every field of the trait, so the definer knows which of what it's given go in the trait and which stay on the entity. It's typed complete, so adding a field to the trait without listing it is a type error. |
+
+#### TraitEntityDef
+
+```ts shape
+import type { TraitEntityDef } from '@ifloom/engine/plugin'
 
 type TraitEntityDef<K extends string> = Omit<EntityDef, 'of' | keyof TraitData<K>> & TraitData<K> & { of?: string }
 ```
 
-`fields` lists every field of the trait, so the definer knows which of what it's given go in the trait and which stay on the entity. It's typed complete, so adding a field to the trait without listing it is a type error. A field both have, such as a place's `ui`, is the trait's.
+What a trait kind's definer takes: an entity's fields and the trait's side by side, with `of` the kind's if left out. A field both have, such as a place's `ui`, is the trait's. Type a plugin's definer's parameter with it, as `machine` above does.
 
-The `TraitKind` it returns has:
+#### TraitKind
+
+```ts shape
+import type { TraitKind } from '@ifloom/engine/plugin'
+
+type TraitKind<K extends string> = {
+  readonly kind: string
+  readonly trait: K
+  ref(id: string): EntityRef
+  id(ref: string): string
+  all(state: GameState, game: Game): EntityRef[]
+  get(state: GameState, game: Game, id: string | null | undefined): TraitData<K> | undefined
+  declaredAll(game: Game): EntityRef[]
+  declaredGet(game: Game, id: string | null | undefined): TraitData<K> | undefined
+  define(def: TraitEntityDef<K>): EntityDef
+  entry(id: string): Reference
+  arg(): Arg<string, string, false>
+  args(): Arg<string | readonly string[], string[], false>
+}
+```
+
+What `defineTraitKind` returns. Keep it in a constant beside the plugin's calls, as `MACHINES` above.
 
 | Member | What it is |
 |---|---|
@@ -1711,16 +2071,6 @@ One entry in a plugin's content: an `id`, and whatever fields the plugin reads. 
 
 ```ts fragment
 references?: PluginReferences
-
-type PluginReferences = {
-  calls?: (table: CallTable, name: string, args: PluginArgs, game: Game) => readonly Reference[]
-  panels?: (panel: string, args: PluginArgs, game: Game) => readonly Reference[]
-  content?: (game: Game) => readonly ContentReferences[]
-}
-
-type CallTable = 'conditions' | 'effects' | 'commands'
-
-type ContentReferences = { list: string; id: string; refs: readonly Reference[] }
 ```
 
 What the plugin's calls, panels and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Each is optional.
@@ -1763,6 +2113,29 @@ A `{ within: 'action dig', refs }` reference puts `action dig: ` in front of the
 **Gotchas.**
 - A call to a plugin the game doesn't have isn't asked about. The name is reported or let through as [Absent partners](/docs/reference/checks#absent-partners) says.
 - An `{ entry }` reference to a plugin the game doesn't have isn't checked. That's how the cast can name the places plugin's locations without needing it.
+
+#### PluginReferences, CallTable and ContentReferences
+
+```ts shape
+import type { CallTable, ContentReferences, PluginReferences } from '@ifloom/engine/plugin'
+
+type PluginReferences = {
+  calls?: (table: CallTable, name: string, args: PluginArgs, game: Game) => readonly Reference[]
+  panels?: (panel: string, args: PluginArgs, game: Game) => readonly Reference[]
+  content?: (game: Game) => readonly ContentReferences[]
+}
+
+type CallTable = 'conditions' | 'effects' | 'commands'
+
+type ContentReferences = { list: string; id: string; refs: readonly Reference[] }
+```
+
+The type of the `references` field, with the two types it uses. The functions are explained above.
+
+| Type | What it is |
+|---|---|
+| `CallTable` | Which table a call is in. It's also what a `{ call }` [reference](/docs/reference/checks#reference) names. |
+| `ContentReferences` | What one entry of the plugin's content names: `list` and `id` say where, as a [`PluginProblem`](#pluginproblem) does, and `refs` what it names. |
 
 ### check
 
@@ -1836,11 +2209,6 @@ A save records each plugin's version in [`meta.plugins`](/docs/reference/saves#s
 import { definePlugin } from '@ifloom/engine/plugin'
 
 function definePlugin<S, V = unknown, C extends AnyCalls = never>(plugin: PluginDef<S, V, C>): DefinedPlugin<S, V>
-
-type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
-  read(state: GameState, game: Game): S
-  write(state: GameState, next: S): GameState
-}
 ```
 
 Declares a plugin, and returns it with typed `read` and `write` for its own state. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice`, `get` and `set`, which need no game. `S` is the plugin's state and `V` what its `view` returns. `C` is its [declared calls](#declaring-calls), `typeof CALLS`: `PluginDef<S, V, C>` is a `Plugin` whose conditions, effects, macros and commands are then exactly the declared ones, each handed its arguments typed. Name all three, `definePlugin<LoyaltyState, LoyaltyView, typeof CALLS>(...)`, since TypeScript can't work out one when you give the others.
@@ -1860,6 +2228,38 @@ runner.view().plugins.loyalty?.stamps                       // a number, typed b
 ```
 
 A plugin is a plain object, so `definePlugin` is optional, but it types `S` and `V` throughout and gives you `read` and `write`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
+
+### DefinedPlugin
+
+```ts shape
+import type { DefinedPlugin } from '@ifloom/engine/plugin'
+
+type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
+  read(state: GameState, game: Game): S
+  write(state: GameState, next: S): GameState
+}
+```
+
+What `definePlugin` returns: the [`Plugin`](#plugin), with `read` and `write` for its state. A plugin package's factory returns one, so its type is the one to name in a factory's return type.
+
+### PluginDef
+
+```ts shape
+import type { PluginDef } from '@ifloom/engine/plugin'
+
+type PluginDef<S, V, C extends AnyCalls> = Omit<Plugin<S, V>, 'conditions' | 'effects' | 'macros' | 'commands' | 'calls'> &
+  ([C] extends [never]
+    ? Pick<Plugin<S, V>, 'conditions' | 'effects' | 'macros' | 'commands'>
+    : {
+        calls: C
+        conditions?: { [K in keyof CallArgs<C, 'conditions'>]: (state: GameState, args: CallArgs<C, 'conditions'>[K], context: PluginContext<S>) => boolean }
+        effects?: { [K in keyof CallArgs<C, 'effects'>]?: (state: GameState, args: CallArgs<C, 'effects'>[K], context: PluginContext<S>) => GameState }
+        macros?: { [K in keyof CallArgs<C, 'effects'>]?: Macro<S, CallArgs<C, 'effects'>[K]> }
+        commands?: { [K in keyof CallArgs<C, 'commands'>]: PluginCommand<S, CallArgs<C, 'commands'>[K]> }
+      })
+```
+
+What `definePlugin` takes. Without declared calls it's a [`Plugin`](#plugin). With them, `calls` is required, and `conditions`, `effects`, `macros` (see [`Macro`](/docs/reference/custom#macro)) and `commands` hold exactly the declared calls, each handed its arguments typed. Every declared condition and command needs a function, and every declared effect one in `effects` or `macros`.
 
 ## Gotchas
 

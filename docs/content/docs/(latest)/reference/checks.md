@@ -30,10 +30,9 @@ A loaded game's problems are already in `loadGame`'s result, each pinned on the 
 
 ```ts shape
 function checkGame(game: Game, options?: { probes?: readonly Probe[] }): Checked
-
-type Checked = { problems: Problem[]; warnings: Problem[]; files: FileRef[] }
-type Probe = { name: string; state: GameState }
 ```
+
+Each of `probes` is a [`Probe`](#probe), a state to draw every scene in (see [Probes](#probes)). It returns a [`Checked`](#checked).
 
 Walks every part of the game that is data: scenes and data scenes, actions, triggers, inputs, settings, stats, entities, `finished`, `carryOver`, the locks, `saveable`, `introScene`, audio, media pools, all the prose, and every plugin's content. Each condition, effect and command is looked up in one table that says what it names, so a condition reads the same wherever it sits. Then each name is checked against the game.
 
@@ -41,10 +40,24 @@ It never throws on bad content. It returns the problems in the order it found th
 
 `warnings` lists what may go wrong in play but isn't a mistake in the content, in the same shape as a problem. So far that's a token that may print nothing (see [Tokens](#tokens)). [`ifloom check`](/docs/cli#ifloom-check) prints each as `warning: …` and doesn't fail on them. [`loadGame`](/docs/reference/loader#loadgame) returns only problems, so call `checkGame(game)` for the warnings.
 
-**Gotchas:**
+**Gotchas.**
 - It doesn't run the game's own code. A [macro in `rules`](/docs/reference/custom#macros) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
 - A key content or a pack can't hold, such as `rules`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `content has no "rules", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
 - It checks only some [tokens](/docs/reference/prose#tokens) in prose (see [Tokens](#tokens)). A plain `{{breadPrice}}` that names nothing is left on screen as written, so you can see it.
+
+### Checked
+
+```ts shape
+type Checked = { problems: Problem[]; warnings: Problem[]; files: FileRef[] }
+```
+
+What `checkGame` finds.
+
+| Field | What it is |
+|---|---|
+| `problems` | Each [`Problem`](#problem-and-describeproblem) in the content, in the order the checker found it. Empty when there's nothing wrong. |
+| `warnings` | What may go wrong in play but isn't a mistake, in the same shape. A warning fails no check. |
+| `files` | Every file the game names, each a [`FileRef`](#fileref), for the CLI to look for. |
 
 ## Probes
 
@@ -60,6 +73,17 @@ checkGame(game, { probes: [{ name: 'day five', state: later }] })
 [`probe`](/docs/cli#probe), from `@ifloom/cli/game`, makes one by playing commands and effects from the start, and a [game module](/docs/cli#the-game-module)'s `probes` can go here as they are.
 
 For each probe the checker draws every scene and reports `render threw: …` against `scene <id> (<name>)` when drawing one throws, such as when one of the game's own values throws for that state. A scene's content is checked already, without probes.
+
+### Probe
+
+```ts shape
+type Probe = { name: string; state: GameState }
+```
+
+| Field | Type | What it holds |
+|---|---|---|
+| `name` | `string` | What the problems it finds are named by, such as `day five`. Keep it short and without spaces. |
+| `state` | `GameState` | The state every scene is drawn in. |
 
 ## Problem and describeProblem
 
@@ -110,7 +134,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `"…" takes its arguments as an object, …` | A [short plugin call](/docs/reference/custom#plugincall) whose value isn't an object or `true`, such as `{ 'places/at': ['cafe'] }`. It's asked with no arguments. The same problem is reported for an effect or a command written that way. |
 | `a condition asks one thing, but this one has … keys that each say what it asks: …` | Two keys in one object that each say what it asks, such as `{ kv, stat }`. It never holds, so combine them with `all`. Its parts aren't looked into. |
 | `a condition needs one key that says what it asks, such as kv or stat, or a call by name; …` | No such key at all, such as `{}` or `{ gte: 3 }`. It never holds. |
-| `{ custom: "…" } is written in short now, as { "game/…": { … } }, or true for no arguments` | A call in the form content wrote before schema 18. It never holds. The same is reported for an effect written that way. |
+| `{ custom: "…" } is written in short now, as { "game/…": { … } }, or true for no arguments` | A call in the long form older content wrote. It never holds. The same is reported for an effect written that way. |
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline` or a `kv` condition's `of: 'storyline:…'`. |
 | `unknown stat "…"` | A stat nobody declares, in `stat` or `level`. |
 | `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'`, `'you'`, `'player'`, `'minigame'` and `'storyline:…'` name no kind and aren't checked as one. |
@@ -132,7 +156,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 
 | Problem | When |
 |---|---|
-| `effects are told apart by their key now, as { …: … }, not { kind: "…" }` | An effect still written with `kind`, as before schema 21. It does nothing. |
+| `effects are told apart by their key now, as { …: … }, not { kind: "…" }` | An effect still written with `kind`, as older content wrote it. It does nothing. |
 | `an effect does one thing, but this one has … keys that each say what it does: …` | Two keys that each say what it does, such as `{ stat, kv }`. It does nothing. |
 | `an effect needs one key that says what it does, such as stat or kv, or a call by name; …` | An effect with no such key, such as `{}` or `{ by: 2 }`. It does nothing. |
 | `no game effect named "…"`, `no plugin effect named "…"` | A [call](/docs/reference/custom#plugincall) to an effect that nobody declares, worded as for a condition. |
@@ -369,12 +393,12 @@ And one warning, in `warnings`:
 
 ## Words written as prose keys
 
-Content from before schema 25 named prose keys where it now writes words. A pack of an older schema is [rewritten](/docs/reference/loader#upgradepack) when it loads, but your own content isn't, so the checker reports each one, wherever it sits: a scene, a flow's decision, an action, a place's or an app's buttons, a notice, a minigame, a message's replies, the feed's posts.
+Older content named prose keys where content now writes words. A pack of an older schema is [rewritten](/docs/reference/loader#upgradepack) when it loads, but your own content isn't, so the checker reports each one, wherever it sits: a scene, a flow's decision, an action, a place's or an app's buttons, a notice, a minigame, a message's replies, the feed's posts.
 
 | Problem | When |
 |---|---|
 | `{ text: "…" } names the prose "…", but a { text } block is words written in place now (schema 25): write the words, or { prose: "…" } to read that prose` | A `{ text }` block whose words are a prose key the game has. |
-| `` `{ words }` is `{ text }` now: a block of words written in place is `{ text: "…" }` `` | A `{ words }` block, as flowing scenes wrote one before schema 25. |
+| `` `{ words }` is `{ text }` now: a block of words written in place is `{ text: "…" }` `` | A `{ words }` block, as older flowing scenes wrote one. |
 | `label "…" names the prose "…", but a label is words written in place now (schema 25): write the words` | A choice's or an action's `label` or `labels` entry, a minigame state's `label` or a reply's `label` that is a prose key the game has. |
 | `notice text "…" names the prose "…", …` | A `notify` effect's `text` that is a prose key. |
 | `post "…" names the prose "…", …` and `comment "…" …` | The text of a `feed/post` or `feed/react` that is a prose key. |
@@ -393,12 +417,17 @@ A translation's [words table](/docs/reference/words) is checked against the fiel
 
 ## Plugin references
 
-A plugin tells the checker what its calls and its content name, so its content is checked the same way the engine's is. It gives a [`references`](/docs/reference/plugins#references) field with two functions, both optional:
+A plugin tells the checker what its calls and its content name, so its content is checked the same way the engine's is. It gives a [`references`](/docs/reference/plugins#references) field with three functions, each optional:
 
 - `calls(table, name, args, game)` says what one call to its conditions, effects or commands names, from the `with` that content passes.
+- `panels(panel, args, game)` says what opening one of its panels names, from what the panel is opened with.
 - `content(game)` says what each entry of its content names, as `{ list, id, refs }`.
 
-Each returns a list of `Reference`s:
+Each returns a list of [`Reference`](#reference)s.
+
+### Reference
+
+One thing a piece of content names, for the checker to resolve: an id by what it is, a file, or content to look inside. You build these in a plugin's `references`, a trait's `references`, an argument's `.naming()` and a `CheckTools.problems` call.
 
 ```ts shape
 type Reference =

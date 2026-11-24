@@ -81,7 +81,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'generators'
 
-/** The plugin's content: `data.generators.pools` and `data.generators.templates`. */
+/** The plugin's two lists, as content writes them in `data.generators.pools` and `data.generators.templates` (a plugin's `data` holds its lists by name). */
 const DATA = defineData(ID, {
   pools: list<PoolDef>({ noun: 'pool' }),
   templates: list<TemplateDef>({ noun: 'template' }),
@@ -101,12 +101,12 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's pools: `data.generators.pools`, from its packs. */
+/** The game's pools: `data.generators.pools`, from its content and packs. */
 export function poolsOf(game: Game): PoolDef[] {
   return DATA.pools.all(game)
 }
 
-/** The game's templates: `data.generators.templates`, from its packs. */
+/** The game's templates: `data.generators.templates`, from its content and packs. */
 export function templatesOf(game: Game): TemplateDef[] {
   return DATA.templates.all(game)
 }
@@ -214,7 +214,7 @@ function rangeProblems(field: FieldDef | undefined): string[] {
 
 /**
  * The plugin. Add it to the game's `plugins`, and put pools and templates in
- * a pack's `data.generators.pools` and `data.generators.templates`.
+ * the content's `data.generators.pools` and `data.generators.templates`.
  */
 function generatorsPlugin(): DefinedPlugin<null> {
   return definePlugin<null, unknown, typeof CALLS>({

@@ -24,6 +24,8 @@ import { browserRunner } from '@ifloom/browser'
 function browserRunner(game: Game, options?: RunnerOptions & { start?: GameState }): Promise<Runner>
 ```
 
+Uses: [`Game`](/docs/api/engine#game), [`RunnerOptions`](/docs/api/engine#runneroptions), [`GameState`](/docs/api/engine#gamestate), [`Runner`](/docs/api/engine#runner).
+
 ## ClockOptions
 
 Type. Explained in [Browser helpers](/docs/browser#clockoptions).
@@ -78,6 +80,8 @@ import { indexedDbDriver } from '@ifloom/browser'
 function indexedDbDriver(options?: { database?: string; store?: string; indexedDB?: IndexedDbLike }): SaveDriver
 ```
 
+Uses: [`IndexedDbLike`](#indexeddblike), [`SaveDriver`](/docs/api/engine#savedriver).
+
 ## IndexedDbLike
 
 Type. Explained in [Browser helpers](/docs/browser#indexeddblike).
@@ -110,7 +114,7 @@ type KeysOptions = {
 |---|---|---|---|---|
 | `choices` | `boolean \| ((key: number) => boolean)` | yes |  | The number keys 1 to 9 pick the choices on screen, in `numberedChoices` order, skipping a greyed-out one. On unless false. A function picks instead, given the key's number, and returns whether it did, such as a UI that clicks the button it drew with that number. |
 | `escape` | `() => boolean \| void` | yes |  | What Escape does, such as opening the game's menu. Nothing if left out. Return `false` when it did nothing, such as with no menu on screen, and the key goes on to the page as if it weren't there. |
-| `map` | `Record<string, CommandRef>` | yes |  | Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the command each sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces what that key does. |
+| `map` | `Record<string,` [`CommandRef`](/docs/api/engine#commandref)`>` | yes |  | Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the command each sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces what that key does. |
 | `minigame` | `boolean` | yes |  | A minigame's inputs from the keyboard too, with `startMinigameKeys`. On unless false. |
 
 ## localStorageDriver
@@ -126,6 +130,8 @@ import { localStorageDriver } from '@ifloom/browser'
 function localStorageDriver(storage?: StorageLike): SaveDriver
 ```
 
+Uses: [`StorageLike`](#storagelike), [`SaveDriver`](/docs/api/engine#savedriver).
+
 ## minigameInput
 
 Function. Explained in [Browser helpers](/docs/browser#minigameinput).
@@ -139,6 +145,8 @@ when it's one letter. One-letter keys match either case.
 import { minigameInput } from '@ifloom/browser'
 function minigameInput(minigame: MinigameView, key: string): string | undefined
 ```
+
+Uses: [`MinigameView`](/docs/api/engine#minigameview).
 
 ## nextSlot
 
@@ -154,6 +162,8 @@ import { nextSlot } from '@ifloom/browser'
 function nextSlot(listing: readonly SaveListing[]): string
 ```
 
+Uses: [`SaveListing`](/docs/api/engine#savelisting).
+
 ## numberedChoices
 
 Function. Explained in [Browser helpers](/docs/browser#numberedchoices).
@@ -164,6 +174,8 @@ The choices the number keys pick, in order: the open scene's, else the room's bu
 import { numberedChoices } from '@ifloom/browser'
 function numberedChoices(view: View): RenderedChoice[]
 ```
+
+Uses: [`View`](/docs/api/engine#view), [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 ## startClock
 
@@ -184,6 +196,8 @@ import { startClock } from '@ifloom/browser'
 function startClock(runner: Runner, options?: ClockOptions): () => void
 ```
 
+Uses: [`Runner`](/docs/api/engine#runner), [`ClockOptions`](#clockoptions).
+
 ## startKeys
 
 Function. Explained in [Browser helpers](/docs/browser#startkeys).
@@ -197,6 +211,8 @@ are left alone. Returns the way to stop.
 import { startKeys } from '@ifloom/browser'
 function startKeys(runner: Runner, options?: KeysOptions): () => void
 ```
+
+Uses: [`Runner`](/docs/api/engine#runner), [`KeysOptions`](#keysoptions).
 
 ## startMinigameKeys
 
@@ -212,6 +228,8 @@ Returns the way to stop.
 import { startMinigameKeys } from '@ifloom/browser'
 function startMinigameKeys(runner: Runner): () => void
 ```
+
+Uses: [`Runner`](/docs/api/engine#runner).
 
 ## startRevealSkip
 

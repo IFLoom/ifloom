@@ -33,21 +33,23 @@ type AppDef = {
 | `name` | `string` |  |  |  |
 | `icon` | `string` |  |  | A name the UI maps to a picture. |
 | `on` | `string` |  |  | The device it is on. |
-| `when` | `Condition` | yes |  | Installed: off the home screen until this holds. |
-| `blocked` | `Blocked[]` | yes |  | On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. |
-| `badge` | `Amount \| { when: Condition }` | yes |  | A count, as an `Amount`: a value asked with its arguments (`{ value: 'messages/unread', with: { channel: 'texts' } }`), a stat or a kv key's number. Or a dot while a condition holds (`{ when }`). |
-| `sections` | `Section[]` |  |  | What the app shows, top to bottom: words, actions, inputs, or a plugin's list (messages, a feed). See `Section`. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Installed: off the home screen until this holds. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. |
+| `badge` | [`Amount`](/docs/api/engine#amount) `\| { when:` [`Condition`](/docs/api/engine#condition) `}` | yes |  | A count, as an `Amount`: a value asked with its arguments (`{ value: 'messages/unread', with: { channel: 'texts' } }`), a stat or a kv key's number. Or a dot while a condition holds (`{ when }`). |
+| `sections` | [`Section[]`](#section) |  |  | What the app shows, top to bottom: words, actions, inputs, or a plugin's list (messages, a feed). See `Section`. |
 
 ### appsOf
 
 Function. Explained in [Devices](/docs/plugins/devices#devicesof-and-appsof).
 
-The game's apps, on every device: `data.devices.apps`, from its packs.
+The game's apps, on every device: `data.devices.apps`, from its content and packs.
 
 ```ts shape
 import { appsOf } from '@ifloom/plugin-devices'
 function appsOf(game: Game): AppDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`AppDef`](#appdef).
 
 ### AppView
 
@@ -73,8 +75,8 @@ type AppView = {
 | `icon` | `string` |  |  | A name the UI maps to a picture. |
 | `badge` | `number \| boolean` |  |  | A count, a dot (`true`), or nothing (`0`). |
 | `disabled` | `string` | yes |  | Why it can't be opened now, if it can't. |
-| `command` | `Command` |  |  | What opening it sends: `devices/open`. |
-| `sections` | `SectionView[]` |  |  | Filled in for the open app only. |
+| `command` | [`Command`](/docs/api/engine#command) |  |  | What opening it sends: `devices/open`. |
+| `sections` | [`SectionView[]`](#sectionview) |  |  | Filled in for the open app only. |
 
 ### DeviceDef
 
@@ -111,23 +113,27 @@ import { devices, type DevicesState } from '@ifloom/plugin-devices'
 function devices(): DefinedPlugin<DevicesState, DevicesView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`DevicesView`](#devicesview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `devices.open` | `(app: string): CommandRef` |  |
-| `devices.home` | `(device: string): CommandRef` |  |
-| `devices.close` | `(device: string): CommandRef` |  |
-| `devices.appOpen` | `(app: string): Condition` |  |
+| `devices.open` | `(app: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `devices.home` | `(device: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `devices.close` | `(device: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `devices.appOpen` | `(app: string):` [`Condition`](/docs/api/engine#condition) |  |
 
 ### devicesOf
 
 Function. Explained in [Devices](/docs/plugins/devices#devicesof-and-appsof).
 
-The game's devices: `data.devices.devices`, from its packs.
+The game's devices: `data.devices.devices`, from its content and packs.
 
 ```ts shape
 import { devicesOf } from '@ifloom/plugin-devices'
 function devicesOf(game: Game): DeviceDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`DeviceDef`](#devicedef).
 
 ### DevicesState
 
@@ -184,11 +190,11 @@ type DeviceView = {
 | `sidebar` | `boolean` |  |  | Whether the sidebar offers it. |
 | `wallpaper` | `string \| null` |  |  | The picture behind its home screen, through `artSrc`, or null. |
 | `badge` | `number` |  |  | Every count, plus one for each dot: what the sidebar button shows. |
-| `apps` | `AppView[]` |  |  | Installed apps, in order. |
+| `apps` | [`AppView[]`](#appview) |  |  | Installed apps, in order. |
 | `shown` | `boolean` |  |  | Out: on its home screen, or on an app. A UI draws a device that's shown, and none that isn't. |
-| `open` | `AppView \| null` |  |  | The app open on it while it's shown, or null on its home screen or put away. |
-| `home` | `RenderedChoice` |  |  | The button that shows it on its home screen, from put away or from an app (the `devices/home` string, `Home`). |
-| `close` | `RenderedChoice \| null` |  |  | The button that puts it away (the `devices/close` string, `Close`), or null while it isn't shown. |
+| `open` | [`AppView`](#appview) `\| null` |  |  | The app open on it while it's shown, or null on its home screen or put away. |
+| `home` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that shows it on its home screen, from put away or from an app (the `devices/home` string, `Home`). |
+| `close` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that puts it away (the `devices/close` string, `Close`), or null while it isn't shown. |
 
 ### Section
 
@@ -201,6 +207,8 @@ import type { Section } from '@ifloom/plugin-devices'
 type Section = { blocks: Block[] } | { actions: ActionDef[] } | { things: { of: string; at?: string } } | { contacts: true } | { plugin: string; with?: Record<string, unknown> } | { panel: string; with?: Record<string, unknown> }
 ```
 
+Uses: [`Block`](/docs/api/engine#block), [`ActionDef`](/docs/api/engine#actiondef).
+
 ### SectionView
 
 Type. Explained in [Devices](/docs/plugins/devices#sectionview).
@@ -209,6 +217,8 @@ Type. Explained in [Devices](/docs/plugins/devices#sectionview).
 import type { SectionView } from '@ifloom/plugin-devices'
 type SectionView = { type: 'prose'; text: string; beats: SceneBeat[] } | { type: 'actions'; actions: RenderedChoice[] } | { type: 'list'; entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[] } | { type: 'plugin'; plugin: string; with: Record<string, unknown> } | { type: 'panel'; panel: string; with: Record<string, unknown> }
 ```
+
+Uses: [`SceneBeat`](/docs/api/engine#scenebeat), [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 ## @ifloom/plugin-devices/react
 
@@ -226,6 +236,8 @@ One section of an open app, drawn by kind; a plugin section by that plugin's ren
 import { AppSection } from '@ifloom/plugin-devices/react'
 const AppSection: ComponentType<{ section: SectionView; }>
 ```
+
+Uses: [`SectionView`](#sectionview).
 
 ### DeviceButtons
 
@@ -263,6 +275,8 @@ import { DeviceScreen } from '@ifloom/plugin-devices/react'
 const DeviceScreen: ComponentType<{ device: DeviceView; }>
 ```
 
+Uses: [`DeviceView`](#deviceview).
+
 ### DevicesState
 
 Type. Explained in [Devices](/docs/plugins/devices#devicesstate).
@@ -273,6 +287,8 @@ The devices in the view (an empty list when the game has no devices plugin).
 import type { DevicesState } from '@ifloom/plugin-devices/react'
 type DevicesState = DeviceView[]
 ```
+
+Uses: [`DeviceView`](#deviceview).
 
 ### DeviceState
 
@@ -293,7 +309,7 @@ type DeviceState = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `openId` | `string \| null` |  |  | The id of the device that's out, the first if more than one is, or `null`. |
-| `device` | `DeviceView \| null` |  |  | That device as the view has it, or `null`. |
+| `device` | [`DeviceView`](#deviceview) `\| null` |  |  | That device as the view has it, or `null`. |
 | `open` | `(id: string) => void` |  |  | Brings a device out on its home screen: sends its `home` button's command. |
 | `close` | `() => void` |  |  | Puts the device that's out away: sends its `close` button's command. |
 
@@ -325,6 +341,8 @@ import { devicesUi } from '@ifloom/plugin-devices/react'
 const devicesUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### OpenAppState
 
 Type.
@@ -350,6 +368,8 @@ import { useDevice } from '@ifloom/plugin-devices/react'
 function useDevice(): DeviceState
 ```
 
+Uses: [`DeviceState`](#devicestate).
+
 ### useDevices
 
 Function. Explained in [Devices](/docs/plugins/devices#usedevices).
@@ -374,3 +394,5 @@ as `data`, so it reads the app's other sections here: the buttons of an
 import { useOpenApp } from '@ifloom/plugin-devices/react'
 function useOpenApp(): OpenAppState | null
 ```
+
+Uses: [`OpenAppState`](#openappstate).

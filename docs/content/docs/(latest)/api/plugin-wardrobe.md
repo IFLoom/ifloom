@@ -38,6 +38,8 @@ import { slotsOf } from '@ifloom/plugin-wardrobe'
 function slotsOf(game: Game): WardrobeSlot[]
 ```
 
+Uses: [`Game`](/docs/api/engine#game), [`WardrobeSlot`](#wardrobeslot).
+
 ### wardrobe
 
 Function. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobe).
@@ -50,14 +52,16 @@ import { wardrobe } from '@ifloom/plugin-wardrobe'
 function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`WardrobeState`](#wardrobestate), [`WardrobeView`](#wardrobeview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `wardrobe.wearable` | `(slot: string): { 'wardrobe/wearable': Wearable }` |  |
-| `wardrobe.closet` | `(options?: Closet): { 'wardrobe/closet': Closet }` |  |
-| `wardrobe.wearing` | `(entity: EntityRef, slot?: string): Condition` |  |
-| `wardrobe.slotFilled` | `(slot: string): Condition` |  |
-| `wardrobe.wear` | `(entity: EntityRef): CommandRef` |  |
-| `wardrobe.takeOff` | `(slot: string): CommandRef` |  |
+| `wardrobe.wearable` | `(slot: string): { 'wardrobe/wearable':` [`Wearable`](#wearable) `}` |  |
+| `wardrobe.closet` | `(options?:` [`Closet`](#closet)`): { 'wardrobe/closet':` [`Closet`](#closet) `}` |  |
+| `wardrobe.wearing` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, slot?: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `wardrobe.slotFilled` | `(slot: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `wardrobe.wear` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `wardrobe.takeOff` | `(slot: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
 
 ### WardrobeSlot
 
@@ -78,7 +82,7 @@ type WardrobeSlot = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  |  |
-| `start` | `EntityRef` | yes |  | What you have on in it at the start: a wearable thing the player starts holding. Nothing if left out. |
+| `start` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | What you have on in it at the start: a wearable thing the player starts holding. Nothing if left out. |
 
 ### WardrobeState
 
@@ -108,8 +112,8 @@ type WardrobeView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `slots` | `{ id: string; label: string; entity: EntityRef \| null; name: string \| null; takeOff: Rend…` |  |  | Every slot, in order, with what is in it on whoever the player is playing now, and the button that takes it off (labelled with the `wardrobe/takeOff` string, `Take off`), or null while it's empty. |
-| `spare` | `{ entity: EntityRef; name: string; slot: string; wear: RenderedChoice }[]` |  |  | Wearable things you hold and aren't wearing, in the game's order of its entities, each with the button that puts it on (labelled with the `wardrobe/wear` string, `Wear {thing}`). |
+| `slots` | `{ id: string; label: string; entity:` [`EntityRef`](/docs/api/engine#entityref) `\| null; name: string \| null; takeOff:…` |  |  | Every slot, in order, with what is in it on whoever the player is playing now, and the button that takes it off (labelled with the `wardrobe/takeOff` string, `Take off`), or null while it's empty. |
+| `spare` | `{ entity:` [`EntityRef`](/docs/api/engine#entityref)`; name: string; slot: string; wear:` [`RenderedChoice`](/docs/api/engine#renderedchoice) `}[]` |  |  | Wearable things you hold and aren't wearing, in the game's order of its entities, each with the button that puts it on (labelled with the `wardrobe/wear` string, `Wear {thing}`). |
 
 ### Wearable
 
@@ -139,6 +143,8 @@ import { wearableOf } from '@ifloom/plugin-wardrobe'
 function wearableOf(state: GameState, game: Game, ref: string): Wearable | undefined
 ```
 
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`Wearable`](#wearable).
+
 ## @ifloom/plugin-wardrobe/react
 
 - Components: [`WardrobeSection`](#wardrobesection)
@@ -156,6 +162,8 @@ The wardrobe plugin's view with its buttons and commands, or null in a game with
 import { useWardrobe } from '@ifloom/plugin-wardrobe/react'
 function useWardrobe(): WardrobeControls | null
 ```
+
+Uses: [`WardrobeControls`](#wardrobecontrols).
 
 ### WARDROBE_WORDS
 
@@ -200,10 +208,10 @@ type WardrobeControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `spare` | `{ entity: EntityRef; name: string; slot: string; wear: RenderedChoice }[]` |  |  | Wearable things you hold and aren't wearing, in the game's order of its entities, each with the button that puts it on (labelled with the `wardrobe/wear` string, `Wear {thing}`). |
-| `slots` | `WardrobeSlotControls[]` |  |  | Every slot, in order, with what is in it and its buttons. |
-| `wear` | `(entity: EntityRef) => Result<GameState>` |  |  | Put on a thing you hold, by its reference (`'clothing:scarf'`): sends `wardrobe/wear`. |
-| `takeOff` | `(slot: string) => Result<GameState>` |  |  | Empty a slot by its id: sends `wardrobe/takeOff`. |
+| `spare` | `{ entity:` [`EntityRef`](/docs/api/engine#entityref)`; name: string; slot: string; wear:` [`RenderedChoice`](/docs/api/engine#renderedchoice) `}[]` |  |  | Wearable things you hold and aren't wearing, in the game's order of its entities, each with the button that puts it on (labelled with the `wardrobe/wear` string, `Wear {thing}`). |
+| `slots` | [`WardrobeSlotControls[]`](#wardrobeslotcontrols) |  |  | Every slot, in order, with what is in it and its buttons. |
+| `wear` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Put on a thing you hold, by its reference (`'clothing:scarf'`): sends `wardrobe/wear`. |
+| `takeOff` | `(slot: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Empty a slot by its id: sends `wardrobe/takeOff`. |
 
 ### WardrobeSection
 
@@ -240,10 +248,10 @@ type WardrobeSlotControls = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` |  |  |  |
-| `entity` | `EntityRef \| null` |  |  |  |
+| `entity` | [`EntityRef`](/docs/api/engine#entityref) `\| null` |  |  |  |
 | `name` | `string \| null` |  |  |  |
-| `takeOff` | `RenderedChoice \| null` |  |  |  |
-| `wear` | `RenderedChoice[]` |  |  | The `wear` button of each spare thing for this slot, from the view's `spare`. |
+| `takeOff` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  |  |
+| `wear` | [`RenderedChoice[]`](/docs/api/engine#renderedchoice) |  |  | The `wear` button of each spare thing for this slot, from the view's `spare`. |
 
 ### wardrobeUi
 
@@ -259,3 +267,5 @@ words. It adds nothing to the side column; a layout can place
 import { wardrobeUi } from '@ifloom/plugin-wardrobe/react'
 const wardrobeUi: PluginUi
 ```
+
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).

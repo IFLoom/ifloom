@@ -50,7 +50,7 @@ Builds the plugin, with the id `quests`. Its state starts empty. Call it once, w
 
 ## Writing quests
 
-Quests are content. They go in your content's [`data`](/docs/reference/loader#content) under `quests.quests`, and are merged by id as scenes are, so a mod can add a quest or replace one.
+Quests are content. They go in your content's [`data`](/docs/reference/loader#content) under `quests.quests` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of quests) and are merged by id as scenes are, so a mod can add a quest or replace one.
 
 ```ts
 import type { Content } from '@ifloom/engine'

@@ -13,7 +13,7 @@ Generated from the source of `@ifloom/plugin-achievements` and `@ifloom/plugin-a
 
 Type. Explained in [Achievements](/docs/plugins/achievements#achievementdef).
 
-An achievement, as content declares it.
+An achievement in the game's content: one entry of `data.achievements.achievements`, the plugin's list of achievements.
 
 ```ts shape
 import type { AchievementDef } from '@ifloom/plugin-achievements'
@@ -35,8 +35,8 @@ type AchievementDef = {
 | `description` | `string` | yes |  | What it's for, for the list. |
 | `image` | `string` | yes |  | A picture for it, for a UI to show. |
 | `secret` | `boolean` | yes |  | Shown as `???`, with no description or progress, until it's earned. |
-| `when` | `Condition` | yes |  | Earned the first time this holds, checked after every command. Leave it out to earn it when `progress` reaches its target, or only with the `achievements/grant` effect. |
-| `progress` | `ProgressDef` | yes |  | A count towards it, such as 4 of 10. Without `when`, reaching the target earns it. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Earned the first time this holds, checked after every command. Leave it out to earn it when `progress` reaches its target, or only with the `achievements/grant` effect. |
+| `progress` | [`ProgressDef`](#progressdef) | yes |  | A count towards it, such as 4 of 10. Without `when`, reaching the target earns it. |
 
 ### AchievementEntry
 
@@ -81,21 +81,25 @@ import { achievements } from '@ifloom/plugin-achievements'
 function achievements(): DefinedPlugin<AchievementsState, AchievementsView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`AchievementsState`](#achievementsstate), [`AchievementsView`](#achievementsview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `achievements.earned` | `(id: string): Condition` |  |
-| `achievements.grant` | `(id: string): EffectRef` |  |
+| `achievements.earned` | `(id: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `achievements.grant` | `(id: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
 
 ### achievementsOf
 
 Function. Explained in [Achievements](/docs/plugins/achievements#achievementsof).
 
-The game's achievements: `data.achievements.achievements`, from its packs.
+The game's achievements: `data.achievements.achievements`, from its content and packs.
 
 ```ts shape
 import { achievementsOf } from '@ifloom/plugin-achievements'
 function achievementsOf(game: Game): AchievementDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`AchievementDef`](#achievementdef).
 
 ### AchievementsProfile
 
@@ -142,7 +146,7 @@ type AchievementsView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `achievements` | `AchievementEntry[]` |  |  | Every achievement, in the order the game declares them. |
+| `achievements` | [`AchievementEntry[]`](#achievemententry) |  |  | Every achievement, in the order the game declares them. |
 | `earned` | `number` |  |  | How many are earned. |
 | `total` | `number` |  |  | How many the game declares, secret ones included. |
 
@@ -238,6 +242,8 @@ import { achievementsUi } from '@ifloom/plugin-achievements/react'
 const achievementsUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useAchievements
 
 Function. Explained in [Achievements](/docs/plugins/achievements#useachievements).
@@ -251,3 +257,5 @@ plugin. A secret one not yet earned comes titled `???` with no description.
 import { useAchievements } from '@ifloom/plugin-achievements/react'
 function useAchievements(): AchievementsView | null
 ```
+
+Uses: [`AchievementsView`](#achievementsview).

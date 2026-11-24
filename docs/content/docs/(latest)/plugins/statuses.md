@@ -35,7 +35,7 @@ Builds the plugin, with the id `statuses`. Nothing is active in a new game.
 
 ## Writing statuses
 
-Statuses are content. They go in your content's [`data`](/docs/reference/loader#content) under `statuses.statuses`, and are merged by id, so a mod can add one or replace one.
+Statuses are content. They go in your content's [`data`](/docs/reference/loader#content) under `statuses.statuses` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of statuses) and are merged by id, so a mod can add one or replace one.
 
 This is the showcase's coffee. It adds 10 to energy until the end of the next turn:
 

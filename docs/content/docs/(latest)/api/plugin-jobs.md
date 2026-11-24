@@ -26,7 +26,7 @@ type FireDef = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `missed` | `number` | yes |  | Fired after missing this many shifts in all. |
-| `when` | `Condition` | yes |  | Fired as soon as this holds after a command: a performance stat too low, say. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Fired as soon as this holds after a command: a performance stat too low, say. |
 
 ### HeldJob
 
@@ -57,7 +57,7 @@ type HeldJob = {
 
 Type. Explained in [Jobs](/docs/plugins/jobs#jobdef).
 
-A job, as content declares it.
+A job in the game's content: one entry of `data.jobs.jobs`, the plugin's list of jobs.
 
 ```ts shape
 import type { JobDef } from '@ifloom/plugin-jobs'
@@ -79,12 +79,12 @@ type JobDef = {
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  | What the player reads: "Weekend help". |
 | `description` | `string` | yes |  | A line or two about it, for the job board. |
-| `blocked` | `Blocked[]` | yes |  | Why an application is refused: the first entry whose `when` holds gives its reason. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Why an application is refused: the first entry whose `when` holds gives its reason. |
 | `days` | `number[]` | yes |  | The weekdays it has shifts on, with the calendar plugin, from 0. Every day if left out. |
 | `hours` | `string[]` | yes |  | The periods a shift can start in, with the calendar plugin. Any if left out. |
-| `shift` | `ShiftDef` |  |  | What a shift costs, pays and takes. See `ShiftDef`. |
-| `ranks` | `RankDef[]` |  |  | The ladder, lowest first. The player is hired at the first. |
-| `fire` | `FireDef` | yes |  | When the player is fired for missing shifts. Never, if left out. |
+| `shift` | [`ShiftDef`](#shiftdef) |  |  | What a shift costs, pays and takes. See `ShiftDef`. |
+| `ranks` | [`RankDef[]`](#rankdef) |  |  | The ladder, lowest first. The player is hired at the first. |
+| `fire` | [`FireDef`](#firedef) | yes |  | When the player is fired for missing shifts. Never, if left out. |
 
 ### jobOf
 
@@ -96,6 +96,8 @@ One of the game's jobs, by id.
 import { jobOf } from '@ifloom/plugin-jobs'
 function jobOf(game: Game, id: string): JobDef | undefined
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`JobDef`](#jobdef).
 
 ### jobs
 
@@ -109,29 +111,33 @@ import { jobs } from '@ifloom/plugin-jobs'
 function jobs(): DefinedPlugin<JobsState, JobsView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`JobsState`](#jobsstate), [`JobsView`](#jobsview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `jobs.open` | `(jobs?: string[]): Effect` |  |
-| `jobs.apply` | `(job: string): CommandRef` |  |
-| `jobs.work` | `(job: string): CommandRef` |  |
-| `jobs.quit` | `(job: string): CommandRef` |  |
-| `jobs.hire` | `(job: string): EffectRef` |  |
-| `jobs.fire` | `(job: string): EffectRef` |  |
-| `jobs.hired` | `(job: string, rank?: string): Condition` |  |
-| `jobs.fired` | `(job: string): Condition` |  |
-| `jobs.shifts` | `(job: string, range: Range): Condition` |  |
-| `jobs.worked` | `(job?: string): Condition` |  |
+| `jobs.open` | `(jobs?: string[]):` [`Effect`](/docs/api/engine#effect) |  |
+| `jobs.apply` | `(job: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `jobs.work` | `(job: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `jobs.quit` | `(job: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `jobs.hire` | `(job: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `jobs.fire` | `(job: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `jobs.hired` | `(job: string, rank?: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `jobs.fired` | `(job: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `jobs.shifts` | `(job: string, range:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) |  |
+| `jobs.worked` | `(job?: string):` [`Condition`](/docs/api/engine#condition) |  |
 
 ### jobsOf
 
 Function. Explained in [Jobs](/docs/plugins/jobs#jobsof-and-jobof).
 
-The game's jobs: `data.jobs.jobs`, from its packs.
+The game's jobs: `data.jobs.jobs`, from its content and packs.
 
 ```ts shape
 import { jobsOf } from '@ifloom/plugin-jobs'
 function jobsOf(game: Game): JobDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`JobDef`](#jobdef).
 
 ### JobsState
 
@@ -149,7 +155,7 @@ type JobsState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `held` | `Record<string, HeldJob>` |  |  | The jobs the player holds, by id. |
+| `held` | `Record<string,` [`HeldJob`](#heldjob)`>` |  |  | The jobs the player holds, by id. |
 | `fired` | `Record<string, number>` |  |  | Jobs the player was fired from, with the day. They can't apply again. |
 
 ### JobsView
@@ -166,8 +172,8 @@ type JobsView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `jobs` | `JobView[]` |  |  | Every job, in the order the game declares them. |
-| `panel` | `JobView[] \| null` |  |  | The jobs on the open job board, the `jobs` panel: only those its `with.job` lists, or every job when it lists none. Null while no job board is open. What a UI draws in the panel, already filtered. |
+| `jobs` | [`JobView[]`](#jobview) |  |  | Every job, in the order the game declares them. |
+| `panel` | [`JobView[]`](#jobview) `\| null` |  |  | The jobs on the open job board, the `jobs` panel: only those its `with.job` lists, or every job when it lists none. Null while no job board is open. What a UI draws in the panel, already filtered. |
 
 ### JobView
 
@@ -202,15 +208,15 @@ type JobView = {
 | `description` | `string` |  |  | A line or two about it; `''` with none. |
 | `hired` | `boolean` |  |  | Whether the player holds it now. |
 | `firedOn` | `number \| null` |  |  | The day the player was fired, or null. |
-| `rank` | `RankView \| null` |  |  | The rank held, or null when not hired. |
-| `next` | `(RankView & { shiftsToGo: number }) \| null` |  |  | The next rank up, and how many more shifts it needs (0 when shifts aren't what's missing), or null at the top or when not hired. |
-| `pay` | `Price \| null` |  |  | What a shift pays now: the rank's pay, or the first rank's for a job not held. |
+| `rank` | [`RankView`](#rankview) `\| null` |  |  | The rank held, or null when not hired. |
+| `next` | `(`[`RankView`](#rankview) `& { shiftsToGo: number }) \| null` |  |  | The next rank up, and how many more shifts it needs (0 when shifts aren't what's missing), or null at the top or when not hired. |
+| `pay` | [`Price`](/docs/api/engine#price) `\| null` |  |  | What a shift pays now: the rank's pay, or the first rank's for a job not held. |
 | `shifts` | `number` |  |  | Shifts worked in all. |
 | `missed` | `number` |  |  | Shifts missed in all. |
 | `nextShift` | `{ day: number; inDays: number } \| null` |  |  | The next day with a shift: `inDays` 0 for today. Null when not hired or nothing is due in the next two weeks. |
-| `apply` | `RenderedChoice \| null` |  |  | The button that applies, or null once hired or fired. Its `disabled` says what's missing. |
-| `work` | `RenderedChoice \| null` |  |  | The button that works a shift, or null when not hired. Its `price` is the shift's cost. |
-| `quit` | `RenderedChoice \| null` |  |  | The button that leaves the job, labelled with the `jobs/quit` string (`Quit`), or null when not hired. |
+| `apply` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that applies, or null once hired or fired. Its `disabled` says what's missing. |
+| `work` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that works a shift, or null when not hired. Its `price` is the shift's cost. |
+| `quit` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that leaves the job, labelled with the `jobs/quit` string (`Quit`), or null when not hired. |
 
 ### RankDef
 
@@ -233,7 +239,7 @@ type RankDef = {
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  | What the player reads: "Barista". |
 | `pay` | `Record<string, number>` |  |  | What a shift pays at this rank, by stat: `{ coins: 18 }`. |
-| `requires` | `{ shifts?: number; when?: Condition }` | yes |  | What it takes to be promoted to it. The first rank, where the player starts, needs nothing. |
+| `requires` | `{ shifts?: number; when?:` [`Condition`](/docs/api/engine#condition) `}` | yes |  | What it takes to be promoted to it. The first rank, where the player starts, needs nothing. |
 
 ### RankView
 
@@ -268,10 +274,10 @@ type ShiftDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `blocked` | `Blocked[]` | yes |  | Why a shift is refused: the first entry whose `when` holds gives its reason. A workplace is one, with the places plugin: `places.onlyAt(['cafe'], { string: 'jobs/notHere' })`, which never holds without it. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Why a shift is refused: the first entry whose `when` holds gives its reason. A workplace is one, with the places plugin: `places.onlyAt(['cafe'], { string: 'jobs/notHere' })`, which never holds without it. |
 | `cost` | `Record<string, number>` | yes |  | Stats it spends, by id: `{ energy: 30 }`. Checked before the shift, like an action's cost. |
 | `passes` | `number` | yes |  | How many of the calendar's periods it takes. None if left out, or without the calendar. |
-| `effects` | `EffectRef[]` | yes |  | More effects, applied after the cost and before the pay: a performance stat going up, say. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | More effects, applied after the cost and before the pay: a performance stat going up, say. |
 
 ## @ifloom/plugin-jobs/react
 
@@ -341,12 +347,12 @@ type JobsControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `jobs` | `JobView[]` |  |  | Every job, in the order the game declares them. |
-| `panel` | `JobView[] \| null` |  |  | The jobs on the open job board, the `jobs` panel: only those its `with.job` lists, or every job when it lists none. Null while no job board is open. What a UI draws in the panel, already filtered. |
-| `held` | `JobView[]` |  |  | The jobs the player holds, in the order the game declares them. |
-| `apply` | `(job: string) => Result<GameState>` |  |  | Apply for a job: sends `jobs/apply`, refused with the reason its `apply` button gives. |
-| `work` | `(job: string) => Result<GameState>` |  |  | Work a shift: sends `jobs/work`. |
-| `quit` | `(job: string) => Result<GameState>` |  |  | Leave a job: sends `jobs/quit`. The player can apply again. |
+| `jobs` | [`JobView[]`](#jobview) |  |  | Every job, in the order the game declares them. |
+| `panel` | [`JobView[]`](#jobview) `\| null` |  |  | The jobs on the open job board, the `jobs` panel: only those its `with.job` lists, or every job when it lists none. Null while no job board is open. What a UI draws in the panel, already filtered. |
+| `held` | [`JobView[]`](#jobview) |  |  | The jobs the player holds, in the order the game declares them. |
+| `apply` | `(job: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Apply for a job: sends `jobs/apply`, refused with the reason its `apply` button gives. |
+| `work` | `(job: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Work a shift: sends `jobs/work`. |
+| `quit` | `(job: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Leave a job: sends `jobs/quit`. The player can apply again. |
 
 ### jobsUi
 
@@ -362,6 +368,8 @@ import { jobsUi } from '@ifloom/plugin-jobs/react'
 const jobsUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useJobs
 
 Function. Explained in [Jobs](/docs/plugins/jobs#usejobs).
@@ -372,3 +380,5 @@ The jobs plugin's view with its commands, or null in a game without the plugin. 
 import { useJobs } from '@ifloom/plugin-jobs/react'
 function useJobs(): JobsControls | null
 ```
+
+Uses: [`JobsControls`](#jobscontrols).

@@ -52,12 +52,14 @@ type Channel = {
 
 Function. Explained in [Messages](/docs/plugins/messages#channelsof).
 
-The game's channels, in order: `data.messages.channels`, from its packs.
+The game's channels, in order: `data.messages.channels`, from its content and packs.
 
 ```ts shape
 import { channelsOf } from '@ifloom/plugin-messages'
 function channelsOf(game: Game): Channel[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`Channel`](#channel).
 
 ### ChannelView
 
@@ -78,9 +80,9 @@ type ChannelView = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  |  |
-| `threads` | `ThreadView[]` |  |  | Newest activity first. |
+| `threads` | [`ThreadView[]`](#threadview) |  |  | Newest activity first. |
 | `unread` | `number` |  |  | How many of its messages the player hasn't read. |
-| `read` | `RenderedChoice \| null` |  |  | The button that marks the whole channel read (the `messages/allRead` string, `Mark all read`), or null while nothing in it is unread. |
+| `read` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks the whole channel read (the `messages/allRead` string, `Mark all read`), or null while nothing in it is unread. |
 
 ### MessageDef
 
@@ -110,12 +112,12 @@ type MessageDef = {
 | `channel` | `string` |  |  | The channel it arrives in, by id. |
 | `from` | `string` |  |  | Who sent it: a character id, or any name the game's prose uses. |
 | `thread` | `string` | yes |  | The thread it belongs in. The sender if left out. |
-| `when` | `Condition` | yes |  | It arrives the first time this holds after a command; left out, after the first command. For a message drawn from a pool, it can be drawn only while this holds; left out, any time. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | It arrives the first time this holds after a command; left out, after the first command. For a message drawn from a pool, it can be drawn only while this holds; left out, any time. |
 | `drawnFrom` | `string[]` | yes |  | The pools it can be drawn from by `messages/draw`. A message with pools arrives only when drawn, never by `when` alone, and can arrive again each time it is drawn. |
 | `weight` | `number` | yes |  | How likely a draw picks it, against the others that can be drawn: 1 if left out. |
-| `body` | `Block[]` |  |  | Its words, as a scene's body: prose blocks. |
-| `replies` | `ReplyDef[]` | yes |  | What the player can send back; one, once. None if left out. |
-| `effects` | `EffectRef[]` | yes |  | What happens as it arrives, each time it does: in the same command, after the arrival is recorded. A trigger on `messages/arrived` would run a command later, since triggers run before the plugins deliver. |
+| `body` | [`Block[]`](/docs/api/engine#block) |  |  | Its words, as a scene's body: prose blocks. |
+| `replies` | [`ReplyDef[]`](#replydef) | yes |  | What the player can send back; one, once. None if left out. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | What happens as it arrives, each time it does: in the same command, after the arrival is recorded. A trigger on `messages/arrived` would run a command later, since triggers run before the plugins deliver. |
 | `after` | `{ ms: number }` | yes |  | How long it takes to arrive once its `when` holds: `ms` milliseconds after the thread's previous arrival, run down by the engine's `tick` as a timer is. Left out, it arrives straight away. One message waits at a time, so the next waits until this one has come. |
 | `typing` | `boolean` | yes |  | Whether its thread shows the other side typing while it waits. True if left out. |
 
@@ -131,26 +133,30 @@ import { messages } from '@ifloom/plugin-messages'
 function messages(): DefinedPlugin<MessagesState, MessagesView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`MessagesState`](#messagesstate), [`MessagesView`](#messagesview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `messages.reply` | `(message: string, reply: string): CommandRef` |  |
-| `messages.draw` | `(pool: string): EffectRef` |  |
-| `messages.since` | `(message: string, range: Range): Condition` |  |
-| `messages.read` | `(thread?: string \| { channel: string }): CommandRef` |  |
-| `messages.arrived` | `(message: string): Condition` |  |
-| `messages.replied` | `(message: string, reply?: string, range?: Range): Condition` |  |
-| `messages.messageRead` | `(message: string): Condition` |  |
+| `messages.reply` | `(message: string, reply: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `messages.draw` | `(pool: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `messages.since` | `(message: string, range:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) |  |
+| `messages.read` | `(thread?: string \| { channel: string }):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `messages.arrived` | `(message: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `messages.replied` | `(message: string, reply?: string, range?:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) |  |
+| `messages.messageRead` | `(message: string):` [`Condition`](/docs/api/engine#condition) |  |
 
 ### messagesOf
 
 Function. Explained in [Messages](/docs/plugins/messages#messagesof).
 
-The game's messages: `data.messages.messages`, from its packs.
+The game's messages: `data.messages.messages`, from its content and packs.
 
 ```ts shape
 import { messagesOf } from '@ifloom/plugin-messages'
 function messagesOf(game: Game): MessageDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`MessageDef`](#messagedef).
 
 ### MessagesState
 
@@ -171,7 +177,7 @@ type MessagesState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `arrived` | `Arrival[]` |  |  | Every arrival, oldest first. |
+| `arrived` | [`Arrival[]`](#arrival) |  |  | Every arrival, oldest first. |
 | `replied` | `Record<string, string>` |  |  | The reply sent to each arrival, by its key. |
 | `repliedOn` | `Record<string, number>` |  |  | The day each reply was sent, by the arrival's key: the calendar's, or the turn without it. |
 | `read` | `Record<string, true>` |  |  | Arrivals the player has opened, by key. |
@@ -192,7 +198,7 @@ type MessagesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `channels` | `ChannelView[]` |  |  | Every channel the game declares, in order, with its threads. |
+| `channels` | [`ChannelView[]`](#channelview) |  |  | Every channel the game declares, in order, with its threads. |
 | `unread` | `number` |  |  | How many messages are unread, in all channels. |
 | `waiting` | `boolean` |  |  | Whether a message with `after` is waiting to arrive, in any thread. |
 
@@ -223,10 +229,10 @@ type MessageView = {
 | `from` | `string` |  |  | Who sent it, as written: a character id or a name. |
 | `name` | `string` |  |  | The sender's name if they are a character, else `from` as written. |
 | `text` | `string` |  |  | The words, filled in, with any picture and video markup in them. |
-| `beats` | `SceneBeat[]` |  |  | The words as beats, as a scene's are: paragraphs, and the pictures and videos in them in the order written, from markup or `{ media }` blocks. |
+| `beats` | [`SceneBeat[]`](/docs/api/engine#scenebeat) |  |  | The words as beats, as a scene's are: paragraphs, and the pictures and videos in them in the order written, from markup or `{ media }` blocks. |
 | `turn` | `number` |  |  | The turn it arrived. |
 | `read` | `boolean` |  |  | Whether the player has read it. |
-| `replies` | `RenderedChoice[]` |  |  | Replies on offer, until one is sent: buttons like any other, each sending its `command`. |
+| `replies` | [`RenderedChoice[]`](/docs/api/engine#renderedchoice) |  |  | Replies on offer, until one is sent: buttons like any other, each sending its `command`. |
 | `replied` | `string \| null` |  |  | The label of the reply sent, if one was. |
 
 ### ReplyDef
@@ -249,8 +255,8 @@ type ReplyDef = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `label` | `string` | yes |  | Its words, as written, with tokens filled: "On my way". Its id if left out. |
-| `when` | `Condition` | yes |  | Only on offer while this holds. |
-| `effects` | `EffectRef[]` | yes |  | What sending it does, besides recording the reply. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Only on offer while this holds. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | What sending it does, besides recording the reply. |
 
 ### ThreadView
 
@@ -276,9 +282,9 @@ type ThreadView = {
 | `name` | `string` |  |  |  |
 | `image` | `string \| null` |  |  | The sender's picture: their entity's `image`, through `artSrc`; null for a name as written. |
 | `portrait` | `string \| null` |  |  | The sender's face, for an avatar: a person's `portrait` with the cast, else their `image`. |
-| `messages` | `MessageView[]` |  |  | Oldest first. |
+| `messages` | [`MessageView[]`](#messageview) |  |  | Oldest first. |
 | `unread` | `number` |  |  | How many of its messages the player hasn't read. |
-| `read` | `RenderedChoice \| null` |  |  | The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. |
+| `read` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. |
 | `typing` | `boolean` |  |  | Whether the other side is typing: a message with `after` is waiting to arrive in this thread, and its `typing` isn't false. |
 
 ## @ifloom/plugin-messages/react
@@ -320,10 +326,10 @@ type MessagesControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `channels` | `ChannelView[]` |  |  | Every channel the game declares, in order, with its threads. |
+| `channels` | [`ChannelView[]`](#channelview) |  |  | Every channel the game declares, in order, with its threads. |
 | `unread` | `number` |  |  | How many messages are unread, in all channels. |
 | `waiting` | `boolean` |  |  | Whether a message with `after` is waiting to arrive, in any thread. |
-| `read` | `(channel: string) => Result<GameState>` |  |  | Mark a channel's messages read: sends `messages/read`. |
+| `read` | `(channel: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Mark a channel's messages read: sends `messages/read`. |
 
 ### MessagesSection
 
@@ -347,6 +353,8 @@ import { MessagesSection } from '@ifloom/plugin-messages/react'
 const MessagesSection: ComponentType<SectionProps>
 ```
 
+Uses: [`SectionProps`](/docs/api/react#sectionprops).
+
 ### messagesUi
 
 Const. Explained in [Messages](/docs/plugins/messages#messagesui).
@@ -360,6 +368,8 @@ import { messagesUi } from '@ifloom/plugin-messages/react'
 const messagesUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useMessages
 
 Function. Explained in [Messages](/docs/plugins/messages#usemessages).
@@ -370,3 +380,5 @@ The messages plugin's view with its command, or null in a game without the plugi
 import { useMessages } from '@ifloom/plugin-messages/react'
 function useMessages(): MessagesControls | null
 ```
+
+Uses: [`MessagesControls`](#messagescontrols).

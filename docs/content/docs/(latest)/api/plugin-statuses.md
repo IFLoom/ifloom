@@ -48,7 +48,7 @@ type ActiveStatus = {
 | `description` | `string` |  |  | What it does, as the player reads it; `''` with none. |
 | `turnsLeft` | `number` |  |  | The turns left on its longest stack. |
 | `stacks` | `number` |  |  | How many times it's applied and still running: 1 unless the status stacks. |
-| `modifiers` | `StatModifier[]` |  |  | What it does to the stats right now, all its stacks together, one entry per stat. |
+| `modifiers` | [`StatModifier[]`](/docs/api/engine-plugin#statmodifier) |  |  | What it does to the stats right now, all its stacks together, one entry per stat. |
 
 ### Reapply
 
@@ -65,7 +65,7 @@ type Reapply = 'refresh' | 'stack'
 
 Type. Explained in [Statuses](/docs/plugins/statuses#statusdef).
 
-A timed status, as content declares it.
+A timed status in the game's content: one entry of `data.statuses.statuses`, the plugin's list of statuses.
 
 ```ts shape
 import type { StatusDef } from '@ifloom/plugin-statuses'
@@ -87,9 +87,9 @@ type StatusDef = {
 | `name` | `string` |  |  | What the player reads: "Caffeinated". |
 | `description` | `string` | yes |  | A line about it, for the UI. |
 | `turns` | `number` |  |  | How many turns it lasts, counting the end of the turn it was applied in. |
-| `modifiers` | `StatusModifier[]` | yes |  | What it does to the player's stats while it lasts, per stack. Never written. |
-| `effects` | `{ start?: EffectRef[]; turn?: EffectRef[]; end?: EffectRef[] }` | yes |  | What it does as it goes: `start` when it starts, and each time a stack is added; `turn` at the end of each turn it is active, once per stack, before its turns go down; `end` when it runs out, once per stack that ran out. |
-| `reapply` | `Reapply` | yes |  | What applying it again does while it is active. `'refresh'` if left out. |
+| `modifiers` | [`StatusModifier[]`](#statusmodifier) | yes |  | What it does to the player's stats while it lasts, per stack. Never written. |
+| `effects` | `{ start?:` [`EffectRef[]`](/docs/api/engine#effectref)`; turn?:` [`EffectRef[]`](/docs/api/engine#effectref)`; end?:` [`EffectRef[]`](/docs/api/engine#effectref) `}` | yes |  | What it does as it goes: `start` when it starts, and each time a stack is added; `turn` at the end of each turn it is active, once per stack, before its turns go down; `end` when it runs out, once per stack that ran out. |
+| `reapply` | [`Reapply`](#reapply) | yes |  | What applying it again does while it is active. `'refresh'` if left out. |
 | `max` | `number` | yes |  | With `reapply: 'stack'`, the most stacks it can have. No limit if left out. |
 
 ### statuses
@@ -104,22 +104,26 @@ import { statuses } from '@ifloom/plugin-statuses'
 function statuses(): DefinedPlugin<StatusesState, StatusesView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`StatusesState`](#statusesstate), [`StatusesView`](#statusesview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `statuses.active` | `(id: string, stacks?: Range): Condition` |  |
-| `statuses.apply` | `(id: string): EffectRef` |  |
-| `statuses.remove` | `(id: string, runEnd?: boolean): EffectRef` |  |
+| `statuses.active` | `(id: string, stacks?:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) |  |
+| `statuses.apply` | `(id: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `statuses.remove` | `(id: string, runEnd?: boolean):` [`EffectRef`](/docs/api/engine#effectref) |  |
 
 ### statusesOf
 
 Function. Explained in [Statuses](/docs/plugins/statuses#statusesof-and-statusof).
 
-The game's timed statuses: `data.statuses.statuses`, from its packs.
+The game's timed statuses: `data.statuses.statuses`, from its content and packs.
 
 ```ts shape
 import { statusesOf } from '@ifloom/plugin-statuses'
 function statusesOf(game: Game): StatusDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 ### StatusesState
 
@@ -136,7 +140,7 @@ type StatusesState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `active` | `ActiveRecord[]` |  |  | Active statuses, in the order they were first applied. |
+| `active` | [`ActiveRecord[]`](#activerecord) |  |  | Active statuses, in the order they were first applied. |
 
 ### StatusesView
 
@@ -151,7 +155,7 @@ type StatusesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `active` | `ActiveStatus[]` |  |  | Active statuses, in the order they were first applied. |
+| `active` | [`ActiveStatus[]`](#activestatus) |  |  | Active statuses, in the order they were first applied. |
 
 ### StatusModifier
 
@@ -179,6 +183,8 @@ One of the game's statuses, by id.
 import { statusOf } from '@ifloom/plugin-statuses'
 function statusOf(game: Game, id: string): StatusDef | undefined
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 ## @ifloom/plugin-statuses/react
 
@@ -216,6 +222,8 @@ import { statusesUi } from '@ifloom/plugin-statuses/react'
 const statusesUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### StatusList
 
 Const. Explained in [Statuses](/docs/plugins/statuses#statuslist).
@@ -240,3 +248,5 @@ The statuses plugin's view: the active statuses, each with its turns left and wh
 import { useStatuses } from '@ifloom/plugin-statuses/react'
 function useStatuses(): StatusesView | null
 ```
+
+Uses: [`StatusesView`](#statusesview).

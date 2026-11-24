@@ -42,7 +42,7 @@ type AudioOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `createAudio` | `(src: string) => AudioLike` | yes |  | Makes the element for a file. `new Audio(src)` if left out. |
+| `createAudio` | `(src: string) =>` [`AudioLike`](#audiolike) | yes |  | Makes the element for a file. `new Audio(src)` if left out. |
 | `log` | `(message: string) => void` | yes |  | Told every decision the player makes, for debugging: `log: console.debug`. |
 | `root` | `EventTarget` | yes |  | Where the first `pointerdown` or `keydown` unlocks sound. `document` if left out. |
 
@@ -75,3 +75,5 @@ clicks or presses a key, or until `unlock()`.
 import { startAudio } from '@ifloom/audio'
 function startAudio(runner: Runner, options?: AudioOptions): AudioPlayer
 ```
+
+Uses: [`Runner`](/docs/api/engine#runner), [`AudioOptions`](#audiooptions), [`AudioPlayer`](#audioplayer).

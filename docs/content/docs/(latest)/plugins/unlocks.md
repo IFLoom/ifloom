@@ -45,7 +45,7 @@ Builds the plugin, with the id `unlocks`. A new game has nothing unlocked.
 
 ## Writing unlocks
 
-Unlocks are content. They go in your content's [`data`](/docs/reference/loader#content) under `unlocks.unlocks`. This is the showcase's one:
+Unlocks are content. They go in your content's [`data`](/docs/reference/loader#content) under `unlocks.unlocks` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of unlocks). This is the showcase's one:
 
 ```ts
 import type { Content } from '@ifloom/engine'

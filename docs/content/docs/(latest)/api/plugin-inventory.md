@@ -21,12 +21,14 @@ import { inventory } from '@ifloom/plugin-inventory'
 function inventory(): DefinedPlugin<null, InventoryView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`InventoryView`](#inventoryview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `inventory.usable` | `(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }` |  |
-| `inventory.use` | `(ref: EntityRef): CommandRef` |  |
-| `inventory.drop` | `(ref: EntityRef): CommandRef` |  |
-| `inventory.give` | `(ref: EntityRef, to: Holder): CommandRef` |  |
+| `inventory.usable` | `(label: string, effects:` [`EffectRef[]`](/docs/api/engine#effectref)`, options?: { keep?: boolean }): { 'inventory/usable':` [`Usable`](#usable) `}` |  |
+| `inventory.use` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `inventory.drop` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `inventory.give` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](/docs/api/engine#holder)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
 
 ### InventoryData
 
@@ -56,6 +58,8 @@ import { inventoryKindsOf } from '@ifloom/plugin-inventory'
 function inventoryKindsOf(game: Game): { id: string }[] | undefined
 ```
 
+Uses: [`Game`](/docs/api/engine#game).
+
 ### InventoryThing
 
 Type. Explained in [Inventory](/docs/plugins/inventory#inventorything).
@@ -78,14 +82,14 @@ type InventoryThing = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ref` | `EntityRef` |  |  | How content names it: `'food:apple'`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | How content names it: `'food:apple'`. |
 | `name` | `string` |  |  |  |
 | `description` | `string \| null` |  |  | Its entity's `description`, tokens filled; null with none. |
 | `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
 | `count` | `number` |  |  | How many are held. |
-| `at` | `Holder` |  |  | Who holds it: the protagonist being played, or `'player'`. |
-| `use` | `RenderedChoice \| null` |  |  | The button that uses one, labelled by its trait, or null for a thing with no use. Send its `command`. |
-| `drop` | `RenderedChoice` |  |  | The button that drops one. |
+| `at` | [`Holder`](/docs/api/engine#holder) |  |  | Who holds it: the protagonist being played, or `'player'`. |
+| `use` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that uses one, labelled by its trait, or null for a thing with no use. Send its `command`. |
+| `drop` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that drops one. |
 
 ### InventoryView
 
@@ -102,7 +106,7 @@ type InventoryView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `things` | `InventoryThing[]` |  |  | What you hold that the inventory shows: the protagonist's things while one is played, then the player's. |
+| `things` | [`InventoryThing[]`](#inventorything) |  |  | What you hold that the inventory shows: the protagonist's things while one is played, then the player's. |
 
 ### Usable
 
@@ -122,7 +126,7 @@ type Usable = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `label` | `string` |  |  | The button: "Eat the sandwich". |
-| `effects` | `EffectRef[]` |  |  | What using one does. They read the state as it was before one was spent. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) |  |  | What using one does. They read the state as it was before one was spent. |
 | `keep` | `boolean` | yes |  | Using it doesn't spend one: a book read, a torch switched on. One is spent if left out. |
 
 ### usableOf
@@ -135,6 +139,8 @@ What makes a thing usable, when it is: its `inventory/usable` trait, read throug
 import { usableOf, type Usable } from '@ifloom/plugin-inventory'
 function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefined
 ```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref), [`Usable`](#usable).
 
 ## @ifloom/plugin-inventory/react
 
@@ -168,6 +174,8 @@ import { InventoryCard } from '@ifloom/plugin-inventory/react'
 const InventoryCard: ComponentType<InventoryProps>
 ```
 
+Uses: [`InventoryProps`](/docs/api/react#inventoryprops).
+
 ### InventoryControls
 
 Type.
@@ -186,10 +194,10 @@ type InventoryControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `things` | `InventoryThing[]` |  |  | What you hold that the inventory shows: the protagonist's things while one is played, then the player's. |
-| `use` | `(ref: EntityRef) => Result<GameState>` |  |  | Use one of a thing you hold: sends `inventory/use`, refused with its reason as the button says. |
-| `drop` | `(ref: EntityRef) => Result<GameState>` |  |  | Drop one of a thing you hold: sends `inventory/drop`. |
-| `give` | `(ref: EntityRef, to: Holder) => Result<GameState>` |  |  | Give one of a thing you hold to someone who can hold things: sends `inventory/give`. |
+| `things` | [`InventoryThing[]`](#inventorything) |  |  | What you hold that the inventory shows: the protagonist's things while one is played, then the player's. |
+| `use` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Use one of a thing you hold: sends `inventory/use`, refused with its reason as the button says. |
+| `drop` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Drop one of a thing you hold: sends `inventory/drop`. |
+| `give` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](/docs/api/engine#holder)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Give one of a thing you hold to someone who can hold things: sends `inventory/give`. |
 
 ### inventoryUi
 
@@ -204,6 +212,8 @@ import { inventoryUi } from '@ifloom/plugin-inventory/react'
 const inventoryUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useInventory
 
 Function. Explained in [Inventory](/docs/plugins/inventory#useinventory).
@@ -214,3 +224,5 @@ The inventory plugin's view with its commands, or null in a game without the plu
 import { useInventory } from '@ifloom/plugin-inventory/react'
 function useInventory(): InventoryControls | null
 ```
+
+Uses: [`InventoryControls`](#inventorycontrols).

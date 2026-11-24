@@ -31,7 +31,7 @@ export type Reapply = 'refresh' | 'stack'
 /** A change a status makes to what one of the player's stats reads, per stack. */
 export type StatusModifier = StatModifier
 
-/** A timed status, as content declares it. */
+/** A timed status in the game's content: one entry of `data.statuses.statuses`, the plugin's list of statuses. */
 export type StatusDef = {
   id: string
   /** What the player reads: "Caffeinated". */
@@ -98,7 +98,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'statuses'
 
-/** The plugin's content: `data.statuses.statuses`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `statuses`, as content writes it in `data.statuses.statuses` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   statuses: list<StatusDef>({ noun: 'status', words: { name: true, description: true, effects: { start: 'effects', turn: 'effects', end: 'effects' } } }),
 })
@@ -125,7 +125,7 @@ function emptyState(): StatusesState {
   return { active: [] }
 }
 
-/** The game's timed statuses: `data.statuses.statuses`, from its packs. */
+/** The game's timed statuses: `data.statuses.statuses`, from its content and packs. */
 export function statusesOf(game: Game): StatusDef[] {
   return DATA.statuses.all(game)
 }
@@ -235,7 +235,7 @@ function endTurn(state: GameState, context: PluginContext<StatusesState>): GameS
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put statuses in a pack's
+ * The plugin. Add it to the game's `plugins`, and put statuses in the content's
  * `data.statuses.statuses`.
  */
 function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {

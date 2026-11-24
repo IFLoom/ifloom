@@ -49,7 +49,7 @@ Plugins add fields of their own to it, which their pages list.
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `tags` | `string[]` |  |  | The choice's or button's tags, for a UI to style or filter it by. The place's tags, its entity's. |
-| `ref` | `EntityRef` |  |  | The place's entity: `'location:park'`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The place's entity: `'location:park'`. |
 | `description` | `string \| null` |  |  | The place's line under its name, its entity's `description`; null with none. |
 | `image` | `string \| null` |  |  | The place's picture's path, its entity's `image` through `artSrc`; null with none. |
 
@@ -77,6 +77,8 @@ import { locationOf } from '@ifloom/plugin-places'
 function locationOf(state: GameState, game: Game, ref: string | null | undefined): Place | undefined
 ```
 
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`Place`](#place).
+
 ### locationsOf
 
 Function. Explained in [Places](/docs/plugins/places#helpers).
@@ -89,6 +91,8 @@ those made in play.
 import { locationsOf } from '@ifloom/plugin-places'
 function locationsOf(state: GameState, game: Game): EntityRef[]
 ```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref).
 
 ### LyingView
 
@@ -109,11 +113,11 @@ type LyingView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `ref` | `EntityRef` |  |  | How content names it: `'item:paper'`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | How content names it: `'item:paper'`. |
 | `name` | `string` |  |  |  |
 | `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
 | `count` | `number` |  |  | How many lie here. |
-| `pickUp` | `RenderedChoice` |  |  | The button that picks one up. Send its `command`. |
+| `pickUp` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that picks one up. Send its `command`. |
 
 ### Place
 
@@ -142,13 +146,13 @@ type Place = {
 |---|---|---|---|---|
 | `parent` | `string` | yes |  | The place it is inside: a room's building. `places/within` follows it. |
 | `exits` | `readonly string[]` |  |  | The places one step away. |
-| `picture` | `PictureDef` | yes |  | A layered picture with hotspots, drawn where the UI draws the room. A hotspot here sends a `command`; a place has no choices. |
-| `blocked` | `Blocked[]` | yes |  | Travel here is refused while one of these holds, with its reason: a door shut for the night, a gate shut until a quest is done. With `hide`, the exit is left off the screen instead of greyed out. |
-| `body` | `Block[]` |  |  | What the player reads here while no scene is open: prose blocks, as a data scene's body. |
-| `actions` | `ActionDef[]` | yes |  | What there is to do here, offered as buttons. |
+| `picture` | [`PictureDef`](/docs/api/engine#picturedef) | yes |  | A layered picture with hotspots, drawn where the UI draws the room. A hotspot here sends a `command`; a place has no choices. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Travel here is refused while one of these holds, with its reason: a door shut for the night, a gate shut until a quest is done. With `hide`, the exit is left off the screen instead of greyed out. |
+| `body` | [`Block[]`](/docs/api/engine#block) |  |  | What the player reads here while no scene is open: prose blocks, as a data scene's body. |
+| `actions` | [`ActionDef[]`](/docs/api/engine#actiondef) | yes |  | What there is to do here, offered as buttons. |
 | `audio` | `Record<string, string \| null>` | yes |  | What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`. Null silences a channel. An open scene's audio and an `audio` effect's win over it. |
-| `ui` | `Ui<SceneUi>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
-| `arrive` | `Arrival` | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
+| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
+| `arrive` | [`Arrival`](#arrival) | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
 
 ### PlaceDef
 
@@ -182,13 +186,13 @@ Plugins add fields of their own to it, which their pages list.
 |---|---|---|---|---|
 | `parent` | `string` | yes |  | The place it is inside: a room's building. `places/within` follows it. |
 | `exits` | `readonly string[]` |  |  | The places one step away. |
-| `picture` | `PictureDef` | yes |  | A layered picture with hotspots, drawn where the UI draws the room. A hotspot here sends a `command`; a place has no choices. |
-| `blocked` | `Blocked[]` | yes |  | Travel here is refused while one of these holds, with its reason: a door shut for the night, a gate shut until a quest is done. With `hide`, the exit is left off the screen instead of greyed out. |
-| `body` | `Block[]` |  |  | What the player reads here while no scene is open: prose blocks, as a data scene's body. |
-| `actions` | `ActionDef[]` | yes |  | What there is to do here, offered as buttons. |
+| `picture` | [`PictureDef`](/docs/api/engine#picturedef) | yes |  | A layered picture with hotspots, drawn where the UI draws the room. A hotspot here sends a `command`; a place has no choices. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Travel here is refused while one of these holds, with its reason: a door shut for the night, a gate shut until a quest is done. With `hide`, the exit is left off the screen instead of greyed out. |
+| `body` | [`Block[]`](/docs/api/engine#block) |  |  | What the player reads here while no scene is open: prose blocks, as a data scene's body. |
+| `actions` | [`ActionDef[]`](/docs/api/engine#actiondef) | yes |  | What there is to do here, offered as buttons. |
 | `audio` | `Record<string, string \| null>` | yes |  | What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`. Null silences a channel. An open scene's audio and an `audio` effect's win over it. |
-| `ui` | `Ui<SceneUi>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
-| `arrive` | `Arrival` | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
+| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | Presentation hints for the room while no scene is open, carried to `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`. The engine gives them no meaning. |
+| `arrive` | [`Arrival`](#arrival) | yes |  | What happens on the doorstep, after the player walks in by an exit (not after a `places/move`): someone catching you on the way in. Its effects apply while `when` holds, or always with no `when`. |
 | `of` | `string` | yes |  | Its kind: the plugin's own, `location`, if left out. |
 
 ### places
@@ -203,18 +207,20 @@ import { places } from '@ifloom/plugin-places'
 function places(options?: PlacesOptions): DefinedPlugin<PlacesState, PlacesView>
 ```
 
+Uses: [`PlacesOptions`](#placesoptions), [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`PlacesState`](#placesstate), [`PlacesView`](#placesview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `places.location` | `(def: PlaceDef): EntityDef` |  |
-| `places.locationRef` | `(id: string): EntityRef` |  |
-| `places.pickUp` | `(ref: EntityRef): CommandRef` |  |
-| `places.go` | `(id: string): CommandRef` |  |
-| `places.at` | `(...places: string[]): Condition` |  |
-| `places.within` | `(...places: string[]): Condition` |  |
-| `places.away` | `(...places: string[]): Condition` |  |
-| `places.move` | `(place: string): EffectRef` |  |
-| `places.onlyAt` | `(places: string[], reason?: Reason, options?: { hide?: boolean }): Blocked` |  |
-| `places.where` | `(state: GameState, game: Game): string \| null` |  |
+| `places.location` | `(def:` [`PlaceDef`](#placedef)`):` [`EntityDef`](/docs/api/engine#entitydef) |  |
+| `places.locationRef` | `(id: string):` [`EntityRef`](/docs/api/engine#entityref) |  |
+| `places.pickUp` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `places.go` | `(id: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `places.at` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `places.within` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `places.away` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `places.move` | `(place: string):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `places.onlyAt` | `(places: string[], reason?:` [`Reason`](/docs/api/engine#reason)`, options?: { hide?: boolean }):` [`Blocked`](/docs/api/engine#blocked) |  |
+| `places.where` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`): string \| null` |  |
 
 ### PlacesOptions
 
@@ -261,9 +267,9 @@ type PlacesView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `location` | `PlaceView \| null` |  |  | Where the player is; null when nowhere. |
-| `exits` | `ExitView[]` |  |  | The exits, in the order the place lists them; none while a scene is open or a lock holds everything. |
-| `things` | `LyingView[]` |  |  | What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. |
+| `location` | [`PlaceView`](#placeview) `\| null` |  |  | Where the player is; null when nowhere. |
+| `exits` | [`ExitView[]`](#exitview) |  |  | The exits, in the order the place lists them; none while a scene is open or a lock holds everything. |
+| `things` | [`LyingView[]`](#lyingview) |  |  | What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. |
 
 ### PlaceView
 
@@ -287,12 +293,12 @@ type PlaceView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | The place's id, as `go` names it. |
-| `ref` | `EntityRef` |  |  | Its entity: `'location:park'`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | Its entity: `'location:park'`. |
 | `name` | `string` |  |  |  |
 | `description` | `string \| null` |  |  | The line under its name, its entity's `description`; null with none. |
 | `tags` | `string[]` |  |  | Its entity's tags, for the UI to style it by. |
 | `image` | `string \| null` |  |  | Its picture's path, its entity's `image` through `artSrc`; null with none. |
-| `picture` | `PictureView \| null` |  |  | The place's picture as the engine's `pictureView` draws it, or null when it has none. Its hotspots are left out while a scene is open or a lock holds everything, as the exits are. |
+| `picture` | [`PictureView`](/docs/api/engine#pictureview) `\| null` |  |  | The place's picture as the engine's `pictureView` draws it, or null when it has none. Its hotspots are left out while a scene is open or a lock holds everything, as the exits are. |
 
 ## @ifloom/plugin-places/react
 
@@ -343,11 +349,11 @@ type PlacesControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `location` | `PlaceView \| null` |  |  | Where the player is; null when nowhere. |
-| `exits` | `ExitView[]` |  |  | The exits, in the order the place lists them; none while a scene is open or a lock holds everything. |
-| `things` | `LyingView[]` |  |  | What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. |
-| `go` | `(exit: string) => Result<GameState>` |  |  | Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. |
-| `pickUp` | `(thing: EntityRef) => Result<GameState>` |  |  | Pick up one of a thing lying here, by its reference (`'item:paper'`): sends its `pickUp` command. |
+| `location` | [`PlaceView`](#placeview) `\| null` |  |  | Where the player is; null when nowhere. |
+| `exits` | [`ExitView[]`](#exitview) |  |  | The exits, in the order the place lists them; none while a scene is open or a lock holds everything. |
+| `things` | [`LyingView[]`](#lyingview) |  |  | What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. |
+| `go` | `(exit: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. |
+| `pickUp` | `(thing:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Pick up one of a thing lying here, by its reference (`'item:paper'`): sends its `pickUp` command. |
 
 ### placesUi
 
@@ -362,6 +368,8 @@ import { placesUi } from '@ifloom/plugin-places/react'
 const placesUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### usePlaces
 
 Function. Explained in [Places](/docs/plugins/places#useplaces).
@@ -372,3 +380,5 @@ The places plugin's view with a way to travel, or null in a game without the plu
 import { usePlaces } from '@ifloom/plugin-places/react'
 function usePlaces(): PlacesControls | null
 ```
+
+Uses: [`PlacesControls`](#placescontrols).

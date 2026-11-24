@@ -13,7 +13,7 @@ Generated from the source of `@ifloom/plugin-cheats` and `@ifloom/plugin-cheats/
 
 Type. Explained in [Cheats](/docs/plugins/cheats#cheatdef).
 
-A cheat, as content declares it in a pack's `data.cheats.cheats`.
+A cheat in the game's content: one entry of `data.cheats.cheats`, the plugin's list of cheats.
 
 ```ts shape
 import type { CheatDef } from '@ifloom/plugin-cheats'
@@ -33,10 +33,10 @@ type CheatDef = {
 | `id` | `string` |  |  |  |
 | `name` | `string` |  |  | What the player reads, on its button: "+20 coins". |
 | `description` | `string` | yes |  | A line about it, for the panel. |
-| `effects` | `EffectRef[]` |  |  | What it does, in order, as any effect list runs. |
-| `blocked` | `Blocked[]` | yes |  | Why it is refused: the first entry whose `when` holds greys the button out with its reason, or leaves it off the panel with `hide`. A supporter-only cheat is `{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters' }`. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) |  |  | What it does, in order, as any effect list runs. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Why it is refused: the first entry whose `when` holds greys the button out with its reason, or leaves it off the panel with `hide`. A supporter-only cheat is `{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters' }`. |
 | `group` | `string` | yes |  | The heading it is listed under in the panel. Cheats with none come first. |
-| `once` | `Once` | yes |  | Usable once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), as a button's `once` is. `reason` is what the button reads once it's used: the plugin's `cheats/usedOnce` string, "Already used.", if left out. |
+| `once` | [`Once`](/docs/api/engine#once) | yes |  | Usable once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), as a button's `once` is. `reason` is what the button reads once it's used: the plugin's `cheats/usedOnce` string, "Already used.", if left out. |
 
 ### cheatOf
 
@@ -48,6 +48,8 @@ One of the game's cheats, by id.
 import { cheatOf } from '@ifloom/plugin-cheats'
 function cheatOf(game: Game, id: string): CheatDef | undefined
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
 
 ### cheats
 
@@ -61,21 +63,25 @@ import { cheats } from '@ifloom/plugin-cheats'
 function cheats(): DefinedPlugin<CheatsState, CheatsView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`CheatsState`](#cheatsstate), [`CheatsView`](#cheatsview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `cheats.use` | `(cheat: string): CommandRef` |  |
-| `cheats.used` | `(cheat?: string): Condition` |  |
+| `cheats.use` | `(cheat: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `cheats.used` | `(cheat?: string):` [`Condition`](/docs/api/engine#condition) |  |
 
 ### cheatsOf
 
 Function. Explained in [Cheats](/docs/plugins/cheats#cheatsof-and-cheatof).
 
-The game's cheats: `data.cheats.cheats`, from its packs.
+The game's cheats: `data.cheats.cheats`, from its content and packs.
 
 ```ts shape
 import { cheatsOf } from '@ifloom/plugin-cheats'
 function cheatsOf(game: Game): CheatDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
 
 ### CheatsState
 
@@ -92,7 +98,7 @@ type CheatsState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `used` | `CheatUse[]` |  |  | Every use of a cheat in this save, oldest first. |
+| `used` | [`CheatUse[]`](#cheatuse) |  |  | Every use of a cheat in this save, oldest first. |
 
 ### CheatsView
 
@@ -110,7 +116,7 @@ type CheatsView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `cheats` | `CheatView[]` |  |  | The cheats the player can see, in the order the game declares them. A blocked one with `hide` is left out. |
+| `cheats` | [`CheatView[]`](#cheatview) |  |  | The cheats the player can see, in the order the game declares them. A blocked one with `hide` is left out. |
 | `used` | `number` |  |  | How many cheats this save has used in all. |
 
 ### CheatUse
@@ -154,7 +160,7 @@ type CheatView = {
 | `group` | `string \| null` |  |  | The heading it goes under, or null. |
 | `once` | `'game' \| 'turn' \| null` |  |  | How often it can be used, as its `once` says: `'game'`, `'turn'`, or null for any number of times. |
 | `used` | `number` |  |  | How many times this save has used it. |
-| `button` | `RenderedChoice` |  |  | The button that uses it: greyed out with its reason while blocked or, for a `once` cheat, after its use. |
+| `button` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that uses it: greyed out with its reason while blocked or, for a `once` cheat, after its use. |
 
 ## @ifloom/plugin-cheats/react
 
@@ -236,10 +242,10 @@ type CheatsControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `cheats` | `CheatView[]` |  |  | The cheats the player can see, in the order the game declares them. A blocked one with `hide` is left out. |
+| `cheats` | [`CheatView[]`](#cheatview) |  |  | The cheats the player can see, in the order the game declares them. A blocked one with `hide` is left out. |
 | `used` | `number` |  |  | How many cheats this save has used in all. |
-| `groups` | `CheatGroup[]` |  |  | The cheats by their `group`, in the order each group first appears; the ungrouped ones first. |
-| `use` | `(cheat: string) => Result<GameState>` |  |  | Use a cheat: sends `cheats/use`, refused with the reason its button gives. |
+| `groups` | [`CheatGroup[]`](#cheatgroup) |  |  | The cheats by their `group`, in the order each group first appears; the ungrouped ones first. |
+| `use` | `(cheat: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Use a cheat: sends `cheats/use`, refused with the reason its button gives. |
 
 ### cheatsUi
 
@@ -254,6 +260,8 @@ import { cheatsUi } from '@ifloom/plugin-cheats/react'
 const cheatsUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useCheats
 
 Function. Explained in [Cheats](/docs/plugins/cheats#usecheats).
@@ -264,3 +272,5 @@ The cheats plugin's view with its command, or null in a game without the plugin.
 import { useCheats } from '@ifloom/plugin-cheats/react'
 function useCheats(): CheatsControls | null
 ```
+
+Uses: [`CheatsControls`](#cheatscontrols).

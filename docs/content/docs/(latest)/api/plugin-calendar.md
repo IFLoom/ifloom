@@ -21,14 +21,16 @@ import { calendar } from '@ifloom/plugin-calendar'
 function calendar(options?: CalendarOptions): DefinedPlugin<CalendarState, CalendarView>
 ```
 
+Uses: [`CalendarOptions`](#calendaroptions), [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`CalendarState`](#calendarstate), [`CalendarView`](#calendarview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `calendar.sleep` | `(): CommandRef` |  |
-| `calendar.pass` | `(n?: number): EffectRef` |  |
-| `calendar.period` | `(...ids: string[]): Condition` |  |
-| `calendar.weekday` | `(...days: number[]): Condition` |  |
-| `calendar.weekend` | `(): Condition` |  |
-| `calendar.day` | `(range: Range): Condition` |  |
+| `calendar.sleep` | `():` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `calendar.pass` | `(n?: number):` [`EffectRef`](/docs/api/engine#effectref) |  |
+| `calendar.period` | `(...ids: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `calendar.weekday` | `(...days: number[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `calendar.weekend` | `():` [`Condition`](/docs/api/engine#condition) |  |
+| `calendar.day` | `(range:` [`Range`](/docs/api/engine#range)`):` [`Condition`](/docs/api/engine#condition) |  |
 
 ### CalendarOptions
 
@@ -49,13 +51,13 @@ type CalendarOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `periods` | `(string \| PeriodDef)[]` | yes |  | The periods of a day, in order. Morning, afternoon, evening, night and late if left out. |
+| `periods` | `(string \|` [`PeriodDef`](#perioddef)`)[]` | yes |  | The periods of a day, in order. Morning, afternoon, evening, night and late if left out. |
 | `week` | `number` | yes |  | Days in a week. 7 if left out. |
 | `weekend` | `number[]` | yes |  | Which days of the week are the weekend, counting from 0. The last two if left out. |
 | `turn` | `'period' \| 'day' \| 'week' \| false` | yes |  | What a turn is: one `'period'`, one `'day'` (the default) or one `'week'`. Passing time ends a turn at each boundary it crosses, and a turn ended any other way moves the clock to the start of the next. `false`: the clock and the turn go their own ways. |
 | `start` | `{ day?: number; period?: string }` | yes |  | Where a new game starts: day 0 and the first period if left out. |
 | `sleep` | `{ from?: string[]; wake?: string } \| false` | yes |  | The `sleep` command: the periods it can be used from (the last three if left out) and the one it wakes in, the next day (the first if left out). `false`: no sleep command. |
-| `curfew` | `Condition \| false` | yes |  | While this holds, passing time over the end of the day is warned against and refused — the player is to go to bed instead. Always, if left out; `false`, never. |
+| `curfew` | [`Condition`](/docs/api/engine#condition) `\| false` | yes |  | While this holds, passing time over the end of the day is warned against and refused — the player is to go to bed instead. Always, if left out; `false`, never. |
 
 ### CalendarState
 
@@ -147,6 +149,8 @@ import { calendarUi } from '@ifloom/plugin-calendar/react'
 const calendarUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useCalendar
 
 Function. Explained in [Calendar](/docs/plugins/calendar#usecalendar).
@@ -157,3 +161,5 @@ The calendar plugin's view, piece by piece: the day, the weekday, the period and
 import { useCalendar } from '@ifloom/plugin-calendar/react'
 function useCalendar(): CalendarView | null
 ```
+
+Uses: [`CalendarView`](#calendarview).

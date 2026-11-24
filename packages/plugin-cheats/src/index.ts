@@ -58,7 +58,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'cheats'
 
-/** The plugin's content: `data.cheats.cheats`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `cheats`, as content writes it in `data.cheats.cheats` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   cheats: list<CheatDef>({ noun: 'cheat', words: { name: true, description: true, blocked: [{ reason: true }], effects: 'effects' } }),
 })
@@ -75,7 +75,7 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** A cheat, as content declares it in a pack's `data.cheats.cheats`. */
+/** A cheat in the game's content: one entry of `data.cheats.cheats`, the plugin's list of cheats. */
 export type CheatDef = {
   id: string
   /** What the player reads, on its button: "+20 coins". */
@@ -133,7 +133,7 @@ export type CheatsView = {
   used: number
 }
 
-/** The game's cheats: `data.cheats.cheats`, from its packs. */
+/** The game's cheats: `data.cheats.cheats`, from its content and packs. */
 export function cheatsOf(game: Game): CheatDef[] {
   return DATA.cheats.all(game)
 }
@@ -187,7 +187,7 @@ function cheatsView(state: GameState, context: PluginContext<CheatsState>): Chea
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put cheats in a pack's
+ * The plugin. Add it to the game's `plugins`, and put cheats in the content's
  * `data.cheats.cheats`.
  */
 function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
@@ -210,7 +210,7 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
       used: (_state, { cheat }, { slice }) => timesUsed(slice, cheat) > 0,
     },
     values: {
-      /** <code v-pre>{{cheats/used}}</code>: how many times this save has used a cheat; with `cheat`, that one. */
+      /** `{{cheats/used}}`: how many times this save has used a cheat; with `cheat`, that one. */
       used: (_state, args, { slice }) => timesUsed(slice, typeof args.cheat === 'string' ? args.cheat : undefined),
     },
     commands: {

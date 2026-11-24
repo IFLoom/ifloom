@@ -112,7 +112,7 @@ export type QuestsView = {
 
 const ID = 'quests'
 
-/** The plugin's content: `data.quests.quests`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `quests`, as content writes it in `data.quests.quests` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   quests: list<QuestDef>({ noun: 'quest', words: { name: true, description: true, stages: [{ hint: true }] } }),
 })
@@ -156,7 +156,7 @@ function emptyState(): QuestsState {
   return { started: {}, reached: {}, done: {}, tracked: null, seen: {} }
 }
 
-/** The game's quests: `data.quests.quests`, from its packs. */
+/** The game's quests: `data.quests.quests`, from its content and packs. */
 export function questsOf(game: Game): QuestDef[] {
   return DATA.quests.all(game)
 }
@@ -282,7 +282,7 @@ function questsView(record: QuestsState, game: Game, state: GameState): QuestsVi
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put quests in a pack's
+ * The plugin. Add it to the game's `plugins`, and put quests in the content's
  * `data.quests.quests`.
  */
 function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
@@ -348,7 +348,7 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
       },
     },
     values: {
-      /** <code v-pre>{{quests/updates}}</code>: quests with news, for a badge. */
+      /** `{{quests/updates}}`: quests with news, for a badge. */
       updates: (state, _args, { slice, game }) => updatesIn(advance(slice, state, game), game),
     },
     onCommand: (_before, after, { slice, set, game }) => {

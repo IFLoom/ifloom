@@ -55,6 +55,8 @@ import { Beat } from '@ifloom/react'
 const Beat: ComponentType<{ beat: SceneBeat; }>
 ```
 
+Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
+
 ## BeatGroup
 
 Const. Explained in [Components](/docs/react/components#beatgroup).
@@ -70,6 +72,8 @@ it still come in on time.
 import { BeatGroup } from '@ifloom/react'
 const BeatGroup: ComponentType<{ section: BlockUi & { readonly [hint: string]: unknown; }; children: ReactNode; }>
 ```
+
+Uses: [`BlockUi`](/docs/api/engine#blockui).
 
 ## BehaviourOptions
 
@@ -89,7 +93,7 @@ type BehaviourOptions = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
 
 ## ChangeItem
@@ -106,6 +110,8 @@ entity's stat and `data-dir="up"` or `"down"`.
 import { ChangeItem } from '@ifloom/react'
 const ChangeItem: ComponentType<{ change: ChangeView; }>
 ```
+
+Uses: [`ChangeView`](/docs/api/engine#changeview).
 
 ## Changes
 
@@ -144,6 +150,8 @@ import { checkUiHints } from '@ifloom/react'
 function checkUiHints(game: Game, options?: CheckUiOptions): string[]
 ```
 
+Uses: [`Game`](/docs/api/engine#game), [`CheckUiOptions`](#checkuioptions).
+
 ## CheckUiOptions
 
 Type. Explained in [Presentation hints](/docs/react/hints#checkuioptions).
@@ -161,8 +169,8 @@ type CheckUiOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `plugins` | `readonly PluginUi[]` | yes |  | The plugin UIs the game draws with (the same list it gives `mountGame`): their `hints` and `inline` pieces are known. |
-| `inline` | `InlineComponents` | yes |  | The game's own inline pieces (the same object you give `mountGame` or the `GameProvider`). |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs the game draws with (the same list it gives `mountGame`): their `hints` and `inline` pieces are known. |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own inline pieces (the same object you give `mountGame` or the `GameProvider`). |
 | `allow` | `readonly string[]` | yes |  | Hints and inline names that aren't reported (`['mood']`, say, for another UI's). |
 
 ## ChoiceButton
@@ -180,6 +188,8 @@ import { ChoiceButton } from '@ifloom/react'
 const ChoiceButton: ComponentType<{ choice: RenderedChoice; className?: string; }>
 ```
 
+Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
+
 ## ChoiceList
 
 Const. Explained in [Components](/docs/react/components#choicelist).
@@ -190,6 +200,8 @@ A list of choices or actions, one per row. `part` names it for styling: `'choice
 import { ChoiceList } from '@ifloom/react'
 const ChoiceList: ComponentType<{ choices: RenderedChoice[]; className?: string; part?: 'actions' | 'choices'; }>
 ```
+
+Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 ## Classes
 
@@ -660,6 +672,8 @@ import { Countdown } from '@ifloom/react'
 const Countdown: ComponentType<CountdownProps>
 ```
 
+Uses: [`CountdownProps`](#countdownprops).
+
 ## CountdownProps
 
 Type. Explained in [Components](/docs/react/components#countdownprops).
@@ -731,6 +745,8 @@ import { DiceOverlay } from '@ifloom/react'
 const DiceOverlay: ComponentType<{ rolls: readonly Roll[]; className?: string; }>
 ```
 
+Uses: [`Roll`](/docs/api/engine#roll).
+
 ## DiceRoll
 
 Const. Explained in [Components](/docs/react/components#diceroll).
@@ -748,6 +764,8 @@ import { DiceRoll } from '@ifloom/react'
 const DiceRoll: ComponentType<DiceRollProps>
 ```
 
+Uses: [`DiceRollProps`](#dicerollprops).
+
 ## DiceRollProps
 
 Type. Explained in [Components](/docs/react/components#dicerollprops).
@@ -763,7 +781,7 @@ type DiceRollProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `roll` | `Roll` |  |  | The roll to draw, from `view.rolls`: its dice, each die's face and its total. |
+| `roll` | [`Roll`](/docs/api/engine#roll) |  |  | The roll to draw, from `view.rolls`: its dice, each die's face and its total. |
 | `animate` | `boolean` | yes |  | Tumble before settling. True if left out; the motion option or a player's reduced-motion setting turns it off whatever this says. |
 | `className` | `string` | yes |  |  |
 
@@ -811,6 +829,8 @@ import { Game } from '@ifloom/react'
 const Game: ComponentType<GameProps>
 ```
 
+Uses: [`GameProps`](#gameprops).
+
 ## GameContextValue
 
 Type. Explained in [Components](/docs/react/components#gamecontextvalue).
@@ -832,15 +852,15 @@ type GameContextValue = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `runner` | `Runner` |  |  | The runner the game was mounted with. |
-| `mods` | `ModsOption` | yes |  | The mods option the game was mounted with, for the mods page; undefined for a game without mods. |
-| `snapshot` | `RunnerSnapshot` |  |  | Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. |
-| `view` | `View` |  |  | The view, as `snapshot.view`. |
-| `send` | `(command: CommandRef) => Result<GameState>` |  |  | Run a command, a plain one or a plugin's in short as its helpers write it (`shop.buy('counter', 'food:bun')`). Returns what `runner.apply` returned, so a caller can show a refusal. |
-| `panels` | `Record<string, PanelComponent>` |  |  | The panels the UI draws by name: the plugin UIs' with the game's own over them. |
-| `inline` | `InlineComponents` |  |  | The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. |
-| `sections` | `Record<string, PluginSectionComponent>` |  |  | The renderers for plugin sections in apps, by plugin id: the plugin UIs' with the game's own over them. |
-| `plugins` | `readonly PluginUi[]` |  |  | The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. |
+| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner the game was mounted with. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | The mods option the game was mounted with, for the mods page; undefined for a game without mods. |
+| `snapshot` | [`RunnerSnapshot`](/docs/api/engine#runnersnapshot) |  |  | Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. |
+| `view` | [`View`](/docs/api/engine#view) |  |  | The view, as `snapshot.view`. |
+| `send` | `(command:` [`CommandRef`](/docs/api/engine#commandref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Run a command, a plain one or a plugin's in short as its helpers write it (`shop.buy('counter', 'food:bun')`). Returns what `runner.apply` returned, so a caller can show a refusal. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` |  |  | The panels the UI draws by name: the plugin UIs' with the game's own over them. |
+| `inline` | [`InlineComponents`](#inlinecomponents) |  |  | The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` |  |  | The renderers for plugin sections in apps, by plugin id: the plugin UIs' with the game's own over them. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) |  |  | The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. |
 
 ## GameMenu
 
@@ -885,6 +905,8 @@ import { GameProvider } from '@ifloom/react'
 function GameProvider(props: GameProviderProps): JSX.Element
 ```
 
+Uses: [`GameProviderProps`](#gameproviderprops).
+
 ## GameProviderProps
 
 Type. Explained in [Components](/docs/react/components#gameproviderprops).
@@ -910,18 +932,18 @@ type GameProviderProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `components` | `Components` | yes |  | Replacements for built-in components, by name. |
-| `classes` | `Classes` | yes |  | Classes for parts, by `data-part` name. |
+| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
 | `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `runner` | `Runner` |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
-| `plugins` | `readonly PluginUi[]` | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
-| `panels` | `Record<string, PanelComponent>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
-| `inline` | `InlineComponents` | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
-| `sections` | `Record<string, PluginSectionComponent>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
-| `mods` | `ModsOption` | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
+| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
 | `children` | `ReactNode` |  |  |  |
 
 ## GameShell
@@ -939,6 +961,8 @@ entirely.
 import { GameShell } from '@ifloom/react'
 function GameShell(props: GameShellProps): JSX.Element
 ```
+
+Uses: [`GameShellProps`](#gameshellprops).
 
 ## GameShellProps
 
@@ -967,21 +991,21 @@ type GameShellProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `sections` | `Record<string, PluginSectionComponent>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
-| `inline` | `InlineComponents` | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
-| `plugins` | `readonly PluginUi[]` | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
-| `components` | `Components` | yes |  | Replacements for built-in components, by name. |
-| `classes` | `Classes` | yes |  | Classes for parts, by `data-part` name. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
+| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
 | `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `runner` | `Runner` |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
-| `panels` | `Record<string, PanelComponent>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
-| `mods` | `ModsOption` | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
+| `runner` | [`Runner`](/docs/api/engine#runner) |  |  | The runner to draw and send commands to, such as `browserRunner(game)` or `createRunner(game)`. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
 | `layout` | `ComponentType` | yes |  | The page, as a component: a `Game` with a `Sidebar`, a `Story` and the rest, as in your `src/layout.tsx`, or any component of your own, since `useGame()` and every built-in component work in it. `DefaultLayout` if left out. |
-| `pages` | `boolean \| PagesOptions` | yes |  | The title screen and the pages around the game: `true`, or what they show. Off if left out, and the game starts straight away. With them on, the layout is drawn on the `game` page. |
-| `audio` | `false \| AudioOptions` | yes |  | Sound, through `@ifloom/audio`. It starts on its own when the game lists any tracks in `game.audio`; `false` turns it off, and an object is passed to `startAudio` as its options. |
+| `pages` | `boolean \|` [`PagesOptions`](#pagesoptions) | yes |  | The title screen and the pages around the game: `true`, or what they show. Off if left out, and the game starts straight away. With them on, the layout is drawn on the `game` page. |
+| `audio` | `false \|` [`AudioOptions`](/docs/api/audio#audiooptions) | yes |  | Sound, through `@ifloom/audio`. It starts on its own when the game lists any tracks in `game.audio`; `false` turns it off, and an object is passed to `startAudio` as its options. |
 
 ## GateOptions
 
@@ -1034,6 +1058,8 @@ import { Hotspot } from '@ifloom/react'
 const Hotspot: ComponentType<{ hotspot: HotspotView; }>
 ```
 
+Uses: [`HotspotView`](/docs/api/engine#hotspotview).
+
 ## InlineAction
 
 Const. Explained in [Components](/docs/react/components#inlineaction).
@@ -1050,6 +1076,8 @@ import { InlineAction } from '@ifloom/react'
 const InlineAction: ComponentType<{ text: string; choice: RenderedChoice; className?: string; }>
 ```
 
+Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
+
 ## InlineComponent
 
 Type. Explained in [Components](/docs/react/components#inlinecomponent-and-inlineprops).
@@ -1060,6 +1088,8 @@ A component that draws an inline piece of the prose named `N`.
 import type { InlineComponent } from '@ifloom/react'
 type InlineComponent<N extends string = string> = ComponentType<InlineProps<N>>
 ```
+
+Uses: [`InlineProps`](#inlineprops).
 
 ## InlineComponents
 
@@ -1087,11 +1117,11 @@ Its fields are the keys of `{ [N in keyof InlineUi]?: InlineComponent<N> } & { [
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `modal` | `InlineComponent<'modal'>` | yes |  | `[[ui:modal\|words\|key]]`: the words open a dialog showing the prose line `key`, titled `title` if given, else the words. |
-| `image` | `InlineComponent<'image'>` | yes |  | `[[ui:image\|words\|path]]`: the words open the picture at `path` (resolved as `[[img:…]]` resolves it) in the viewer, described by `alt`. |
-| `mail` | `InlineComponent<'mail'>` | yes |  | `[[ui:mail\|body\|From: Ava\|Subject: Hello]]`: a letter or an email, its header lines as written, then the body. A paragraph of its own. |
-| `prop` | `InlineComponent<'prop'>` | yes |  | `[[ui:prop\|words\|sticky]]`: a note in the story's world, by its face (`sticky`, `clip` or `diary`). A paragraph of its own. |
-| `mono` | `InlineComponent<'mono'>` | yes |  | `[[ui:mono\|words]]`: words in a typewriter face, such as a sign or a screen. |
+| `modal` | [`InlineComponent`](#inlinecomponent)`<'modal'>` | yes |  | `[[ui:modal\|words\|key]]`: the words open a dialog showing the prose line `key`, titled `title` if given, else the words. |
+| `image` | [`InlineComponent`](#inlinecomponent)`<'image'>` | yes |  | `[[ui:image\|words\|path]]`: the words open the picture at `path` (resolved as `[[img:…]]` resolves it) in the viewer, described by `alt`. |
+| `mail` | [`InlineComponent`](#inlinecomponent)`<'mail'>` | yes |  | `[[ui:mail\|body\|From: Ava\|Subject: Hello]]`: a letter or an email, its header lines as written, then the body. A paragraph of its own. |
+| `prop` | [`InlineComponent`](#inlinecomponent)`<'prop'>` | yes |  | `[[ui:prop\|words\|sticky]]`: a note in the story's world, by its face (`sticky`, `clip` or `diary`). A paragraph of its own. |
+| `mono` | [`InlineComponent`](#inlinecomponent)`<'mono'>` | yes |  | `[[ui:mono\|words]]`: words in a typewriter face, such as a sign or a screen. |
 
 ## InlineImage
 
@@ -1109,6 +1139,8 @@ import { InlineImage } from '@ifloom/react'
 function InlineImage(props: InlineProps<'image'>): JSX.Element
 ```
 
+Uses: [`InlineProps`](#inlineprops).
+
 ## InlineMail
 
 Component. Explained in [Components](/docs/react/components#inlinemail).
@@ -1123,6 +1155,8 @@ Written as a paragraph of its own, it draws as one. Replace it with a
 import { InlineMail } from '@ifloom/react'
 function InlineMail(props: InlineProps<'mail'>): JSX.Element
 ```
+
+Uses: [`InlineProps`](#inlineprops).
 
 ## InlineModal
 
@@ -1141,6 +1175,8 @@ import { InlineModal } from '@ifloom/react'
 function InlineModal(props: InlineProps<'modal'>): JSX.Element
 ```
 
+Uses: [`InlineProps`](#inlineprops).
+
 ## InlineMono
 
 Component. Explained in [Components](/docs/react/components#inlinemono).
@@ -1151,6 +1187,8 @@ The built-in `mono`, from `[[ui:mono|words]]`: the words in a typewriter face, a
 import { InlineMono } from '@ifloom/react'
 function InlineMono(props: InlineProps<'mono'>): JSX.Element
 ```
+
+Uses: [`InlineProps`](#inlineprops).
 
 ## InlineProp
 
@@ -1165,6 +1203,8 @@ as one. Replace it with a `prop` of your own in `inline`.
 import { InlineProp } from '@ifloom/react'
 function InlineProp(props: InlineProps<'prop'>): JSX.Element
 ```
+
+Uses: [`InlineProps`](#inlineprops).
 
 ## InlineProps
 
@@ -1187,7 +1227,7 @@ type InlineProps<N extends string = string> = {
 |---|---|---|---|---|
 | `name` | `N` |  |  | The piece's name, as `[[ui:name\|…]]` wrote it. |
 | `text` | `string` |  |  | Its words, the second part. |
-| `args` | `InlineUiArgs<N>` |  |  | The parts after its words, typed by the name's entry in `InlineUi`. |
+| `args` | [`InlineUiArgs`](/docs/api/engine#inlineuiargs)`<N>` |  |  | The parts after its words, typed by the name's entry in `InlineUi`. |
 
 ## InlineTrigger
 
@@ -1213,6 +1253,8 @@ One input: a text box, a number box, or the options to pick from. Shows the engi
 import { InputField } from '@ifloom/react'
 const InputField: ComponentType<{ input: InputView; }>
 ```
+
+Uses: [`InputView`](/docs/api/engine#inputview).
 
 ## InputFields
 
@@ -1240,6 +1282,8 @@ drops it.
 import { Inventory } from '@ifloom/react'
 const Inventory: ComponentType<InventoryProps>
 ```
+
+Uses: [`InventoryProps`](#inventoryprops).
 
 ## InventoryProps
 
@@ -1286,7 +1330,7 @@ type KeyOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `map` | `Record<string, Command>` | yes |  | Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the command each sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces what that key does. |
+| `map` | `Record<string,` [`Command`](/docs/api/engine#command)`>` | yes |  | Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the command each sends. They come before the built-in keys, so mapping `'1'` or `'Escape'` replaces what that key does. |
 
 ## LayeredPicture
 
@@ -1302,6 +1346,8 @@ while the game's pictures setting is off, since its hotspots are play.
 import { LayeredPicture } from '@ifloom/react'
 const LayeredPicture: ComponentType<{ picture: PictureView; className?: string; }>
 ```
+
+Uses: [`PictureView`](/docs/api/engine#pictureview).
 
 ## LoadPage
 
@@ -1327,6 +1373,8 @@ import { MediaViewer } from '@ifloom/react'
 const MediaViewer: ComponentType<MediaViewerProps>
 ```
 
+Uses: [`MediaViewerProps`](#mediaviewerprops).
+
 ## MediaViewerProps
 
 Type. Explained in [Components](/docs/react/components#mediaviewerprops-and-viewermedia).
@@ -1342,7 +1390,7 @@ type MediaViewerProps = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `media` | `ViewerMedia` |  |  | The picture or video to show. |
+| `media` | [`ViewerMedia`](#viewermedia) |  |  | The picture or video to show. |
 | `open` | `boolean` |  |  | Whether it's showing. |
 | `onOpenChange` | `(open: boolean) => void` |  |  | Called with false when the player closes it. |
 
@@ -1374,8 +1422,8 @@ type MinigameControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `minigame` | `MinigameView \| null` |  |  | The minigame being played, as the view has it, or `null`. |
-| `send` | `(input: string) => ReturnType<Runner['apply']>` |  |  | Press one of its inputs. Returns what `apply` returned, so a refusal can be shown. |
+| `minigame` | [`MinigameView`](/docs/api/engine#minigameview) `\| null` |  |  | The minigame being played, as the view has it, or `null`. |
+| `send` | `(input: string) => ReturnType<`[`Runner`](/docs/api/engine#runner)`['apply']>` |  |  | Press one of its inputs. Returns what `apply` returned, so a refusal can be shown. |
 
 ## ModManager
 
@@ -1412,7 +1460,7 @@ type ModsOption = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `store` | `Mods` |  |  | Where the player's mods are kept: `mods(game.id, driver)` from `@ifloom/engine`, over the same driver as the saves. |
+| `store` | [`Mods`](/docs/api/engine#mods) |  |  | Where the player's mods are kept: `mods(game.id, driver)` from `@ifloom/engine`, over the same driver as the saves. |
 | `problems` | `string[]` | yes |  | The loader's problems, as `describeProblem` writes them; the ones starting `mod:<id> ` are shown under that mod. |
 | `onChange` | `() => void` | yes |  | Build the game again with the mods as they now are — usually `() => location.reload()`. |
 
@@ -1440,7 +1488,7 @@ type ModsState = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `available` | `boolean` |  |  | False when the provider was given no `mods`. |
-| `list` | `InstalledMod[]` |  |  | The mods the player has added. |
+| `list` | [`InstalledMod[]`](/docs/api/engine#installedmod) |  |  | The mods the player has added. |
 | `add` | `(file: File) => Promise<boolean>` |  |  | Add a mod from a file. True if it was added; otherwise `message` says why. |
 | `toggle` | `(id: string) => Promise<void>` |  |  | Turn a mod on or off. |
 | `remove` | `(id: string) => Promise<void>` |  |  | Remove a mod. |
@@ -1464,6 +1512,8 @@ drawn, for anything the game wants to drive itself.
 import { mountGame } from '@ifloom/react'
 function mountGame(loaded: Game | { game: Game; problems?: readonly unknown[] }, options?: MountOptions): Promise<Runner>
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`MountOptions`](#mountoptions), [`Runner`](/docs/api/engine#runner).
 
 ## MountOptions
 
@@ -1494,23 +1544,23 @@ type MountOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `audio` | `false \| AudioOptions` | yes |  | Sound, through `@ifloom/audio`. It starts on its own when the game lists any tracks in `game.audio`; `false` turns it off, and an object is passed to `startAudio` as its options. |
-| `sections` | `Record<string, PluginSectionComponent>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
-| `inline` | `InlineComponents` | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
-| `plugins` | `readonly PluginUi[]` | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
-| `components` | `Components` | yes |  | Replacements for built-in components, by name. |
-| `classes` | `Classes` | yes |  | Classes for parts, by `data-part` name. |
+| `audio` | `false \|` [`AudioOptions`](/docs/api/audio#audiooptions) | yes |  | Sound, through `@ifloom/audio`. It starts on its own when the game lists any tracks in `game.audio`; `false` turns it off, and an object is passed to `startAudio` as its options. |
+| `sections` | `Record<string,` [`PluginSectionComponent`](#pluginsectioncomponent)`>` | yes |  | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). |
+| `inline` | [`InlineComponents`](#inlinecomponents) | yes |  | The game's own components for `[[ui:name\|words\|arg\|…]]` in its prose, by name. One here goes over a built-in one of the same name (`modal`, `image`); a name nothing draws shows its words. |
+| `plugins` | `readonly` [`PluginUi[]`](/docs/api/react-kit#pluginui) | yes |  | The plugin UIs to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the rest apply, and the default layout places what they bring, in this order. One for a plugin the game doesn't have does nothing. Leave a plugin out to draw it yourself. |
+| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
 | `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `panels` | `Record<string, PanelComponent>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
-| `mods` | `ModsOption` | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
+| `panels` | `Record<string,` [`PanelComponent`](#panelcomponent)`>` | yes |  | The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. |
+| `mods` | [`ModsOption`](#modsoption) | yes |  | Mods the player can add, turn off or remove. Leave out for a game without mods. |
 | `layout` | `ComponentType` | yes |  | The page, as a component: a `Game` with a `Sidebar`, a `Story` and the rest, as in your `src/layout.tsx`, or any component of your own, since `useGame()` and every built-in component work in it. `DefaultLayout` if left out. |
-| `pages` | `boolean \| PagesOptions` | yes |  | The title screen and the pages around the game: `true`, or what they show. Off if left out, and the game starts straight away. With them on, the layout is drawn on the `game` page. |
+| `pages` | `boolean \|` [`PagesOptions`](#pagesoptions) | yes |  | The title screen and the pages around the game: `true`, or what they show. Off if left out, and the game starts straight away. With them on, the layout is drawn on the `game` page. |
 | `root` | `string \| Element` | yes |  | Where to draw it: an element, or a selector for one. `'#root'` if left out. |
-| `start` | `GameState` | yes |  | The state to start from. A new game with a random seed if left out. |
-| `runner` | `RunnerOptions` | yes |  | Merged over the defaults: undo 50 deep, saves in localStorage, an autosave each turn. |
+| `start` | [`GameState`](/docs/api/engine#gamestate) | yes |  | The state to start from. A new game with a random seed if left out. |
+| `runner` | [`RunnerOptions`](/docs/api/engine#runneroptions) | yes |  | Merged over the defaults: undo 50 deep, saves in localStorage, an autosave each turn. |
 
 ## Notice
 
@@ -1522,6 +1572,8 @@ One notice: its picture, title and text, and a button to dismiss it.
 import { Notice } from '@ifloom/react'
 const Notice: ComponentType<{ notice: NoticeView; }>
 ```
+
+Uses: [`NoticeView`](/docs/api/engine#noticeview).
 
 ## Notices
 
@@ -1687,9 +1739,9 @@ type PagesOptions = {
 |---|---|---|---|---|
 | `subtitle` | `string` | yes |  | A line under the title. |
 | `art` | `string` | yes |  | A picture for the title screen, by its path. |
-| `credits` | `Credit[]` | yes |  | Lines and links for the credits page. No Credits button without them. |
-| `gate` | `GateOptions` | yes |  | A notice shown before the title screen until the player confirms it. |
-| `pages` | `Record<string, PageDef>` | yes |  | Pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, goes over it. |
+| `credits` | [`Credit[]`](#credit) | yes |  | Lines and links for the credits page. No Credits button without them. |
+| `gate` | [`GateOptions`](#gateoptions) | yes |  | A notice shown before the title screen until the player confirms it. |
+| `pages` | `Record<string,` [`PageDef`](#pagedef)`>` | yes |  | Pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, goes over it. |
 
 ## PageState
 
@@ -1713,12 +1765,12 @@ type PageState = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `enabled` | `boolean` |  |  | False when the game was mounted without `pages`: the game is all there is. |
-| `page` | `Page` |  |  | The page showing. |
-| `from` | `Page \| null` |  |  | The page under this one, which `back` returns to; null at the title, the gate or the game. |
-| `go` | `(page: Page) => void` |  |  | Show a page. `title`, `game` and `gate` start afresh; any other goes on top of the one showing. |
+| `page` | [`Page`](#page) |  |  | The page showing. |
+| `from` | [`Page`](#page) `\| null` |  |  | The page under this one, which `back` returns to; null at the title, the gate or the game. |
+| `go` | `(page:` [`Page`](#page)`) => void` |  |  | Show a page. `title`, `game` and `gate` start afresh; any other goes on top of the one showing. |
 | `back` | `() => void` |  |  | Return to the page under this one, or the title screen if there is none. |
-| `options` | `PagesOptions` |  |  | The options the pages were set up with. |
-| `added` | `Readonly<Record<string, PageDef>>` |  |  | Every page added to the built-in ones, by id: the plugin UIs' (`achievements`, say) and the game's own `pages` over them. |
+| `options` | [`PagesOptions`](#pagesoptions) |  |  | The options the pages were set up with. |
+| `added` | `Readonly<Record<string,` [`PageDef`](#pagedef)`>>` |  |  | Every page added to the built-in ones, by id: the plugin UIs' (`achievements`, say) and the game's own `pages` over them. |
 
 ## PanelComponent
 
@@ -1949,6 +2001,8 @@ type PartKey =
   | Extract<keyof PartNames, string>
 ```
 
+Uses: [`PartNames`](#partnames).
+
 ## PartNames
 
 Type. Explained in [Components](/docs/react/components#overridablecomponents-and-partnames).
@@ -2002,6 +2056,8 @@ import { Plugins } from '@ifloom/react'
 function Plugins(props: { at: PluginSpot }): JSX.Element | null
 ```
 
+Uses: [`PluginSpot`](#pluginspot).
+
 ## PluginSectionComponent
 
 Type. Explained in [Components](/docs/react/components#pluginsectioncomponent).
@@ -2042,6 +2098,8 @@ import { PriceTag } from '@ifloom/react'
 const PriceTag: ComponentType<{ price: Price; className?: string; }>
 ```
 
+Uses: [`Price`](/docs/api/engine#price).
+
 ## Reveal
 
 Type.
@@ -2059,7 +2117,7 @@ type Reveal = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `delay` | `number` | yes |  | Milliseconds to wait after the reveal before it, or after the scene comes on. |
-| `as` | `TransitionName` | yes |  | How the block comes in. |
+| `as` | [`TransitionName`](#transitionname) | yes |  | How the block comes in. |
 
 ## RevealBeat
 
@@ -2078,9 +2136,9 @@ type RevealBeat = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `beat` | `SceneBeat` |  |  |  |
+| `beat` | [`SceneBeat`](/docs/api/engine#scenebeat) |  |  |  |
 | `index` | `number` |  |  | Its index in `view.scene.beats`. |
-| `roll` | `Roll` | yes |  | The roll its `ui.dice` names, drawn settled, when it isn't new. |
+| `roll` | [`Roll`](/docs/api/engine#roll) | yes |  | The roll its `ui.dice` names, drawn settled, when it isn't new. |
 
 ## RevealGroup
 
@@ -2099,9 +2157,9 @@ type RevealGroup = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `reveal` | `RevealPoint \| null` |  |  | The reveal that holds this run back, or null for the first run, shown with the screen. |
-| `dice` | `Roll` | yes |  | A new roll whose dice tumble before this run, which waits for them to settle: the one its first beat's `ui.dice` names. |
-| `beats` | `RevealBeat[]` |  |  | The run's beats, in order. |
+| `reveal` | [`RevealPoint`](#revealpoint) `\| null` |  |  | The reveal that holds this run back, or null for the first run, shown with the screen. |
+| `dice` | [`Roll`](/docs/api/engine#roll) | yes |  | A new roll whose dice tumble before this run, which waits for them to settle: the one its first beat's `ui.dice` names. |
+| `beats` | [`RevealBeat[]`](#revealbeat) |  |  | The run's beats, in order. |
 
 ## RevealPoint
 
@@ -2121,7 +2179,7 @@ type RevealPoint = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `delay` | `number` |  |  | Milliseconds since the run before. |
-| `as` | `TransitionName` |  |  | How the run comes in. |
+| `as` | [`TransitionName`](#transitionname) |  |  | How the run comes in. |
 | `at` | `number` |  |  | When it comes, in milliseconds from the screen coming on. |
 
 ## RoomActions
@@ -2178,9 +2236,9 @@ type SavesState = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `available` | `boolean` |  |  | False when the runner was made without `saves`: there is nothing to list. |
-| `saving` | `SavingView` |  |  | Whether the game lets the player save now, and why not: `view.saving`. Loading is always allowed. |
-| `slots` | `SaveMeta[]` |  |  | Every save that can be read, newest first, as the runner's snapshot lists them. |
-| `broken` | `BrokenSave[]` |  |  | Saves that are there but can't be read, with why. They can only be deleted. |
+| `saving` | [`SavingView`](/docs/api/engine#savingview) |  |  | Whether the game lets the player save now, and why not: `view.saving`. Loading is always allowed. |
+| `slots` | [`SaveMeta[]`](/docs/api/engine#savemeta) |  |  | Every save that can be read, newest first, as the runner's snapshot lists them. |
+| `broken` | [`BrokenSave[]`](/docs/api/engine#brokensave) |  |  | Saves that are there but can't be read, with why. They can only be deleted. |
 | `save` | `(name?: string) => Promise<boolean>` |  |  | Save in a new slot (the next free number), with the player's `name` for it if given. True if it was written. |
 | `overwrite` | `(slot: string) => Promise<boolean>` |  |  | Save over an existing slot. True if it was written. |
 | `load` | `(slot: string) => Promise<boolean>` |  |  | Load a slot. True if it loaded. |
@@ -2257,6 +2315,8 @@ import { SceneHeader } from '@ifloom/react'
 const SceneHeader: ComponentType<{ scene: { id: string | null; key: string; title: string; body: string; beats: SceneBeat[]; fresh: number; tags: string[]; speaker: SpeakerView | null; image: string | null; picture: PictureView | null; choices: RenderedChoice[]; ui?: Ui<SceneUi>; }; }>
 ```
 
+Uses: [`SceneBeat`](/docs/api/engine#scenebeat), [`SpeakerView`](/docs/api/engine#speakerview), [`PictureView`](/docs/api/engine#pictureview), [`RenderedChoice`](/docs/api/engine#renderedchoice), [`Ui`](/docs/api/engine#ui), [`SceneUi`](/docs/api/engine#sceneui).
+
 ## SceneRolls
 
 Type. Explained in [Components](/docs/react/components#scenerolls).
@@ -2274,8 +2334,8 @@ type SceneRolls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `all` | `readonly Roll[]` |  |  | The rolls the last command made: `view.rolls`. |
-| `fresh` | `readonly Roll[]` |  |  | The rolls the command that led here made, whose dice tumble. Empty for a screen that wasn't new. |
+| `all` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The rolls the last command made: `view.rolls`. |
+| `fresh` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | The rolls the command that led here made, whose dice tumble. Empty for a screen that wasn't new. |
 | `at` | `number` |  |  | A count that moves on with each new set of rolls: key the dice by it, so a new set tumbles again. |
 
 ## SceneTiming
@@ -2303,17 +2363,17 @@ type SceneTiming = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `view` | `View` |  |  | The view drawn. |
+| `view` | [`View`](/docs/api/engine#view) |  |  | The view drawn. |
 | `motion` | `boolean` |  |  | Whether transitions, reveals and tumbling dice play: the `motion` option, unless the player asks for reduced motion. |
-| `transition` | `ScreenTransition` |  |  | How this screen comes in and goes out. `key` is `view.scene.key`: key the screen's element by it. |
-| `leave` | `{ out?: TransitionName; ms?: number }` |  |  | How the screen before goes, when the choice that led here says (its `out` and `ms`), over that screen's own. |
-| `groups` | `RevealGroup[]` |  |  | The scene's beats in runs: those shown with the screen, then each that waits for a reveal or for dice. Empty while a minigame runs. |
+| `transition` | [`ScreenTransition`](#screentransition) |  |  | How this screen comes in and goes out. `key` is `view.scene.key`: key the screen's element by it. |
+| `leave` | `{ out?:` [`TransitionName`](#transitionname)`; ms?: number }` |  |  | How the screen before goes, when the choice that led here says (its `out` and `ms`), over that screen's own. |
+| `groups` | [`RevealGroup[]`](#revealgroup) |  |  | The scene's beats in runs: those shown with the screen, then each that waits for a reveal or for dice. Empty while a minigame runs. |
 | `last` | `number` |  |  | When the last run comes, in milliseconds from the screen coming on; 0 with none. The choices come with it. |
 | `pending` | `boolean` |  |  | Whether runs are still to come: until then the choices can't be pressed, and a click or a key calls `skip`. |
 | `revealed` | `boolean` |  |  | Whether the player skipped the wait, or every run came in. Dice drawn after it show settled. |
 | `skip` | `() => void` |  |  | Show everything at once. |
-| `rolls` | `SceneRolls` |  |  | The rolls on screen. |
-| `unnamed` | `readonly Roll[]` |  |  | New rolls that no beat on screen names, for a moment over the scene (`DiceOverlay`). |
+| `rolls` | [`SceneRolls`](#scenerolls) |  |  | The rolls on screen. |
+| `unnamed` | `readonly` [`Roll[]`](/docs/api/engine#roll) |  |  | New rolls that no beat on screen names, for a moment over the scene (`DiceOverlay`). |
 
 ## ScreenTransition
 
@@ -2334,8 +2394,8 @@ type ScreenTransition = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `key` | `string` |  |  | `view.scene.key`: key the screen's element by it, so a new screen is a new element. |
-| `in` | `TransitionName` |  |  | How this screen comes in. |
-| `out` | `TransitionName` |  |  | How it goes out. |
+| `in` | [`TransitionName`](#transitionname) |  |  | How this screen comes in. |
+| `out` | [`TransitionName`](#transitionname) |  |  | How it goes out. |
 | `ms` | `number` |  |  | How long each takes, in milliseconds. |
 
 ## Section
@@ -2356,6 +2416,8 @@ when its children draw nothing (the plugin isn't there, the list is empty).
 import { Section } from '@ifloom/react'
 const Section: ComponentType<SectionProps>
 ```
+
+Uses: [`SectionProps`](#sectionprops).
 
 ## SectionProps
 
@@ -2383,7 +2445,7 @@ type SectionProps = {
 | `collapsible` | `boolean` | yes |  | Fold in place with a button on its title. The player's choice is remembered. |
 | `dialog` | `boolean` | yes |  | Draw a button that opens the children in a dialog, instead of the children. |
 | `open` | `boolean` | yes |  | Open at first, for a folding section: true if left out. The player's last choice wins. |
-| `when` | `Condition` | yes |  | Only while this condition holds, such as `{ 'places/at': { location: 'home' } }`. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Only while this condition holds, such as `{ 'places/at': { location: 'home' } }`. |
 | `badge` | `ReactNode` | yes |  | Something small after the title: a count, a "new". |
 | `className` | `string` | yes |  |  |
 | `children` | `ReactNode` | yes |  |  |
@@ -2419,6 +2481,8 @@ picks something, unless a dialog it opened is still open.
 import { Sidebar } from '@ifloom/react'
 const Sidebar: ComponentType<SidebarProps>
 ```
+
+Uses: [`SidebarProps`](#sidebarprops).
 
 ## SidebarProps
 
@@ -2463,6 +2527,8 @@ import { StatGauge } from '@ifloom/react'
 function StatGauge(props: { stat: StatView }): JSX.Element
 ```
 
+Uses: [`StatView`](/docs/api/engine#statview).
+
 ## StatList
 
 Const. Explained in [Components](/docs/react/components#statlist).
@@ -2493,6 +2559,8 @@ pictures and panels keep the whole width.
 import { Story } from '@ifloom/react'
 const Story: ComponentType<StoryProps>
 ```
+
+Uses: [`StoryProps`](#storyprops).
 
 ## StoryProps
 
@@ -2530,8 +2598,8 @@ type StyleOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `components` | `Components` | yes |  | Replacements for built-in components, by name. |
-| `classes` | `Classes` | yes |  | Classes for parts, by `data-part` name. |
+| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
 | `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
 
 ## TEXT_SIZES
@@ -2626,8 +2694,8 @@ type Transition = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `in` | `TransitionName` | yes |  | How the new screen comes in. |
-| `out` | `TransitionName` | yes |  | How the screen before goes out. |
+| `in` | [`TransitionName`](#transitionname) | yes |  | How the new screen comes in. |
+| `out` | [`TransitionName`](#transitionname) | yes |  | How the screen before goes out. |
 | `ms` | `number` | yes |  | How long each takes, in milliseconds. |
 
 ## TransitionName
@@ -2672,11 +2740,11 @@ type UiOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `components` | `Components` | yes |  | Replacements for built-in components, by name. |
-| `classes` | `Classes` | yes |  | Classes for parts, by `data-part` name. |
+| `components` | [`Components`](#components) | yes |  | Replacements for built-in components, by name. |
+| `classes` | [`Classes`](#classes) | yes |  | Classes for parts, by `data-part` name. |
 | `unstyled` | `boolean` | yes |  | Drop every built-in class. The structure and the `data-part`s stay, for your own styles. |
 | `viewer` | `boolean` | yes |  | Let the player click a picture or a video in the story to see it large. On if left out. |
-| `keys` | `boolean \| KeyOptions` | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
+| `keys` | `boolean \|` [`KeyOptions`](#keyoptions) | yes |  | Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for the menu, and any keys of the game's own in `map`. Off if left out. A minigame's keys work either way. |
 | `motion` | `boolean` | yes |  | Play scene transitions and prose reveals (the `ui.transition` and `ui.reveal` hints). On if left out. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
 
 ## UiProvider
@@ -2689,6 +2757,8 @@ Gives the components below it a game's `components`, `classes`, `unstyled`, `vie
 import { UiProvider } from '@ifloom/react'
 function UiProvider(props: UiOptions & { children: ReactNode }): JSX.Element
 ```
+
+Uses: [`UiOptions`](#uioptions).
 
 ## UiStringKey
 
@@ -2776,6 +2846,8 @@ import { useAudio } from '@ifloom/react'
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
+Uses: [`AudioOptions`](/docs/api/audio#audiooptions), [`Runner`](/docs/api/engine#runner), [`AudioPlayer`](/docs/api/audio#audioplayer).
+
 ## useBacklog
 
 Function. Explained in [Components](/docs/react/components#usebacklog).
@@ -2786,6 +2858,8 @@ The backlog's entries, oldest first, as the runner's snapshot has them. Empty un
 import { useBacklog } from '@ifloom/react'
 function useBacklog(): readonly BacklogEntry[]
 ```
+
+Uses: [`BacklogEntry`](/docs/api/engine#backlogentry).
 
 ## useClock
 
@@ -2798,6 +2872,8 @@ import { useClock } from '@ifloom/react'
 function useClock(): ClockState
 ```
 
+Uses: [`ClockState`](#clockstate).
+
 ## useGame
 
 Function. Explained in [Components](/docs/react/components#usegame).
@@ -2808,6 +2884,8 @@ The runner, its snapshot, the current view and `send`. Only inside a `GameProvid
 import { useGame } from '@ifloom/react'
 function useGame(): GameContextValue
 ```
+
+Uses: [`GameContextValue`](#gamecontextvalue).
 
 ## useHolds
 
@@ -2827,6 +2905,8 @@ import { useHolds } from '@ifloom/react'
 function useHolds(condition: Condition | undefined): boolean
 ```
 
+Uses: [`Condition`](/docs/api/engine#condition).
+
 ## useMinigame
 
 Function. Explained in [Components](/docs/react/components#useminigame).
@@ -2840,6 +2920,8 @@ import { useMinigame } from '@ifloom/react'
 function useMinigame(options?: { keys?: boolean }): MinigameControls
 ```
 
+Uses: [`MinigameControls`](#minigamecontrols).
+
 ## useMods
 
 Function. Explained in [Components](/docs/react/components#usemods).
@@ -2850,6 +2932,8 @@ The mod manager without the look: the list, adding, toggling and removing, and r
 import { useMods } from '@ifloom/react'
 function useMods(): ModsState
 ```
+
+Uses: [`ModsState`](#modsstate).
 
 ## useMotion
 
@@ -2873,6 +2957,8 @@ import { usePage } from '@ifloom/react'
 function usePage(): PageState
 ```
 
+Uses: [`PageState`](#pagestate).
+
 ## usePart
 
 Function. Explained in [Components](/docs/react/components#usepart).
@@ -2884,6 +2970,8 @@ the built-in classes; `extra` is a `className` a caller passed, added last.
 import { usePart } from '@ifloom/react'
 function usePart(name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; className: string }
 ```
+
+Uses: [`PartKey`](#partkey).
 
 ## usePicturesShown
 
@@ -2908,6 +2996,8 @@ The plugin UIs the game in context has, in the order of its `plugins` list.
 import { usePluginUis } from '@ifloom/react'
 function usePluginUis(): readonly PluginUi[]
 ```
+
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ## useProfile
 
@@ -2943,6 +3033,8 @@ import { useSaves } from '@ifloom/react'
 function useSaves(): SavesState
 ```
 
+Uses: [`SavesState`](#savesstate).
+
 ## useScene
 
 Function. Explained in [Components](/docs/react/components#usescene).
@@ -2970,6 +3062,8 @@ import { useScene } from '@ifloom/react'
 function useScene(): SceneTiming
 ```
 
+Uses: [`SceneTiming`](#scenetiming).
+
 ## useSetting
 
 Function. Explained in [Components](/docs/react/components#usesetting).
@@ -2983,6 +3077,8 @@ import { useSetting } from '@ifloom/react'
 function useSetting(id: string): KvValue | undefined
 ```
 
+Uses: [`KvValue`](/docs/api/engine#kvvalue).
+
 ## useTimer
 
 Function. Explained in [Components](/docs/react/components#usetimer-and-usetimers).
@@ -2994,6 +3090,8 @@ import { useTimer } from '@ifloom/react'
 function useTimer(id: string): TimerView | null
 ```
 
+Uses: [`TimerView`](/docs/api/engine#timerview).
+
 ## useTimers
 
 Function. Explained in [Components](/docs/react/components#usetimer-and-usetimers).
@@ -3004,6 +3102,8 @@ The running timers, as `view.timers` has them, in the order they started.
 import { useTimers } from '@ifloom/react'
 function useTimers(): TimerView[]
 ```
+
+Uses: [`TimerView`](/docs/api/engine#timerview).
 
 ## useWords
 
@@ -3017,6 +3117,8 @@ import { useWords } from '@ifloom/react'
 function useWords(): Say
 function useWords<W extends Words>(words: W): Say<(keyof W & string) | UiStringKey>
 ```
+
+Uses: [`Say`](#say), [`Words`](#words), [`UiStringKey`](#uistringkey).
 
 ## Video
 
@@ -3033,6 +3135,8 @@ volume setting, else the `sfx` channel's.
 import { Video } from '@ifloom/react'
 const Video: ComponentType<VideoProps>
 ```
+
+Uses: [`VideoProps`](#videoprops).
 
 ## VideoProps
 
@@ -3075,6 +3179,8 @@ import type { ViewerMedia } from '@ifloom/react'
 type ViewerMedia = Extract<SceneBeat, { type: 'image' } | { type: 'video' }>
 ```
 
+Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
+
 ## When
 
 Const. Explained in [Components](/docs/react/components#when).
@@ -3085,6 +3191,8 @@ Its children while `condition` holds, and nothing otherwise. `useHolds` is the s
 import { When } from '@ifloom/react'
 const When: ComponentType<{ condition: Condition; children?: ReactNode; }>
 ```
+
+Uses: [`Condition`](/docs/api/engine#condition).
 
 ## WithPages
 
@@ -3098,6 +3206,8 @@ uses it, so a layout needn't.
 import { WithPages } from '@ifloom/react'
 function WithPages(props: { pages?: boolean | PagesOptions; children: ReactNode }): JSX.Element
 ```
+
+Uses: [`PagesOptions`](#pagesoptions).
 
 ## Words
 

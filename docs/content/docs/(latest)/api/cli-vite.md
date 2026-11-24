@@ -15,6 +15,8 @@ Function.
 function ifloom(options?: IfloomViteOptions): UserConfig
 ```
 
+Uses: [`IfloomViteOptions`](#ifloomviteoptions).
+
 ## IfloomViteOptions
 
 Type. Explained in [The CLI](/docs/cli#ifloomviteoptions).

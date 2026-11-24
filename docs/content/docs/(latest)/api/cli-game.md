@@ -22,7 +22,7 @@ type BuildOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocked` | `Pack[]` |  |  | Packs to pass to `loadGame` as `{ packs }`. `ifloom check` passes the game's `src/unlocks/` content here; empty otherwise. |
+| `unlocked` | [`Pack[]`](/docs/api/engine#pack) |  |  | Packs to pass to `loadGame` as `{ packs }`. `ifloom check` passes the game's `src/unlocks/` content here; empty otherwise. |
 
 ## defineGame
 
@@ -42,6 +42,8 @@ import { defineGame } from '@ifloom/cli/game'
 function defineGame(def: GameModuleDef): GameModule
 ```
 
+Uses: [`GameModuleDef`](/docs/api/cli#gamemoduledef), [`GameModule`](/docs/api/cli#gamemodule).
+
 ## explorer
 
 Function. Explained in [The CLI](/docs/cli#explorer).
@@ -58,6 +60,8 @@ game, so it shows what a curious player meets — not a route through the story.
 import { explorer } from '@ifloom/cli/game'
 function explorer(): Policy
 ```
+
+Uses: [`Policy`](/docs/api/cli#policy).
 
 ## GameModule
 
@@ -77,10 +81,10 @@ type GameModule = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `start` | `(game: Game) => GameState` | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
-| `probes` | `(game: Game) => Probe[]` | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
-| `policy` | `Policy` | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
-| `build` | `(options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }` |  |  | Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
+| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
+| `policy` | [`Policy`](/docs/api/cli#policy) | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
+| `build` | `(options?: Partial<`[`BuildOptions`](/docs/api/cli#buildoptions)`>) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. |
 
 ## GameModuleDef
 
@@ -100,10 +104,10 @@ type GameModuleDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `build` | `(options: BuildOptions) => { game: Game; problems: Problem[] }` |  |  | Build the game: what `loadGame` returns, its `game` and its `problems`. |
-| `start` | `(game: Game) => GameState` | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
-| `probes` | `(game: Game) => Probe[]` | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
-| `policy` | `Policy` | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
+| `build` | `(options:` [`BuildOptions`](/docs/api/cli#buildoptions)`) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Build the game: what `loadGame` returns, its `game` and its `problems`. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
+| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
+| `policy` | [`Policy`](/docs/api/cli#policy) | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
 
 ## Policy
 
@@ -115,6 +119,8 @@ Picks the next command from what is on screen, or null to stop.
 import type { Policy } from '@ifloom/cli/game'
 type Policy = (screen: View, state: GameState, game: Game) => CommandRef | null
 ```
+
+Uses: [`View`](/docs/api/engine#view), [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`CommandRef`](/docs/api/engine#commandref).
 
 ## Probe
 
@@ -133,7 +139,7 @@ type Probe = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `name` | `string` |  |  | What the problems it finds are named by: `'evening, after the café'`. |
-| `state` | `GameState` |  |  | The state to render every scene against. |
+| `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state to render every scene against. |
 
 ## probe
 
@@ -153,6 +159,8 @@ import { probe } from '@ifloom/cli/game'
 function probe(name: string, game: Game, steps: readonly ProbeStep[], from?: Probe | GameState): Probe
 ```
 
+Uses: [`Game`](/docs/api/engine#game), [`ProbeStep`](/docs/api/cli#probestep), [`Probe`](/docs/api/engine#probe), [`GameState`](/docs/api/engine#gamestate).
+
 ## ProbeStep
 
 Type. Explained in [The CLI](/docs/cli#probestep).
@@ -164,3 +172,5 @@ One step of a probe: an effect, applied as content applies it, or
 import type { ProbeStep } from '@ifloom/cli/game'
 type ProbeStep = Effect | { play: CommandRef }
 ```
+
+Uses: [`Effect`](/docs/api/engine#effect), [`CommandRef`](/docs/api/engine#commandref).

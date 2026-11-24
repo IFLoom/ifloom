@@ -41,7 +41,7 @@ Builds the plugin, with the id `cheats`. A new game has used no cheats.
 
 ## Writing cheats
 
-Cheats are content. They go in your content's [`data`](/docs/reference/loader#content) under `cheats.cheats`, and are merged by id, so a mod can add one or replace one. These are the showcase's two:
+Cheats are content. They go in your content's [`data`](/docs/reference/loader#content) under `cheats.cheats` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of cheats) and are merged by id, so a mod can add one or replace one. These are the showcase's two:
 
 ```ts
 import type { Content } from '@ifloom/engine'

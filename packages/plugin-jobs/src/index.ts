@@ -87,7 +87,7 @@ export type FireDef = {
   when?: Condition
 }
 
-/** A job, as content declares it. */
+/** A job in the game's content: one entry of `data.jobs.jobs`, the plugin's list of jobs. */
 export type JobDef = {
   id: string
   /** What the player reads: "Weekend help". */
@@ -192,7 +192,7 @@ const ID = 'jobs'
 /** The panel a UI draws the job board in. */
 const PANEL = 'jobs'
 
-/** The plugin's content: `data.jobs.jobs`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `jobs`, as content writes it in `data.jobs.jobs` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   jobs: list<JobDef>({
     noun: 'job',
@@ -232,7 +232,7 @@ function emptyState(): JobsState {
   return { held: {}, fired: {} }
 }
 
-/** The game's jobs: `data.jobs.jobs`, from its packs. */
+/** The game's jobs: `data.jobs.jobs`, from its content and packs. */
 export function jobsOf(game: Game): JobDef[] {
   return DATA.jobs.all(game)
 }
@@ -421,7 +421,7 @@ function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put jobs in a pack's
+ * The plugin. Add it to the game's `plugins`, and put jobs in the content's
  * `data.jobs.jobs`.
  */
 function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
@@ -531,9 +531,9 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
     onCommand: review,
     values: {
       /**
-       * <code v-pre>{{jobs/rank job=barista}}</code>: the name of the rank the player holds at
+       * `{{jobs/rank job=barista}}`: the name of the rank the player holds at
        * the job, such as "Head barista"; '' when not hired, so a fallback shows:
-       * <code v-pre>{{jobs/rank job=barista|out of work}}</code>.
+       * `{{jobs/rank job=barista|out of work}}`.
        */
       rank: (_state, args, { slice, game }) => {
         const job = DATA.jobs.get(game, args.job)

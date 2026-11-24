@@ -152,7 +152,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'feed'
 
-/** The plugin's content: `data.feed.feeds` and `data.feed.posts`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's two lists, as content writes them in `data.feed.feeds` and `data.feed.posts` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   feeds: list<FeedDef>({ noun: 'feed', words: { name: true } }),
   posts: list<PostDef>({ noun: 'post', words: { body: 'blocks' } }),
@@ -195,7 +195,7 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's posts: `data.feed.posts`, from its packs. */
+/** The game's posts: `data.feed.posts`, from its content and packs. */
 export function postsOf(game: Game): PostDef[] {
   return DATA.posts.all(game)
 }
@@ -214,14 +214,14 @@ const drawn = (beats: SceneBeat[]) => ({ text: wordsOf(beats), beats })
 /** Beats' words, as a line of text. */
 const wordsOf = (beats: readonly SceneBeat[]) => beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n')
 
-/** The game's feeds, in order: `data.feed.feeds`, from its packs. */
+/** The game's feeds, in order: `data.feed.feeds`, from its content and packs. */
 export function feedsOf(game: Game): FeedDef[] {
   return DATA.feeds.all(game)
 }
 
 /**
  * The plugin. Add it to the game's `plugins`, and put the feeds and other
- * people's posts in a pack's `data.feed.feeds` and `data.feed.posts`, so a
+ * people's posts in the content's `data.feed.feeds` and `data.feed.posts`, so a
  * mod can add either.
  */
 function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
@@ -329,7 +329,7 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     values: {
       /**
        * Posts the player hasn't looked at: in every feed, or in one with
-       * `{ feed }`. <code v-pre>{{feed/unread feed=social}}</code>, or a
+       * `{ feed }`. `{{feed/unread feed=social}}`, or a
        * badge's `{ value: 'feed/unread', with: { feed: 'social' } }`.
        */
       unread: (_state, args, { slice, game }) =>

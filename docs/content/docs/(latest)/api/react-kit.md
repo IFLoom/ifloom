@@ -29,6 +29,8 @@ import { Badge } from '@ifloom/react/kit'
 function Badge(props: BadgeProps): JSX.Element
 ```
 
+Uses: [`BadgeProps`](#badgeprops).
+
 ## BadgeProps
 
 Type. Explained in [Components](/docs/react/components#badgeprops).
@@ -59,6 +61,8 @@ Component. Explained in [Components](/docs/react/components#button).
 import { Button } from '@ifloom/react/kit'
 function Button(props: ButtonProps): JSX.Element
 ```
+
+Uses: [`ButtonProps`](#buttonprops).
 
 ## ButtonProps
 
@@ -173,6 +177,8 @@ import { DialogContent } from '@ifloom/react/kit'
 function DialogContent(props: DialogContentProps): JSX.Element
 ```
 
+Uses: [`DialogContentProps`](#dialogcontentprops).
+
 ## DialogContentProps
 
 Type. Explained in [Components](/docs/react/components#dialogcontentprops).
@@ -249,8 +255,8 @@ type HintCheckContext = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `game` | `Game` |  |  | The loaded game, for a hint that names something in it. |
-| `on` | `UiTarget` |  |  | What the hint is written on: a scene, a choice, a block, a stat, an entity or the game. |
+| `game` | [`Game`](/docs/api/engine#game) |  |  | The loaded game, for a hint that names something in it. |
+| `on` | [`UiTarget`](/docs/api/engine#uitarget) |  |  | What the hint is written on: a scene, a choice, a block, a stat, an entity or the game. |
 | `id` | `string` | yes |  | The id of what it's written on: a stat's, a scene's, a choice's, a kind's or an entity's reference. |
 | `transitions` | `ReadonlySet<string>` |  |  | `TRANSITIONS` and the game's own `ui.transitionNames`. |
 
@@ -264,6 +270,8 @@ One of the UI's icons. Replace it in `components` to use your own set everywhere
 import { Icon } from '@ifloom/react/kit'
 const Icon: ComponentType<{ name: IconName; label?: string; }>
 ```
+
+Uses: [`IconName`](#iconname).
 
 ## IconName
 
@@ -309,6 +317,8 @@ restyles them by `data-kit`, and a game by `classes` or its own CSS.
 import { KIT_LOOKS } from '@ifloom/react/kit'
 const KIT_LOOKS: Readonly<Record<KitPart, string>>
 ```
+
+Uses: [`KitPart`](#kitpart).
 
 ## KIT_PARTS
 
@@ -358,6 +368,8 @@ A built-in component that a game can replace by `name`. Used for every component
 import { overridable } from '@ifloom/react/kit'
 function overridable<P extends object>(name: keyof OverridableComponents, Default: ComponentType<P>): ComponentType<P>
 ```
+
+Uses: [`OverridableComponents`](/docs/api/react#overridablecomponents).
 
 ## Override
 
@@ -411,9 +423,9 @@ type PluginControls<Id extends string, W extends Words> = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `view` | `PluginViewOf<Id> \| undefined` |  |  | The plugin's slice of the view, `view.plugins[id]`, typed; undefined in a game without the plugin. |
-| `words` | `Say<(keyof W & string) \| UiStringKey>` |  |  | Say one of the plugin's words, or the UI's, by key: the game's `ui.<key>` over the English. |
-| `send` | `(command: CommandRef) => Result<GameState>` |  |  | Run a command, as the plugin's helpers write it: `send(shop.buy(vendor, entity))`, or a button's `command` from the view. Returns what `runner.apply` returned, so a caller can show a refusal. |
+| `view` | [`PluginViewOf`](#pluginviewof)`<Id> \| undefined` |  |  | The plugin's slice of the view, `view.plugins[id]`, typed; undefined in a game without the plugin. |
+| `words` | [`Say`](/docs/api/react#say)`<(keyof W & string) \|` [`UiStringKey`](/docs/api/react#uistringkey)`>` |  |  | Say one of the plugin's words, or the UI's, by key: the game's `ui.<key>` over the English. |
+| `send` | `(command:` [`CommandRef`](/docs/api/engine#commandref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Run a command, as the plugin's helpers write it: `send(shop.buy(vendor, entity))`, or a button's `command` from the view. Returns what `runner.apply` returned, so a caller can show a refusal. |
 
 ## PluginKit
 
@@ -452,6 +464,8 @@ import { pluginKit } from '@ifloom/react/kit'
 function pluginKit<const Id extends string, const W extends Words = Record<never, string>>(id: Id, words?: W): PluginKit<Id, W>
 ```
 
+Uses: [`Words`](/docs/api/react#words), [`PluginKit`](#pluginkit).
+
 ## PluginPage
 
 Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginpage).
@@ -489,8 +503,8 @@ type PluginPanel = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `component` | `PanelComponent` |  |  | What it draws, given what the panel was opened with as `data`. |
-| `title` | `string \| ((data: Readonly<Record<string, unknown>>, view: View) => string \| undefined)` | yes |  | The dialog's title: a key of the module's words (or the UI's), or a function of what the panel was opened with and the view. Content's `with.title` goes over it. |
+| `component` | [`PanelComponent`](/docs/api/react#panelcomponent) |  |  | What it draws, given what the panel was opened with as `data`. |
+| `title` | `string \| ((data: Readonly<Record<string, unknown>>, view:` [`View`](/docs/api/engine#view)`) => string \| undefined)` | yes |  | The dialog's title: a key of the module's words (or the UI's), or a function of what the panel was opened with and the view. Content's `with.title` goes over it. |
 
 ## PluginUi
 
@@ -521,15 +535,15 @@ type PluginUi = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | The plugin's id, as its engine side names it. The module does nothing in a game without that plugin. |
-| `words` | `Words` | yes |  | Its words in English, by key. A game rewords any with `ui.<key>` in its strings. |
-| `panels` | `Readonly<Record<string, PluginPanel>>` | yes |  | Panels by name, which `PanelHost` draws when content opens one. A game's own `panels` of the same name go over these. |
-| `layout` | `Readonly<Partial<Record<PluginSpot, readonly ComponentType[]>>>` | yes |  | What the default layout places, by spot. A layout of your own places them with `<Plugins at="…" />`, or draws the components itself. |
-| `sections` | `Readonly<Record<string, PluginSectionComponent>>` | yes |  | Renderers for a plugin's section in a device's app, by that plugin's id. The game's own `sections` go over these. |
-| `inline` | `InlineComponents` | yes |  | Inline pieces it draws, for `[[ui:name\|…]]` in prose. The game's own `inline` go over these. `checkUiHints` knows their names. |
-| `hints` | `readonly UiHint[]` | yes |  | The `ui` hints its components read, declared as `UI_HINTS` declares the React UI's, so `checkUiHints` checks them. |
-| `pages` | `Readonly<Record<string, PluginPage>>` | yes |  | Pages it adds among the pages around the game, by id. A game's own page of the same id goes over it. |
+| `words` | [`Words`](/docs/api/react#words) | yes |  | Its words in English, by key. A game rewords any with `ui.<key>` in its strings. |
+| `panels` | `Readonly<Record<string,` [`PluginPanel`](#pluginpanel)`>>` | yes |  | Panels by name, which `PanelHost` draws when content opens one. A game's own `panels` of the same name go over these. |
+| `layout` | `Readonly<Partial<Record<`[`PluginSpot`](/docs/api/react#pluginspot)`, readonly ComponentType[]>>>` | yes |  | What the default layout places, by spot. A layout of your own places them with `<Plugins at="…" />`, or draws the components itself. |
+| `sections` | `Readonly<Record<string,` [`PluginSectionComponent`](/docs/api/react#pluginsectioncomponent)`>>` | yes |  | Renderers for a plugin's section in a device's app, by that plugin's id. The game's own `sections` go over these. |
+| `inline` | [`InlineComponents`](/docs/api/react#inlinecomponents) | yes |  | Inline pieces it draws, for `[[ui:name\|…]]` in prose. The game's own `inline` go over these. `checkUiHints` knows their names. |
+| `hints` | `readonly` [`UiHint[]`](#uihint) | yes |  | The `ui` hints its components read, declared as `UI_HINTS` declares the React UI's, so `checkUiHints` checks them. |
+| `pages` | `Readonly<Record<string,` [`PluginPage`](#pluginpage)`>>` | yes |  | Pages it adds among the pages around the game, by id. A game's own page of the same id goes over it. |
 | `settings` | `{ label: string; component: ComponentType }` | yes |  | Something for the settings page, such as a code box: drawn there with pages on, and behind a menu button labelled `label` (a key of its words) without them. |
-| `components` | `Components` | yes |  | Built-in components it replaces by name, as a game's `components` do. The game's own go over these. |
+| `components` | [`Components`](/docs/api/react#components) | yes |  | Built-in components it replaces by name, as a game's `components` do. The game's own go over these. |
 | `provider` | `ComponentType<{ children: ReactNode }>` | yes |  | Wraps the game, for state the module keeps beside the runner, such as codes being entered. |
 
 ## PluginViewOf
@@ -543,6 +557,8 @@ in the engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
 import type { PluginViewOf } from '@ifloom/react/kit'
 type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegistry[Id] : unknown
 ```
+
+Uses: [`ViewRegistry`](/docs/api/engine#viewregistry).
 
 ## PROSE
 
@@ -660,8 +676,8 @@ type UiHint = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `name` | `string` |  |  | The key content writes under `ui`. |
-| `on` | `readonly UiTarget[]` |  |  | Where it's written. |
-| `check` | `((value: unknown, cx: HintCheckContext) => string \| readonly string[] \| undefined)` | yes |  | The problems with a value, if any. |
+| `on` | `readonly` [`UiTarget[]`](/docs/api/engine#uitarget) |  |  | Where it's written. |
+| `check` | `((value: unknown, cx:` [`HintCheckContext`](#hintcheckcontext)`) => string \| readonly string[] \| undefined)` | yes |  | The problems with a value, if any. |
 
 ## useDialogParts
 
@@ -673,6 +689,8 @@ The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with `e
 import { useDialogParts } from '@ifloom/react/kit'
 function useDialogParts(extra?: string): { dialog: { 'data-part': PartKey; className: string; }; overlay: { 'data-part': PartKey; className: string; }; title: { 'data-part': PartKey; className: string; }; close: { 'data-part': PartKey; className: string; }; }
 ```
+
+Uses: [`PartKey`](/docs/api/react#partkey).
 
 ## useKitPart
 
@@ -690,6 +708,8 @@ import { useKitPart } from '@ifloom/react/kit'
 function useKitPart(kit: KitPart, name: PartKey, layout?: string, className?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string }
 ```
 
+Uses: [`KitPart`](#kitpart), [`PartKey`](/docs/api/react#partkey).
+
 ## usePageParts
 
 Function.
@@ -700,6 +720,8 @@ The attributes for a page's outer section, as every built-in page has: centred, 
 import { usePageParts } from '@ifloom/react/kit'
 function usePageParts(className?: string, part?: PartKey): { 'data-part': PartKey; className: string; }
 ```
+
+Uses: [`PartKey`](/docs/api/react#partkey).
 
 ## usePlugin
 
@@ -714,3 +736,5 @@ rewording over them, and `send` takes the commands its helpers write.
 import { usePlugin } from '@ifloom/react/kit'
 function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W>
 ```
+
+Uses: [`Words`](/docs/api/react#words), [`PluginKit`](#pluginkit), [`PluginControls`](#plugincontrols).

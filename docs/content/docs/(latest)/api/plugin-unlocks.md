@@ -21,6 +21,8 @@ import { codeFits } from '@ifloom/plugin-unlocks'
 function codeFits(code: string, game: string, def: UnlockDef): Promise<boolean>
 ```
 
+Uses: [`UnlockDef`](#unlockdef).
+
 ### contentScript
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
@@ -31,6 +33,8 @@ The script `ifloom build` puts in the page's head: the encrypted content, by unl
 import { contentScript } from '@ifloom/plugin-unlocks'
 function contentScript(locked: readonly LockedContent[]): string
 ```
+
+Uses: [`LockedContent`](#lockedcontent).
 
 ### enterCode
 
@@ -45,6 +49,8 @@ runner's snapshot says so at `helpers.unlocks`. Never throws.
 import { enterCode } from '@ifloom/plugin-unlocks'
 function enterCode(runner: Runner, code: string): Promise<Result<Entered>>
 ```
+
+Uses: [`Runner`](/docs/api/engine#runner), [`Result`](/docs/api/engine#result), [`Entered`](#entered).
 
 ### Entered
 
@@ -105,6 +111,8 @@ import { lockContent } from '@ifloom/plugin-unlocks'
 function lockContent(code: string, game: string, def: UnlockDef, packs: readonly Pack[]): Promise<LockedContent>
 ```
 
+Uses: [`UnlockDef`](#unlockdef), [`Pack`](/docs/api/engine#pack), [`LockedContent`](#lockedcontent).
+
 ### LockedContent
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#lockedcontent).
@@ -141,6 +149,8 @@ import { lockedContent } from '@ifloom/plugin-unlocks'
 function lockedContent(): Readonly<Record<string, LockedContent>>
 ```
 
+Uses: [`LockedContent`](#lockedcontent).
+
 ### normaliseCode
 
 Function.
@@ -170,11 +180,13 @@ import { startUnlocks } from '@ifloom/plugin-unlocks'
 function startUnlocks(runner: Runner, options?: { content?: Readonly<Record<string, LockedContent>> }): () => void
 ```
 
+Uses: [`Runner`](/docs/api/engine#runner), [`LockedContent`](#lockedcontent).
+
 ### UnlockDef
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockdef).
 
-An unlock, as content declares it in a pack's `data.unlocks.unlocks`.
+An unlock in the game's content: one entry of `data.unlocks.unlocks`, the plugin's list of unlocks.
 
 ```ts shape
 import type { UnlockDef } from '@ifloom/plugin-unlocks'
@@ -213,6 +225,8 @@ import { unlockedPacks } from '@ifloom/plugin-unlocks'
 function unlockedPacks(game: string, profile: Profile, content?: Readonly<Record<string, LockedContent>>): Promise<{ packs: Pack[]; problems: string[] }>
 ```
 
+Uses: [`Profile`](/docs/api/engine#profile), [`LockedContent`](#lockedcontent), [`Pack`](/docs/api/engine#pack).
+
 ### unlockHash
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
@@ -224,6 +238,8 @@ The hash of a code for an unlock, in hex: what goes in the unlock's `hash`.
 import { unlockHash } from '@ifloom/plugin-unlocks'
 function unlockHash(code: string, game: string, def: Pick<UnlockDef, 'id' | 'salt' | 'iterations'>): Promise<string>
 ```
+
+Uses: [`UnlockDef`](#unlockdef).
 
 ### unlocks
 
@@ -237,21 +253,25 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 function unlocks(): DefinedPlugin<UnlocksState, UnlocksView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`UnlocksState`](#unlocksstate), [`UnlocksView`](#unlocksview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `unlocks.has` | `(unlock: string): Condition` |  |
-| `unlocks.record` | `(unlock: string): CommandRef` |  |
+| `unlocks.has` | `(unlock: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `unlocks.record` | `(unlock: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
 
 ### unlocksOf
 
 Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
 
-The game's unlocks: `data.unlocks.unlocks`, from its packs.
+The game's unlocks: `data.unlocks.unlocks`, from its content and packs.
 
 ```ts shape
 import { unlocksOf } from '@ifloom/plugin-unlocks'
 function unlocksOf(game: Game): UnlockDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`UnlockDef`](#unlockdef).
 
 ### UnlocksProfile
 
@@ -299,7 +319,7 @@ type UnlockStatus = {
 |---|---|---|---|---|
 | `status` | `'idle' \| 'checking' \| 'wrong' \| 'unlocked'` |  |  | `checking` while a code is checked (which takes a moment on purpose) and while the codes the profile remembers are, as codes start; `wrong` when the last code didn't work; `unlocked` when it did; `idle` otherwise. |
 | `reason` | `string \| null` |  |  | Why the last code didn't work, while `status` is `wrong`; null otherwise. |
-| `entered` | `Entered \| null` |  |  | What the last code unlocked, while `status` is `unlocked`; null otherwise. |
+| `entered` | [`Entered`](#entered) `\| null` |  |  | What the last code unlocked, while `status` is `unlocked`; null otherwise. |
 
 ### UnlocksView
 
@@ -318,7 +338,7 @@ type UnlocksView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocks` | `UnlockView[]` |  |  | Every unlock, in the order the game declares them. |
+| `unlocks` | [`UnlockView[]`](#unlockview) |  |  | Every unlock, in the order the game declares them. |
 | `unlocked` | `number` |  |  | How many are unlocked. |
 | `total` | `number` |  |  | How many unlocks the game declares. |
 
@@ -396,13 +416,13 @@ type UnlocksControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocks` | `UnlockView[]` |  |  | Every unlock, in the order the game declares them. |
+| `unlocks` | [`UnlockView[]`](#unlockview) |  |  | Every unlock, in the order the game declares them. |
 | `unlocked` | `number` |  |  | How many are unlocked. |
 | `total` | `number` |  |  | How many unlocks the game declares. |
 | `available` | `boolean` |  |  | Whether codes can be entered: codes have started on the runner (the unlocks UI starts them). |
 | `enter` | `(code: string) => Promise<boolean>` |  |  | Try a code with `enterCode`. True if it unlocked something; `entered` says what, or `message` why not. |
 | `checking` | `boolean` |  |  | True while a code is being checked, which takes a moment on purpose: the snapshot's `helpers.unlocks.status`. |
-| `entered` | `Entered \| null` |  |  | What the last code unlocked, or null. |
+| `entered` | [`Entered`](#entered) `\| null` |  |  | What the last code unlocked, or null. |
 | `message` | `string \| null` |  |  | Why the last code didn't work, or null. |
 | `restart` | `(() => void) \| undefined` |  |  | Build the game again with what a code just opened: `onChange` from `unlocksUiWith`, when the last code needs it. Undefined otherwise. |
 | `problems` | `string[]` |  |  | What couldn't be opened of the content the profile remembers (a code that has changed since). |
@@ -436,6 +456,8 @@ import { unlocksUi } from '@ifloom/plugin-unlocks/react'
 const unlocksUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### UnlocksUiOptions
 
 Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksuioptions).
@@ -455,7 +477,7 @@ type UnlocksUiOptions = {
 |---|---|---|---|---|
 | `problems` | `string[]` | yes |  | What `unlockedPacks` said it couldn't open, shown under the code box. |
 | `onChange` | `() => void` | yes |  | Build the game again with the content a code has just opened: usually `() => location.reload()`. |
-| `start` | `(runner: Runner) => () => void` | yes |  | How codes start on the runner: `startUnlocks` if left out. Returns the way to stop them. |
+| `start` | `(runner:` [`Runner`](/docs/api/engine#runner)`) => () => void` | yes |  | How codes start on the runner: `startUnlocks` if left out. Returns the way to stop them. |
 
 ### unlocksUiWith
 
@@ -469,6 +491,8 @@ calls once a code has opened content the game in play doesn't have yet.
 import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'
 function unlocksUiWith(options?: UnlocksUiOptions): PluginUi
 ```
+
+Uses: [`UnlocksUiOptions`](#unlocksuioptions), [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useUnlocks
 
@@ -485,3 +509,5 @@ UI starts them), `available` is false and the list still shows.
 import { useUnlocks } from '@ifloom/plugin-unlocks/react'
 function useUnlocks(): UnlocksControls | null
 ```
+
+Uses: [`UnlocksControls`](#unlockscontrols).

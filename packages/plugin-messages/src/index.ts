@@ -228,7 +228,7 @@ const DUE = 'messages.due'
 /** How long a notice's line can be, in characters, before it is cut. */
 const NOTICE_LENGTH = 80
 
-/** The plugin's content: `data.messages.channels` and `data.messages.messages`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's two lists, as content writes them in `data.messages.channels` and `data.messages.messages` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   channels: list<Channel>({ noun: 'channel', words: { name: true } }),
   messages: list<MessageDef>({ noun: 'message', words: { body: 'blocks', effects: 'effects', replies: [{ label: true, effects: 'effects' }] } }),
@@ -269,7 +269,7 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's messages: `data.messages.messages`, from its packs. */
+/** The game's messages: `data.messages.messages`, from its content and packs. */
 export function messagesOf(game: Game): MessageDef[] {
   return DATA.messages.all(game)
 }
@@ -352,14 +352,14 @@ const empty = (): MessagesState => ({ arrived: [], replied: {}, repliedOn: {}, r
 /** Whether a condition's arguments give any bound of a range. */
 const ranged = (args: Range) => args.gte !== undefined || args.gt !== undefined || args.lte !== undefined || args.lt !== undefined
 
-/** The game's channels, in order: `data.messages.channels`, from its packs. */
+/** The game's channels, in order: `data.messages.channels`, from its content and packs. */
 export function channelsOf(game: Game): Channel[] {
   return DATA.channels.all(game)
 }
 
 /**
  * The plugin. Add it to the game's `plugins`, and put the channels and the
- * messages in a pack's `data.messages.channels` and `data.messages.messages`,
+ * messages in the content's `data.messages.channels` and `data.messages.messages`,
  * so a mod can add either.
  */
 function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
@@ -516,7 +516,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
     values: {
       /**
        * Unread messages: in every channel, or in one with `{ channel }`.
-       * <code v-pre>{{messages/unread channel=texts}}</code>, or a badge's
+       * `{{messages/unread channel=texts}}`, or a badge's
        * `{ value: 'messages/unread', with: { channel: 'texts' } }`.
        */
       unread: (_state, args, { slice, game }) => unreadIn(slice, game, args.channel === undefined ? undefined : String(args.channel)),

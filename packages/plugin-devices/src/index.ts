@@ -183,7 +183,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'devices'
 
-/** The plugin's content: `data.devices.devices` and `data.devices.apps`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's two lists, as content writes them in `data.devices.devices` and `data.devices.apps` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, {
   devices: list<DeviceDef>({ noun: 'device', words: { name: true } }),
   apps: list<AppDef>({ noun: 'app', words: { name: true, blocked: [{ reason: true }], sections: [{ blocks: 'blocks', actions: ['button'] }] } }),
@@ -205,19 +205,19 @@ const CALLS = defineCalls(ID, {
   },
 })
 
-/** The game's devices: `data.devices.devices`, from its packs. */
+/** The game's devices: `data.devices.devices`, from its content and packs. */
 export function devicesOf(game: Game): DeviceDef[] {
   return DATA.devices.all(game)
 }
 
-/** The game's apps, on every device: `data.devices.apps`, from its packs. */
+/** The game's apps, on every device: `data.devices.apps`, from its content and packs. */
 export function appsOf(game: Game): AppDef[] {
   return DATA.apps.all(game)
 }
 
 /**
  * The plugin. Add it to the game's `plugins`, and put the devices and the
- * apps on them in a pack's `data.devices.devices` and `data.devices.apps`, so
+ * apps on them in the content's `data.devices.devices` and `data.devices.apps`, so
  * a mod can add an app or a device.
  */
 function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {

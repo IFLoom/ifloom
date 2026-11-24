@@ -118,7 +118,7 @@ const ID = 'wardrobe'
 const WEARABLE = 'wardrobe/wearable'
 const CLOSET = 'wardrobe/closet'
 
-/** The plugin's content: `data.wardrobe.slots`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `slots`, as content writes it in `data.wardrobe.slots` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, { slots: list<WardrobeSlot>({ noun: 'slot', words: { label: true } }) })
 
 /** The plugin's calls, and what each takes. */

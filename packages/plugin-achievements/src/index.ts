@@ -30,7 +30,7 @@ import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
  */
 export type ProgressDef = { value: Amount; target: number }
 
-/** An achievement, as content declares it. */
+/** An achievement in the game's content: one entry of `data.achievements.achievements`, the plugin's list of achievements. */
 export type AchievementDef = {
   id: string
   /** What the player reads: "First loaf". */
@@ -90,7 +90,7 @@ export type AchievementsView = {
 
 const ID = 'achievements'
 
-/** The plugin's content: `data.achievements.achievements`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `achievements`, as content writes it in `data.achievements.achievements` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, { achievements: list<AchievementDef>({ noun: 'achievement', words: { name: true, description: true } }) })
 
 /** The plugin's calls, and what each takes. */
@@ -122,7 +122,7 @@ function emptyState(): AchievementsState {
   return { earned: {} }
 }
 
-/** The game's achievements: `data.achievements.achievements`, from its packs. */
+/** The game's achievements: `data.achievements.achievements`, from its content and packs. */
 export function achievementsOf(game: Game): AchievementDef[] {
   return DATA.achievements.all(game)
 }
@@ -192,8 +192,8 @@ function profileIds(stored: unknown): string[] {
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put achievements in a
- * pack's `data.achievements.achievements`.
+ * The plugin. Add it to the game's `plugins`, and put achievements in the
+ * content's `data.achievements.achievements`.
  */
 function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView> {
   return definePlugin<AchievementsState, AchievementsView, typeof CALLS>({
@@ -217,7 +217,7 @@ function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView
       },
     },
     values: {
-      /** <code v-pre>{{achievements/earned}}</code>: how many this save has earned. */
+      /** `{{achievements/earned}}`: how many this save has earned. */
       earned: (_state, _args, { slice }) => Object.keys(slice.earned).length,
     },
     onCommand: (_before, after, { slice, set, game }) => {

@@ -47,7 +47,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'unlocks'
 
-/** The plugin's content: `data.unlocks.unlocks`, with the words a player reads in each, for a translation's `words` table. */
+/** The plugin's one list, `unlocks`, as content writes it in `data.unlocks.unlocks` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
 const DATA = defineData(ID, { unlocks: list<UnlockDef>({ noun: 'unlock', words: { name: true, description: true } }) })
 
 /** The plugin's calls, and what each takes. */
@@ -65,7 +65,7 @@ const CALLS = defineCalls(ID, {
 /** Where the page keeps the encrypted content `ifloom build` puts in it. */
 const GLOBAL = '__ifloomUnlocks'
 
-/** An unlock, as content declares it in a pack's `data.unlocks.unlocks`. */
+/** An unlock in the game's content: one entry of `data.unlocks.unlocks`, the plugin's list of unlocks. */
 export type UnlockDef = {
   id: string
   /** Its name for the player: "Supporter edition". */
@@ -149,7 +149,7 @@ export type UnlockStatus = {
   entered: Entered | null
 }
 
-/** The game's unlocks: `data.unlocks.unlocks`, from its packs. */
+/** The game's unlocks: `data.unlocks.unlocks`, from its content and packs. */
 export function unlocksOf(game: Game): UnlockDef[] {
   return DATA.unlocks.all(game)
 }

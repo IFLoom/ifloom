@@ -34,7 +34,7 @@ type BuildOptions = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `unlocked` | `Pack[]` |  |  | Packs to pass to `loadGame` as `{ packs }`. `ifloom check` passes the game's `src/unlocks/` content here; empty otherwise. |
+| `unlocked` | [`Pack[]`](/docs/api/engine#pack) |  |  | Packs to pass to `loadGame` as `{ packs }`. `ifloom check` passes the game's `src/unlocks/` content here; empty otherwise. |
 
 ## checkBuild
 
@@ -54,6 +54,8 @@ import { checkBuild } from '@ifloom/cli'
 function checkBuild(dir: string, files?: readonly FileRef[]): string[]
 ```
 
+Uses: [`FileRef`](/docs/api/engine#fileref).
+
 ## checkFiles
 
 Function. Explained in [The CLI](/docs/cli#checkfiles).
@@ -68,6 +70,8 @@ after one. `inlined` lists files that are in the page itself, after
 import { checkFiles } from '@ifloom/cli'
 function checkFiles(files: readonly FileRef[], dir: string, inlined?: ReadonlySet<string>): string[]
 ```
+
+Uses: [`FileRef`](/docs/api/engine#fileref).
 
 ## checkGame
 
@@ -100,6 +104,8 @@ import { defineGame } from '@ifloom/cli'
 function defineGame(def: GameModuleDef): GameModule
 ```
 
+Uses: [`GameModuleDef`](#gamemoduledef), [`GameModule`](#gamemodule).
+
 ## explorer
 
 Function. Explained in [The CLI](/docs/cli#explorer).
@@ -117,6 +123,8 @@ import { explorer } from '@ifloom/cli'
 function explorer(): Policy
 ```
 
+Uses: [`Policy`](#policy).
+
 ## gameFrom
 
 Function. Explained in [The CLI](/docs/cli#gamefrom).
@@ -129,6 +137,8 @@ its `build` as `{ unlocked }`.
 import { gameFrom } from '@ifloom/cli'
 function gameFrom(module: Record<string, unknown>, unlocked?: Pack[]): { game: Game; problems: string[]; warnings: string[]; files: FileRef[] }
 ```
+
+Uses: [`Pack`](/docs/api/engine#pack), [`Game`](/docs/api/engine#game), [`FileRef`](/docs/api/engine#fileref).
 
 ## GameModule
 
@@ -148,10 +158,10 @@ type GameModule = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `start` | `(game: Game) => GameState` | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
-| `probes` | `(game: Game) => Probe[]` | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
-| `policy` | `Policy` | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
-| `build` | `(options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }` |  |  | Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
+| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
+| `policy` | [`Policy`](#policy) | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
+| `build` | `(options?: Partial<`[`BuildOptions`](#buildoptions)`>) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Builds the game, as the module's `build` does, with `unlocked` empty unless given: the game, and the loader's problems. |
 
 ## GameModuleDef
 
@@ -171,10 +181,10 @@ type GameModuleDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `build` | `(options: BuildOptions) => { game: Game; problems: Problem[] }` |  |  | Build the game: what `loadGame` returns, its `game` and its `problems`. |
-| `start` | `(game: Game) => GameState` | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
-| `probes` | `(game: Game) => Probe[]` | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
-| `policy` | `Policy` | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
+| `build` | `(options:` [`BuildOptions`](#buildoptions)`) => { game:` [`Game`](/docs/api/engine#game)`; problems:` [`Problem[]`](/docs/api/engine#problem) `}` |  |  | Build the game: what `loadGame` returns, its `game` and its `problems`. |
+| `start` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Where `ifloom playtest` starts, and `ifloom snapshot` when there are no probes. `startingState(game)` if left out. |
+| `probes` | `(game:` [`Game`](/docs/api/engine#game)`) =>` [`Probe[]`](/docs/api/engine#probe) | yes |  | The states `ifloom snapshot` renders every scene and place in, each made with `probe`. Just the start if left out. |
+| `policy` | [`Policy`](#policy) | yes |  | Picks each command `ifloom playtest` plays. The CLI's `explorer()` if left out. |
 
 ## inlineAssets
 
@@ -206,6 +216,8 @@ import { metricsText } from '@ifloom/cli'
 function metricsText(turns: TurnMetrics[]): string
 ```
 
+Uses: [`TurnMetrics`](#turnmetrics).
+
 ## newGame
 
 Function. Explained in [The CLI](/docs/cli#newgame).
@@ -216,6 +228,8 @@ Make a new game. Returns its folder and the files written there. Installs nothin
 import { newGame } from '@ifloom/cli'
 function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null }
 ```
+
+Uses: [`NewGameOptions`](#newgameoptions), [`ThemeName`](#themename).
 
 ## NewGameOptions
 
@@ -234,9 +248,9 @@ type NewGameOptions = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `name` | `string` |  |  | The game's package name, which is also its folder's: `my-story`. For the `plugin` template it's the plugin's package name, such as `ifloom-plugin-weather`, and the plugin's id is the name without `ifloom-plugin-` or `plugin-` in front: `weather`. |
-| `template` | `TemplateName` | yes |  | What to start from. `react` if left out. |
+| `template` | [`TemplateName`](#templatename) | yes |  | What to start from. `react` if left out. |
 | `into` | `string` | yes |  | Where to put it. Left out, `games/<name>` in the IFLoom checkout, or a folder named `<name>` in the current folder anywhere else. |
-| `theme` | `ThemeName \| 'none'` | yes |  | The React UI preset to start from. Left out, a `react` or `next` game gets one at random, so two new games don't start out looking alike, and a copied example keeps its own. `'none'` leaves the preset out, for the React UI's plain default look. The vanilla, vue and svelte templates have no React UI and ignore it. |
+| `theme` | [`ThemeName`](#themename) `\| 'none'` | yes |  | The React UI preset to start from. Left out, a `react` or `next` game gets one at random, so two new games don't start out looking alike, and a copied example keeps its own. `'none'` leaves the preset out, for the React UI's plain default look. The vanilla, vue and svelte templates have no React UI and ignore it. |
 
 ## Playtest
 
@@ -255,9 +269,9 @@ type Playtest = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `transcript` | `string` |  |  | Every screen, and the command taken on it, as plain text. |
-| `turns` | `TurnMetrics[]` |  |  | Each turn's numbers, in order. |
-| `refusals` | `{ turn: number; command: Command; reason: string }[]` |  |  | Commands the policy chose that were refused, with why: each one a policy or game bug. |
-| `state` | `GameState` |  |  | The state it ended on. |
+| `turns` | [`TurnMetrics[]`](#turnmetrics) |  |  | Each turn's numbers, in order. |
+| `refusals` | `{ turn: number; command:` [`Command`](/docs/api/engine#command)`; reason: string }[]` |  |  | Commands the policy chose that were refused, with why: each one a policy or game bug. |
+| `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state it ended on. |
 
 ## playtest
 
@@ -271,6 +285,8 @@ screen it first shows on.
 import { playtest } from '@ifloom/cli'
 function playtest(game: Game, start: GameState, policy?: Policy, options?: PlaytestOptions): Playtest
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`GameState`](/docs/api/engine#gamestate), [`Policy`](#policy), [`PlaytestOptions`](#playtestoptions), [`Playtest`](#playtest).
 
 ## PlaytestOptions
 
@@ -300,6 +316,8 @@ import type { Policy } from '@ifloom/cli'
 type Policy = (screen: View, state: GameState, game: Game) => CommandRef | null
 ```
 
+Uses: [`View`](/docs/api/engine#view), [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`CommandRef`](/docs/api/engine#commandref).
+
 ## Probe
 
 Type. Explained in [The CLI](/docs/cli#probe-1).
@@ -317,7 +335,7 @@ type Probe = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `name` | `string` |  |  | What the problems it finds are named by: `'evening, after the café'`. |
-| `state` | `GameState` |  |  | The state to render every scene against. |
+| `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The state to render every scene against. |
 
 ## probe
 
@@ -337,6 +355,8 @@ import { probe } from '@ifloom/cli'
 function probe(name: string, game: Game, steps: readonly ProbeStep[], from?: Probe | GameState): Probe
 ```
 
+Uses: [`Game`](/docs/api/engine#game), [`ProbeStep`](#probestep), [`Probe`](/docs/api/engine#probe), [`GameState`](/docs/api/engine#gamestate).
+
 ## ProbeStep
 
 Type. Explained in [The CLI](/docs/cli#probestep).
@@ -349,6 +369,8 @@ import type { ProbeStep } from '@ifloom/cli'
 type ProbeStep = Effect | { play: CommandRef }
 ```
 
+Uses: [`Effect`](/docs/api/engine#effect), [`CommandRef`](/docs/api/engine#commandref).
+
 ## screenText
 
 Function. Explained in [The CLI](/docs/cli#screentext).
@@ -359,6 +381,8 @@ A screen as plain text: where, when, the prose, every button with its price or r
 import { screenText } from '@ifloom/cli'
 function screenText(screen: View): string
 ```
+
+Uses: [`View`](/docs/api/engine#view).
 
 ## snapshot
 
@@ -376,6 +400,8 @@ differently.
 import { snapshot } from '@ifloom/cli'
 function snapshot(game: Game, probes: Probe[]): string
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`Probe`](/docs/api/engine#probe).
 
 ## TemplateName
 

@@ -100,11 +100,26 @@ export const ch1: Content = {
 | `prose` | By key. |
 | `words` | By key: other words for the fields of the content, laid over it once everything is merged. A translation is one pack with this table. See [The words table](/docs/reference/words). |
 | `variants` | By variants name. Each file appends its members to the list, so several files can add lines to one name. A member is a prose key, or `{ text, weight }` to give it a [weight](/docs/reference/prose#variantmember). |
-| `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. The [places plugin](/docs/plugins/places#in-your-content)'s locations, the [shop](/docs/plugins/shop#writing-vendors)'s vendors and the [cast](/docs/plugins/cast#in-your-content)'s characters are entities instead, in `entities`. |
+| `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then [list name](#plugin-data), such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. The [places plugin](/docs/plugins/places#in-your-content)'s locations, the [shop](/docs/plugins/shop#writing-vendors)'s vendors and the [cast](/docs/plugins/cast#in-your-content)'s characters are entities instead, in `entities`. |
 | `audio` | [Audio](/docs/reference/audio#gameaudio). `tracks` and `channels` merge by id, and `mute` and `default` go over the earlier ones. |
 | `media` | [Media](/docs/reference/media#gamemedia). `pools` merge by id. |
 
 What the game is and its code go on the `base` you give [`loadGame`](#loadgame), never in content or a pack: `id`, `title`, `version`, `plugins` and `rules`. Content that has one of them anyway loads without it, with the problem `content has no "…", so it was left out`. So does content with an `id`, a `schema` or `patches`, which only a pack has, and content with `custom`, which is the game's code now and goes in [`rules`](/docs/reference/rules). TypeScript catches all of these sooner, because they aren't in the `Content` type.
+
+### Plugin data
+
+Content for a plugin goes in `data` under the plugin's id, and under that each of its lists by name. Some plugins keep two lists (messages has `channels` and `messages`), so every plugin's `data` holds its lists by name, even a plugin with only one. That's why the cheats are `data.cheats.cheats`: the plugin `cheats`, then its list of cheats. A plugin can then add a list later without moving the one it has. The [words table](/docs/reference/words) names an entry the same way, `cheats/cheats.coins.name`, and each plugin's page says which lists it reads.
+
+```ts
+import type { Content } from '@ifloom/engine'
+
+const town: Content = {
+  data: {
+    cheats: { cheats: [{ id: 'coins', name: '+20 coins', effects: [{ stat: 'coins', by: 20 }] }] },
+    messages: { channels: [{ id: 'texts', name: 'Texts' }], messages: [] },
+  },
+}
+```
 
 ### One key declared twice
 

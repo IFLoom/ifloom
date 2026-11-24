@@ -33,15 +33,17 @@ import { cast } from '@ifloom/plugin-cast'
 function cast(options?: CastOptions): DefinedPlugin<null, CastView>
 ```
 
+Uses: [`CastOptions`](#castoptions), [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`CastView`](#castview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `cast.person` | `(def: PersonDef): EntityDef` |  |
-| `cast.character` | `(who: string, kind?: string): EntityRef` |  |
-| `cast.talk` | `(who: string): CommandRef` |  |
-| `cast.call` | `(who: string): CommandRef` |  |
-| `cast.here` | `(...who: string[]): Condition` |  |
-| `cast.at` | `(who: string, ...places: string[]): Condition` |  |
-| `cast.met` | `(...who: string[]): Condition` |  |
+| `cast.person` | `(def:` [`PersonDef`](#persondef)`):` [`EntityDef`](/docs/api/engine#entitydef) |  |
+| `cast.character` | `(who: string, kind?: string):` [`EntityRef`](/docs/api/engine#entityref) |  |
+| `cast.talk` | `(who: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `cast.call` | `(who: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `cast.here` | `(...who: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `cast.at` | `(who: string, ...places: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `cast.met` | `(...who: string[]):` [`Condition`](/docs/api/engine#condition) |  |
 
 ### CastOptions
 
@@ -74,8 +76,8 @@ type CastView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `present` | `PersonView[]` |  |  | Who is in the room, while no scene is open. |
-| `people` | `PersonView[]` |  |  | Everyone the player has met. |
+| `present` | [`PersonView[]`](#personview) |  |  | Who is in the room, while no scene is open. |
+| `people` | [`PersonView[]`](#personview) |  |  | Everyone the player has met. |
 
 ### peopleOf
 
@@ -88,6 +90,8 @@ people content declares, in its order, then those made in play.
 import { peopleOf } from '@ifloom/plugin-cast'
 function peopleOf(state: GameState, game: Game): EntityRef[]
 ```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref).
 
 ### Person
 
@@ -115,11 +119,11 @@ type Person = {
 | `fullName` | `string` | yes |  | Prose tokens are filled in, as in the entity's name. The name if left out. |
 | `pronouns` | `Record<string, string>` | yes |  | For prose that needs them: `{ they: 'she', them: 'her', … }`. The engine gives them no meaning. |
 | `home` | `string` | yes |  | Where they are when no schedule entry holds. Away (`AWAY`), which is nowhere on the map, if left out. |
-| `schedule` | `{ location: string; when?: Condition }[]` | yes |  | Where they are while each `when` holds; the first that holds wins. `'$'` is them. |
-| `talk` | `string \| TalkOption[]` | yes |  | The scene talking to them opens, or the first of several whose `when` holds. Can't be talked to if left out. |
-| `call` | `{ scene?: string; when?: Condition; busy?: string }` | yes |  | Whether they can be reached from anywhere, and the scene a call opens (their talk scene if left out). |
+| `schedule` | `{ location: string; when?:` [`Condition`](/docs/api/engine#condition) `}[]` | yes |  | Where they are while each `when` holds; the first that holds wins. `'$'` is them. |
+| `talk` | `string \|` [`TalkOption[]`](#talkoption) | yes |  | The scene talking to them opens, or the first of several whose `when` holds. Can't be talked to if left out. |
+| `call` | `{ scene?: string; when?:` [`Condition`](/docs/api/engine#condition)`; busy?: string }` | yes |  | Whether they can be reached from anywhere, and the scene a call opens (their talk scene if left out). |
 | `storyline` | `string` | yes |  | Their storyline: while it is closed, they will not talk or pick up. |
-| `met` | `Condition` | yes |  | Whether the player has met them. Having seen one of their talk or call scenes, if left out. |
+| `met` | [`Condition`](/docs/api/engine#condition) | yes |  | Whether the player has met them. Having seen one of their talk or call scenes, if left out. |
 | `portrait` | `string` | yes |  | A face for avatars, beside the entity's `image`: a path in the game's `art/` folder, as an image's is. Where a UI draws someone small (a thread, a post, a contact), it uses this. Their `image` if left out. |
 
 ### PersonDef
@@ -155,11 +159,11 @@ Plugins add fields of their own to it, which their pages list.
 | `fullName` | `string` | yes |  | Prose tokens are filled in, as in the entity's name. The name if left out. |
 | `pronouns` | `Record<string, string>` | yes |  | For prose that needs them: `{ they: 'she', them: 'her', … }`. The engine gives them no meaning. |
 | `home` | `string` | yes |  | Where they are when no schedule entry holds. Away (`AWAY`), which is nowhere on the map, if left out. |
-| `schedule` | `{ location: string; when?: Condition }[]` | yes |  | Where they are while each `when` holds; the first that holds wins. `'$'` is them. |
-| `talk` | `string \| TalkOption[]` | yes |  | The scene talking to them opens, or the first of several whose `when` holds. Can't be talked to if left out. |
-| `call` | `{ scene?: string; when?: Condition; busy?: string }` | yes |  | Whether they can be reached from anywhere, and the scene a call opens (their talk scene if left out). |
+| `schedule` | `{ location: string; when?:` [`Condition`](/docs/api/engine#condition) `}[]` | yes |  | Where they are while each `when` holds; the first that holds wins. `'$'` is them. |
+| `talk` | `string \|` [`TalkOption[]`](#talkoption) | yes |  | The scene talking to them opens, or the first of several whose `when` holds. Can't be talked to if left out. |
+| `call` | `{ scene?: string; when?:` [`Condition`](/docs/api/engine#condition)`; busy?: string }` | yes |  | Whether they can be reached from anywhere, and the scene a call opens (their talk scene if left out). |
 | `storyline` | `string` | yes |  | Their storyline: while it is closed, they will not talk or pick up. |
-| `met` | `Condition` | yes |  | Whether the player has met them. Having seen one of their talk or call scenes, if left out. |
+| `met` | [`Condition`](/docs/api/engine#condition) | yes |  | Whether the player has met them. Having seen one of their talk or call scenes, if left out. |
 | `portrait` | `string` | yes |  | A face for avatars, beside the entity's `image`: a path in the game's `art/` folder, as an image's is. Where a UI draws someone small (a thread, a post, a contact), it uses this. Their `image` if left out. |
 | `of` | `string` | yes |  | Their kind: the cast's own (`character`, or the `kind` option) if left out. |
 
@@ -173,6 +177,8 @@ The `cast/person` trait of someone in the game, read through what they were made
 import { personOf } from '@ifloom/plugin-cast'
 function personOf(state: GameState, game: Game, ref: EntityRef): Person | undefined
 ```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref), [`Person`](#person).
 
 ### PersonView
 
@@ -201,17 +207,17 @@ type PersonView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | Their id, as `cast.talk('ava')` names them; the whole reference for a person of another kind than the cast's. |
-| `ref` | `EntityRef` |  |  | As content names them: `'character:ava'`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | As content names them: `'character:ava'`. |
 | `name` | `string` |  |  |  |
 | `fullName` | `string` |  |  | Their full name, or their name when they have none. |
 | `description` | `string \| null` |  |  | Their entity's `description`, tokens filled: "Runs the café". |
-| `ui` | `Ui<EntityUi>` | yes |  | Their entity's presentation hints, as written (the React UI's `hue`, say); left out with none. |
+| `ui` | [`Ui`](/docs/api/engine#ui)`<`[`EntityUi`](/docs/api/engine#entityui)`>` | yes |  | Their entity's presentation hints, as written (the React UI's `hue`, say); left out with none. |
 | `image` | `string \| null` |  |  | Their picture's path: the entity's `image`, else `<kind>/<id>`, through `artSrc`. Typed as every plugin's picture is, though the cast always gives one. |
 | `portrait` | `string \| null` |  |  | Their face, for avatars: the trait's `portrait`, else their `image`, through `artSrc`. |
 | `here` | `boolean` |  |  | In the room with the player. |
 | `closed` | `boolean` |  |  | Their storyline is closed for now. |
 | `met` | `boolean` |  |  | Whether the player has met them, as their `met` condition says, else whether they've seen one of their talk or call scenes. |
-| `actions` | `RenderedChoice[]` |  |  | The talk button, greyed out with its reason when it is. |
+| `actions` | [`RenderedChoice[]`](/docs/api/engine#renderedchoice) |  |  | The talk button, greyed out with its reason when it is. |
 
 ### TalkOption
 
@@ -259,6 +265,8 @@ import { castUi } from '@ifloom/plugin-cast/react'
 const castUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### PeopleHere
 
 Const. Explained in [Cast](/docs/plugins/cast#peoplehere).
@@ -305,3 +313,5 @@ The cast plugin's view: who is here (`present`, each with their buttons) and eve
 import { usePeople } from '@ifloom/plugin-cast/react'
 function usePeople(): CastView | null
 ```
+
+Uses: [`CastView`](#castview).

@@ -391,7 +391,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
         }),
     },
     values: {
-      /** <code v-pre>{{cast/name character=ava}}</code>: someone's name as the player reads it; `''` for anyone not in the cast. */
+      /** `{{cast/name character=ava}}`: someone's name as the player reads it; `''` for anyone not in the cast. */
       name: (state, args, { game }) => {
         const them = typeof args.character === 'string' ? one(state, game, refOf(args.character)) : undefined
         return them ? nameOf(state, game, them) : ''

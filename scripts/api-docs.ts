@@ -216,8 +216,35 @@ function isKeyed(node: ts.TypeNode): boolean {
 
 /** Text made safe for a Markdown table cell. */
 const cell = (text: string) => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ')
-/** A type in a table cell, shortened past CELL characters. */
-const typeCell = (text: string) => '`' + cell(text.length > CELL ? text.slice(0, CELL - 1).trimEnd() + '…' : text).replace(/`/g, "'") + '`'
+/** A type shortened past CELL characters, never inside a name, so a link is never cut in half. */
+const shortened = (text: string) =>
+  text.length > CELL
+    ? text
+        .slice(0, CELL - 1)
+        .replace(/[\w$]+$/, '')
+        .trimEnd() + '…'
+    : text
+/** Code in a cell: a code span, its spaces outside it so none are lost. */
+function codeRun(text: string): string {
+  const [, before, code, after] = /^(\s*)([\s\S]*?)(\s*)$/.exec(cell(text))!
+  return code ? `${before ? ' ' : ''}\`${code.replace(/`/g, "'")}\`${after ? ' ' : ''}` : before || after ? ' ' : ''
+}
+/** The names and string literals in a type's text, in order. */
+const TOKENS = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|[A-Za-z_$][\w$]*/g
+
+/** Where an export's own section is: its page's slug and its heading's anchor. */
+type Home = { slug: string; anchor: string }
+
+/** The anchors of a page's headings, in the page's order, as the site makes them: each entry's (when it has several), then each export's. */
+function anchorsOf(entries: string[], namesOf: (entry: string) => string[]): Map<string, string> {
+  const slugger = new GithubSlugger()
+  const anchors = new Map<string, string>()
+  for (const entry of entries) {
+    if (entries.length > 1) anchors.set(entry, slugger.slug(entry))
+    for (const name of namesOf(entry)) anchors.set(`${entry} ${name}`, slugger.slug(name))
+  }
+  return anchors
+}
 
 /** Markdown from TSDoc parts: links as code, `<` outside code escaped so the page stays plain Markdown. */
 function docText(parts: readonly ts.SymbolDisplayPart[]): string {
@@ -264,6 +291,10 @@ class Writer {
   /** The entries that export each name, by the symbol it is there: a name two entries export as different things is ambiguous. */
   exporters = new Map<string, Map<string, ts.Symbol>>()
   headings: Map<string, Heading[]>
+  /** Each exported type's section, by its symbol, so a page can link to it. */
+  homes = new Map<ts.Symbol, Home>()
+  /** The page being written. */
+  page?: PageSpec
   constructor(program: ts.Program, probe: string) {
     this.checker = program.getTypeChecker()
     this.known = new Set(this.checker.getSymbolsInScope(program.getSourceFile(probe)!, ts.SymbolFlags.Type | ts.SymbolFlags.Value).map((symbol) => symbol.name))
@@ -373,10 +404,72 @@ class Writer {
       const description = docText(property.getDocumentationComment(this.checker))
       const fallback = tagText(property, this.checker, 'default')
       if (description || fallback) documented = true
-      rows.push(`| \`${property.name}\` | ${typeCell(text)} | ${optional ? 'yes' : ''} | ${fallback ? cell(fallback) : ''} | ${cell(description)} |`)
+      rows.push(
+        `| \`${property.name}\` | ${this.linked(shortened(text))} | ${optional ? 'yes' : ''} | ${fallback ? cell(fallback) : ''} | ${cell(description)} |`,
+      )
     }
     const table = rows.length ? ['| Field | Type | Optional | Default | Description |', '|---|---|---|---|---|', ...rows] : []
     return { lines, table: documented ? table : [], more, extra }
+  }
+
+  /** The exported type a name in a type's text stands for, preferring what this page's entries export, when that is one thing. */
+  typeNamed(name: string): ts.Symbol | undefined {
+    const byEntry = this.exporters.get(name)
+    if (!byEntry) return undefined
+    // Only types: `Game` is the engine's type and also the React UI's component, which no type names.
+    const isType = (each: ts.Symbol | undefined): each is ts.Symbol =>
+      !!each && (each.flags & (ts.SymbolFlags.TypeAlias | ts.SymbolFlags.Interface | ts.SymbolFlags.Class | ts.SymbolFlags.Enum)) !== 0
+    const here = (this.page?.entries ?? []).map((entry) => byEntry.get(entry)).filter(isType)
+    const found = new Set(here.length ? here : [...byEntry.values()].filter(isType))
+    const [symbol] = found
+    return found.size === 1 ? symbol : undefined
+  }
+
+  /** A link to an exported type's section: on this page by its anchor, else on its own page. */
+  hrefOf(symbol: ts.Symbol): string | undefined {
+    const home = this.homes.get(symbol)
+    return home && (home.slug === this.page?.slug ? `#${home.anchor}` : `/docs/api/${home.slug}#${home.anchor}`)
+  }
+
+  /** A type's text cut into its pieces: the exported types it names, with their links, and the code between them. */
+  pieces(text: string): { code: string; href?: string }[] {
+    const pieces: { code: string; href?: string }[] = []
+    let last = 0
+    for (const match of text.matchAll(TOKENS)) {
+      const [token] = match
+      const at = match.index
+      if (!/^[A-Za-z_$]/.test(token)) continue
+      // Not a field's or a parameter's name, nor a name reached through a dot.
+      if (/^\s*\??:/.test(text.slice(at + token.length)) || /\.\s*$/.test(text.slice(0, at))) continue
+      const symbol = this.typeNamed(token)
+      const href = symbol && this.hrefOf(symbol)
+      if (!href) continue
+      if (at > last) pieces.push({ code: text.slice(last, at) })
+      // A list of it is one link, `Blocked[]`, rather than a link and a stray `[]`.
+      const list = /^(\[\])*/.exec(text.slice(at + token.length))![0]
+      pieces.push({ code: token + list, href })
+      last = at + token.length + list.length
+    }
+    if (last < text.length) pieces.push({ code: text.slice(last) })
+    return pieces
+  }
+
+  /** A type in a table cell, each exported type it names linked to its section. */
+  linked(text: string): string {
+    return this.pieces(text)
+      .map((piece) => (piece.href ? `[\`${piece.code}\`](${piece.href})` : codeRun(piece.code)))
+      .join('')
+      .trim()
+  }
+
+  /** "Uses:" and a link to each exported type a block names but its own, in order, once each; nothing when it names none. */
+  uses(code: string, name: string): string[] {
+    const seen = new Map<string, string>()
+    for (const piece of this.pieces(code)) {
+      const each = piece.code.replace(/(\[\])+$/, '')
+      if (piece.href && each !== name && !seen.has(each)) seen.set(each, piece.href)
+    }
+    return seen.size ? ['', `Uses: ${[...seen].map(([each, href]) => `[\`${each}\`](${href})`).join(', ')}.`] : []
   }
 
   /** The names a piece of code uses, and those it declares itself (type parameters, parameters, its own name). */
@@ -532,14 +625,16 @@ class Writer {
       const calls = type.getCallSignatures()
       if (target.flags & ts.SymbolFlags.Class) {
         kinds.push('class')
-        body.push(...this.block(`const ${name}: ${this.typeText(type)}`, name, entry, true))
+        const code = `const ${name}: ${this.typeText(type)}`
+        body.push(...this.block(code, name, entry, true), ...this.uses(code, name))
       } else if (calls.length) {
         const component =
           isReact &&
           /^[A-Z]/.test(name) &&
           calls.every((each) => /^((React\.)?(JSX\.)?Element( \| null)?|.*ReactNode.*|.*ReactElement.*)$/.test(checker.typeToString(each.getReturnType())))
         kinds.push(component ? 'component' : 'function')
-        body.push(...this.block(this.signatures(name, type, component).join('\n'), name, entry, true))
+        const code = this.signatures(name, type, component).join('\n')
+        body.push(...this.block(code, name, entry, true), ...this.uses(code, name))
         body.push(...this.parameterDocs(type))
         // A plugin's helpers, or anything else a function carries.
         const helpers = checker
@@ -551,7 +646,7 @@ class Writer {
             const helperType = checker.getTypeOfSymbol(helper)
             const signature = helperType.getCallSignatures().map((each) => this.signatureText(each))
             body.push(
-              `| \`${name}.${helper.name}\` | ${signature.length ? signature.map((each) => '`' + cell(each).replace(/`/g, "'") + '`').join('<br>') : typeCell(this.typeText(helperType))} | ${cell(docText(helper.getDocumentationComment(checker)))} |`,
+              `| \`${name}.${helper.name}\` | ${signature.length ? signature.map((each) => this.linked(each)).join('<br>') : this.linked(shortened(this.typeText(helperType)))} | ${cell(docText(helper.getDocumentationComment(checker)))} |`,
             )
           }
         }
@@ -564,7 +659,7 @@ class Writer {
           const { lines, table } = this.fields(type, home)
           body.push(...this.block(`const ${name}: {\n${lines.join('\n')}\n}`, name, entry, true))
           if (table.some((row) => /\| [^|]+ \|$/.test(row))) body.push('', ...table)
-        } else body.push(...this.block(`const ${name}: ${whole}`, name, entry, true))
+        } else body.push(...this.block(`const ${name}: ${whole}`, name, entry, true), ...this.uses(whole, name))
       }
     }
 
@@ -625,7 +720,7 @@ class Writer {
       } else {
         const { parts, dropped } = this.aliasParts(aliasOf, type, home, typeDeclaration?.typeParameters ?? [])
         const text = parts.length > 1 ? `\n${parts.map((part) => `  | ${part}`).join('\n')}` : ` ${parts[0]}`
-        body.push(...this.block(`type ${name}${parameters} =${text}`, name, entry, false))
+        body.push(...this.block(`type ${name}${parameters} =${text}`, name, entry, false), ...this.uses(text, name))
         if (dropped) body.push('', 'Plugins add members of their own, which their pages list.')
       }
     }
@@ -649,6 +744,7 @@ class Writer {
 
   /** The sections of an entry's exports, in alphabetical order. */
   entry(entry: string, spec: PageSpec, module: ts.Symbol): Section[] {
+    this.page = spec
     const exports = this.checker.getExportsOfModule(module).filter((symbol) => symbol.name !== 'default')
     exports.sort((a, b) => compare(a.name, b.name))
     return exports.map((symbol) => this.section(symbol.name, symbol, entry, spec))
@@ -668,20 +764,15 @@ function pageOf(writer: Writer, spec: PageSpec, modules: Map<string, ts.Symbol>)
     `Generated from the source of ${spec.entries.map((entry) => `\`${entry}\``).join(' and ')} and its TSDoc by \`npm run api-docs\`. Each export links to the page that explains it, where one does.`,
   )
   const sectionsOf = new Map(spec.entries.map((entry) => [entry, writer.entry(entry, spec, modules.get(entry)!)]))
-  // Every heading's anchor, in the page's order, as the site makes them.
-  const slugger = new GithubSlugger()
-  const anchors = new Map<Section | string, string>()
-  for (const [entry, sections] of sectionsOf) {
-    if (several) anchors.set(entry, slugger.slug(entry))
-    for (const section of sections) anchors.set(section, slugger.slug(section.name))
-  }
+  const anchors = anchorsOf(spec.entries, (entry) => sectionsOf.get(entry)!.map((section) => section.name))
   for (const [entry, sections] of sectionsOf) {
     const depth = several ? '###' : '##'
     if (several) lines.push('', `## ${entry}`)
     lines.push('')
     for (const kind of ['component', 'function', 'const', 'class', 'type'] as Kind[]) {
       const these = sections.filter((section) => section.kinds[0] === kind)
-      if (these.length) lines.push(`- ${KIND_TITLES[kind]}: ${these.map((section) => `[\`${section.name}\`](#${anchors.get(section)})`).join(', ')}`)
+      if (these.length)
+        lines.push(`- ${KIND_TITLES[kind]}: ${these.map((section) => `[\`${section.name}\`](#${anchors.get(`${entry} ${section.name}`)})`).join(', ')}`)
     }
     if (!sections.length) lines.push('This entry exports nothing.')
     for (const section of sections) lines.push('', `${depth} ${section.name}`, '', ...section.body)
@@ -727,6 +818,37 @@ function metaOf(): string {
   return JSON.stringify(meta, null, 2) + '\n'
 }
 
+/** The names an entry's sections are written under, in their order. */
+const exportNames = (checker: ts.TypeChecker, module: ts.Symbol) =>
+  checker
+    .getExportsOfModule(module)
+    .map((symbol) => symbol.name)
+    .filter((name) => name !== 'default')
+    .sort(compare)
+
+/**
+ * Each exported symbol's section. An export several entries share is at the entry of the package that declares it,
+ * the first such in the pages' order, else the first entry that exports it.
+ */
+function homesOf(checker: ts.TypeChecker, specs: PageSpec[], modules: Map<string, ts.Symbol>): Map<ts.Symbol, Home> {
+  const found = new Map<ts.Symbol, { home: Home; own: boolean }>()
+  for (const spec of specs) {
+    const anchors = anchorsOf(spec.entries, (entry) => exportNames(checker, modules.get(entry)!))
+    for (const entry of spec.entries) {
+      const folder = `/packages/${entry.slice('@ifloom/'.length).split('/')[0]}/`
+      for (const symbol of checker.getExportsOfModule(modules.get(entry)!)) {
+        if (symbol.name === 'default') continue
+        const target = symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol
+        const own = packageOf(target.declarations?.[0]?.getSourceFile().fileName ?? '').endsWith(folder)
+        const before = found.get(target)
+        if (before && (before.own || !own)) continue
+        found.set(target, { home: { slug: spec.slug, anchor: anchors.get(`${entry} ${symbol.name}`)! }, own })
+      }
+    }
+  }
+  return new Map([...found].map(([symbol, { home }]) => [symbol, home]))
+}
+
 /** Every page of the API section, by its file name, and the number of exports listed. */
 export function apiDocs(): { files: Map<string, string>; exports: number } {
   const { program, probe } = programOf()
@@ -740,14 +862,17 @@ export function apiDocs(): { files: Map<string, string>; exports: number } {
   writer.learnAliases([...modules.values()].flatMap((module) => writer.checker.getExportsOfModule(module)))
   const files = new Map<string, string>()
   const counts = new Map<PageSpec, number>()
-  for (const each of SPECS) {
+  const specs = SPECS.map((each) => {
     // A plugin with nothing for the player has no `/react` subpath.
     const entries = each.entries.filter((entry) => modules.has(entry))
-    const spec = {
+    return {
       ...each,
       entries,
       description: each.description.replace(' and its /react subpath, if it has one', entries.length > 1 ? ' and its /react subpath' : ''),
     }
+  })
+  writer.homes = homesOf(writer.checker, specs, modules)
+  for (const spec of specs) {
     files.set(`${spec.slug}.md`, pageOf(writer, spec, modules))
     counts.set(
       spec,

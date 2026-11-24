@@ -20,6 +20,8 @@ import { drawEntity } from '@ifloom/plugin-generators'
 function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity
 ```
 
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`TemplateDef`](#templatedef), [`GeneratedEntity`](#generatedentity).
+
 ## FieldDef
 
 Type. Explained in [Generators](/docs/plugins/generators#fielddef).
@@ -35,6 +37,8 @@ Where one field of a new entity comes from:
 import type { FieldDef } from '@ifloom/plugin-generators'
 type FieldDef = KvValue | { pool: string } | { between: [ number, number ] } | { join: FieldDef[]; with?: string }
 ```
+
+Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 ## GeneratedEntity
 
@@ -65,9 +69,11 @@ import { generators } from '@ifloom/plugin-generators'
 function generators(): DefinedPlugin<null>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `generators.generate` | `(template: string, count?: number): EffectRef` |  |
+| `generators.generate` | `(template: string, count?: number):` [`EffectRef`](/docs/api/engine#effectref) |  |
 
 ## PoolDef
 
@@ -94,16 +100,20 @@ import type { PoolEntry } from '@ifloom/plugin-generators'
 type PoolEntry = KvValue | { value: KvValue; weight?: number }
 ```
 
+Uses: [`KvValue`](/docs/api/engine#kvvalue).
+
 ## poolsOf
 
 Function. Explained in [Generators](/docs/plugins/generators#poolsof-and-templatesof).
 
-The game's pools: `data.generators.pools`, from its packs.
+The game's pools: `data.generators.pools`, from its content and packs.
 
 ```ts shape
 import { poolsOf } from '@ifloom/plugin-generators'
 function poolsOf(game: Game): PoolDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`PoolDef`](#pooldef).
 
 ## TemplateDef
 
@@ -132,15 +142,15 @@ type TemplateDef = {
 |---|---|---|---|---|
 | `id` | `string` |  |  |  |
 | `of` | `string` | yes |  | The kind of entity it makes. The `like`'s kind if left out. |
-| `like` | `EntityRef` | yes |  | An entity it is made like: what it isn't given (name, picture, traits, stats) is read from that one. |
-| `name` | `FieldDef` | yes |  | Its name. The `like`'s if left out. |
-| `description` | `FieldDef` | yes |  | A line or two about it, drawn as the name is. |
-| `image` | `FieldDef` | yes |  | Its picture, through `artSrc`, drawn as the name is: `{ pool: 'faces' }`. |
+| `like` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | An entity it is made like: what it isn't given (name, picture, traits, stats) is read from that one. |
+| `name` | [`FieldDef`](#fielddef) | yes |  | Its name. The `like`'s if left out. |
+| `description` | [`FieldDef`](#fielddef) | yes |  | A line or two about it, drawn as the name is. |
+| `image` | [`FieldDef`](#fielddef) | yes |  | Its picture, through `artSrc`, drawn as the name is: `{ pool: 'faces' }`. |
 | `tags` | `string[]` | yes |  | Words it has, after its kind's and its `like`'s. |
 | `traits` | `Record<string, unknown>` | yes |  | Trait data, by trait id, over its `like`'s or its kind's: `{ 'cast/person': { home: 'park' } }`. |
-| `at` | `Placement` | yes |  | Who holds it once made: a holder, or how many each holds. Nobody if left out. |
-| `stats` | `Record<string, FieldDef>` | yes |  | Its stats, by id: stats the game declares for the kind. Left out, a stat reads its `like`'s, else its `start`. |
-| `kv` | `Record<string, FieldDef>` | yes |  | Its kv keys, by name. |
+| `at` | [`Placement`](/docs/api/engine#placement) | yes |  | Who holds it once made: a holder, or how many each holds. Nobody if left out. |
+| `stats` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | Its stats, by id: stats the game declares for the kind. Left out, a stat reads its `like`'s, else its `start`. |
+| `kv` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | Its kv keys, by name. |
 
 ## templateKind
 
@@ -153,13 +163,17 @@ import { templateKind } from '@ifloom/plugin-generators'
 function templateKind(template: TemplateDef): string | undefined
 ```
 
+Uses: [`TemplateDef`](#templatedef).
+
 ## templatesOf
 
 Function. Explained in [Generators](/docs/plugins/generators#poolsof-and-templatesof).
 
-The game's templates: `data.generators.templates`, from its packs.
+The game's templates: `data.generators.templates`, from its content and packs.
 
 ```ts shape
 import { templatesOf } from '@ifloom/plugin-generators'
 function templatesOf(game: Game): TemplateDef[]
 ```
+
+Uses: [`Game`](/docs/api/engine#game), [`TemplateDef`](#templatedef).

@@ -118,7 +118,7 @@ declare module '@ifloom/engine' {
 
 const ID = 'inventory'
 
-/** The plugin's content: `data.inventory.kinds`, the kinds it shows. */
+/** The plugin's one list, `kinds`, as content writes it in `data.inventory.kinds` (a plugin's `data` holds its lists by name), the kinds it shows. */
 const DATA = defineData(ID, { kinds: list<{ id: string }>({ noun: 'kind' }) })
 
 /** The plugin's calls, and what each takes. */

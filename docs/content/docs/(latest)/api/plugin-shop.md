@@ -47,11 +47,11 @@ type GoodDef = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `entity` | `EntityRef` |  |  | The thing, by reference: `'food:apple'`. |
+| `entity` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The thing, by reference: `'food:apple'`. |
 | `price` | `Record<string, number>` | yes |  | What one costs, by stat: `{ coins: 4 }`. Each stat should be spendable. The thing's `shop/sellable` price if left out. |
 | `stock` | `number` | yes |  | How many the vendor holds: it starts with that many, and `restock` tops it back up to it. Never runs out if left out: each one bought is new. A unique thing is always sold from the vendor's stock, so give it `stock: 1` or start it with the vendor. |
-| `restock` | `Restock` | yes |  | When the stock comes back up to `stock`. Never, if left out. |
-| `when` | `Condition` | yes |  | Offered only while this holds. |
+| `restock` | [`Restock`](#restock) | yes |  | When the stock comes back up to `stock`. Never, if left out. |
+| `when` | [`Condition`](/docs/api/engine#condition) | yes |  | Offered only while this holds. |
 
 ### GoodView
 
@@ -78,17 +78,17 @@ type GoodView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `entity` | `EntityRef` |  |  | The thing: `'food:apple'`. |
+| `entity` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The thing: `'food:apple'`. |
 | `name` | `string` |  |  | Its name. |
 | `description` | `string \| null` |  |  | Its description; null with none. |
 | `image` | `string \| null` |  |  | Its picture's path, through `artSrc`; null with none. |
 | `stock` | `number \| null` |  |  | How many the vendor has left, or null when it never runs out. |
 | `owned` | `number` |  |  | How many you hold. |
 | `off` | `number` |  |  | The fraction off today, or 0. |
-| `fullPrice` | `Price \| null` |  |  | The price before today's discount, or null when there is none. |
-| `buy` | `RenderedChoice` |  |  | The button that buys one: its price, and why it's greyed out, as any button has them. Send its `command`. |
-| `sell` | `RenderedChoice \| null` |  |  | The button that sells one back, or null if the vendor takes nothing back. |
-| `sellFor` | `Price \| null` |  |  | What selling one back pays, or null. |
+| `fullPrice` | [`Price`](/docs/api/engine#price) `\| null` |  |  | The price before today's discount, or null when there is none. |
+| `buy` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that buys one: its price, and why it's greyed out, as any button has them. Send its `command`. |
+| `sell` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that sells one back, or null if the vendor takes nothing back. |
+| `sellFor` | [`Price`](/docs/api/engine#price) `\| null` |  |  | What selling one back pays, or null. |
 
 ### Restock
 
@@ -129,6 +129,8 @@ import { sellableOf } from '@ifloom/plugin-shop'
 function sellableOf(state: GameState, game: Game, ref: EntityRef): Sellable | undefined
 ```
 
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref), [`Sellable`](#sellable).
+
 ### shop
 
 Function. Explained in [Shop](/docs/plugins/shop#shop).
@@ -141,18 +143,20 @@ import { shop } from '@ifloom/plugin-shop'
 function shop(): DefinedPlugin<ShopState, ShopView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`ShopState`](#shopstate), [`ShopView`](#shopview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `shop.vendor` | `(def: VendorDef): EntityDef` |  |
-| `shop.vendorRef` | `(vendor: string): EntityRef` |  |
-| `shop.sellable` | `(price: Record<string, number>): { 'shop/sellable': Sellable }` |  |
-| `shop.buy` | `(vendor: string, entity: EntityRef, count?: number): CommandRef` |  |
-| `shop.sell` | `(vendor: string, entity: EntityRef, count?: number): CommandRef` |  |
-| `shop.open` | `(vendor: string): Effect` |  |
-| `shop.vendorOpen` | `(vendor: string): Condition` |  |
-| `shop.inStock` | `(vendor: string, entity: EntityRef): Condition` |  |
-| `shop.outside` | `(...periods: string[]): Condition` |  |
-| `shop.hours` | `(periods: readonly string[], reason?: Reason): Blocked` |  |
+| `shop.vendor` | `(def:` [`VendorDef`](#vendordef)`):` [`EntityDef`](/docs/api/engine#entitydef) |  |
+| `shop.vendorRef` | `(vendor: string):` [`EntityRef`](/docs/api/engine#entityref) |  |
+| `shop.sellable` | `(price: Record<string, number>): { 'shop/sellable':` [`Sellable`](#sellable) `}` |  |
+| `shop.buy` | `(vendor: string, entity:` [`EntityRef`](/docs/api/engine#entityref)`, count?: number):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `shop.sell` | `(vendor: string, entity:` [`EntityRef`](/docs/api/engine#entityref)`, count?: number):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `shop.open` | `(vendor: string):` [`Effect`](/docs/api/engine#effect) |  |
+| `shop.vendorOpen` | `(vendor: string):` [`Condition`](/docs/api/engine#condition) |  |
+| `shop.inStock` | `(vendor: string, entity:` [`EntityRef`](/docs/api/engine#entityref)`):` [`Condition`](/docs/api/engine#condition) |  |
+| `shop.outside` | `(...periods: string[]):` [`Condition`](/docs/api/engine#condition) |  |
+| `shop.hours` | `(periods: readonly string[], reason?:` [`Reason`](/docs/api/engine#reason)`):` [`Blocked`](/docs/api/engine#blocked) |  |
 
 ### ShopState
 
@@ -169,7 +173,7 @@ type ShopState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stocked` | `Record<string, Record<EntityRef, StockRecord>>` |  |  | By vendor, then thing: when its stock was last topped up. |
+| `stocked` | `Record<string, Record<`[`EntityRef`](/docs/api/engine#entityref)`,` [`StockRecord`](#stockrecord)`>>` |  |  | By vendor, then thing: when its stock was last topped up. |
 
 ### ShopView
 
@@ -185,8 +189,8 @@ type ShopView = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `vendors` | `VendorView[]` |  |  | Every vendor, in the order the game declares them. |
-| `panel` | `VendorView \| null` |  |  | The vendor whose counter the open `shop` panel shows, by its `with.vendor`, or null while no `shop` panel is open: what a UI draws in the panel, with no looking up. |
+| `vendors` | [`VendorView[]`](#vendorview) |  |  | Every vendor, in the order the game declares them. |
+| `panel` | [`VendorView`](#vendorview) `\| null` |  |  | The vendor whose counter the open `shop` panel shows, by its `with.vendor`, or null while no `shop` panel is open: what a UI draws in the panel, with no looking up. |
 
 ### StockRecord
 
@@ -223,10 +227,10 @@ type Vendor = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `blocked` | `Blocked[]` | yes |  | Refused while one of these holds, with its reason: what buying and selling are refused with, the first that holds winning. An entry with `hide` says where the vendor is: while it holds, the vendor isn't `here` (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])` writes opening hours as one, with the calendar). Open everywhere if left out. |
-| `goods` | `GoodDef[]` |  |  | What it sells, in the order shown. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Refused while one of these holds, with its reason: what buying and selling are refused with, the first that holds winning. An entry with `hide` says where the vendor is: while it holds, the vendor isn't `here` (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])` writes opening hours as one, with the calendar). Open everywhere if left out. |
+| `goods` | [`GoodDef[]`](#gooddef) |  |  | What it sells, in the order shown. |
 | `buysBack` | `number` | yes |  | The fraction of a thing's price it pays to take one back. It takes nothing back if left out. |
-| `discounts` | `DiscountDef` | yes |  | Goods marked down each day. None if left out. |
+| `discounts` | [`DiscountDef`](#discountdef) | yes |  | Goods marked down each day. None if left out. |
 
 ### VendorDef
 
@@ -251,10 +255,10 @@ Plugins add fields of their own to it, which their pages list.
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `blocked` | `Blocked[]` | yes |  | Refused while one of these holds, with its reason: what buying and selling are refused with, the first that holds winning. An entry with `hide` says where the vendor is: while it holds, the vendor isn't `here` (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])` writes opening hours as one, with the calendar). Open everywhere if left out. |
-| `goods` | `GoodDef[]` |  |  | What it sells, in the order shown. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | Refused while one of these holds, with its reason: what buying and selling are refused with, the first that holds winning. An entry with `hide` says where the vendor is: while it holds, the vendor isn't `here` (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])` writes opening hours as one, with the calendar). Open everywhere if left out. |
+| `goods` | [`GoodDef[]`](#gooddef) |  |  | What it sells, in the order shown. |
 | `buysBack` | `number` | yes |  | The fraction of a thing's price it pays to take one back. It takes nothing back if left out. |
-| `discounts` | `DiscountDef` | yes |  | Goods marked down each day. None if left out. |
+| `discounts` | [`DiscountDef`](#discountdef) | yes |  | Goods marked down each day. None if left out. |
 | `of` | `string` | yes |  | Its kind: the plugin's own, `vendor`, if left out. |
 
 ### vendorOf
@@ -270,6 +274,8 @@ import { vendorOf } from '@ifloom/plugin-shop'
 function vendorOf(state: GameState, game: Game, ref: string | null | undefined): Vendor | undefined
 ```
 
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`Vendor`](#vendor).
+
 ### vendorsOf
 
 Function. Explained in [Shop](/docs/plugins/shop#vendorsof-vendorof-and-vendorref).
@@ -282,6 +288,8 @@ made in play.
 import { vendorsOf } from '@ifloom/plugin-shop'
 function vendorsOf(state: GameState, game: Game): EntityRef[]
 ```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref).
 
 ### VendorView
 
@@ -305,12 +313,12 @@ type VendorView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | Its id, as `buy` names it: the bare id for one of the `vendor` kind, else its whole reference. |
-| `ref` | `EntityRef` |  |  | Its entity: `'vendor:counter'`. |
+| `ref` | [`EntityRef`](/docs/api/engine#entityref) |  |  | Its entity: `'vendor:counter'`. |
 | `name` | `string` |  |  |  |
 | `here` | `boolean` |  |  | Where the player is: refused by none of its `blocked` entries with `hide`. |
 | `closed` | `string \| null` |  |  | Why it's closed, its first `blocked` entry without `hide` that holds, in the words `shop/buy` is refused with; null while it's open. |
 | `buysBack` | `boolean` |  |  | Takes things back. |
-| `goods` | `GoodView[]` |  |  | The goods on offer now, in the order the vendor lists them. |
+| `goods` | [`GoodView[]`](#goodview) |  |  | The goods on offer now, in the order the vendor lists them. |
 
 ## @ifloom/plugin-shop/react
 
@@ -355,11 +363,11 @@ type ShopControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `vendors` | `VendorView[]` |  |  | Every vendor, in the order the game declares them. |
-| `panel` | `VendorView \| null` |  |  | The vendor whose counter the open `shop` panel shows, by its `with.vendor`, or null while no `shop` panel is open: what a UI draws in the panel, with no looking up. |
-| `here` | `VendorView[]` |  |  | The vendors at the player's location (every vendor, in a game without places): what a layout of your own can show where the player is. |
-| `buy` | `(vendor: string, entity: EntityRef, count?: number) => Result<GameState>` |  |  | Buy `count` (1 if left out) of a thing, by its reference: sends `shop/buy`, refused with its reason as the buy button says. |
-| `sell` | `(vendor: string, entity: EntityRef, count?: number) => Result<GameState>` |  |  | Sell `count` (1 if left out) of a thing back: sends `shop/sell`. |
+| `vendors` | [`VendorView[]`](#vendorview) |  |  | Every vendor, in the order the game declares them. |
+| `panel` | [`VendorView`](#vendorview) `\| null` |  |  | The vendor whose counter the open `shop` panel shows, by its `with.vendor`, or null while no `shop` panel is open: what a UI draws in the panel, with no looking up. |
+| `here` | [`VendorView[]`](#vendorview) |  |  | The vendors at the player's location (every vendor, in a game without places): what a layout of your own can show where the player is. |
+| `buy` | `(vendor: string, entity:` [`EntityRef`](/docs/api/engine#entityref)`, count?: number) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Buy `count` (1 if left out) of a thing, by its reference: sends `shop/buy`, refused with its reason as the buy button says. |
+| `sell` | `(vendor: string, entity:` [`EntityRef`](/docs/api/engine#entityref)`, count?: number) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sell `count` (1 if left out) of a thing back: sends `shop/sell`. |
 
 ### ShopCounter
 
@@ -376,6 +384,8 @@ closed vendor says so above its goods.
 import { ShopCounter } from '@ifloom/plugin-shop/react'
 const ShopCounter: ComponentType<ShopCounterProps>
 ```
+
+Uses: [`ShopCounterProps`](#shopcounterprops).
 
 ### ShopCounterProps
 
@@ -399,6 +409,8 @@ The vendor with this id in a dialog, titled with its name and drawn as a `ShopCo
 import { ShopDialog } from '@ifloom/plugin-shop/react'
 const ShopDialog: ComponentType<ShopDialogProps>
 ```
+
+Uses: [`ShopDialogProps`](#shopdialogprops).
 
 ### ShopDialogProps
 
@@ -426,6 +438,8 @@ import { shopUi } from '@ifloom/plugin-shop/react'
 const shopUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useShop
 
 Function. Explained in [Shop](/docs/plugins/shop#useshop).
@@ -436,3 +450,5 @@ The shop plugin's view with its commands, or null in a game without the plugin. 
 import { useShop } from '@ifloom/plugin-shop/react'
 function useShop(): ShopControls | null
 ```
+
+Uses: [`ShopControls`](#shopcontrols).

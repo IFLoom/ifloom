@@ -50,6 +50,8 @@ import { freshState } from '@ifloom/engine/testing'
 function freshState(game: Game, options?: StartOptions): GameState
 ```
 
+Uses: [`Game`](/docs/api/engine#game), [`StartOptions`](/docs/api/engine#startoptions), [`GameState`](/docs/api/engine#gamestate).
+
 ## loadChecked
 
 Function. Explained in [Testing helpers](/docs/reference/testing#loadchecked).
@@ -60,6 +62,8 @@ Function. Explained in [Testing helpers](/docs/reference/testing#loadchecked).
 import { loadChecked } from '@ifloom/engine/testing'
 function loadChecked(content: readonly Content[], base: GameBase, options?: LoadOptions): Game
 ```
+
+Uses: [`Content`](/docs/api/engine#content), [`GameBase`](/docs/api/engine#gamebase), [`LoadOptions`](/docs/api/engine#loadoptions), [`Game`](/docs/api/engine#game).
 
 ## PartnerCase
 
@@ -81,7 +85,7 @@ type PartnerCase = {
 |---|---|---|---|---|
 | `name` | `string` |  |  | `alone`, or `with <id>`, for a test's name. |
 | `partner` | `string \| null` |  |  | The partner's id, or `null` alone. |
-| `plugins` | `Plugin[]` |  |  | The plugins to load: the partner, if any, then the plugin under test. |
+| `plugins` | [`Plugin[]`](/docs/api/engine-plugin#plugin) |  |  | The plugins to load: the partner, if any, then the plugin under test. |
 | `has` | `(id: string) => boolean` |  |  | Whether this case loads the plugin `id`: the plugin under test or the partner. |
 
 ## partnerCases
@@ -97,6 +101,8 @@ import { partnerCases } from '@ifloom/engine/testing'
 function partnerCases(plugin: Plugin, partners: readonly Plugin[]): PartnerCase[]
 ```
 
+Uses: [`Plugin`](/docs/api/engine-plugin#plugin), [`PartnerCase`](#partnercase).
+
 ## play
 
 Function. Explained in [Testing helpers](/docs/reference/testing#play).
@@ -107,6 +113,8 @@ The state after each command in turn. Throws on the first one refused, naming it
 import { play } from '@ifloom/engine/testing'
 function play(state: GameState, game: Game, ...commands: readonly CommandRef[]): GameState
 ```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`CommandRef`](/docs/api/engine#commandref).
 
 ## undocumentedExports
 

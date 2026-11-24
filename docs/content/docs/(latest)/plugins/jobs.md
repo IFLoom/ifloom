@@ -42,7 +42,7 @@ Builds the plugin, with the id `jobs`. The player holds no job in a new game.
 
 ## Writing jobs
 
-Jobs are content. They go in your content's [`data`](/docs/reference/loader#content) under `jobs.jobs`, and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
+Jobs are content. They go in your content's [`data`](/docs/reference/loader#content) under `jobs.jobs` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of jobs) and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
 
 ```ts
 import type { Content } from '@ifloom/engine'

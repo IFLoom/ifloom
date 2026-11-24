@@ -21,15 +21,17 @@ import { debug } from '@ifloom/plugin-debug'
 function debug(): DefinedPlugin<null, DebugView>
 ```
 
+Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`DebugView`](#debugview).
+
 | Helper | Signature | Description |
 |---|---|---|
-| `debug.stat` | `(stat: string, to: number, of?: string): CommandRef` |  |
-| `debug.kv` | `(key: string, to: KvValue): CommandRef` |  |
-| `debug.held` | `(entity: string, to: number, at?: string): CommandRef` |  |
-| `debug.scene` | `(scene?: string): CommandRef` |  |
-| `debug.time` | `(time: { day?: number; period?: string }): CommandRef` |  |
-| `debug.turn` | `(turn: number): CommandRef` |  |
-| `debug.go` | `(location: string): CommandRef` |  |
+| `debug.stat` | `(stat: string, to: number, of?: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `debug.kv` | `(key: string, to:` [`KvValue`](/docs/api/engine#kvvalue)`):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `debug.held` | `(entity: string, to: number, at?: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `debug.scene` | `(scene?: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `debug.time` | `(time: { day?: number; period?: string }):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `debug.turn` | `(turn: number):` [`CommandRef`](/docs/api/engine#commandref) |  |
+| `debug.go` | `(location: string):` [`CommandRef`](/docs/api/engine#commandref) |  |
 
 ### DebugView
 
@@ -131,9 +133,9 @@ type DebugControls = {
 | `locks` | `{ reason: string; deny: string[] }[]` |  |  | Every lock whose `when` holds now, with what it stops and why. |
 | `fired` | `Record<string, number>` |  |  | Triggers that have fired, with the turn each last did. |
 | `seed` | `number` |  |  | The save's seed, which every random draw is hashed from. |
-| `greyed` | `RenderedChoice[]` |  |  | Every greyed-out button on screen: the actions, the scene's choices and each person's buttons. |
-| `state` | `GameState` |  |  | The whole game state. |
-| `log` | `Command[]` |  |  | The commands run since the start, in order. |
+| `greyed` | [`RenderedChoice[]`](/docs/api/engine#renderedchoice) |  |  | Every greyed-out button on screen: the actions, the scene's choices and each person's buttons. |
+| `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The whole game state. |
+| `log` | [`Command[]`](/docs/api/engine#command) |  |  | The commands run since the start, in order. |
 | `canUndo` | `boolean` |  |  | Whether there's a state to go back to. |
 | `canRedo` | `boolean` |  |  | Whether there's an undone state to go forward to. |
 | `undo` | `() => void` |  |  | Go back a state, as `runner.undo()`. |
@@ -153,6 +155,8 @@ import { debugUi } from '@ifloom/plugin-debug/react'
 const debugUi: PluginUi
 ```
 
+Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
+
 ### useDebug
 
 Function. Explained in [Debug](/docs/plugins/debug#usedebug).
@@ -163,3 +167,5 @@ The debug plugin's view with its commands, or null in a game without the plugin.
 import { useDebug } from '@ifloom/plugin-debug/react'
 function useDebug(): DebugControls | null
 ```
+
+Uses: [`DebugControls`](#debugcontrols).

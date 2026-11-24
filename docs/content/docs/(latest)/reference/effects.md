@@ -177,7 +177,7 @@ Changes how many of a thing a [holder](/docs/reference/glossary#holder) holds, `
 { entity: 'gift:scarf', at: 'character:ava', to: 1 }
 ```
 
-It does nothing when the thing isn't in the game, when the holder isn't there or its kind isn't [unique](/docs/reference/entities#kinddef), or when the thing would hold itself. The [`give` and `take`](/docs/reference/entities#give) helpers write it with `by`.
+It does nothing when the thing isn't in the game, when the holder isn't there or its kind isn't [unique](/docs/reference/entities#kinddef), or when the thing would hold itself. The [`give` and `take`](/docs/reference/entities#give-take-move-and-holding) helpers write it with `by`.
 
 ### move
 
@@ -189,7 +189,7 @@ Moves a thing from one [holder](/docs/reference/glossary#holder) `to` another. H
 { move: 'gift:scarf', to: 'gift:box' }
 ```
 
-It does nothing when `to` can't hold things, when `from` and `to` are the same, or when the thing would end up holding itself, however far round. The [`move`](/docs/reference/entities#move) helper writes it.
+It does nothing when `to` can't hold things, when `from` and `to` are the same, or when the thing would end up holding itself, however far round. The [`move`](/docs/reference/entities#give-take-move-and-holding) helper writes it.
 
 ### you
 

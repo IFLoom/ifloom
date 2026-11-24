@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for writing a plugin. Someone will read it and, if it meets the criteria on
-        https://ifloom.dev/docs/plugins/community#how-listing-works, add it to the list.
+        https://ifloom.dev/docs/reference/plugins/community#listing-criteria, add it to the list.
   - type: input
     id: name
     attributes:

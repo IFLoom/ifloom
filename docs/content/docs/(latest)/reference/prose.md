@@ -335,7 +335,7 @@ The [content checker](/docs/reference/checks) reads the markup in every block, l
 | `"*sigh" is not closed, so it is shown as written; close it, or write \* for a star` | A star opens and never closes. |
 | `[[reveal]] is no longer markup and would be shown as written; …` | A paragraph holds `[[reveal]]`, which prose doesn't read. |
 
-The checker also reports an unknown pool, track or tag, a tooltip key with no prose, a UI piece with no name, a name that isn't an id, no words or an empty argument, and markup that isn't closed. It warns about a bare token with no fallback that may print nothing, and reports a token that names no phrase, value or key, as [Tokens](/docs/reference/checks#tokens) lists. Whether a UI renders a piece's name is that UI's own check, such as the React UI's `checkUiHints`.
+The checker also reports an unknown pool, track or tag, a tooltip key with no prose, a UI piece with no name, a name that isn't an id, no words or an empty argument, and markup that isn't closed. It warns about a bare token with no fallback that may print nothing, and reports a token that names no phrase, value or key, as [Tokens](/docs/reference/checks#prose) lists. Whether a UI renders a piece's name is that UI's own check, such as the React UI's `checkUiHints`.
 
 ## Caveats
 

@@ -8,9 +8,9 @@
  *   :root { --font-body: Georgia, serif; --primary: oklch(0.5 0.15 30); }
  *   [data-part="choice"] { border-radius: 0; }
  *
- * See "Make it your own" in the React UI docs.
+ * See https://ifloom.dev/docs/how-to/react/theme-the-react-ui#style-parts-with-css
  *
  * These are Tailwind source, built with your own classes. A game without
  * Tailwind imports @ifloom/react's prebuilt styles.min.css instead, and a
- * preset's .min.css. See "Without Tailwind" in the same docs.
+ * preset's .min.css: see "Use the prebuilt stylesheet" on the same page.
  */

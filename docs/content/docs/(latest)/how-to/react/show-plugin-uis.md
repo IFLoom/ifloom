@@ -23,7 +23,7 @@ import './styles.css'
 mountGame(module.build(), { layout: Layout, plugins: [placesUi, questsUi, shopUi] })
 ```
 
-Each [plugin UI](/docs/reference/react/kit#pluginui) brings its panels, its words, a page or settings if it has them, and the parts the layout places, in the order of the list. [`GameShell`](/docs/reference/react/index#gameshell) and [`GameProvider`](/docs/reference/react/components#gameprovider) take the same `plugins`. Follow these rules for the list:
+Each [plugin UI](/docs/reference/react/kit#pluginui) brings its panels, its words, a page or settings if it has them, and the parts the layout places, in the order of the list. [`GameShell`](/docs/reference/react#gameshell) and [`GameProvider`](/docs/reference/react/components#gameprovider) take the same `plugins`. Follow these rules for the list:
 
 - **List every plugin UI you want.** The UI finds none by itself, so a plugin UI you leave out never renders.
 - **List one for a plugin the game lacks if you like.** It renders nothing, so the debug plugin's `debugUi` can stay in the list of a release built without the plugin.

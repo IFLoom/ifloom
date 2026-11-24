@@ -52,7 +52,7 @@ The record outlives every save, so a title screen can offer New Game+ from then 
 
 ## Stop play after an ending
 
-Leave the ending's `choices` empty when the player should start again from the menu instead. While a scene is open the room offers no actions or exits, so nothing on screen can be pressed. With the React UI's [`pages`](/docs/reference/react/index#mountoptions) on, the player's menu has Title screen, which leads to New game, Continue and Load. Without `pages`, the menu still loads a save, so say so in the ending's words.
+Leave the ending's `choices` empty when the player should start again from the menu instead. While a scene is open the room offers no actions or exits, so nothing on screen can be pressed. With the React UI's [`pages`](/docs/reference/react#mountoptions) on, the player's menu has Title screen, which leads to New game, Continue and Load. Without `pages`, the menu still loads a save, so say so in the ending's words.
 
 To stop every other command too, such as a message reply or a debug button, set the kv key `phase` with the ending and add a [lock](/docs/reference/locks) that denies everything in that phase:
 

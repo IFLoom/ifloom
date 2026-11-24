@@ -90,7 +90,7 @@ const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (s
 
 `max` is the stat's ceiling now, so a ceiling that grows during the game is already worked out. `role="meter"` and the values let a screen reader say how full it is.
 
-If a plain bar is all you need in the React UI, give the stat the hint [`ui: { display: 'bar' }`](/docs/reference/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/reference/react/components#statlist) renders it. `StatList` is plain on purpose, so write your own, as above, for a bar that changes colour. To reword a levelled stat's "Level 2" or its bar's label, set `ui.statLevel` or `ui.statProgress` in your content's [`strings`](/docs/reference/react/index#strings).
+If a plain bar is all you need in the React UI, give the stat the hint [`ui: { display: 'bar' }`](/docs/reference/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/reference/react/components#statlist) renders it. `StatList` is plain on purpose, so write your own, as above, for a bar that changes colour. To reword a levelled stat's "Level 2" or its bar's label, set `ui.statLevel` or `ui.statProgress` in your content's [`strings`](/docs/reference/react#strings).
 
 ## Add a strip of unread counts
 

@@ -164,7 +164,7 @@ The third argument of [`loadGame`](#loadgame). Every field is in [`LoadOptions`]
 
 The answer of [`loadGame`](#loadgame), with the merged game, its raw prose and variants, and every problem found. Every field is in [`Loaded`](/docs/api/engine#loaded).
 
-`game` is ready to run. `prose` and `variants` are the merged records `game.prose` reads, for tools that want the raw text. `problems` lists what the loader and [`checkGame`](/docs/reference/checks#checkgame) found, each a [`Problem`](/docs/reference/checks#problem-and-describeproblem). A game with problems still loads, so a build either shows them or fails on them.
+`game` is ready to run. `prose` and `variants` are the merged records `game.prose` reads, for tools that want the raw text. `problems` lists what the loader and [`checkGame`](/docs/reference/checks#checkgame) found, each a [`Problem`](/docs/reference/checks#problem). A game with problems still loads, so a build either shows them or fails on them.
 
 ## PackContext
 
@@ -244,7 +244,7 @@ It also reports these problems with the content and packs themselves, which the 
 
 The declared-twice check covers every key content declares by id or key: scenes, prose keys, strings, stats, kinds, entities, `traits` rows, storylines, actions, locks with an `id`, triggers, inputs, minigames, timers, phrases, settings, kv and `resets` keys, `ui` hints, `introScene`, `finished`, `carryOver`, audio tracks, media pools and plugin entries. Files may add to one variants name, and only the same line listed twice is reported.
 
-[`describeProblem`](/docs/reference/checks#problem-and-describeproblem) prints a problem with its source in front:
+[`describeProblem`](/docs/reference/checks#describeproblem) prints a problem with its source in front:
 
 ```text
 story.ava · scene ava.hi · gated on unknown scene "ava.hello"

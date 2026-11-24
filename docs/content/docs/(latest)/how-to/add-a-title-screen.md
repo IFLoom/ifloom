@@ -6,7 +6,7 @@ Use this to open your game on a title screen rather than straight into the story
 
 ## Turn on the title screen
 
-In the React UI, pass `pages` to [`mountGame`](/docs/reference/react/index#mountgame). With a UI of your own, render a title screen before the game. This one offers New game, and Continue once there's a save to go on from:
+In the React UI, pass `pages` to [`mountGame`](/docs/reference/react#mountgame). With a UI of your own, render a title screen before the game. This one offers New game, and Continue once there's a save to go on from:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/title.ts
@@ -146,7 +146,7 @@ const runner = createRunner(game, startingState(game), {
 })
 ```
 
-Then render [`GameShell`](/docs/reference/react/index#gameshell) with that runner and the same `pages` prop, as in `<GameShell runner={runner} pages={{ subtitle: 'A new flat, a new town' }} />`.
+Then render [`GameShell`](/docs/reference/react#gameshell) with that runner and the same `pages` prop, as in `<GameShell runner={runner} pages={{ subtitle: 'A new flat, a new town' }} />`.
 
 ## Make it look like your game
 

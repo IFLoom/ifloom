@@ -1,7 +1,6 @@
 {
   "title": "React UI",
   "description": "@ifloom/react",
-  "root": true,
   "pages": [
     "index",
     "components",

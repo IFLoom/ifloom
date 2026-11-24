@@ -18,7 +18,7 @@ The base gives `id`, `title`, `version`, `plugins` and `rules`. The content and 
 
 | Field | Meaning |
 |---|---|
-| `id` | The game's id, which [saves](/docs/reference/saves#keys) are kept under. A save from another game's id is refused, so the id never changes once players have saves. |
+| `id` | The game's id, which [saves](/docs/reference/saves#savedriver) are kept under. A save from another game's id is refused, so the id never changes once players have saves. |
 | `version` | The game's own version, a whole number from 1, which saves record. Declaring it, even as 1, stops the engine filling new stats, settings and entities into old saves itself. See [`migrations`](/docs/reference/rules#migrations). |
 | `plugins` | The [plugins](/docs/reference/plugins) the game is built with. Their hooks run in this order. |
 | `introScene` | The scene open on the first frame, counted as seen once at turn 0. A game without one opens on its room with nothing seen. |

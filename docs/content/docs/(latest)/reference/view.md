@@ -69,7 +69,7 @@ While no scene is open, the room's `id` is `null`, it has no choices, and its ti
 
 One state as the engine renders it once, before `view` formats it, with what the view leaves out. Every field is in [`Screen`](/docs/api/engine#screen).
 
-The screen keeps each choice's effects, the new [pool picks](/docs/reference/media#remembered-picks) and the track each background channel resolves to. The reducer reads it after each command to record the picks and the tracks, and locks, guards and prices read the choices' effects. The engine renders the open scene once per screen, so a command never renders a scene twice, and the view can't disagree with the screen.
+The screen keeps each choice's effects, the new [pool picks](/docs/reference/media#mediastate) and the track each background channel resolves to. The reducer reads it after each command to record the picks and the tracks, and locks, guards and prices read the choices' effects. The engine renders the open scene once per screen, so a command never renders a scene twice, and the view can't disagree with the screen.
 
 `view` drops `effects` from each choice, `tracks` from the audio and `picks` altogether, and takes the rest as it is. A tool that maps where choices lead, or a UI that previews an outcome, reads the screen.
 

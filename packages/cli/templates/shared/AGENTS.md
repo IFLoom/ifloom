@@ -27,7 +27,7 @@ for coding agents working on the game.
   entity's `name`, a block of words in a scene, `text('…')` or
   `{ text: '…' }`. Only lines read by key, `{ prose: 'key' }` blocks,
   `variants` and pools, go in the `prose` table. A translation is one pack
-  with a `words` table: https://ifloom.dev/docs/recipes/translating
+  with a `words` table: https://ifloom.dev/docs/how-to/translate-your-game
 - `src/rules.ts` holds the game's own code once it has any: `rules`, with its
   hooks (`onTurn`, `onStat`, ...) and the conditions, effects and values content
   calls as `{ 'game/name': args }`.
@@ -39,7 +39,7 @@ for coding agents working on the game.
   what the content declares.
 - Content is plain data: scenes, choices, conditions, effects, stats and words.
   Prefer data over code.
-- How to organise a game: https://ifloom.dev/docs/guide/organising
+- How to organise a game: https://ifloom.dev/docs/how-to/organise-your-files
 
 ## How the game is put together
 

@@ -28,9 +28,8 @@ import { codeOf, includesOf } from '../../../../docs/lib/snippets.ts'
  *
  * Pages under `reference/react/` and `how-to/react/` document the optional
  * React UI, so they stay React.
- * Two more pages are about one framework by design: the guide's worked
- * example of a UI in plain JS (`guide/ui-from-scratch`), whose other
- * frameworks are on `guide/frameworks`, and the Next.js recipe, since Next is React.
+ * One more page is about one framework by design: `how-to/build-with-next`,
+ * since Next is React.
  */
 /** What a page can include: the snippets, by their URL. */
 const SNIPPET_FILES = import.meta.glob('../../../../docs/snippets/**/*.{ts,tsx,vue}', { query: '?raw', import: 'default', eager: true }) as Record<
@@ -67,7 +66,7 @@ const GROUP = 'framework'
 const DRAWING = ['React UI']
 
 /** Pages that may show a UI snippet in one framework only. */
-const ALLOWED = [/\/(?:reference|how-to)\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/how-to\/build-with-next\.md$/, /\/api\//]
+const ALLOWED = [/\/(?:reference|how-to)\/react\//, /\/how-to\/build-with-next\.md$/, /\/api\//]
 
 const IMPORTS_UI = /from\s+['"](?:@ifloom\/react|react|react-dom|vue|svelte)(?:\/[^'"]*)?['"]/
 const CALLS_UI = /\bmountGame\(|\bdocument\.(?:createElement|querySelector|getElementById)\b/

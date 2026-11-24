@@ -4,7 +4,7 @@
  * and the story is in `story/`, one file per area (a place, a chapter or a
  * character's arc). Add a new file's content to the list when you make one.
  *
- * The docs: https://ifloom.dev/docs/guide/organising
+ * The docs: https://ifloom.dev/docs/how-to/organise-your-files
  */
 import { loadGame } from '@ifloom/engine'
 import { defineGame, probe } from '@ifloom/cli/game'

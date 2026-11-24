@@ -48,7 +48,7 @@ The save keeps only the milliseconds `left` and the `total` the timer started wi
 
 ### TimerView
 
-A running timer as [`view.timers`](/docs/reference/view#timers) lists it, in the order the timers started. Every field is in [`TimerView`](/docs/api/engine#timerview).
+A running timer as [`view.timers`](/docs/reference/timers#view) lists it, in the order the timers started. Every field is in [`TimerView`](/docs/api/engine#timerview).
 
 `left / total` is the share left. The view never includes a timer's effects, so rendering every running timer gives nothing away, and a timer is in the view only while it runs. To render them, see [Render timers](/docs/how-to/render/timers-minigames-panels#render-timers).
 

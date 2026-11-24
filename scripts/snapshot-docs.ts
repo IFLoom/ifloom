@@ -39,7 +39,7 @@ meta.title = version
 meta.pages = meta.pages?.filter((page) => page !== 'changelog')
 writeFileSync(metaFile, JSON.stringify(meta, null, 2) + '\n')
 
-// Links between pages are absolute (/docs/guide/...), so point them into the
+// Links between pages are absolute (/docs/how-to/...), so point them into the
 // snapshot. Links to the changelog keep pointing at the latest one.
 function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>

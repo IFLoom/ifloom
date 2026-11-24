@@ -7,7 +7,7 @@
  * Any UI draws its view from `view.plugins.__id__`. Its own React UI is in
  * `src/react/`, the `/react` subpath, which a game drawn another way never loads.
  *
- * How each part is named: https://ifloom.dev/docs/reference/plugins#naming
+ * How each part is named: https://ifloom.dev/docs/reference/plugin-api#id
  */
 import { stringOf, type CommandRef, type Condition, type EffectRef, type Game } from '@ifloom/engine'
 import {

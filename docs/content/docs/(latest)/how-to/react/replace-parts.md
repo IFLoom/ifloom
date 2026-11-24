@@ -225,7 +225,7 @@ A button of your own that sends a command should send the `command` a [`ChoiceBu
 
 ## Use the provider without GameShell
 
-`mountGame` and [`GameShell`](/docs/reference/react/index#gameshell) add the sound, the text size and the pages around the layout. To render the React UI inside a page of your own React app, wrap it in a [`GameProvider`](/docs/reference/react/components#gameprovider) instead, with a [`TooltipProvider`](/docs/reference/react/kit#tooltip) if anything in it uses tooltips:
+`mountGame` and [`GameShell`](/docs/reference/react#gameshell) add the sound, the text size and the pages around the layout. To render the React UI inside a page of your own React app, wrap it in a [`GameProvider`](/docs/reference/react/components#gameprovider) instead, with a [`TooltipProvider`](/docs/reference/react/kit#tooltip) if anything in it uses tooltips:
 
 ```tsx given
 import { createRoot } from 'react-dom/client'

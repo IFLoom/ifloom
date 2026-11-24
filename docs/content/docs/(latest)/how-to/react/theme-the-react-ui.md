@@ -23,7 +23,7 @@ A preset is a stylesheet that sets the fonts, the sizes, the colours and the sha
 | `studio` | A clean, modern app. Cards on a soft grey page, the side column on the right, bold headings, choices as raised cards, and the reading column kept to the start of the story. The Corner Café (`examples/cafe`) uses it. |
 | `storybook` | Soft and friendly. Rounded type, a warm tinted page, big pill buttons, and dialogue in speech bubbles. The showcase uses it. |
 
-[`ifloom new`](/docs/reference/cli/index#ifloom-new) writes this import, with the preset you name in `--theme`, or one at random when you name none. With no preset, the UI renders in a system sans-serif, in neutral colours, with the side column on the left.
+[`ifloom new`](/docs/reference/cli#ifloom-new) writes this import, with the preset you name in `--theme`, or one at random when you name none. With no preset, the UI renders in a system sans-serif, in neutral colours, with the side column on the left.
 
 A preset is plain CSS that sets the tokens below and styles a few parts. It styles the UI's own parts and the [kit's parts](/docs/reference/react/kit#kitpart), never a plugin's own by name, so every plugin's UI looks right in every preset. Read yours in `node_modules/@ifloom/react/src/themes/` to see what it changes, or copy it into `src/styles.css` as the start of your own.
 

@@ -50,7 +50,7 @@ Every command replaces the list, with an empty one when it moved no tracked stat
 
 ### ChangeView
 
-A [`Change`](#change) with the words to show after its `text`, as [`view.changes`](/docs/reference/view#changes) lists it. Every field is in [`ChangeView`](/docs/api/engine#changeview).
+A [`Change`](#change) with the words to show after its `text`, as [`view.changes`](/docs/reference/changes#view) lists it. Every field is in [`ChangeView`](/docs/api/engine#changeview).
 
 `name` says what moved when `text` doesn't:
 

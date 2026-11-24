@@ -87,7 +87,7 @@ const SPECS: PageSpec[] = [
     title: '@ifloom/cli/game',
     description: "Every export of @ifloom/cli/game, the game module's entry: its signature and its fields.",
     entries: ['@ifloom/cli/game'],
-    home: ['reference/cli/', 'guide/organising.md'],
+    home: ['reference/cli/'],
   },
   {
     slug: 'cli-vite',

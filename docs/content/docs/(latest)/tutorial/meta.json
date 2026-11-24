@@ -1,6 +1,10 @@
 {
   "title": "Tutorial",
-  "description": "Build a small game from a template, step by step",
+  "description": "Write a short story or build a small town, step by step",
   "root": true,
-  "pages": ["index", "story", "town"]
+  "pages": [
+    "index",
+    "story",
+    "town"
+  ]
 }

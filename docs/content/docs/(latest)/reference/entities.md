@@ -388,7 +388,7 @@ The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/c
 | `an entity id must not be a whole number` | A declared entity's id is a whole number, such as `'7'`. |
 | A kind the game doesn't declare | An entity's `of`, a stat's `of`, a `count`, an `each` or a `create` names an undeclared kind. |
 | A stat on the wrong owner | An effect or condition names a stat with an `of` whose kind doesn't keep it. |
-| A holder that can't hold | An `at`, an `entity` effect or a `move` names a holder the checker can tell isn't the player, `'you'` or a unique entity ([Holders](/docs/reference/checks#holders)). |
+| A holder that can't hold | An `at`, an `entity` effect or a `move` names a holder the checker can tell isn't the player, `'you'` or a unique entity ([Holders](/docs/reference/checks#checks)). |
 | A trait's own problem | A plugin's trait reports its data on an entity ([Traits](/docs/reference/checks#traits)). |
 
 ## Caveats

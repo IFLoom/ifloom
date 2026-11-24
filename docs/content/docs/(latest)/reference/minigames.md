@@ -99,9 +99,9 @@ The minigame being played, as the save keeps it in [`state.minigame`](/docs/refe
 
 ### MinigameView
 
-The running minigame as [`view.minigame`](/docs/reference/view#minigame) holds it, or `null`. Every field is in [`MinigameView`](/docs/api/engine#minigameview).
+The running minigame as [`view.minigame`](/docs/reference/minigames#view) holds it, or `null`. Every field is in [`MinigameView`](/docs/api/engine#minigameview).
 
-`label` is the running state's words with tokens filled, and `view.scene.body` holds the same words as markup. `timeLeft` and `timeTotal` are the state's timer in milliseconds, or `null` for a state with no timer. A UI sends ticks while `timeLeft` isn't `null`, and while [`view.timers`](/docs/reference/view#timers) isn't empty. To render it, see [Render a minigame](/docs/how-to/render/timers-minigames-panels#render-a-minigame).
+`label` is the running state's words with tokens filled, and `view.scene.body` holds the same words as markup. `timeLeft` and `timeTotal` are the state's timer in milliseconds, or `null` for a state with no timer. A UI sends ticks while `timeLeft` isn't `null`, and while [`view.timers`](/docs/reference/timers#view) isn't empty. To render it, see [Render a minigame](/docs/how-to/render/timers-minigames-panels#render-a-minigame).
 
 ### MinigameInput
 

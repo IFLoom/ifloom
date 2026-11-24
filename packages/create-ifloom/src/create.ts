@@ -77,7 +77,9 @@ export function create(argv: string[], io: Io): number {
     io.log(`Made ${args.name} from the ${template} template${look}. Next:\n`)
     for (const line of nextSteps(pm.name, relative(io.cwd, made.dir) || '.', template)) io.log(`  ${line}`)
     io.log(
-      template === 'plugin' ? '\nWriting a plugin: https://ifloom.dev/docs/reference/plugins' : '\nYour first story: https://ifloom.dev/docs/guide/first-story',
+      template === 'plugin'
+        ? '\nWriting a plugin: https://ifloom.dev/docs/how-to/write-a-plugin'
+        : '\nYour first story: https://ifloom.dev/docs/tutorial/story/start-a-story',
     )
     return 0
   } catch (error) {

@@ -83,7 +83,7 @@ The [content checker](/docs/reference/checks) checks every phrase, under `phrase
 | `mood.word takes who` | A token leaves out an argument its phrase takes. |
 | `mood.word takes who, not whom` | A token passes an argument its phrase doesn't take. |
 
-The checker also reports a row with no `text`, a name that `rules.values` has too, and a group name that is also a phrase, such as `outfit` and `outfit.verdict` from two files. It checks each row's `when` and words as any condition and line, with an argument read as `'$'`. It reports a token with a group in its name, such as `{{outfit.verdit}}`, that names no phrase, value or kv key, as [Tokens](/docs/reference/checks#tokens) lists.
+The checker also reports a row with no `text`, a name that `rules.values` has too, and a group name that is also a phrase, such as `outfit` and `outfit.verdict` from two files. It checks each row's `when` and words as any condition and line, with an argument read as `'$'`. It reports a token with a group in its name, such as `{{outfit.verdit}}`, that names no phrase, value or kv key, as [Tokens](/docs/reference/checks#prose) lists.
 
 ## Caveats
 

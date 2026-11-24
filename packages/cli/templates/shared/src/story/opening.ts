@@ -2,7 +2,7 @@
  * The opening of the story: its scenes, the choices in them and their words,
  * written where they are read. A block of words is `text(…)`, and a choice
  * is `{ id, label, effects }`. To translate the game, a pack's `words` table
- * gives these fields other words: https://ifloom.dev/docs/recipes/translating
+ * gives these fields other words: https://ifloom.dev/docs/how-to/translate-your-game
  */
 import { text, type Content } from '@ifloom/engine'
 

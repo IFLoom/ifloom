@@ -4,7 +4,7 @@ description: "How-to for adding @ifloom/react to a game: installing it with Reac
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 
-Use this to render a game with the React UI in a project that doesn't have it yet. A game made from the `react` template has every file below already, as [Create a game](/docs/how-to/create-a-game) shows. You need a [game module](/docs/reference/cli/index#the-game-module) in `src/game.ts` first, which [Add IFLoom to an existing project](/docs/how-to/add-to-a-project) writes.
+Use this to render a game with the React UI in a project that doesn't have it yet. A game made from the `react` template has every file below already, as [Create a game](/docs/how-to/create-a-game) shows. You need a [game module](/docs/reference/cli#the-game-module) in `src/game.ts` first, which [Add IFLoom to an existing project](/docs/how-to/add-to-a-project) writes.
 
 ## Install the packages
 
@@ -50,7 +50,7 @@ Turn on JSX, the DOM and Vite's client types in `tsconfig.json`, beside the sett
 
 ## Add the Vite plugins
 
-List React's and Tailwind's Vite plugins in the [CLI's preset](/docs/reference/cli/index#the-vite-preset), which builds one HTML file that opens from disk:
+List React's and Tailwind's Vite plugins in the [CLI's preset](/docs/reference/cli#the-vite-preset), which builds one HTML file that opens from disk:
 
 ```ts
 // vite.config.ts
@@ -77,7 +77,7 @@ The UI's stylesheet imports Tailwind and tells it to scan the UI's components, s
 
 ## Mount the game
 
-Call [`mountGame`](/docs/reference/react/index#mountgame) with what the game module's `build()` returns, in `src/main.ts`:
+Call [`mountGame`](/docs/reference/react#mountgame) with what the game module's `build()` returns, in `src/main.ts`:
 
 ```ts
 // src/main.ts
@@ -116,7 +116,7 @@ Run `npx ifloom dev` and open the address it prints. The game's title is in the 
 
 For more, see:
 
-- [The React UI](/docs/reference/react) and [`MountOptions`](/docs/reference/react/index#mountoptions).
+- [The React UI](/docs/reference/react) and [`MountOptions`](/docs/reference/react#mountoptions).
 - [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis), to render your plugins.
 - [Add a title screen](/docs/how-to/add-a-title-screen), to open on one with the `pages` option.
 - [Choosing a UI](/docs/explanation/choosing-a-ui), for when to use the React UI.

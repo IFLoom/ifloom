@@ -103,7 +103,7 @@ if (!added.ok) console.warn(added.reason) // 'That mod is for another game (anot
 
 ## Checks
 
-`add` doesn't check a pack's content, so a mod that names a scene nobody wrote goes in. [`loadGame`](/docs/reference/content#loadgame) reports each problem against the pack that brought it, and a mod's pack is `mod:<id>`, so [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes a mod's problems with `mod:<id>` in front:
+`add` doesn't check a pack's content, so a mod that names a scene nobody wrote goes in. [`loadGame`](/docs/reference/content#loadgame) reports each problem against the pack that brought it, and a mod's pack is `mod:<id>`, so [`describeProblem`](/docs/reference/checks#describeproblem) writes a mod's problems with `mod:<id>` in front:
 
 ```text
 mod:compliments · scene ava.hi · no prose for "ava.hi#coffee"

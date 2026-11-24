@@ -3,8 +3,6 @@
   "root": "version",
   "pages": [
     "tutorial",
-    "guide",
-    "recipes",
     "how-to",
     "explanation",
     "reference",

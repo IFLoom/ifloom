@@ -3,7 +3,7 @@ import { checkComment, checkPage, checkPages, checkTsdoc, DONE, report } from '.
 
 /**
  * The docs follow the voice rules a script can check (`docs/lib/check-style.ts` lists them): the TSDoc of every
- * export, field and helper the API pages print, and the pages in its DONE list, which grows as pages are rewritten.
+ * export, field and helper the API pages print, and the pages in its DONE list: every page but the API pages and the changelog.
  * `node docs/lib/check-style.ts` prints the same problems, grouped by rule and counted.
  */
 describe('the docs style', () => {

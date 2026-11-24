@@ -151,8 +151,8 @@ npm install --save-dev @ifloom/cli
 ```
 
 Add `@ifloom/react` for the ready-made React UI, or draw the game yourself with
-any framework. The [installation guide](https://ifloom.dev/docs/guide/installation)
-shows a game and the code that mounts it in plain JS, React, Vue and Svelte.
+any framework. [Add IFLoom to an existing project](https://ifloom.dev/docs/how-to/add-to-a-project)
+shows a game and the code that mounts it in plain JS, React and Vue.
 
 ### From this repository
 
@@ -167,7 +167,7 @@ npm run dev -w @ifloom/example-novel   # play The Letter in your browser
 npm run new -- my-story                # makes games/my-story, which git ignores
 ```
 
-[Working from the repository](https://ifloom.dev/docs/guide/from-the-repository)
+[Working from the repository](https://ifloom.dev/docs/how-to/work-in-the-repository)
 covers games inside the checkout and beside it.
 
 ## Documentation

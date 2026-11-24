@@ -4,5 +4,5 @@ contact_links:
     url: https://ifloom.dev/docs/reference/plugins
     about: How a plugin is built, from its state to its tests.
   - name: Community plugins
-    url: https://ifloom.dev/docs/plugins/community
+    url: https://ifloom.dev/docs/reference/plugins/community
     about: The plugins already listed, and what a listing needs.

@@ -248,7 +248,8 @@ describe('the docs', () => {
     const problems: string[] = []
     let sections = 0
     for (const page of pages) {
-      if (!/(^|\/)how-to\/render\//.test(page.path)) continue
+      // Only the latest docs include their code from docs/snippets/: a released version's copy has it written in (scripts/snapshot-docs.ts).
+      if (!page.path.includes('/(latest)/how-to/render/')) continue
       // The page's `##` headings, outside code.
       const headings: string[] = []
       let fenced = false

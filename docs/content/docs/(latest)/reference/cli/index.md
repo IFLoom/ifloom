@@ -6,7 +6,7 @@ description: "The ifloom command's subcommands with their flags and exit codes, 
 
 In the showcase: `examples/showcase/package.json`, whose scripts run each command, and `examples/showcase/src/game.ts`, its game module.
 
-`npm create ifloom` runs `ifloom new`. Every other command runs from the game's folder. `ifloom` or `ifloom help` prints every command with its flags and exits with `0`, and an unknown command prints the same and exits with `1`.
+`npm create ifloom` runs `ifloom new`. Every other command runs from the game's folder, where the game lists `@ifloom/cli` as a dev dependency. Outside a game, `npx ifloom` runs the latest CLI from the `ifloom` package, which depends on `@ifloom/cli` and runs its command. `ifloom` or `ifloom help` prints every command with its flags and exits with `0`, and an unknown command prints the same and exits with `1`.
 
 ## Requirements
 

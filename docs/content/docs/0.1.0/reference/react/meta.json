@@ -1,0 +1,11 @@
+{
+  "title": "React UI",
+  "description": "@ifloom/react",
+  "pages": [
+    "index",
+    "components",
+    "kit",
+    "hints",
+    "parts"
+  ]
+}

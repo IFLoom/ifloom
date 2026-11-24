@@ -1,15 +1,19 @@
 # Changelog
 
-Every change you'd notice as someone making a game with IFLoom is listed here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once there is a first release.
+Every change you'd notice as someone making a game with IFLoom is listed here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-IFLoom is pre-release, so nothing is a stable API yet and anything below can still change.
+IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such as 0.2.0, can change what the one before it offered.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-11-24
 
 **Things are entities.** The engine no longer has items or collections of its own. A sandwich, a scarf, a note, a photo, a person and a place are all [entities](/docs/reference/entities) of a kind: what each is stays in your content, and the save keeps only what play changed. Kinds can be `unique` and say whether they're `listed`. Entities carry [traits](/docs/explanation/entities-and-traits#traits-give-entities-meaning) that plugins read. The player and unique entities [hold](/docs/reference/entities#holder-and-placement) things, and `'you'` is whoever the player is playing. The inventory, shop, wardrobe, cast, places and generators all work on them, alone or together (see [Things: carrying, selling, wearing](/docs/explanation/entities-and-traits)). Old saves, packs and mods are carried forward; your own content isn't, so `ifloom check` reports what to rewrite. The details are in the lists below.
 
 ### Added
 
+- The first release on npm. Every package is published at 0.1.0, so [`npm create ifloom@latest`](/docs/how-to/create-a-game) makes a game that installs from the registry, and `npm install @ifloom/engine` or a plugin works in any project. Each package's page on npm links to its docs.
+- `npx ifloom` runs the [command line](/docs/reference/cli) without installing it first, from the new `ifloom` package. A game still lists `@ifloom/cli` as a dev dependency.
 - An [API](/docs/api) section in the docs: every export of every package's entry points, with its exact signature and, for an object type, each field with its type, whether it's optional, its default and its description. It's generated from the source and its TSDoc (`npm run api-docs`), so it can't drift, and each export links to the page that explains it.
 - `@ifloom/engine` exports `ChangesDef`, `CreateFields`, `BeatSize` and `TraitSource`, and `@ifloom/engine/plugin` exports `SpeakerFinder`, `RawCall` and `CallForm`: types that the signatures of exported types already named.
 - `@ifloom/engine/plugin` exports `AnyCalls` (what `definePlugin`'s `calls` takes), `CallIn` (a call in short against a registry) and `QueryArgs` and `QueryAnswer` (a query's arguments and answer by name), the types in the signatures of [`Plugin`](/docs/reference/plugin-api#plugin), [`Query`](/docs/reference/plugin-queries#query) and [`pluginQuery`](/docs/reference/plugin-queries#pluginquery).

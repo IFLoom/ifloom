@@ -1,6 +1,6 @@
 ---
 title: "Ship your game"
-description: "How-to for shipping a game as a folder that opens from disk: keep the Vite preset, put pictures and sound in public/, leave debug out, pick a save driver, run ifloom build, and open the result from disk."
+description: "Build your game into a folder that opens from disk or a static host, with pictures, sound and saves that work there."
 ---
 Use this when the game is ready for players, as a folder to zip, upload to itch.io or open by double-clicking `index.html`. A game made with [Create a game](/docs/how-to/create-a-game) has everything it needs. [Why IFLoom works this way](/docs/explanation/design#nothing-loads-at-runtime) explains why a page opened from disk loads nothing at runtime.
 

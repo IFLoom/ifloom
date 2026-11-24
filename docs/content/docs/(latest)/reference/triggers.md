@@ -1,6 +1,6 @@
 ---
 title: "Triggers"
-description: "Reference for TriggerDef: effects that run by themselves after a command once a condition holds, once a game or once a turn."
+description: "A trigger is a list of effects that runs by itself after a command once its condition holds, once a game or once a turn."
 ---
 A trigger is a list of effects that runs by itself after a command, once its condition holds, without the player pressing anything. Your content declares triggers in `triggers`, for a note under the door the first time the player steps out, a bill that comes due or a scene that interrupts the walk home. [Tell the player when something happens](/docs/how-to/show-a-notice) pairs one with a notice.
 

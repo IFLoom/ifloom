@@ -1,6 +1,6 @@
 ---
 title: "Ask the player for a name"
-description: "How-to for asking the player to type a name: declare an input, hold the story until it's given, print it in the prose, and name the saves and the player's spoken lines with it."
+description: "Ask the player to type a name, hold the story until they do, and print it in the prose and on their spoken lines."
 ---
 Use this when the story needs the player's name, or any other word or number they type, such as a pet's name or the hour they wake. An [input](/docs/reference/inputs) writes what the player enters to a key in the [kv store](/docs/reference/glossary#kv), the game's store of named values. The steps use The Letter, the novel example, whose first page asks for a name.
 

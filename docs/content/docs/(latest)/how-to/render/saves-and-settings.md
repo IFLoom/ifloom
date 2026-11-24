@@ -1,6 +1,6 @@
 ---
 title: "Render saves, settings and the backlog"
-description: "How-to for rendering the screens around the story in a UI of your own, in plain JS, React and Vue: a save and load screen from the runner's snapshot, a settings screen, and the backlog with an Undo button."
+description: "Render a save and load screen, a settings screen and the backlog with Undo in a UI of your own, in plain JS, React or Vue."
 ---
 Render the screens a player opens from a menu: saves to load, settings to change, and the [backlog](/docs/api/engine#backlogentry) of what was shown, with Undo. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. These parts read the runner's [snapshot](/docs/reference/glossary#snapshot) as well as its view, because saves, setting values, the backlog and undo belong to the runner rather than to the game state.
 

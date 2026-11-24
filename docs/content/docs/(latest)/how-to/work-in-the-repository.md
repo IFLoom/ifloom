@@ -1,6 +1,6 @@
 ---
 title: "Run the examples from the repository"
-description: "How-to for trying IFLoom's unreleased code from a clone of the repository: play the examples, make a game inside the checkout, or make one beside it on the packed packages with npm, pnpm, yarn or bun."
+description: "Try unreleased IFLoom code from a clone of the repository by playing the examples or making a game in or beside the checkout."
 ---
 Use this to try code that hasn't been released yet, such as a fix on the main branch. You need Node 22.18 or later, git and npm, because the checkout's tools run the packages' TypeScript source and Node strips the types itself from 22.18. For a game on the published packages, see [Create a game](/docs/how-to/create-a-game) instead.
 

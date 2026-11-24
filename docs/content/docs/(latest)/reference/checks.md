@@ -1,6 +1,6 @@
 ---
 title: "Checking content"
-description: "Reference for checkGame, describeProblem, Checked, Probe, Problem, FileRef and Reference, and every problem the content checker reports, by where it runs."
+description: "The content checker, checkGame, and every problem it reports about the names and files a game's content uses."
 ---
 The content checker is `checkGame`, one walk over a game's content that reports each name the game lacks and lists every file it names. [`loadGame`](/docs/reference/content#loadgame) runs it on the game it merges, so a loaded game's problems are in its result already, each pinned on the content or pack it came from. `ifloom check` prints them, and [Playtest and snapshot from the command line](/docs/how-to/playtest-and-snapshot) runs it with probes.
 

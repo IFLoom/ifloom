@@ -1,6 +1,6 @@
 ---
 title: "The words table"
-description: "Reference for a pack's words table, the key each field a player reads has, translatableFields, WordField, WordShape and WordPart, and its checks."
+description: "A pack's words table gives other words to each field a player reads by its key, and translatableFields lists those keys."
 ---
 The words table is a pack's `words`, which gives other words to the fields of your content that a player reads, each by its key. Every such field is [written in place](/docs/reference/glossary#words-in-place), such as a choice's `label`, an entity's `name` or a `{ text }` block, so a translation is one pack with this table, its `prose` and its `strings`. [Translate your game](/docs/how-to/translate-your-game) makes one, and [Content and packs](/docs/explanation/content-and-packs) explains how a pack goes over the content.
 

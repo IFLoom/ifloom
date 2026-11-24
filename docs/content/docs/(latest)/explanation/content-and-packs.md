@@ -1,6 +1,6 @@
 ---
 title: "Content, packs and the base"
-description: "Explanation of the three inputs to loadGame: content (the game's own files), packs (mods and unlocked content laid over it) and the base (the game's id and code), why they're kept apart, and how merging works."
+description: "Why loadGame takes a game as content, packs and a base, and what a mod, a save and an upgrade can change in each."
 ---
 This page explains why `loadGame` takes a game in three parts, and what belongs in each. A game is its content, merged, plus a base. Packs from outside the game's code go over the top. The split decides what a mod can change, what a save records, and what the engine upgrades when it moves on.
 

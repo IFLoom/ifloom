@@ -1,6 +1,6 @@
 ---
 title: "Add a character with a schedule"
-description: "How-to for adding a character with the cast plugin: declare them with a talk scene and a friendship stat, give them a schedule, change what they say as the story moves, let the player call them and name them."
+description: "Add a character who keeps a schedule, talks with the player, changes what they say as the story moves and answers calls."
 ---
 Use this for someone the player meets around town, such as a neighbour who walks a dog in the park. You need the [cast plugin](/docs/reference/plugins/cast), and for anyone to be here with the player, the [places plugin](/docs/reference/plugins/places) too (see [Add a plugin](/docs/how-to/add-a-plugin)). Schedules by time of day also need the [calendar](/docs/reference/plugins/calendar). A [character](/docs/reference/glossary#character) is an entity with the `cast/person` trait, and `cast.person()` writes one.
 

@@ -1,6 +1,6 @@
 ---
 title: "Test a route through your game"
-description: "How-to for testing a game with Vitest and no browser: set up, check the game loads with no problems, play a route and check the stats and the view, test a refusal by its reason, check a scene can be reached, and keep a test file per area."
+description: "Test a route through your game with Vitest and no browser, checking the stats, the view and the reasons for refusals."
 ---
 Use this to check that a route through your game still plays as you meant, every time you change it. The engine runs the same in Node as in a browser, so a test plays commands and checks the state and the view without opening a page. The examples use [Vitest](https://vitest.dev) and the game `npm create ifloom` makes, with its door and its room inside.
 

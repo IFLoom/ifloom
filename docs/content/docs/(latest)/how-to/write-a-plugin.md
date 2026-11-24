@@ -1,6 +1,6 @@
 ---
 title: "Write a plugin"
-description: "How-to for writing a plugin: when to write one rather than rules, starting a package from the plugin template, a first plugin with state, a condition, an effect and a value, declaring its calls, a command with a refusal, a migration, watching other commands, hooks, tests and publishing."
+description: "Write a plugin package with its own state, calls and tests, and publish it."
 ---
 Use this to add a whole system of your own, such as a loyalty card, a sink of dirty dishes or a diary. A [plugin](/docs/reference/glossary#plugin) keeps state in the save and brings the conditions, effects, commands, values, hooks and view that work on it. Content calls them by name with the plugin's id in front, so a mod can use them without shipping code.
 

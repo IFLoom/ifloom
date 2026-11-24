@@ -1,6 +1,6 @@
 ---
 title: "Add a plugin"
-description: "How-to for adding a first-party plugin to a game: install its package, list it in the base's plugins in the right order, write its content, and show it with the React UI's plugins list."
+description: "Install a first-party plugin, list it in the game's plugins in the right order, write its content and show it in the React UI."
 ---
 Use this to add any first-party plugin, such as the calendar, places or quests, to a game you already have. The steps are the same for all seventeen; [First-party plugins](/docs/reference/plugins) lists them, and [How plugins work](/docs/explanation/plugins) explains what one adds.
 

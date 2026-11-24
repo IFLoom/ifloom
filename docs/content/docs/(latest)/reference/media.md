@@ -1,6 +1,6 @@
 ---
 title: "Media"
-description: "Reference for GameMedia and its pools, PictureDef with its layers and hotspots, video flags, MediaState and the picture's view: the pictures and videos a game picks and shows."
+description: "The pictures and videos a game shows, from pools picked by tags to layered pictures with hotspots."
 ---
 A game shows pictures and videos three ways: [markup](/docs/reference/prose#images) in prose, a [`{ media }`](/docs/reference/scenes#scenemedia) block in a scene's body, and a [layered picture](/docs/reference/glossary#picture) with hotspots on a scene or a location. Each can name a file or ask a pool, a named list of files in the content's `media`, for one by its tags. [Add pictures and backgrounds](/docs/how-to/add-pictures-and-backgrounds) uses all three.
 

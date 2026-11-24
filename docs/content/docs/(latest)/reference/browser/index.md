@@ -1,6 +1,6 @@
 ---
 title: "Browser helpers"
-description: "Reference for @ifloom/browser: browserRunner, the localStorage and IndexedDB save drivers, the clock for timers and minigames, keyboard shortcuts, nextSlot and the key that shows held-back prose."
+description: "The browser helpers in @ifloom/browser, which make a runner with saves, keep saves in the browser, tick the clock and handle keys."
 ---
 `@ifloom/browser` holds the parts of a game that need a web page, which the engine leaves out because it has no DOM. It makes a runner with saves in the browser, keeps saves in `localStorage` or IndexedDB, sends the clock's ticks, and turns key presses into commands. Every helper is plain DOM, so a UI in any framework uses it, and so does the [React UI](/docs/reference/react). [Start your own UI](/docs/how-to/render/start) starts each helper beside the runner, and [Choosing a UI](/docs/explanation/choosing-a-ui) compares the ways to put a game on screen.
 

@@ -1,6 +1,6 @@
 ---
 title: "Run a game in code"
-description: "How-to for playing a game from code with no UI: make a runner, send commands, read the view, follow changes, turn on undo and saves, use apply and view on states, and play from a Node script."
+description: "Play a game from code with no UI, in Node or a browser, by making a runner, sending commands and reading the view."
 ---
 Use this to play a game from your own code: a script, a tool, a test, or the loop under a UI of your own. Nothing here needs a page, so it runs the same in Node and in a browser. You need a game module, such as the one `npm create ifloom` makes in `src/game.ts`.
 

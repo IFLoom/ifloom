@@ -1,6 +1,6 @@
 ---
 title: "Commands"
-description: "Reference for Command, every command the player can send and the refusals each gives, with apply, startingState, Applied and StartOptions."
+description: "A command is one thing the player does, and apply answers each with the next state or a refusal."
 ---
 A command is one thing the player does, such as choosing a choice, doing an action or sending a plugin's own command. A UI sends commands, and [`apply`](#apply) answers each with the next [state](/docs/reference/state), or refuses it with a reason. Running a command is a pure function, so the same state, game and command always give the same answer. [State, commands and the view](/docs/explanation/state-and-commands) explains the loop, and [Run a game in code](/docs/how-to/run-a-game-in-code) sends commands from Node.
 

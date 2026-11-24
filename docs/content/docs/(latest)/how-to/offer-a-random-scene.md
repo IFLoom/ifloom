@@ -1,6 +1,6 @@
 ---
 title: "Offer a random scene from a set"
-description: "How-to for storylets: mark scenes as members of a set, draw one by weight from an action, limit how often each comes up with its when, add a cooldown or a chance, and add scenes to the set from another file or a mod."
+description: "Draw a scene at random from a set of storylets by weight, condition, cooldown and chance, and let other files and mods add to the set."
 ---
 Use this for the small things that happen while the player sits in a café or waits at a bus stop. Each one is a [storylet](/docs/reference/glossary#storylet), a scene drawn at random from a named set, and the game keeps no list of them. The steps build the showcase café's "Sit a while".
 

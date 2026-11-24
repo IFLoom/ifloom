@@ -1,6 +1,6 @@
 ---
 title: "Add pictures and backgrounds"
-description: "How-to for pictures and clips: where the files go, a picture in a scene's words, a scene's background, a picture picked from a pool by tags, a layered picture with a hotspot, a location's picture, video, and a placeholder for art that isn't made yet."
+description: "Put pictures and short clips in a game, in a scene's words, behind a scene, picked from a pool by tags or layered with hotspots."
 ---
 Use this to put pictures and short clips in your game: in a scene's words, behind a scene, picked from a set by tags, or stacked in layers with a part the player clicks. The engine renders none of them itself. It lists them in the view, and a UI shows them, the React UI with no setup.
 

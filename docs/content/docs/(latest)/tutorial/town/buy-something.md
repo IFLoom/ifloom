@@ -1,6 +1,6 @@
 ---
 title: "7. Buy something"
-description: "Step 7 of the town tutorial. Adds a coffee to the café as an action with a price in coins, which the game refuses while the café is shut, with the reason on its button."
+description: "Sell a coffee at the café for coins, refused with a reason on its button while the café is shut."
 ---
 By the end of this step the café sells a coffee for 4 coins that gives back 20 energy, and the button says why when the player can't buy one.
 

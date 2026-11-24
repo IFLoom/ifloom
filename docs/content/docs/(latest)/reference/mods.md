@@ -1,6 +1,6 @@
 ---
 title: "Mods"
-description: "Reference for mods: the mod file a player adds to a built game, the store that keeps installed mods, and how their packs reach the game."
+description: "A mod is a pack in a JSON file that a player adds to a built game, kept by the mod store and loaded over the content."
 ---
 A mod is a [pack](/docs/reference/content#pack) in a JSON file that a player adds to a built game. The mod store keeps it, and the next time the game starts, the game loads the packs of the mods that are on over its content. [Content, packs and the base](/docs/explanation/content-and-packs#why-a-games-files-are-content-and-a-mod-is-a-pack) explains why a mod is a pack, and [Let players add mods](/docs/how-to/let-players-add-mods) builds a mod manager.
 

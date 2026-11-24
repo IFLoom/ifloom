@@ -1,6 +1,6 @@
 ---
 title: "Run code at the end of a turn"
-description: "How-to for the game's own end-of-turn code: onTurn before the plugins move on, onTurnDone after them, reading the day that ended from before, keeping state of your own, a day's end step by step, and testing it."
+description: "Run the game's own code as each turn ends, before or after the plugins move on, and test it."
 ---
 Use this when something has to happen as each turn ends that content alone can't say, such as energy coming back overnight, wages on a Friday or a choice of morning scene. You write it in the game's [rules](/docs/reference/glossary#rules), as [`onTurn`](/docs/reference/rules#onturn) or [`onTurnDone`](/docs/reference/rules#onturndone). For a kv key that goes back each turn, content's [`resets`](/docs/reference/rules#resets) is enough. For work once a day, see [Run things each day](/docs/how-to/schedule-daily-work).
 

@@ -1,6 +1,6 @@
 ---
 title: "4. Check, playtest and build"
-description: "Step 4 of the story tutorial. Checks the story's content for mistakes, plays it to an ending with nobody at the keyboard, and builds it into a folder that opens from disk."
+description: "Check the story for mistakes, read a playtest that plays it to an ending, and build it into a folder that opens from disk."
 ---
 By the end of this step you'll have checked the story for mistakes, read a playtest that plays it to an ending, and built it into a folder you can open from disk.
 

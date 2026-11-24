@@ -1,6 +1,6 @@
 ---
 title: "Start your own UI"
-description: "How-to for putting an IFLoom game on screen with a UI of your own in plain JS, React or Vue: make the runner, render its snapshot, send the player's commands, and put the parts from the other Render it yourself pages together."
+description: "Put a game on screen with a UI of your own in plain JS, React or Vue, from the runner's snapshot and the player's commands."
 ---
 Use these pages when you render the game with code of your own, or when you place the React UI's parts in a layout of your own. Start from the template for your framework (`vanilla`, `react` or `vue`), made as [Create a game](/docs/how-to/create-a-game) shows. [Choosing a UI](/docs/explanation/choosing-a-ui) compares the ways to put a game on screen.
 

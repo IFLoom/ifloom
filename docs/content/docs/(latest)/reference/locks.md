@@ -1,6 +1,6 @@
 ---
 title: "Locks"
-description: "Reference for Lock and LockTarget, the locks in content's locks that refuse commands while a condition holds, with lockOn and lockedOut."
+description: "A lock refuses some commands while a condition holds, with one line telling the player why."
 ---
 A lock refuses some commands while a condition holds, with one line the player reads, such as an intro that moves only through its scenes or an office where the phone stays in the pocket. Your content declares locks in `locks`, so a mod can add one. [State, commands and the view](/docs/explanation/state-and-commands#locks-and-blocked-reasons) explains locks beside `blocked` reasons, and [Find out why a choice doesn't show](/docs/how-to/troubleshoot-a-missing-choice) traces a refusal back to its lock.
 

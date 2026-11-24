@@ -1,6 +1,6 @@
 ---
 title: "Randomness"
-description: "Reference for the save's seed and the seeded draws hash, draw, drawOne, chance and weighted, which give the same values for the same save and turn."
+description: "The seeded draws, which give the same values for the same save and turn, and the save's seed they hash."
 ---
 The engine draws every value that looks random, such as today's cake at the café, by hashing parts the code names: usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. Nothing is random at runtime, so the same save in the same turn always gives the same draws. [Why IFLoom works this way](/docs/explanation/design#the-same-save-gives-the-same-draws) explains why, and [`CustomContext`](/docs/reference/custom#customcontext)'s `roll(max, name)` draws for the game's own code without naming the parts.
 

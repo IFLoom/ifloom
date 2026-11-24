@@ -1,6 +1,6 @@
 ---
 title: "Add a countdown"
-description: "How-to for a choice the player has to make in time: a timer that runs out into its own effects, a scene that starts it, choices that stop it, a line for the last seconds, the countdown in the React UI, and a test that sends the ticks."
+description: "Give the player a choice to make in time, with a timer that runs out into its own effects and a test that sends the ticks."
 ---
 Use this when the story shouldn't wait: the phone rings and stops after ten seconds, or the bus pulls away. A [timer](/docs/reference/glossary#timer) counts down in real time and runs its own effects when it runs out. The steps build the showcase's ringing phone, which becomes a missed call if the player doesn't answer.
 

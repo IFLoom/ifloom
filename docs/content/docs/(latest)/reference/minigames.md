@@ -1,6 +1,6 @@
 ---
 title: "Minigames"
-description: "Reference for MinigameDef and its states, transitions, scene field, state and view: small games inside the story, declared as data and run by ticks and inputs."
+description: "A minigame is a small game inside the story, declared as data with states, inputs and timers, and run by ticks."
 ---
 A minigame is a small game inside the story, such as a timed button press, a lock to pick or a round of snap. Your content declares each one in `minigames` as data, a few states with the inputs each listens for, timers that move it on and numbers it keeps while it runs. The [`minigame` effect](/docs/reference/effects#minigame) starts one, and the player plays it with the [`minigame`](/docs/reference/commands#minigame) and [`tick`](/docs/reference/commands#tick) commands. [Build a minigame](/docs/how-to/build-a-minigame) writes one from start to finish.
 

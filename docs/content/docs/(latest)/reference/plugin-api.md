@@ -1,6 +1,6 @@
 ---
 title: "Plugin API"
-description: "Reference for Plugin and definePlugin: a plugin's id, version and state, its context, its commands, its hooks and providers (guard, price, label, profile, stat modifiers), and the types they take."
+description: "A plugin's shape, from its id, version and state to its commands, hooks and providers, and definePlugin, which declares one."
 ---
 A plugin adds one system to the engine, such as a loyalty card, a quest list or a phone, with its own state in the save and the conditions, effects, commands, values, hooks and view that work on that state. A game lists its plugins in the base's [`plugins`](/docs/reference/content#gamebase) when it calls `loadGame`, and content calls each plugin's functions by name, as it calls the game's own [`rules`](/docs/reference/rules). [How plugins work](/docs/explanation/plugins) explains hooks, providers and cooperation, and [Write a plugin](/docs/how-to/write-a-plugin) builds one from the `plugin` template.
 

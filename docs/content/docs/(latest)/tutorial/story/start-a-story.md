@@ -1,6 +1,6 @@
 ---
 title: "1. Start a story"
-description: "Step 1 of the story tutorial. Creates a game from a template with npm, then writes the first three chapters of a short story as scenes, with choices that move between them."
+description: "Create a game from a template and write the first three chapters of a short story, with choices that lead from one to the next."
 ---
 By the end of this step you'll have a new game running in your browser, with three chapters of a story called The Last Bus and choices that lead from one to the next.
 

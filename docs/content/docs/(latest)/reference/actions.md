@@ -1,6 +1,6 @@
 ---
 title: "Actions"
-description: "Reference for ActionDef and ButtonDef, the fields a choice and an action share (cost, blocked, once), and actionOf, need, whyNot, effectsOf and actionReferences."
+description: "An action is something the player does outside a scene's choices, with the cost, blocked and once fields a choice shares."
 ---
 An action is something the player can do outside a scene's choices, such as buying a coffee, doing a shift or waiting a while. Your content declares the game's own in `actions`, and plugins offer theirs, such as a location's actions in the [places plugin](/docs/reference/plugins/places) and an app's in the [devices plugin](/docs/reference/plugins/devices). [State, commands and the view](/docs/explanation/state-and-commands#locks-and-blocked-reasons) explains how refusals work, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) offers actions in a game.
 

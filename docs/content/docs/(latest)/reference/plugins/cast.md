@@ -1,6 +1,6 @@
 ---
 title: "Cast"
-description: "Reference for @ifloom/plugin-cast: characters and their trait, talk options, schedules, calls and meeting, the talk and call commands, conditions, values, queries, speakers, view, React UI, helpers, checks and strings."
+description: "The cast plugin gives a game characters with their own hours, whom the player can find, talk to and call."
 ---
 `@ifloom/plugin-cast` gives a game its [characters](/docs/reference/glossary#character): people with their own hours, who the player can find, talk to and call. A character is an [entity](/docs/reference/glossary#entity) carrying the `cast/person` trait, so a stat the game declares `of: 'character'`, such as a friendship, is kept on each one. The cast keeps no state of its own and works out where everyone is from their schedules each time. It [cooperates](/docs/reference/plugin-queries#cooperates) with [places](/docs/reference/plugins/places), which it asks where the player is, and with the [calendar](/docs/reference/plugins/calendar), whose conditions schedules read. [Entities, things and traits](/docs/explanation/entities-and-traits#locations-characters-and-vendors-are-entities) explains why a character is an entity, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Add a character with a schedule](/docs/how-to/add-a-character) builds one.
 

@@ -1,6 +1,6 @@
 ---
 title: "Cheats"
-description: "Reference for @ifloom/plugin-cheats: cheats the player uses from a panel, refused or hidden until a condition holds, the use command, the used condition and value, the log, view, React UI, helpers, checks and strings."
+description: "The cheats plugin gives the player cheats that run their effects in any scene and through any lock, free or refused until a condition holds."
 ---
 `@ifloom/plugin-cheats` gives the player cheats, such as "+20 coins", each a list of effects that runs when the player uses it, in any scene and through any [lock](/docs/reference/locks). A cheat is free for everyone, or refused or hidden while a condition holds, and the plugin logs every use in the save. Cheats ship in the release, where the [debug](/docs/reference/plugins/debug) plugin's commands are for you while you build the game and stay out of it. The plugin needs no other plugin, and it [cooperates](/docs/reference/plugins#cooperates) with [unlocks](/docs/reference/plugins/unlocks), whose `unlocks/has` condition a supporter's cheat names. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Sell supporter content](/docs/how-to/sell-supporter-content) keeps cheats for supporters.
 

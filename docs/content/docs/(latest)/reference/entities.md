@@ -1,6 +1,6 @@
 ---
 title: "Entities"
-description: "Reference for KindDef, EntityDef, EntityState, holders, traits and Select, with the functions that read entities, their traits and what each holder holds."
+description: "Kinds, entities, holders and traits, and the functions that read an entity, its traits and what each holder holds."
 ---
 An entity is one of a kind of thing a game keeps, such as a member of staff, a dish, a person or a sandwich, and a kind names the sort (`staff`, `dish`, `character`). Your content declares the kinds in `kinds` and the entities there are at the start in `entities`, and the save keeps only what play changes. [Entities, things and traits](/docs/explanation/entities-and-traits) explains kinds, holders and traits, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) adds things to a game. The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove), [`each`](/docs/reference/effects#each), [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change entities, and the [`entity`](/docs/reference/conditions#entity) and [`count`](/docs/reference/conditions#count) conditions ask about them.
 

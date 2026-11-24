@@ -1,6 +1,6 @@
 ---
 title: "Build with esbuild"
-description: "How-to for building an IFLoom game with esbuild: no set-up for the packages, Tailwind's CLI or the prebuilt stylesheet for the React UI, a dev server, ifloom check and playtest beside it, and a short script for the single offline index.html."
+description: "Build an IFLoom game with esbuild, with a dev server and a short script that makes the single index.html that opens from disk."
 ---
 Use esbuild if you want a small build set-up. It compiles TypeScript and JSX itself, so your game needs no loader, and a build script of about twenty lines makes the one `index.html` that opens from disk. `ifloom check` and `ifloom playtest` work beside it.
 

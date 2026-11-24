@@ -1,6 +1,6 @@
 ---
 title: "Tell the player when something happens"
-description: "How-to for a notice raised by a trigger: run effects by themselves when a condition first holds or once a turn, tell the player with the notify effect, replace a repeating notice by id, and count notices on a badge by tag."
+description: "Tell the player when something happens outside the story, with a trigger that raises a notice once or each turn."
 ---
 Use this when something happens outside the story the player is reading, such as a note under the door or the rent going out. A [trigger](/docs/reference/glossary#trigger) runs effects by itself after a command once its condition holds, and a [notice](/docs/reference/notices) tells the player. The steps build the showcase's two triggers.
 

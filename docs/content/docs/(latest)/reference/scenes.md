@@ -1,6 +1,6 @@
 ---
 title: "Scenes"
-description: "Reference for DataScene, Block, SceneMedia and Choice: a scene's fields, the blocks of its body, its pictures and video, and the choices under it."
+description: "A scene is one screen of story, a body of blocks and the choices under it, declared as data in content's scenes."
 ---
 A scene is one screen of story: a body of words and the choices under it. Your content declares scenes in `scenes`, each a [`DataScene`](#datascene) written as data, so the [content checker](/docs/reference/checks) can check every id it names. [Turns, scenes and the room](/docs/explanation/turns-and-time#a-scene-and-the-room) explains a scene beside the room, [Write a flowing scene](/docs/how-to/write-a-flowing-scene) writes one that reads on as the player chooses, and [End the game](/docs/how-to/end-the-game) writes an ending.
 

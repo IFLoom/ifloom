@@ -1,6 +1,6 @@
 ---
 title: "Add a location"
-description: "How-to for adding a location with the places plugin: declare it with its exits and words, give it things to do, opening hours and a doorstep scene, put one location inside another, share lines across locations and say who is behind an exit."
+description: "Add a location the player can walk to, with exits, things to do, opening hours and a scene at the door."
 ---
 Use this when the player should be able to walk somewhere new, such as a park off the high street. You need the [places plugin](/docs/reference/plugins/places) in the game's `plugins` (see [Add a plugin](/docs/how-to/add-a-plugin)). A [location](/docs/reference/glossary#location) is an entity with the `places/location` trait, and `places.location()` writes one.
 

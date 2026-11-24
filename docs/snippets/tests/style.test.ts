@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkComment, checkPage, checkPages, checkTsdoc, DONE, report } from '../../lib/check-style.ts'
+import { checkComment, checkPage, checkPages, checkTsdoc, descriptionProblems, DONE, report } from '../../lib/check-style.ts'
 
 /**
  * The docs follow the voice rules a script can check (`docs/lib/check-style.ts` lists them): the TSDoc of every
@@ -52,9 +52,24 @@ describe('the docs style', () => {
     ].join('\n')
     expect(checkPage('wrong.md', page).map((problem) => `${problem.where} ${problem.rule}`)).toEqual([
       'wrong.md:2 title in Title Case',
+      'wrong.md:3 colon in the description',
       'wrong.md:5 two colons in a sentence',
       'wrong.md:10 heading in Title Case',
       'wrong.md:19 says "in short"',
     ])
+    expect(rules(checkPage('bare.md', '---\ntitle: "Stats"\n---\nText.'))).toEqual(['no description'])
+
+    // A description is one plain sentence for the reader: no label, no colon, no second sentence, 30 words at most.
+    expect(descriptionProblems('Add a location the player can walk to, with exits and opening hours.')).toEqual([])
+    expect(descriptionProblems('How-to for adding a location.')).toEqual(['description opens with a label ("How-to")'])
+    expect(descriptionProblems('Reference for Content and loadGame.')).toEqual(['description opens with a label ("Reference for")'])
+    expect(descriptionProblems('Step 2 of the town tutorial.')).toEqual(['description opens with a label ("Step 2 of")'])
+    expect(descriptionProblems('The landing page of the docs. Says what IFLoom is.')).toEqual([
+      'description opens with a label ("The landing page")',
+      'description of more than one sentence',
+    ])
+    expect(descriptionProblems('Locations: exits, hours and doors.')).toEqual(['colon in the description'])
+    expect(descriptionProblems(`Add ${'a location '.repeat(15)}`)).toEqual(['description of 31 words (30 at most)'])
+    expect(descriptionProblems('')).toEqual(['no description'])
   })
 })

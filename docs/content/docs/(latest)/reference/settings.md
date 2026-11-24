@@ -1,6 +1,6 @@
 ---
 title: "Settings"
-description: "Reference for SettingDef: the settings a player can change, play settings kept in the state and read by conditions, and ui settings kept in the profile."
+description: "The settings a player can change, play settings kept in the state for conditions and ui settings kept in the profile."
 ---
 A setting is something the player changes from a settings screen, such as whether hints show or how large the text is. The engine declares none of its own, so your content declares each one in `settings`. [Add a settings page](/docs/how-to/add-a-settings-page) puts them on screen.
 

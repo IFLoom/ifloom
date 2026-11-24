@@ -1,6 +1,6 @@
 ---
 title: "How the pieces fit"
-description: "Explanation of the four layers of an IFLoom game (the engine, plugins, a UI and the toolchain), how they talk to each other, and which ones a game needs."
+description: "An IFLoom game is built in four layers, the engine, plugins, a UI and the toolchain, and only the engine is required."
 ---
 This page explains how the packages of an IFLoom game fit together, and why only one of them is required. A game is built in four layers: the engine, plugins, a UI and the toolchain. The engine is the one every game uses. A game adds each of the others when it needs it, leaves it out, or puts something of its own in its place.
 

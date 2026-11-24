@@ -1,6 +1,6 @@
 ---
 title: "Panels"
-description: "Reference for OpenPanel, ScenePanel and panelOf: a named piece of UI that content opens over the story, such as a vendor's counter or a job board."
+description: "A panel is a named piece of UI that content opens over the story, such as a vendor's counter or a job board."
 ---
 A panel is a named piece of UI that content opens over the story, such as a vendor's counter, a job board or the wardrobe. The engine keeps which panel is open and what it was opened with, and the UI decides what each name renders. The [`panel`](/docs/reference/effects#panel) effect opens one, so a choice, an action, an inline `[[act:]]` link or a thing's use can each open one, and [Open a shop, a job board or another panel](/docs/how-to/open-a-panel) opens one from each kind of content.
 

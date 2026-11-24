@@ -1,6 +1,6 @@
 ---
 title: "Offer New Game+"
-description: "How-to for New Game+: saying when the game counts as finished, choosing the stats, kv keys and things that carry over, offering it on the React UI's title screen or your own, and writing lines only a second run shows."
+description: "Let a player who finished the game start again with some of their stats, kv keys and things, and write lines only a second run shows."
 ---
 Use this to let a player who has finished your game start again with a little of what they had, such as their coins or a memory of the first read. You need an ending first, as [End the game](/docs/how-to/end-the-game) shows.
 

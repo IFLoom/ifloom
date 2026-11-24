@@ -1,6 +1,6 @@
 ---
 title: "5. Add locations to walk between"
-description: "Step 5 of the town tutorial. Installs the places plugin, adds the house, the high street and the café with exits between them, and renders the exits in the page."
+description: "Add the house, the high street and the café as locations with exits, so the player can walk between them."
 ---
 By the end of this step the player steps out of the house and walks down the high street to the café and back.
 

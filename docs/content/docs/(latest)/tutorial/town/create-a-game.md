@@ -1,6 +1,6 @@
 ---
 title: "1. Create a game"
-description: "Step 1 of the town tutorial. Creates a game from a template with npm, runs it in the browser, and tours the files you'll change."
+description: "Create a game from a template, run it in your browser, and find the files that hold its story."
 ---
 By the end of this step you'll have a new game running in your browser, and you'll know which files hold its story.
 

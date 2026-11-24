@@ -1,6 +1,6 @@
 ---
 title: "Render the inventory, shop, jobs and wardrobe"
-description: "How-to for rendering the inventory, shop, jobs and wardrobe plugins in a UI of your own, in plain JS, React and Vue: things to use and drop, a vendor's counter with prices and discounts, a job board, and what the player wears."
+description: "Render the things to use and drop, a vendor's counter, a job board and what the player wears in a UI of your own."
 ---
 Render the plugins that deal in [things](/docs/reference/glossary#thing) and work: what the player can use or drop from the [inventory](/docs/reference/plugins/inventory), a vendor's counter from the [shop](/docs/reference/plugins/shop), a board from [jobs](/docs/reference/plugins/jobs), and what the player wears from the [wardrobe](/docs/reference/plugins/wardrobe). Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
 

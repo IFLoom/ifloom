@@ -1,6 +1,6 @@
 ---
 title: "Stats"
-description: "Reference for StatDef and the types and functions of stats: ranges, words for a value, rounding, derived stats, levels, stats kept on entities, statValue and statLevel."
+description: "A stat is a number the game keeps for the player or for each entity of a kind, with ranges, levels and derived values."
 ---
 A stat is a number the game keeps for the player, such as coins, energy or charm, or for each entity of a kind. The engine declares no stats of its own, so your content declares every one in `stats`. [Entities, things and traits](/docs/explanation/entities-and-traits#stats-the-kv-store-and-storylines) explains when a value is a stat rather than a kv key. The [`stat` effect](/docs/reference/effects#stat) changes a stat, the [`stat`](/docs/reference/conditions#stat) and [`level`](/docs/reference/conditions#level) conditions test it, and an action's [cost](/docs/reference/actions#actioncost) spends it.
 

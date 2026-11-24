@@ -1,6 +1,6 @@
 ---
 title: "Create a game"
-description: "How-to for starting a new IFLoom game with npm create ifloom: pick a package manager, a template and a theme, and check the new game runs."
+description: "Start a new IFLoom game with npm create ifloom, choosing a package manager, a template and a theme."
 ---
 Use this to start a new game in a folder of its own, with npm, pnpm, yarn or bun. You need Node 20.19 or later, or 22.12 or later. To put a game in a project you already have, see [Add IFLoom to an existing project](/docs/how-to/add-to-a-project) instead.
 

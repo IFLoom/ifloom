@@ -1,6 +1,6 @@
 ---
 title: "Conditions"
-description: "Reference for Condition and every kind of condition (kv, settings, choices, scenes seen, stats, levels, counts, entities, storylines, rolls, timers, turns and calls), with holds, inRange, explain and explainText."
+description: "Every kind of condition, a test of the state written as data, and the functions that check one and explain why it fails."
 ---
 A condition is a test of the state, written as plain data, that says when something applies: a line of prose, a choice, a lock or a character's schedule. Content writes one in a `when`, a `blocked` entry or a `gate`, and the [content checker](/docs/reference/checks) checks every id in it. [State, commands and the view](/docs/explanation/state-and-commands) explains why conditions are data, and [Find out why a choice doesn't show](/docs/how-to/troubleshoot-a-missing-choice) puts [`explain`](#explain) to work.
 

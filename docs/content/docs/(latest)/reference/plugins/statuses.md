@@ -1,6 +1,6 @@
 ---
 title: "Statuses"
-description: "Reference for @ifloom/plugin-statuses: timed statuses, their stat modifiers and effects, reapplying and stacking, the active condition, the apply and remove effects and commands, state, view, React UI, helpers, checks and strings."
+description: "The statuses plugin adds timed statuses that change the player's stats for a few turns and run effects as they start, tick and end."
 ---
 `@ifloom/plugin-statuses` adds timed statuses: something that affects the player for a few [turns](/docs/reference/glossary#turn) and then wears off, such as a coffee that perks them up or a cold that saps their energy. While a status lasts, it changes the values the player's stats read through the engine's [stat modifiers](/docs/reference/plugin-api#statmodifiers), which write nothing into the stats. It can also run [effects](/docs/reference/effects) as it starts, at the end of each turn and as it ends. Statuses needs no other plugin and cooperates with none. [Add a plugin](/docs/how-to/add-a-plugin) installs it.
 

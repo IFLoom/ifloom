@@ -1,6 +1,6 @@
 ---
 title: "Build a minigame"
-description: "How-to for a quick-time minigame built from data, the showcase park's quick feet: states that show an arrow and listen for inputs, timers that move them on, a kv store of its own, an action that starts it, a quiz with answers on the buttons, and a test that plays it."
+description: "Build a quick-time minigame from data, with states, inputs and timers, an action that starts it and a test that plays it."
 ---
 Use this for a small game inside the story, played with buttons or keys against the clock. A [minigame](/docs/reference/minigames) is data, like a scene. It has states, the inputs each state listens for, timers that move it on, and a few numbers it keeps while it runs. The steps build quick feet from the showcase's park: an arrow appears, and the player has a second and a half to press it.
 

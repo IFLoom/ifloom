@@ -1,6 +1,6 @@
 ---
 title: "2. Keep a stat and the player's name"
-description: "Step 2 of the story tutorial. Declares a stat that kind choices raise, and asks the player's name, which a line of the story then prints."
+description: "Keep a stat that kind choices raise, and ask the player's name so the story can greet them by it."
 ---
 By the end of this step the side column shows how warm the player has been to the stranger, and the first chapter asks the player's name and greets them by it.
 

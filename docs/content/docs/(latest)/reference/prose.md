@@ -1,6 +1,6 @@
 ---
 title: "Prose and markup"
-description: "Reference for the prose table and the words a player reads: ProseStore, VariantMember, tokens, markup for speech, pictures, video, sound, inline choices, tooltips, UI pieces, bold and italics, SceneBeat and InlineSpan, and the functions that parse and fill them."
+description: "The prose table, the markup in the words a player reads, and the functions that parse prose into beats and spans."
 ---
 A game's words are [written in place](/docs/reference/glossary#words-in-place), in a scene's blocks, its choices' labels and an entity's name. A line several scenes share, a set of lines drawn at random, or a line a mod rewrites by key goes in content's `prose` table under a [prose key](/docs/reference/glossary#prose-key) instead. Either way, the view fills the tokens in the words and parses their markup into beats a UI renders. [Put a choice in a line](/docs/how-to/put-a-choice-in-a-line) and [Show a popup](/docs/how-to/show-a-popup) use the markup, and [Translate your game](/docs/how-to/translate-your-game) gives the words other languages.
 

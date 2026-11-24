@@ -1,6 +1,6 @@
 ---
 title: "Inputs"
-description: "Reference for InputDef: values the player types or picks, such as a name, checked against their declaration and written to a kv key, with the lines that refuse a value."
+description: "An input is a value the player types or picks, such as a name, checked and written to a kv key."
 ---
 An input is a value the player types or picks, such as a name for the cat or the hour the alarm goes off, which the engine writes to a key in the [kv store](/docs/reference/glossary#kv). Your content declares each input in `inputs` with what it accepts, and the [`input`](/docs/reference/commands#input) command writes it, so a UI can't store anything the declaration refuses. [Ask the player for a name](/docs/how-to/ask-for-a-name) adds one to a scene.
 

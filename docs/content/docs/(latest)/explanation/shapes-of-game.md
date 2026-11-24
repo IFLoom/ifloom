@@ -1,6 +1,6 @@
 ---
 title: "Three shapes of game"
-description: "Explanation of how one IFLoom core makes a linear novel, a management game and a life sim, with what each of the three example games uses and what it leaves out."
+description: "One small core makes a linear novel, a management game and a life sim, as the three example games show."
 ---
 This page explains how one small core makes three quite different games, by showing what each of the repository's examples uses and what it leaves out. All three run on the same engine: the turn, scenes and choices, conditions and effects, stats, entities and their holders, the kv store, saves and the view. They differ in how much world each one declares, and in which plugins it adds.
 

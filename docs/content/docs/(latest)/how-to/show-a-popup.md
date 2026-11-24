@@ -1,6 +1,6 @@
 ---
 title: "Show a popup"
-description: "How-to for opening a dialog from a word in the prose: a popup that only shows words, with [[ui:modal|…]], rendered in plain JS, React or Vue, or a modal whose buttons change the game, with an inline action and the panel effect."
+description: "Open a dialog from a word in the prose, either one that only shows words or one whose buttons change the game."
 ---
 Use this to open a dialog from a word in the text. Choose one of two ways, by whether the dialog changes the game:
 

@@ -1,6 +1,6 @@
 ---
 title: "Introduction"
-description: "The landing page of the IFLoom docs. Says what IFLoom is and who it's for, offers the two tutorials, and lists the tabs of the docs."
+description: "IFLoom is a TypeScript engine for interactive fiction of any shape, from a linear novel to a life sim, with two tutorials to start from."
 ---
 IFLoom is a TypeScript engine for interactive fiction. You can write a linear novel with it, a management game played a week at a time, or a life sim with a calendar, a map and characters who keep their own hours. All three run on the same small core, and plugins add the rest. [Three shapes of game](/docs/explanation/shapes-of-game) shows each one.
 

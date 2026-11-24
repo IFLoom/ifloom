@@ -1,6 +1,6 @@
 ---
 title: "Calendar"
-description: "Reference for @ifloom/plugin-calendar: its options, the periods of a day, its conditions, effects, sleep command, queries, values, state, view, React UI, helpers, checks and strings."
+description: "The calendar plugin gives a game days, weekdays and periods of the day, a bed and a curfew, and sets how long a turn is."
 ---
 `@ifloom/plugin-calendar` gives a game days, weekdays and periods of the day, a bed to go to and an optional curfew. It also sets how long a [turn](/docs/reference/state#turn) is: one period, one day or one week. The calendar needs no other plugin, and the [places](/docs/reference/plugins/places) and [cast](/docs/reference/plugins/cast) plugins read its conditions for opening hours and schedules. [Turns and time](/docs/explanation/turns-and-time#the-calendar-makes-a-turn-a-period-a-day-or-a-week) explains how the calendar's clock and the engine's turn keep step, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Set up days and times of day](/docs/how-to/set-up-the-clock) builds a day with it.
 

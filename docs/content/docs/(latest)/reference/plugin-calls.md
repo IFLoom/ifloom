@@ -1,6 +1,6 @@
 ---
 title: "Declaring a plugin's calls"
-description: "Reference for defineCalls, arg and defineData: a plugin's conditions, effects, commands and data lists declared once, the types built from them, and the registries that type content."
+description: "The defineCalls and defineData functions declare a plugin's calls and data lists once, and type every call content makes to it."
 ---
 A plugin declares each of its conditions, effects and commands once with [`defineCalls`](#definecalls), with what each takes, and each list of its `data` once with [`defineData`](#definedata-and-list). The engine builds the rest from those declarations: the arguments each function gets, typed, the registry entries content is type-checked against, a writer for each call, the words a translation reaches, and what the [content checker](/docs/reference/checks) reports. [Plugin API](/docs/reference/plugin-api) covers the plugin these go in, and [Write a plugin](/docs/how-to/write-a-plugin) declares a plugin's calls step by step.
 

@@ -1,6 +1,6 @@
 ---
 title: "Notices"
-description: "Reference for Notice, notify and dismiss: news the game tells the player beside the story, shown as a toast or counted on a badge."
+description: "A notice is news the game tells the player beside the story, shown as a toast or counted on a badge."
 ---
 A notice is news the game tells the player outside a scene, such as a note under the door or the rent going out. The [`notify`](/docs/reference/effects#notify) effect raises one, and the [`dismiss`](/docs/reference/commands#dismiss) command marks it seen. [Tell the player when something happens](/docs/how-to/show-a-notice) raises one from a trigger.
 

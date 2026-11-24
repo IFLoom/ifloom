@@ -1,6 +1,6 @@
 ---
 title: "Turns, scenes and the room"
-description: "Explanation of time in IFLoom: the turn as the engine's one clock and what ends one, a scene and the room under it, how the engine runs a scene, timers in real time, and how the calendar makes a turn a period, a day or a week."
+description: "Time passes by the turn, the engine's one clock, and the player sees a scene or the room while it does."
 ---
 This page explains how time passes in an IFLoom game and what the player sees while it does. The engine has one clock, the turn, and two kinds of screen, a scene and the room. Real-time timers and the calendar's days both work through those two ideas rather than beside them.
 

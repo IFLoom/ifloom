@@ -1,6 +1,6 @@
 ---
 title: "Common types"
-description: "Reference for the types other pages use before their own: Result, the rules for ids and separators, Range, EntityRef, KvValue and StatKey."
+description: "The types the rest of the reference uses first, such as Result, Range and EntityRef, and the rules for ids."
 ---
 These are the types and rules that the rest of the reference uses before it reaches their own feature. Each comes from `@ifloom/engine`. [The glossary](/docs/reference/glossary) defines the words these entries use.
 

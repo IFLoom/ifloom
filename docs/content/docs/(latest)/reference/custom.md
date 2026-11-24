@@ -1,6 +1,6 @@
 ---
 title: "Calls by name"
-description: "Reference for the game's own conditions, macros, effects and values in rules, called by name from content, with CustomContext, Macro, PluginCall, CommandRef, EffectRef, ValueRef, callOf, commandOf and buildEffects."
+description: "The conditions, effects, macros and values a game writes in code and content calls by name with game/ in front."
 ---
 A call by name is a condition, effect, macro, value or command written in code and named from content, such as `{ 'game/marketDay': true }`. The game declares its own in its [`rules`](/docs/reference/rules) and content calls them with `game/` in front, while a plugin's take the plugin's id in front, as in `{ 'quests/done': { quest: 'bread' } }`. [Content, packs and the base](/docs/explanation/content-and-packs#rules-are-the-games-code) explains why the game's code is called this way, and [Write your own condition, effect or macro](/docs/how-to/write-your-own-condition-or-effect) writes one.
 

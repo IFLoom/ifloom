@@ -1,6 +1,6 @@
 ---
 title: "Add panels, sections, components and hints"
-description: "How-to for adding your game's own screens to the React UI: a scene's panel, an app's panel, a plugin's section in an app, a plugin's view anywhere, components that join usePart and overridable, a ui hint and an inline piece of your own, and more shadcn/ui components."
+description: "Add your game's own panels, sections, components, ui hints and inline pieces to the React UI."
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

@@ -1,6 +1,6 @@
 ---
 title: "Roll dice for a check"
-description: "How-to for a dice check in the middle of the prose: an inline action that rolls dice against a target, a line for each outcome, the dice shown above it in the React UI, a stat added to the roll, and rolls the game makes by itself."
+description: "Roll dice against a target from a link in the prose, with a line for each outcome and a stat added to the roll."
 ---
 Use this for a check, a roll against a target, such as two dice for skimming a stone or a d20 plus strength for climbing a wall. The steps build the showcase park's skimming stones. The player clicks a link in the line, the dice land, and the next line says how it went.
 

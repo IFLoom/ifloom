@@ -1,6 +1,6 @@
 ---
 title: "The view"
-description: "Reference for View, the value a UI renders from a state, with a map of where each part is explained, the screen it's built from, rendered choices and prices, and the functions that build them."
+description: "The view is one plain value that holds everything a UI renders for a state, already worded for the player."
 ---
 The view is one plain value that says everything a UI renders for a state: the scene and its choices, the room's actions, stats, things, notices and each plugin's slice, already worded for the player. [`view`](#view-1) builds it, and a UI sends back the `command` on whatever the player presses. [State, commands and the view](/docs/explanation/state-and-commands#the-view-is-what-a-ui-renders) explains why a UI reads only the view, and [Start your own UI](/docs/how-to/render/start) renders one.
 

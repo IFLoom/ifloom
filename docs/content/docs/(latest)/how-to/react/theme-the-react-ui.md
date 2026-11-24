@@ -1,6 +1,6 @@
 ---
 title: "Theme the React UI"
-description: "How-to for giving a game rendered with the React UI a look of its own: a theme preset, tokens and colours, dark mode, a bundled font, CSS on data-part, the classes option, unstyled, your own Tailwind set-up and the prebuilt stylesheet."
+description: "Give a game rendered with the React UI a look of its own, with a theme preset, colours, dark mode, a font and CSS."
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

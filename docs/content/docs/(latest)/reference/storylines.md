@@ -1,6 +1,6 @@
 ---
 title: "Storylines"
-description: "Reference for StorylineDef, StorylineState and storylineOpen: threads of the story, each with its own kv store, closed for some turns and open again."
+description: "A storyline is one thread of the story with a kv store of its own, which can close for some turns and open again."
 ---
 A storyline is one thread of the story, such as a friendship with Ava or the business of a lost cat. Your content declares each one in `storylines`, and the engine keeps a kv store for it and whether it's closed for a while. [Entities, things and traits](/docs/explanation/entities-and-traits#stats-the-kv-store-and-storylines) explains a storyline beside stats and the kv store.
 

@@ -1,6 +1,6 @@
 ---
 title: "Run things each day: cooldowns, new-day work and pay"
-description: "How-to for what a life sim does day by day: reset a value each day, allow something once a day, run code once at the start of each day, rest a scene between visits, keep part of a day for work, and pay wages once a week."
+description: "Reset a value each day, allow something once a day, rest a scene between visits and pay wages once a week."
 ---
 Use this for the work a life sim does as the days go by, such as the day's weather, a coffee allowed once a day, a scene that rests between visits, or wages paid on a Friday. Each is a few lines on features the engine and the plugins already have. The steps assume the [calendar](/docs/reference/plugins/calendar) with its default turn of a day (see [Set up days and times of day](/docs/how-to/set-up-the-clock)), and say where a turn of a period changes things.
 

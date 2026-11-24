@@ -1,6 +1,6 @@
 ---
 title: "4. Remember what the player did"
-description: "Step 4 of the town tutorial. Counts the player's visits to the kitchen in the kv store, and shows a line and a choice only from the second visit."
+description: "Count the player's visits to the kitchen in the kv store, and offer a cup of tea from the second visit on."
 ---
 By the end of this step the game counts the player's trips to the kitchen, and from the second trip on the kitchen offers a cup of tea.
 

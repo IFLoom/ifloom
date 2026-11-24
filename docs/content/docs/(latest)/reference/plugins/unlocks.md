@@ -1,6 +1,6 @@
 ---
 title: "Unlocks"
-description: "Reference for @ifloom/plugin-unlocks: unlocks and their codes' hashes, locked content, the has condition, the record command, entering codes, the profile, state, view, React UI, the functions behind codes, checks and strings."
+description: "The unlocks plugin checks the codes a player enters and opens the cheats, scenes and encrypted packs each code unlocks."
 ---
 `@ifloom/plugin-unlocks` checks codes the player enters, such as the ones a game's supporters get, and records the unlock each code opens. An unlock opens a cheat or a scene through the `unlocks/has` condition, and it can carry packs of its own, which `ifloom build` encrypts so that only the code opens them. The game holds a slow hash of each code and never the code, and the player's [profile](/docs/reference/profile) remembers a code that worked, so it outlives saves. The plugin needs no other plugin, and the [cheats](/docs/reference/plugins/cheats) plugin cooperates with it. [Add a plugin](/docs/how-to/add-a-plugin) installs it, [Sell supporter content](/docs/how-to/sell-supporter-content) sets it up for a release, and [What an offline game can protect](/docs/explanation/design#what-an-offline-game-can-protect) explains what each kind of gate protects.
 

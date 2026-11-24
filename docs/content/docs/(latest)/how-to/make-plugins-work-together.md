@@ -1,6 +1,6 @@
 ---
 title: "Make plugins work together"
-description: "How-to for a plugin that works with others when the game has them: list them in cooperates, ask a partner's query with a fallback, answer queries of your own, let content call a partner's conditions and effects, and test the plugin alone and with each partner."
+description: "Make your plugin do more in a game that has another plugin, by asking it by name, and test it alone and with each partner."
 ---
 Use this when your plugin should do more in a game that also has another plugin, such as a loyalty card that only stamps in the café when the game has places. A plugin never imports another. It names its partners in `cooperates`, asks them by name, and does without them when the game lacks them. You need a plugin first, as [Write a plugin](/docs/how-to/write-a-plugin) makes.
 

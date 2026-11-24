@@ -1,6 +1,6 @@
 ---
 title: "Presentation hints"
-description: "Reference for the ui field on scenes, choices, blocks, actions, kinds, entities, stats and the game, the hint interfaces a UI package augments, InlineUi, entityUi and uiInContent."
+description: "The ui field that scenes, choices, entities and the game carry for a UI package, and the interfaces a UI augments to declare its hints."
 ---
 A presentation hint is a note in a `ui` field about how something looks or moves, such as a scene that fades in or a stat shown as a bar. The engine carries each `ui` field to the view as written, and a UI package decides what its hints mean. [Presentation lives in UI packages](/docs/explanation/design#presentation-lives-in-ui-packages) explains why the engine reads none of them, and [Add a transition or reveal lines](/docs/how-to/add-a-transition) uses the React UI's.
 

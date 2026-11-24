@@ -1,6 +1,6 @@
 ---
 title: "Quests"
-description: "Reference for @ifloom/plugin-quests: quests and their stages, the active, done and reached conditions, the start effect, the track and seen commands, the updates value, state, view, React UI, helpers, checks and strings."
+description: "The quests plugin keeps the player's quests, each a list of stages done by conditions, with tracking and news."
 ---
 `@ifloom/plugin-quests` keeps a list of the player's quests, how far each has got and a hint for the next step. A quest is a list of stages, and each stage is done by a [condition](/docs/reference/conditions) on the game state, the same conditions that gate the story, so a quest can't drift from the story it describes. The plugin never takes progress back. Quests needs no other plugin, and its stages can use any plugin's conditions, such as the [places](/docs/reference/plugins/places) plugin's `places.at('high-street')`. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Add a quest](/docs/how-to/add-a-quest) builds one.
 

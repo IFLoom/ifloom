@@ -1,6 +1,6 @@
 ---
 title: "End the game"
-description: "How-to for ending a story: an ending scene whose choice starts over, several endings chosen by the state, counting an ending as finishing the game, stopping play after an ending, and what a new game keeps."
+description: "End the story with one ending or several chosen by the state, count it as finishing the game, and offer a way to start again."
 ---
 Use this when the story should stop. An ending is a scene the story doesn't move on from, with a choice that starts over. You need a game with a scene to lead into it, as [Create a game](/docs/how-to/create-a-game) makes. The steps use The Letter, the novel example, which has two endings.
 

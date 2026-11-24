@@ -1,6 +1,6 @@
 ---
 title: "Write your own condition, effect or macro"
-description: "How-to for the game's own code that content calls by name: a condition, a macro, an effect, a value for prose, typing each call, passing the rules to loadGame, and asking them from code."
+description: "Write a condition, effect, macro or value in the game's rules, and call it from content by name with game/ in front."
 ---
 Use this when content needs something worked out in code, such as whether it's market day or what a loaf costs today. You write the function once in the game's [rules](/docs/reference/glossary#rules), and content calls it by name with `game/` in front. A [plugin](/docs/how-to/write-a-plugin) is the better home when the system needs state of its own or more than one game uses it.
 

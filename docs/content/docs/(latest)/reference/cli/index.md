@@ -1,6 +1,6 @@
 ---
 title: "The CLI"
-description: "Reference for @ifloom/cli: the ifloom commands new, dev, build, check, playtest, snapshot, words and unlock-hash with their flags and exit codes, the game module they read, and the Vite preset."
+description: "The ifloom command's subcommands with their flags and exit codes, the game module they read and the Vite preset."
 ---
 `@ifloom/cli` is the `ifloom` command, which makes a game, runs it while you write, builds it into a folder that opens from disk, and checks and plays it with nobody at the keyboard. It reads the game from its [game module](#the-game-module) and builds it with the [Vite preset](#the-vite-preset). [Create a game](/docs/how-to/create-a-game) starts one, [Ship your game](/docs/how-to/ship-your-game) builds it, and [Playtest and snapshot](/docs/how-to/playtest-and-snapshot) puts the checks in CI.
 

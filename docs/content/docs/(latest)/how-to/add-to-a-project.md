@@ -1,6 +1,6 @@
 ---
 title: "Add IFLoom to an existing project"
-description: "How-to for adding IFLoom to a web project you already have: install the packages, write the game module, render the game into a page, and add the CLI's scripts."
+description: "Put an IFLoom game in a web project that already has its own build, rendered into one of its pages."
 ---
 Use this to put a game in a project that already has its own build, such as a site or an app. You need Node 20.19 or later, or 22.12 or later. To start a game in a new folder, see [Create a game](/docs/how-to/create-a-game) instead.
 

@@ -1,6 +1,6 @@
 ---
 title: "Move a story from Twine"
-description: "How-to for moving a SugarCube or Harlowe story to IFLoom: where each kind of passage goes, one passage converted side by side, and the differences to plan for."
+description: "Move a SugarCube or Harlowe story to IFLoom, with one passage converted side by side and the differences to plan for."
 ---
 Use this when you have a story written in Twine's SugarCube or Harlowe and want it in IFLoom. Make a game first, as [Create a game](/docs/how-to/create-a-game) shows. The [Twine phrasebook](/docs/reference/twine-phrasebook) maps each macro and special passage, and this page converts a whole passage.
 

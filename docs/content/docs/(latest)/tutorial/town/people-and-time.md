@@ -1,6 +1,6 @@
 ---
 title: "6. Add a person and a clock"
-description: "Step 6 of the town tutorial. Installs the calendar and cast plugins, makes a turn one period of the day, and adds Ruth, who keeps the café counter on weekday mornings and afternoons."
+description: "Give the game a clock with the calendar plugin, and add Ruth, who keeps the café counter on weekday mornings and afternoons."
 ---
 By the end of this step the game has a clock, and Ruth the baker stands behind the café counter in the morning and goes home in the evening.
 

@@ -1,6 +1,6 @@
 ---
 title: "Add a title screen"
-description: "How-to for opening a game on a title screen with New game and Continue: the React UI's pages option with a subtitle, a picture and credits, a title screen of your own in plain JS or Vue, and restyling or replacing it."
+description: "Open the game on a title screen with New game and Continue, the React UI's own or one you render yourself."
 ---
 Use this to open your game on a title screen rather than straight into the story. The [React UI](/docs/reference/react) has one built in, turned on with an option. With a UI of your own, you render the screen from the [runner](/docs/reference/runner).
 

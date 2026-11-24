@@ -1,6 +1,6 @@
 ---
 title: "Debug"
-description: "Reference for @ifloom/plugin-debug: commands that ignore locks and set a stat, a kv key, what a holder holds, the scene, the clock, the turn or the location, the readout view, React UI, helpers and strings."
+description: "The debug plugin adds commands that set the state by hand past every lock while you test, and a readout of locks and triggers."
 ---
 `@ifloom/plugin-debug` adds commands that set the state by hand while you test, so you reach the state you want to look at without playing up to it. Each command ignores [locks](/docs/reference/locks), pays no cost and needs no exit, and the view adds a readout of the locks that are on, the triggers that have fired and the seed. The plugin is for you, so a release build leaves it out, where the [cheats](/docs/reference/plugins/cheats) plugin gives the player cheats in the release. It needs no other plugin, and it [cooperates](/docs/reference/plugins#cooperates) with the [calendar](/docs/reference/plugins/calendar) for the clock and with [places](/docs/reference/plugins/places) for the map. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Debug a game](/docs/how-to/debug-a-game) adds it to development builds only.
 

@@ -1,6 +1,6 @@
 ---
 title: "Write a save driver"
-description: "How-to for keeping saves your own way: when you need a driver, compressing saves to fit in localStorage, falling back when the browser refuses storage, moving saves to a new driver, passing the driver to the runner, testing it, and a folder of files in a desktop app."
+description: "Keep saves your own way with a save driver, such as compressed saves in localStorage or files in a desktop app."
 ---
 Use this when the browser's storage needs handling the built-in drivers don't do. A save driver is a name and four async functions that store strings by key. The save store, the [profile](/docs/reference/profile) and the [mod store](/docs/reference/mods) all write through the driver you give them, so one driver covers everything your game keeps.
 

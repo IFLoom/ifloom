@@ -1,6 +1,6 @@
 ---
 title: "Build a friendship in stages"
-description: "How-to for pacing a storyline over turns: a choice that pays once a turn, a counter on the storyline, greetings that change with visits, and stages that come in order with days between them, through quests or plain conditions."
+description: "Grow a friendship over days, with a choice that pays once a turn, greetings that change with visits and stages that come in order."
 ---
 Use this when a friendship or a rivalry should grow over days, not in one afternoon. The player meets someone, gets to know them, and some days later something happens that couldn't have happened on the first visit. The steps use Ava, who runs the café in the showcase. Her storyline is `ava`, and the friendship is a stat on her, `friendship`, declared on the kind `character` (see [Add a character with a schedule](/docs/how-to/add-a-character)).
 

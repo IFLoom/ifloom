@@ -1,6 +1,6 @@
 ---
 title: "Sell supporter content"
-description: "How-to for giving the people who fund your game a code that opens cheats and extra scenes: decide what to protect, add the unlocks and cheats plugins, make a code and its hash, gate the cheats, lock content in src/unlocks, take codes in the game, build and check, and ship a release with new codes."
+description: "Give the people who fund your game a code that opens cheats and extra scenes, and ship new codes with each release."
 ---
 Use this to give supporters, such as members on a funding site, a code that opens something extra: cheats, an extra scene, a whole route. The [unlocks plugin](/docs/reference/plugins/unlocks) checks the code and the [cheats plugin](/docs/reference/plugins/cheats) runs the cheats. A supporter enters the code once, and keeps what it opens across saves and new games.
 

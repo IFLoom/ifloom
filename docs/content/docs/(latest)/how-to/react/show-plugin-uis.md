@@ -1,6 +1,6 @@
 ---
 title: "Show plugins in the React UI"
-description: "How-to for rendering plugins with the React UI: listing their UIs in plugins, where the default layout puts them, placing them in a layout of your own, leaving out one thing a plugin UI brings, and rendering a plugin yourself from its hook."
+description: "Show plugins in the React UI by listing their UIs, place them in a layout of your own, or render one yourself from its hook."
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

@@ -1,6 +1,6 @@
 ---
 title: "Components"
-description: "Reference for every component and hook @ifloom/react exports, from GameShell to the pages around the game: what each renders, its parts, and a link to its props."
+description: "Every component and hook @ifloom/react exports, from GameShell to the pages around the game, with what each renders."
 ---
 This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
 

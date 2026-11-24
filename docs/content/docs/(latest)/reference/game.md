@@ -1,6 +1,6 @@
 ---
 title: "The game"
-description: "Reference for Game, the loaded game every engine function takes: its fields, the room shown with no scene open, saveable, and the sceneOf lookup."
+description: "The loaded Game every engine function takes, with its fields, the room shown while no scene is open, and sceneOf."
 ---
 A `Game` is one loaded game: its scenes, stats, entities and the rest of its content, merged with the base that holds its id and code. [`loadGame`](/docs/reference/content#loadgame) makes it, and every engine function takes it as an argument, so nothing is registered globally. [Content, packs and the base](/docs/explanation/content-and-packs) explains where each part comes from.
 

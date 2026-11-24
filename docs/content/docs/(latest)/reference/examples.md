@@ -1,6 +1,6 @@
 ---
 title: "Examples"
-description: "Reference for the three example games, the showcase, The Letter and The Corner Café: how to run each, and which file shows each feature."
+description: "The three example games, with how to run each and which file shows each feature."
 ---
 The IFLoom repository has three example games in `examples/`, each laid out as every game is (see [Organise your game's files](/docs/how-to/organise-your-files)). The showcase, Small Town, uses every feature together, The Letter is a linear novel with no plugins, and The Corner Café is a management game a week at a time. [Three shapes of game](/docs/explanation/shapes-of-game) explains what each shape needs, and the tables below say which file shows each feature.
 

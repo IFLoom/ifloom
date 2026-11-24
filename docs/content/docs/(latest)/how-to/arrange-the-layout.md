@@ -1,6 +1,6 @@
 ---
 title: "Arrange the layout"
-description: "How-to for arranging the page: sections that fold or open in a dialog, parts shown only at some locations, where the story's text sits, and the side column as a drawer on a phone, in plain JS, React and Vue."
+description: "Arrange the page around the story, with sections that fold or open in a dialog and a side column that becomes a drawer on a phone."
 ---
 Use this to change how the page is laid out around the story. The layout is one file: in the React UI, `src/layout.tsx`, a component made of regions (`Game`, `Sidebar`, `Story`, `Overlay`) with the parts inside them, passed to `mountGame` as `layout`. The vanilla and vue templates have the same regions in `src/layout.ts` and `src/Layout.vue`. [`DefaultLayout`](/docs/reference/react/components#defaultlayout) is the whole default layout.
 

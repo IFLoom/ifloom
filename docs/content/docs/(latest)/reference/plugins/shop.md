@@ -1,6 +1,6 @@
 ---
 title: "Shop"
-description: "Reference for @ifloom/plugin-shop: vendors and their goods, the vendor and sellable traits, stock, restocking, selling back and daily discounts, the buy and sell commands, conditions, state, view, React UI, helpers, checks and strings."
+description: "The shop plugin adds vendors who sell things for any spendable stat, with stock, restocking, selling back and daily discounts."
 ---
 `@ifloom/plugin-shop` adds vendors the player buys [things](/docs/reference/glossary#thing) from and sells them back to, for prices in any spendable [stat](/docs/reference/stats#statdef), such as coins, energy or both. A vendor is an [entity](/docs/reference/glossary#entity) carrying the `shop/vendor` [trait](/docs/reference/glossary#trait), and it holds the stock of each good that has one. The shop needs no other plugin, and it cooperates with the [calendar](/docs/reference/plugins/calendar) for opening hours and days, and with [places](/docs/reference/plugins/places) for where a vendor stands. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Open a shop, a job board or another panel](/docs/how-to/open-a-panel) opens a vendor's counter.
 

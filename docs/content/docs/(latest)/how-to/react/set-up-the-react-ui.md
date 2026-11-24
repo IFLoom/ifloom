@@ -1,6 +1,6 @@
 ---
 title: "Set up the React UI"
-description: "How-to for adding @ifloom/react to a game: installing it with React and Tailwind, the TypeScript settings, the Vite config, the stylesheet, the entry that mounts the game, and index.html."
+description: "Add the React UI to a game with React, Tailwind, the TypeScript and Vite settings, its stylesheet and the entry that mounts the game."
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

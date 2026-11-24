@@ -1,6 +1,6 @@
 ---
 title: "3. Keep stats"
-description: "Step 3 of the town tutorial. Declares the player's energy and coins as stats, and adds a choice that spends energy once."
+description: "Give the player energy and coins as stats, and a choice that spends some of that energy once."
 ---
 By the end of this step the side column shows the player's energy and coins, and unpacking a box costs some of that energy.
 

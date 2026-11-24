@@ -1,6 +1,6 @@
 ---
 title: "Add a quest"
-description: "How-to for a quest with the quests plugin: declare its stages and what finishes each, start it by a condition or an effect, gate content on its progress, show a badge for news, and track one quest."
+description: "Give the player a goal in stages, each finished by a condition, and gate content on how far the quest has got."
 ---
 Use this to give the player a goal in steps, such as settling into a new town. You need the [quests plugin](/docs/reference/plugins/quests) (see [Add a plugin](/docs/how-to/add-a-plugin)). A quest is a list of [stages](/docs/reference/glossary#stage), each done the first time its condition holds, in order. Progress is never taken back.
 

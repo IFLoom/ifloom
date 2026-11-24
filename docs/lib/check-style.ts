@@ -10,7 +10,12 @@
  *   - the summary (the first paragraph) has one colon at most and 35 words at most;
  *   - no comment says "as content declares it", "as content writes it", "as the UI draws it" or "in short".
  *
- * The pages listed in DONE (relative to `docs/content/docs/(latest)/`), outside front matter and code:
+ * The pages listed in DONE (relative to `docs/content/docs/(latest)/`):
+ *
+ *   - the front matter has a `description`, one sentence of 30 words at most with no colon, which opens with no label
+ *     such as "How-to for", "Reference for", "Explanation of", "Step 2 of" or "Lists";
+ *
+ * and outside front matter and code:
  *
  *   - no sentence has two colons or more;
  *   - none says one of the banned phrases above;
@@ -143,20 +148,45 @@ export function titleCase(heading: string): boolean {
   return capitals.length > 1
 }
 
+/** The labels a page's description never opens with: it says what the reader gets, not what sort of page it is. */
+const LABELS =
+  /^(how-to\b|reference (for|index|list|that)\b|explanation (of|for)\b|troubleshooting (for|of)\b|step \d+ of\b|the landing page\b|says\b|lists\b|covers\b|this page\b)/i
+
+/** The rules a page's front-matter `description` breaks: one plain sentence for the reader, with no label, no colon and 30 words at most. */
+export function descriptionProblems(description: string): string[] {
+  const words = plain(description).trim()
+  if (!words) return ['no description']
+  const problems: string[] = []
+  const label = LABELS.exec(words)?.[0]
+  if (label) problems.push(`description opens with a label ("${label}")`)
+  if (colons(words)) problems.push('colon in the description')
+  if (sentences(words).length > 1) problems.push('description of more than one sentence')
+  const count = words.split(/\s+/).filter((word) => /\w/.test(word)).length
+  if (count > 30) problems.push(`description of ${count} words (30 at most)`)
+  return problems
+}
+
 /** The problems with one page's Markdown, named by `page`. */
 export function checkPage(page: string, source: string): StyleProblem[] {
   const problems: StyleProblem[] = []
   const lines = source.split('\n')
   const report = (line: number, rule: string, text: string) => problems.push({ where: `${page}:${line}`, rule, text: text.trim() })
   let index = 0
-  // Front matter: only the title is held to the heading rule.
+  // Front matter: the title is held to the heading rule, and the description to its own.
+  let description = false
   if (lines[0] === '---') {
     for (index = 1; index < lines.length && lines[index] !== '---'; index++) {
       const title = /^title:\s*["']?(.*?)["']?\s*$/.exec(lines[index])
       if (title && titleCase(title[1])) report(index + 1, 'title in Title Case', title[1])
+      const said = /^description:\s*(.*?)\s*$/.exec(lines[index])
+      if (said) {
+        description = true
+        for (const rule of descriptionProblems(said[1].replace(/^(["'])(.*)\1$/, '$2'))) report(index + 1, rule, said[1])
+      }
     }
     index++
   }
+  if (!description) report(1, 'no description', '')
   // A run of prose lines, checked as one text from the line it starts on.
   let run: string[] = []
   let start = 0

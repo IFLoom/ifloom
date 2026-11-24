@@ -1,6 +1,6 @@
 ---
 title: "Amounts"
-description: "Reference for Amount, a number content names that the engine works out when it reads it, the fields that take one, and amountOf."
+description: "An amount is a number content names, such as a stat or a formula, that the engine works out when it reads it."
 ---
 An amount is a number that content names and the engine works out when it reads it: a plain number, a stat, a kv key, a value, a count of entities, or a formula of them. Range bounds, a `stat` effect's `by` and `to`, a stat's `min` and `max` and a roll's target all take one, so "coins at least the rent" needs no code. [Effects and conditions are data](/docs/explanation/state-and-commands) explains why content stays data.
 

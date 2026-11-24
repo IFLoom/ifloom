@@ -1,6 +1,6 @@
 ---
 title: "Work with a coding agent"
-description: "How-to for working on an IFLoom game with a coding agent: give it the docs as llms.txt, llms-full.txt or the MCP server, let the game's AGENTS.md brief it, and have it check its own work."
+description: "Give a coding agent the IFLoom docs and a brief for your game, and have it check its own work."
 ---
 Use this when a coding agent, such as Claude Code, Cursor or Codex, writes or changes your game. The agent needs to read the docs and to check what it did, and these steps give it both.
 

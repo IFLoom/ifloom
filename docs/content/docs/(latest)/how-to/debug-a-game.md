@@ -1,6 +1,6 @@
 ---
 title: "Debug a game"
-description: "How-to for finding and fixing a bug in play: add the debug plugin to development builds only, jump to the state you need with debug commands, read the locks and greyed-out buttons in the debug card, and replay a player's save or command log in a test."
+description: "Jump to the state you need with the debug plugin, see why a button is greyed out, and replay a player's save in a test."
 ---
 Use this when something in play goes wrong and you want to get to it fast, see why, and keep it fixed. The [debug plugin](/docs/reference/plugins/debug) sets the state directly, past every lock, so you can skip to day four without playing days one to three. A player's save or command log brings their bug into a test.
 

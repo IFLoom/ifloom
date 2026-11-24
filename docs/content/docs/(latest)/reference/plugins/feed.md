@@ -1,6 +1,6 @@
 ---
 title: "Feed"
-description: "Reference for @ifloom/plugin-feed: feeds and other people's posts, the player's own posts, likes and comments, the appeared, posted and likes conditions, the post and react effects, the seen command, the unread value, state, view, React UI, helpers, checks and strings."
+description: "The feed plugin keeps timelines of posts that appear when the story allows, with the player's own posts, likes and comments."
 ---
 `@ifloom/plugin-feed` keeps timelines of posts, such as a social app or a notice board. Other people's posts are content that appears the first time a [condition](/docs/reference/conditions) holds at the end of a command. The player's own posts go up through the `feed/post` [effect](/docs/reference/effects), and both collect likes and comments through `feed/react`. The game declares its feeds and posts in `data.feed`, so a mod adds either. The feed needs no other plugin and has no device of its own, and it cooperates with the [cast](/docs/reference/plugins/cast) for posters' names and faces. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Build a phone](/docs/how-to/build-a-phone) shows a feed as an app.
 

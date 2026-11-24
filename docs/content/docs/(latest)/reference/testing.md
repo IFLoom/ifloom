@@ -1,6 +1,6 @@
 ---
 title: "Testing helpers"
-description: "Reference for @ifloom/engine/testing: loadChecked, freshState, play, partnerCases and PartnerCase, and the package checks boundaryProblems, exportedNames and undocumentedExports."
+description: "The helpers in @ifloom/engine/testing that game and plugin tests use, from loadChecked and play to the package checks."
 ---
 `@ifloom/engine/testing` holds the helpers that plugin tests and game tests would otherwise each write for themselves. They sit at their own subpath of the engine package, so a game's page never loads them, and none of them uses a test runner. Each returns a value or throws a plain `Error`, so they work the same with [Vitest](https://vitest.dev), `node:test` or anything else. [Test a route through your game](/docs/how-to/test-a-route) tests a whole game, and [Write a plugin](/docs/how-to/write-a-plugin) tests a plugin.
 

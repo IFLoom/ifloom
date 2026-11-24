@@ -1,6 +1,6 @@
 ---
 title: "8. Check, playtest and build"
-description: "Step 8 of the town tutorial. Checks the game's content for mistakes, plays it with nobody at the keyboard, and builds it into a folder that opens from disk."
+description: "Check the town for mistakes, watch a playtest run through it, and build it into a folder that opens from disk."
 ---
 By the end of this step you'll have checked the town for mistakes, watched a playtest run through it, and built it into a folder you can open from disk.
 

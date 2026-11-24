@@ -1,6 +1,6 @@
 ---
 title: "Render the scene and its choices"
-description: "How-to for rendering the main column in a UI of your own, in plain JS, React and Vue: the open scene's title, beats and choices, a flowing scene, the room's actions, inline choices and tooltips, inputs, and transitions and reveals."
+description: "Render the open scene or the room, with its beats, choices, inputs and inline links, in a UI of your own."
 ---
 Render the main column of the screen, the open scene or the room while none is open, with everything the player reads and presses there. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows.
 

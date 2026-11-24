@@ -1,6 +1,6 @@
 ---
 title: "Choosing a UI"
-description: "Explanation of the two ways to put an IFLoom game on screen, the ready-made React UI or a UI of your own in any framework, what each gives you and costs, and how to mix them."
+description: "Compare the ready-made React UI with a UI of your own in any framework, and see what each gives you and costs."
 ---
 This page compares the two ways to put a game on screen, so you can pick one. The engine has no UI. A UI has to render the [view](/docs/reference/glossary#view) and send the player's commands, and it's either the ready-made React UI or code of your own. Both run on the same [runner](/docs/reference/runner), so you can start with one and move to the other later without touching your game's content.
 

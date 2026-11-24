@@ -1,6 +1,6 @@
 ---
 title: "Stability and planned renames"
-description: "Reference for what you can rely on in IFLoom before 1.0: the packages and entries that make up the API, the parts that already carry old data forward, and the renames still planned."
+description: "IFLoom has no stable API before 1.0, but saves and packs already carry old data forward, and a few renames are still planned."
 ---
 IFLoom hasn't reached 1.0, so it has no stable API yet. Names, shapes and defaults can change between releases, and the [changelog](/docs/changelog) lists each change. Saves and packs already carry old data forward, and this page lists the renames still planned.
 

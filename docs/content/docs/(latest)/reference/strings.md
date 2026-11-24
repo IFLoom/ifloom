@@ -1,6 +1,6 @@
 ---
 title: "Strings"
-description: "Reference for the engine's and plugins' own lines by key, such as refusals and labels: STRINGS, StringKey and Strings, stringOf and reasonOf, and how a game or a translation rewords them."
+description: "The engine's and plugins' own lines by key, such as refusals and labels, and how a game or a translation rewords them."
 ---
 Strings are the engine's and plugins' own lines for the player, such as a refusal, a button's label or a save's name, kept in one table by key. The table is in English, and a game rewords any line in its content's `strings`, as a translation does in a pack's. [Translate your game](/docs/how-to/translate-your-game) rewords them with the rest of a game's words.
 

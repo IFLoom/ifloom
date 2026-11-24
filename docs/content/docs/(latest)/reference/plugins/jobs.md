@@ -1,6 +1,6 @@
 ---
 title: "Jobs"
-description: "Reference for @ifloom/plugin-jobs: jobs, shifts and ranks, hiring, missed shifts and firing, the hired, fired, shifts and worked conditions, the hire and fire effects, the apply, work and quit commands, the rank value, state, view, React UI, helpers, checks and strings."
+description: "The jobs plugin adds jobs the player applies for, works shifts at, is promoted in and can be fired from."
 ---
 `@ifloom/plugin-jobs` adds jobs the player applies for, works shifts at, is promoted in and can be fired from. A shift costs stats such as energy and time on the clock, and pays a wage at the rank the player holds. The game declares its jobs in `data.jobs.jobs`, so a mod adds or changes one. Jobs needs no other plugin, and it cooperates with the [calendar](/docs/reference/plugins/calendar) for shift days, hours and time, and with [places](/docs/reference/plugins/places) for a workplace. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Open a shop, a job board or another panel](/docs/how-to/open-a-panel) opens a job board.
 

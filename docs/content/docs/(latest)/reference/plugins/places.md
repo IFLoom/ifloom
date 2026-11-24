@@ -1,6 +1,6 @@
 ---
 title: "Places"
-description: "Reference for @ifloom/plugin-places: locations and their trait, arrival, things lying in a location, the go and pickUp commands, the move effect, conditions, queries, values, the room, state, view, React UI, helpers, checks and strings."
+description: "The places plugin gives a game a map of locations with exits between them, and keeps track of where the player is."
 ---
 `@ifloom/plugin-places` gives a game a map of [locations](/docs/reference/glossary#location) with exits between them, and keeps track of where the player is. A location is an [entity](/docs/reference/glossary#entity) carrying the `places/location` trait, so a mod adds or changes one as it would any entity. While no scene is open, the plugin fills the [room](/docs/reference/glossary#room) with the location the player is at, its actions and its exits. Places needs no other plugin, and its conditions read the [calendar](/docs/reference/plugins/calendar)'s for opening hours. The [cast](/docs/reference/plugins/cast), the [inventory](/docs/reference/plugins/inventory), the [shop](/docs/reference/plugins/shop), [jobs](/docs/reference/plugins/jobs) and [debug](/docs/reference/plugins/debug) ask it where the player is. [Entities, things and traits](/docs/explanation/entities-and-traits#locations-characters-and-vendors-are-entities) explains why a location is an entity, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Add a location](/docs/how-to/add-a-location) builds one.
 

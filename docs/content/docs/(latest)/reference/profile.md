@@ -1,6 +1,6 @@
 ---
 title: "The profile"
-description: "Reference for the player's profile: the records kept outside any save, such as settings, a finished game and plugins' achievements, by namespace."
+description: "The profile keeps what outlives a save, such as the player's settings, a finished game and achievements, for every save on a device."
 ---
 The profile holds what outlives a save: the player's settings, whether they've finished the game, and what plugins keep across games, such as achievements. Every save of a game on one device shares it, and a new game still sees it. [State, commands and the view](/docs/explanation/state-and-commands#the-runner-adds-what-every-ui-wants) explains what the runner keeps beside the state, and [Add a settings page](/docs/how-to/add-a-settings-page) stores the player's settings in it.
 

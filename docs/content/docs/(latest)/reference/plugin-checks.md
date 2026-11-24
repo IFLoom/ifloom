@@ -1,6 +1,6 @@
 ---
 title: "A plugin's content checks"
-description: "Reference for how the content checker checks a plugin's content: PluginEntry, the references a plugin's calls, panels and data name, its own check, CheckTools and PluginProblem."
+description: "The content checker checks a plugin's data, calls and panels from the plugin's references and its own check."
 ---
 A plugin's content is the entries content writes in its `data`, the calls content makes to it and the panels its UI renders. The [content checker](/docs/reference/checks) checks them with the engine's own, in the same words, from what the plugin's [`references`](#pluginreferences-calltable-and-contentreferences) say each one names and the rules in its [`check`](#check). [`ifloom check`](/docs/reference/cli#ifloom-check) runs the checker, and [Declaring a plugin's calls](/docs/reference/plugin-calls) covers the checks a call's declaration brings.
 

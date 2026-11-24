@@ -1,6 +1,6 @@
 ---
 title: "Older saves"
-description: "Reference for saves written by an older engine: the history of SAVE_VERSION and what loading each version does, fields added without a version, entities and plugin state in old saves, and old save files, command logs and profiles."
+description: "Each change to the save format and what loading a save from before it does, for saves written by an older engine."
 ---
 A save records the format it was written in, and [`loadState`](/docs/reference/saves#loadstate) carries an older one forward when it loads. This page lists each change to the save format and what loading a save from before it does. The game's own changes to its content are carried by its migrations, which [Migrate your players' saves](/docs/upgrading/migrate-your-saves) writes. In the showcase, Small Town, the test `carries a save from before things were entities` in `examples/showcase/tests/showcase.test.ts` loads one such save.
 

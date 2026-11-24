@@ -1,6 +1,6 @@
 ---
 title: "Put a choice inside a line of text"
-description: "How-to for an inline action, a choice or an action pressed as a link inside a line of prose with [[act:id|words]], and for a tooltip on a word with [[tip:key|words]]."
+description: "Put a choice or an action inside a line of prose as a link, and add a tooltip to a word."
 ---
 Use this when a choice reads better as part of the sentence than as a button under it: "Your phone is ringing. Pick it up, or let it ring." The same markup puts a short note on a word, such as who runs the launderette. You need a scene with choices, or a location with actions.
 

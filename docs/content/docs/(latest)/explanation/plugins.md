@@ -1,6 +1,6 @@
 ---
 title: "How plugins work"
-description: "Explanation of IFLoom's plugins: what a plugin adds to the core, hooks and providers, content in data rather than options, cooperating with other plugins by name, why each is its own package, and its React UI in a /react subpath."
+description: "A plugin adds one system to the engine, and the rules every plugin keeps let a game combine any of them."
 ---
 This page explains what a plugin is, how it plugs into the core, and why the first-party plugins never import each other. A plugin adds one system to the engine, such as a calendar, locations or quests. The rules each plugin keeps are what let a game take any combination of them.
 

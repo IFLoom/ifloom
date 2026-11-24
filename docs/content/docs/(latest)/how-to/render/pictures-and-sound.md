@@ -1,6 +1,6 @@
 ---
 title: "Render pictures and play sound"
-description: "How-to for rendering a scene's layered picture with its hotspots, and playing the game's music, sounds and voices, in a UI of your own in plain JS, React and Vue."
+description: "Render a scene's layered picture with its hotspots, and play the game's music, sounds and voices, in a UI of your own."
 ---
 Render a scene's [picture](/docs/reference/glossary#picture), its layers and hotspots, and play the game's music, sounds and voiced lines. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. A picture or a clip inside the prose is a beat, which [Render the scene](/docs/how-to/render/scene#render-the-scene) covers.
 

@@ -1,6 +1,6 @@
 ---
 title: "Rearrange or replace the React UI's parts"
-description: "How-to for changing the React UI's page beyond its look: moving parts in layout.tsx, replacing a component everywhere with components and Default, a scene or minigame of your own, a page of another shape, your own root, and GameProvider without GameShell."
+description: "Move the React UI's parts in your layout, replace a component everywhere, or render a scene, a page or the root your own way."
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

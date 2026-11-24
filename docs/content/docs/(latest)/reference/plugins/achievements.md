@@ -1,6 +1,6 @@
 ---
 title: "Achievements"
-description: "Reference for @ifloom/plugin-achievements: achievements earned by a condition, progress or an effect, secret ones, the earned condition, the grant effect, the earned value, the profile record, state, view, React UI, helpers, checks and strings."
+description: "The achievements plugin marks things the player has done, earned by a condition, progress or an effect, with secret ones and a record in the profile."
 ---
 `@ifloom/plugin-achievements` marks things the player has done, such as finishing a storyline, saving up 100 coins or finding a secret. The player earns each achievement the first time its condition holds, when its progress reaches its target, or through an effect. A secret one shows as `???` until it's earned. The save keeps what it has earned, and the player's [profile](/docs/reference/profile), which outlives saves, keeps everything earned in any save. Achievements needs no other plugin and cooperates with none, and its conditions can use any plugin's conditions. [Add a plugin](/docs/how-to/add-a-plugin) installs it.
 

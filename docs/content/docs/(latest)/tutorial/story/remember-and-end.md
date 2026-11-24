@@ -1,6 +1,6 @@
 ---
 title: "3. Remember a choice and end the story"
-description: "Step 3 of the story tutorial. Makes later chapters read differently after an earlier choice, offers a choice only to a kind player, and writes two endings with a way to start again."
+description: "Make later chapters change with an earlier choice, and end the story in one of two ways with a button to start again."
 ---
 By the end of this step the bus and the walk home change with what the player chose earlier, and the story ends in one of two ways, each with a button to start again.
 

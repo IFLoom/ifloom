@@ -1,6 +1,6 @@
 ---
 title: "Upgrade IFLoom"
-description: "How-to for moving a game to a newer IFLoom release: read the changelog, raise every @ifloom package's range together, fix what TypeScript and the checker report, check the story still reads the same, and check packs, mods and players' saves."
+description: "Move a game to a newer IFLoom release by raising every @ifloom range together and fixing what TypeScript and the checker report."
 ---
 Use this when a new IFLoom release is out and you want your game on it. The engine carries players' saves and older packs forward by itself, so the work is in your own content and code. You need the game's `package.json` and a passing `ifloom check` on the release you have now.
 

@@ -1,6 +1,6 @@
 ---
 title: "Make a choice that needs a thing"
-description: "How-to for a choice or an action the player can take only while they hold a thing: greyed out with a reason, or hidden, and the thing used up when it's chosen."
+description: "Offer a choice or an action only while the player holds a thing, greyed out with a reason or hidden, and use the thing up."
 ---
 Use this when a choice should need something the player carries, such as a sandwich to share or a key for a door. The choice is greyed out with a reason, or hidden, until the player holds the [thing](/docs/reference/glossary#thing), and choosing it can use the thing up. You need the thing declared as an entity, as the showcase's sandwich is:
 

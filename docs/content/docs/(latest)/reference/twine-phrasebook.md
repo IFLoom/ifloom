@@ -1,6 +1,6 @@
 ---
 title: "Twine phrasebook"
-description: "Reference that maps Twine's SugarCube and Harlowe macros, special passages, variables, saves, audio and randomness to IFLoom's scenes, choices, conditions, effects and plugins, side by side."
+description: "Each SugarCube and Harlowe macro, special passage and idea beside the IFLoom scene, choice, condition, effect or plugin that does the same."
 ---
 This phrasebook maps each SugarCube and Harlowe idea to IFLoom, with the Twine version first and IFLoom's under it. A passage is a [scene](/docs/reference/scenes), a link is a choice, and a variable is a stat or a key in the [kv store](/docs/reference/glossary#kv). [Move a story from Twine](/docs/how-to/move-from-twine) converts a whole passage, and [Differences from Twine, Ink and Ren'Py](/docs/explanation/design#differences-from-twine-ink-and-renpy) explains why IFLoom keeps rules out of the prose.
 

@@ -1,6 +1,6 @@
 ---
 title: "Content and packs"
-description: "Reference for Content, Pack, Patch, SCHEMA, GameBase and loadGame: what each key holds, how loadGame merges content and packs, and the problems it reports."
+description: "The content a game declares, how loadGame merges it with packs, and the problems it reports."
 ---
 Content is the game's own data, one [`Content`](/docs/api/engine#content) object per file in `src/world/` and `src/story/`. A pack is data from outside the game's code, such as a mod, and goes over the content. [`loadGame`](#loadgame) merges both with a base that holds the game's id and code, and checks the result. [Content, packs and the base](/docs/explanation/content-and-packs) explains why the three are kept apart, and [Organise your game's files](/docs/how-to/organise-your-files) shows how to lay content out.
 

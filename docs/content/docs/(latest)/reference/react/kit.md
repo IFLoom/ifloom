@@ -1,6 +1,6 @@
 ---
 title: "Plugin UIs and the kit"
-description: "Reference for @ifloom/react/kit and the plugin UI exports: PluginUi, pluginKit, usePlugin, Plugins and its spots, the kit's parts and their looks, dialogs and pages like the UI's own, and the shadcn/ui primitives."
+description: "The kit in @ifloom/react/kit that plugin UIs are built from, with pluginKit, usePlugin, its parts and the shadcn/ui primitives."
 ---
 This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

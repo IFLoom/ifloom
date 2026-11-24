@@ -1,6 +1,6 @@
 ---
 title: "Write a flowing scene"
-description: "How-to for writing a scene that reads on as the player chooses: words in place, a decision partway through, a question to come back to, a jump ahead, a minigame where it stands and a part that folds away."
+description: "Write a scene that reads on as the player chooses, with decisions partway through, jumps, a minigame in place and parts that fold away."
 ---
 Write a scene as a [flow](/docs/reference/glossary#flow) when it should carry on after each choice, such as a conversation or a chapter whose text builds as the player decides. Each choice the player makes stays on the page where it was made, followed by the words it brings. You need a game with at least one scene, as [Create a game](/docs/how-to/create-a-game) makes.
 

@@ -1,6 +1,6 @@
 ---
 title: "Set up days and times of day"
-description: "How-to for giving a game days and periods with the calendar plugin: choose the periods, how long a turn is and where the game starts, let actions pass time, add a bed and a curfew, and print the time in prose."
+description: "Give a game days and times of day with the calendar plugin, with actions that pass time, a bed and a curfew."
 ---
 Use this when time matters to the story, such as a café that shuts in the evening or a job on weekdays. You need the [calendar plugin](/docs/reference/plugins/calendar) (see [Add a plugin](/docs/how-to/add-a-plugin)). With no options, a day has five periods, from `morning` to `late`, a week has seven days, a [turn](/docs/reference/glossary#turn) is a day, and the game starts on Monday morning.
 

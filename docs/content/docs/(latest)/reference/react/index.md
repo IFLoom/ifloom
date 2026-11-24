@@ -1,6 +1,6 @@
 ---
 title: "The React UI"
-description: "Reference index for @ifloom/react, the optional React UI: its pages, its two entries, mountGame, MountOptions, GameShell and the UI's own strings."
+description: "The optional React UI, @ifloom/react, with mountGame and its options, its two entries, its pages and its strings."
 ---
 This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
 

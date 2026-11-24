@@ -1,6 +1,6 @@
 ---
 title: "Playtest and snapshot from the command line"
-description: "How-to for the CLI's checks of a whole game: run ifloom check, play a week with ifloom playtest and read its transcript, pick where it starts and what it chooses, snapshot how every scene reads with probes made by playing, and run them all in tests and CI."
+description: "Check a whole game from the command line, play a week of it with nobody at the keyboard, and snapshot how every scene reads."
 ---
 Use this to check a whole game without playing it yourself: that its content holds together, that a week of play offers nothing it then refuses, and that no scene reads differently from last time without you meaning it. The three commands run from the game's folder, whatever builds it, and read the [game module](/docs/reference/glossary#game-module) in `src/game.ts`.
 

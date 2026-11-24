@@ -1,6 +1,6 @@
 ---
 title: "Phrases"
-description: "Reference for Phrases, Phrase, PhraseRow and PhraseWithArgs: words for the middle of a sentence that change with the state, declared in content's phrases and printed with a token such as {{outfit.verdict}}."
+description: "A phrase is a few words that change with the state, declared in content's phrases and printed in prose with a token."
 ---
 A phrase is a few words that change with the state, for the middle of a sentence. Your content declares phrases in `phrases`, each as rows tried in order, and prose prints one anywhere words go with a [token](/docs/reference/prose#tokens), such as `{{outfit.verdict}}`. [Translate your game](/docs/how-to/translate-your-game) gives a phrase's rows other words.
 

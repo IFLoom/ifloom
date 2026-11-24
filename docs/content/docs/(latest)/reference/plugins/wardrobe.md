@@ -1,6 +1,6 @@
 ---
 title: "Wardrobe"
-description: "Reference for @ifloom/plugin-wardrobe: slots, the wearable and closet traits, what each body has on, the wearing condition, the wear and takeOff commands, state, view, React UI, helpers, checks and strings."
+description: "The wardrobe plugin keeps track of what the player and each protagonist has on, in slots the game declares."
 ---
 `@ifloom/plugin-wardrobe` keeps track of what the player has on. The game declares the slots, such as a coat and a scarf, and anything the player can wear is a [thing](/docs/reference/glossary#thing) with the `wardrobe/wearable` [trait](/docs/reference/glossary#trait), which names its slot. The player wears only what they hold, and wearing a thing leaves the count held as it was. The plugin keeps what's worn for each body, the player's and each protagonist's the [`you`](/docs/reference/effects#you) effect switches to. The wardrobe needs no other plugin, and it cooperates with [places](/docs/reference/plugins/places) for a location where the player changes. [Entities, things and traits](/docs/explanation/entities-and-traits#traits-give-entities-meaning) explains traits, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Let the player get dressed](/docs/how-to/dress-the-player) builds a wardrobe with it.
 

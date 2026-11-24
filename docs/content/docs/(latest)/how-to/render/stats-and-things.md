@@ -1,6 +1,6 @@
 ---
 title: "Render stats, things and what changed"
-description: "How-to for rendering the side column's numbers and lists in a UI of your own, in plain JS, React and Vue: the stats, the things the player holds, listed entities, what the last command changed, notices and dice rolls."
+description: "Render the stats, the things the player holds, what the last command changed, notices and dice rolls in a UI of your own."
 ---
 Render the numbers and lists around the story: the player's stats, the [things](/docs/reference/glossary#thing) the player holds, what the last command changed, notices and dice. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows.
 

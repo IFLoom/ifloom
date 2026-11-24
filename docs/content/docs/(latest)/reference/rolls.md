@@ -1,6 +1,6 @@
 ---
 title: "Dice rolls"
-description: "Reference for the roll effect, Dice, Roll and RollsState: dice in notation or as a count and sides, a number added, a target, criticals, state.rolls and view.rolls."
+description: "A dice roll is the roll effect, which throws dice, keeps the total in the kv store and lists the roll for a UI."
 ---
 A dice roll is the `roll` effect, which throws dice, keeps the total in the [kv store](/docs/reference/glossary#kv) under a key, and records the roll. A condition then branches on how it went, prose prints the total, and a UI shows the dice landing. Any list of effects can hold one, a choice's, an action's, a trigger's or a plugin's. [Roll dice for a check](/docs/how-to/roll-dice) builds a whole check, and [Why IFLoom works this way](/docs/explanation/design#the-same-save-gives-the-same-draws) explains why a roll can't be thrown again by reloading.
 

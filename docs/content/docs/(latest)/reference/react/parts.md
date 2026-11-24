@@ -1,6 +1,6 @@
 ---
 title: "React UI parts"
-description: "Reference for every data-part the React UI and the first-party plugins' React UIs render, with the data attributes each carries, for a stylesheet, the classes option or a test."
+description: "Every data-part the React UI and the plugins' React UIs render, with its data attributes, for a stylesheet, the classes option or a test."
 ---
 This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

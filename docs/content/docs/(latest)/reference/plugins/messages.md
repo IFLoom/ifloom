@@ -1,6 +1,6 @@
 ---
 title: "Messages"
-description: "Reference for @ifloom/plugin-messages: channels and messages, replies, pools, messages that wait, the arrived, since, replied and read conditions, the draw and due effects, the reply and read commands, the unread value, state, view, React UI, helpers, checks and strings."
+description: "The messages plugin delivers texts, emails or letters when the story allows, kept in threads with replies that work like choices."
 ---
 `@ifloom/plugin-messages` delivers messages to the player when the story allows, such as texts, emails or letters on the mat, kept in threads with replies that work like choices. A message has a sender, a body of [blocks](/docs/reference/scenes#block) and replies that carry [effects](/docs/reference/effects). It arrives the first time its condition holds at the end of a command, or each time an effect draws it from a pool, and it raises a [notice](/docs/reference/notices) tagged with its channel. The game declares its channels and messages in `data.messages`, so a mod adds either. The plugin needs no other plugin and has no phone of its own. It cooperates with the [cast](/docs/reference/plugins/cast) for senders' names and faces, and with the [calendar](/docs/reference/plugins/calendar) for days. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Build a phone](/docs/how-to/build-a-phone) shows a channel as an app.
 

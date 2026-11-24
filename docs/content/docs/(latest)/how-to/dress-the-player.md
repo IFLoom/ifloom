@@ -1,6 +1,6 @@
 ---
 title: "Let the player get dressed"
-description: "How-to for clothes with the wardrobe plugin: declare the slots and the things that go in them, start the player dressed, give them a place to change, and make the story notice what they wear."
+description: "Give the player clothes with the wardrobe plugin, start them dressed, give them somewhere to change and make the story notice what they wear."
 ---
 Use this when what the player wears matters to the story, such as a raincoat people notice or a bench that's too cold without a scarf. You need the [wardrobe plugin](/docs/reference/plugins/wardrobe) (see [Add a plugin](/docs/how-to/add-a-plugin)). The player wears only what they hold, so the clothes are [things](/docs/how-to/give-the-player-things), and the wardrobe only marks which of them are on.
 

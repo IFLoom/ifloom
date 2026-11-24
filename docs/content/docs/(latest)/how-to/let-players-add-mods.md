@@ -1,6 +1,6 @@
 ---
 title: "Let players add mods"
-description: "How-to for mods in a built game: build the game over the player's mods at start-up, give the player a mod manager in plain JS, React or Vue, show each mod's problems under it, write a mod file to try it, and what saves made with mods do."
+description: "Let players add mods to your built game with a mod manager in plain JS, React or Vue, and see what mods do to saves."
 ---
 Use this to let players add [mods](/docs/reference/glossary#mod) to your built game: files of content that change scenes, add new ones or reword lines. A mod is a [pack](/docs/explanation/content-and-packs), so it is data a player can add with no code. The game reads the mods that are on as the page opens, builds itself over them, and reloads when the player changes them.
 

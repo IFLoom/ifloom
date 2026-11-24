@@ -1,6 +1,6 @@
 ---
 title: "Inventory"
-description: "Reference for @ifloom/plugin-inventory: the usable trait, the use, drop and give commands, the kinds it shows, the view with a button per thing, React UI, helpers, checks and strings."
+description: "The inventory plugin lets the player use, drop and give away the things they hold."
 ---
 `@ifloom/plugin-inventory` lets the player use, drop and give away the [things](/docs/reference/glossary#thing) they hold. A thing with the `inventory/usable` trait gets a button, such as "Eat the sandwich", that runs its effects and spends one. The engine keeps who holds what (the `give`, `take` and `move` effects and `view.held`), so the plugin keeps nothing in the save. The inventory needs no other plugin, and it cooperates with [places](/docs/reference/plugins/places), which says where a dropped thing goes. [Entities, things and traits](/docs/explanation/entities-and-traits#things-and-holders) explains holding, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) builds things with it.
 

@@ -1,6 +1,6 @@
 ---
 title: "Render messages, the feed and devices"
-description: "How-to for rendering the messages, feed and devices plugins in a UI of your own, in plain JS, React and Vue: threads of texts with replies, a feed of posts, and a phone or laptop with its apps, put together into one phone."
+description: "Render texts with replies, a feed of posts and a device with its apps in a UI of your own, in plain JS, React or Vue."
 ---
 Render the plugins a phone is made of: the texts from [messages](/docs/reference/plugins/messages), the posts from the [feed](/docs/reference/plugins/feed), and the phone itself with its apps from [devices](/docs/reference/plugins/devices). Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
 

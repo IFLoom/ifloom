@@ -1,6 +1,6 @@
 ---
 title: "Add a content notice and pages of your own"
-description: "How-to for the pages around the game: a content notice before the title screen that the player confirms once, and a page of your own, such as a list of endings, with a button on the title screen, in plain JS, React and Vue."
+description: "Show a content notice the player confirms once before the title screen, and add pages of your own such as a list of endings."
 ---
 Use this to show a content notice before the title screen, or to add a page of your own beside the title screen, such as a gallery or a list of endings found. Turn the title screen on first, as [Add a title screen](/docs/how-to/add-a-title-screen) shows. Both pages read and write the player's [profile](/docs/reference/profile), which outlives every save.
 

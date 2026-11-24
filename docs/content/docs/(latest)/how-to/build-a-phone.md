@@ -1,6 +1,6 @@
 ---
 title: "Build a phone"
-description: "How-to for putting a smartphone in a game from the devices, messages and feed plugins: apps with unread badges, texts with replies, texts that come one at a time or again, posts the player makes, apps of your own, and places the phone is shut."
+description: "Put a phone in a game from the devices, messages and feed plugins, with texts, posts, unread badges and apps of your own."
 ---
 Use this to give the player a phone with texts, a social feed, contacts, a gallery and apps of your own. A phone is three plugins put together by your content: [devices](/docs/reference/plugins/devices) shows a device with apps, [messages](/docs/reference/plugins/messages) keeps the texts and [feed](/docs/reference/plugins/feed) keeps the posts. None of them knows about the others. Contacts come from the [cast](/docs/reference/plugins/cast).
 

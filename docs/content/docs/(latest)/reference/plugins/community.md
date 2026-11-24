@@ -1,6 +1,6 @@
 ---
 title: "Community plugins"
-description: "Reference list of the plugins other people have written for IFLoom, the criteria a plugin meets to be listed, and how to submit one."
+description: "Plugins other people have written for IFLoom, the criteria for listing one, and how to submit yours."
 ---
 People outside the IFLoom project write and keep these plugins. Each is a package of its own on npm, which a game installs and lists in its `plugins` as it does a first-party plugin, as [Add a plugin](/docs/how-to/add-a-plugin) shows. [Write a plugin](/docs/how-to/write-a-plugin) starts one of your own.
 

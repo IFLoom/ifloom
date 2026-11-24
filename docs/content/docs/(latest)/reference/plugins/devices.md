@@ -1,6 +1,6 @@
 ---
 title: "Devices"
-description: "Reference for @ifloom/plugin-devices: devices and the apps on them, sections, badges, the open condition, the open, home and close commands, state, view, React UI, helpers, checks and strings."
+description: "The devices plugin gives the player devices such as a phone or a laptop, with apps built from sections and unread badges."
 ---
 `@ifloom/plugin-devices` gives the player devices, such as a phone or a laptop, with apps on them that the game declares in `data.devices`. An app is built from sections the engine already has, such as words, [actions](/docs/reference/glossary#action), the [things](/docs/reference/glossary#thing) of a kind the player holds or another plugin's view. Opening an app passes no time and doesn't move the player, and [locks](/docs/reference/locks) still refuse it. The plugin needs no other plugin, and it [cooperates](/docs/reference/plugins#cooperates) with the [cast](/docs/reference/plugins/cast), whose people a contacts section lists. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Build a phone](/docs/how-to/build-a-phone) puts it together with [messages](/docs/reference/plugins/messages) and the [feed](/docs/reference/plugins/feed).
 

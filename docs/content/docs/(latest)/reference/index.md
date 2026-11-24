@@ -1,6 +1,6 @@
 ---
 title: "Reference"
-description: "Where each export lives: the three entries of @ifloom/engine, the plugins, the React UI, the browser packages and the CLI, with the shared types and the glossary."
+description: "The reference pages for every IFLoom export, grouped by package from the engine to the plugins, the React UI, the browser helpers and the CLI."
 ---
 The reference documents every export of every IFLoom package, one page per feature. Each entry gives a definition, its behaviour and one example, and links to the generated [API](/docs/api) for the full signature and every field. [The glossary](/docs/reference/glossary) defines the words the pages use, and [Common types](/docs/reference/common) covers the types every page relies on.
 

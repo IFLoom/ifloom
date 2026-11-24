@@ -1,6 +1,6 @@
 ---
 title: "Timers"
-description: "Reference for TimerDef, RunningTimer and TimerView: named countdowns in real time, run down by ticks, with the effects that run when one runs out."
+description: "A timer is a named countdown in real time, run down by ticks, that runs its effects when it runs out."
 ---
 A timer is a named countdown in real time that runs its effects when it reaches 0, for a phone that stops ringing or a bus about to leave. Your content declares each timer in `timers`, the [`timer` effect](/docs/reference/effects#timer) starts, stops and extends it, and the [`timer` condition](/docs/reference/conditions#timer) reads it. [Turns, scenes and the room](/docs/explanation/turns-and-time#timers-run-in-real-time-not-turns) explains how real time sits beside turns, and [Add a countdown](/docs/how-to/add-a-countdown) builds one.
 

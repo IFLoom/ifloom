@@ -1,6 +1,6 @@
 ---
 title: "Saves"
-description: "Reference for saves: the save store, save drivers, the save file and its details, loadState, SAVE_VERSION and the tools a game's own migrations get."
+description: "The save store, the drivers that decide where saves are kept, the save file and loadState, which brings a save into play."
 ---
 A save is the whole [`GameState`](/docs/reference/state) in a named slot, with a few details for a load screen. The save store, [`saves(game, driver)`](#saves-1), keeps one game's saves, and a driver decides where they're kept. [State, commands and the view](/docs/explanation/state-and-commands#saves-and-migrations) explains why a save is only the state, [Render saves, settings and the backlog](/docs/how-to/render/saves-and-settings#render-a-save-and-load-screen) renders a load screen, and [Write a save driver](/docs/how-to/write-a-save-driver) keeps saves somewhere of your own.
 

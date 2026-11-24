@@ -1,6 +1,6 @@
 ---
 title: "A plugin's view, scene and actions"
-description: "Reference for what a plugin shows: its view and beats, its room scene, its actions, its background audio, the kinds and entities it brings, its traits and trait kinds, and speakerOf."
+description: "A plugin's view, room scene, actions and audio show the player what it keeps, and its content brings kinds, entities and traits."
 ---
 A plugin shows the player what it keeps through its providers: its [`view`](#view) in `view.plugins`, a [room scene](#scene) while no scene is open, [actions](#actions) as buttons, and [audio](#audio) on background channels. It brings the kinds and entities it keeps in its [`content`](#content), and reads what content writes on entities through [traits](#traits). [Entities and traits](/docs/explanation/entities-and-traits) explains traits, and [Write a plugin](/docs/how-to/write-a-plugin) gives a plugin a view.
 

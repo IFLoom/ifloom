@@ -1,6 +1,6 @@
 ---
 title: "Translate your game"
-description: "How-to for a translation as one pack: list every field a player reads with ifloom words, fill in a words table, translate the prose and the strings, load the pack in the page, and check its keys."
+description: "Translate your game as one pack with a words table, its prose and the strings, and check its keys."
 ---
 Use this to make your game readable in another language. A translation is one [pack](/docs/reference/glossary#pack) with three tables. Its `words` give other words to every label, name and line your content writes in place. Its `prose` translates the lines read by key, and its `strings` the engine's and plugins' own lines. You keep writing the game in one language, and the pack lays the other words over it as the game loads.
 

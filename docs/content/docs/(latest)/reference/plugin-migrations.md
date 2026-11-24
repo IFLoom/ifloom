@@ -1,6 +1,6 @@
 ---
 title: "Plugin migrations"
-description: "Reference for carrying a plugin forward: its saved state with version and migrations, the content packs write for it with contentVersion and contentMigrations, and command logs with commandVersion and commandMigrations."
+description: "A plugin's versions and migration steps carry its saved state, the content packs write for it and its command logs forward."
 ---
 A plugin carries three things forward when their shape changes: its state in a save, the content packs write for it, and the commands in a [command log](/docs/reference/runner#commandlog). Each has a version on the [`Plugin`](/docs/reference/plugin-api#plugin) and a table of steps keyed by the version each step upgrades from. [Content, packs and the base](/docs/explanation/content-and-packs) explains why packs carry their own versions, and [Migrate your saves](/docs/upgrading/migrate-your-saves) does the same for a game's own state.
 

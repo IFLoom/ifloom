@@ -1,6 +1,6 @@
 ---
 title: "Rules and hooks"
-description: "Reference for GameRules, the game's own code run as the first plugin: its state, commands, turn hooks, onStat, saveName and migrations, with TurnContext and content's resets."
+description: "The game's own code, GameRules, which the engine runs as the first plugin, with its state, commands, turn hooks and migrations."
 ---
 `rules` is the game's own code, a [`GameRules`](#gamerules) you pass on the base to [`loadGame`](/docs/reference/content#loadgame), beside the plugins. The engine calls its functions in place of knowing about your game, and content calls its conditions, effects, macros and values by name with `game/` in front. [Content, packs and the base](/docs/explanation/content-and-packs#rules-are-the-games-code) explains why the game's code is a plugin, and [Run code at the end of a turn](/docs/how-to/run-code-at-the-end-of-a-turn) writes a turn hook.
 

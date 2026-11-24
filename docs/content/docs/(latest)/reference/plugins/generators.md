@@ -1,6 +1,6 @@
 ---
 title: "Generators"
-description: "Reference for @ifloom/plugin-generators: pools of values, templates that make entities, the fields a template draws, the generate effect and its seeded draws, helpers and checks."
+description: "The generators plugin makes new entities from templates, drawing each field from a pool, a range or a fixed value, the same on every replay."
 ---
 `@ifloom/plugin-generators` makes new [entities](/docs/reference/glossary#entity) from templates, such as visitors in a park, customers in a shop or applicants for a job. The game declares named pools of values and templates that say where each field of an entity comes from, and an effect makes as many as it asks for. The plugin knows nothing about people: a pool is any list of values, and a template fills any kind the game declares. Every draw is seeded by the save, so a replay makes the same entities and a reload can't make different ones. Generators needs no other plugin, cooperates with none and keeps no state. [The same save gives the same draws](/docs/explanation/design#the-same-save-gives-the-same-draws) explains the seeding, and [Add a plugin](/docs/how-to/add-a-plugin) installs it.
 

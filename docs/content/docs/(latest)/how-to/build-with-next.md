@@ -1,6 +1,6 @@
 ---
 title: "Build with Next.js"
-description: "How-to for running an IFLoom game in a Next.js app: the packages as they are, Tailwind or the prebuilt stylesheet for the React UI, a client component that starts the game, and ifloom check and playtest beside it."
+description: "Run an IFLoom game in a Next.js app from a client component that starts it, with ifloom check and playtest beside it."
 ---
 Use this when your game is part of a website: a page of a site you already run on Next, or a game you host on Vercel or Netlify. Next is React, so this page uses React throughout, with the [React UI](/docs/reference/react) or a UI of your own written in React.
 

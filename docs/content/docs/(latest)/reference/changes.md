@@ -1,6 +1,6 @@
 ---
 title: "Changes"
-description: "Reference for ChangesDef, Change and ChangeView: the tracked stats the last command moved, the player's and those kept on entities, listed in view.changes for feedback such as a +3 coins pill."
+description: "The tracked stats the last command moved, listed in view.changes so a UI can show feedback such as +3 coins."
 ---
 After each command the engine compares the stats your content tracks in `changes`, before and after, and lists what moved in `view.changes`. A UI shows it as feedback after a choice, such as `+3 coins` or `+4 Ava`, without working out the difference itself.
 

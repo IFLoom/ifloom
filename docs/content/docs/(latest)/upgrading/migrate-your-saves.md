@@ -1,6 +1,6 @@
 ---
 title: "Migrate your players' saves"
-description: "How-to for carrying players' saves forward when an update to your game changes its content: give the game a version, write a migration step, fill new stats and settings, keep every old step, and test a save from the version before."
+description: "Carry players' saves forward when an update changes your game's content, with a version and a migration step for each change."
 ---
 Use this when an update to your game changes its content in a way an old save has to know about, such as a kv key renamed or a stat added with a `start` above 0. The engine carries saves across its own changes. Your game's `rules.migrations` carry them across yours. You need a game that already saves, and a save from the version before to test with.
 

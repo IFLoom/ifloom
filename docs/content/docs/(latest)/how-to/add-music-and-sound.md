@@ -1,6 +1,6 @@
 ---
 title: "Add music and sound"
-description: "How-to for giving a game sound: the files in public/audio, tracks and playlists, music by default and per scene, a location's ambience, one-shot sounds and voiced lines, volume and mute settings, and starting the audio player in plain JS, React or Vue."
+description: "Give a game music, ambience, one-shot sounds and voiced lines, and play them with the audio player in plain JS, React or Vue."
 ---
 Use this to give your game music, background sound, one-shot sounds and voiced lines. Your content lists the tracks and says when each plays. The engine works out what should be playing and lists it in `view.audio`, and the [audio player](/docs/reference/browser/audio-player), `@ifloom/audio`, plays it in the browser.
 

@@ -1,6 +1,6 @@
 ---
 title: "Audio"
-description: "Reference for GameAudio, TrackDef, PlaylistDef and ChannelDef, the audio and sound effects, AudioState, AudioView and audioSrc: the music and sounds a game declares and the view lists."
+description: "The tracks, playlists and channels a game declares, and the music and sounds the view lists for an audio player."
 ---
 A game's audio is the tracks, playlists and channels it declares in its content's `audio`, which scenes, locations, effects and prose name by id. The engine plays nothing itself. It works out what each channel should play and which one-shot sounds are due, and lists them in `view.audio` for an audio player such as [`@ifloom/audio`](/docs/reference/browser/audio-player) to play. [Add music and sound](/docs/how-to/add-music-and-sound) gives the café music and a doorbell.
 

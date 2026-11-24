@@ -1,6 +1,6 @@
 ---
 title: "Add a transition or reveal lines"
-description: "How-to for the React UI's transition and reveal hints: fade or slide a scene, a location or the next screen in, set a default for the game, hold lines back to reveal them one after another, restyle them with CSS, and add a transition of your own."
+description: "Fade or slide scenes and locations in, and reveal lines one after another, with the React UI's transition and reveal hints."
 ---
 Use this to make a scene fade in, the next location slide in from the side, or a paragraph wait a moment before it appears. Content asks for each with a [ui hint](/docs/reference/glossary#ui-hints), a `ui` field the engine carries to the view unchanged. The names on this page, `transition` and `reveal`, are the [React UI's hints](/docs/reference/react/hints). Tests, `ifloom playtest` and replays ignore them.
 

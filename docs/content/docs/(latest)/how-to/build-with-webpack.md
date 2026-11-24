@@ -1,6 +1,6 @@
 ---
 title: "Build with webpack"
-description: "How-to for building an IFLoom game with webpack: a loader for your own TypeScript, Tailwind through PostCSS or the prebuilt stylesheet for the React UI, mounting the game, ifloom check and playtest beside it, and the single offline index.html with two plugins."
+description: "Build an IFLoom game with webpack, with the React UI's styles and a single index.html that opens from disk."
 ---
 Use webpack if your project already builds with it. The game is the same `src/game.ts` as in any template, and webpack replaces only the `ifloom dev` and `ifloom build` steps. `ifloom check` and `ifloom playtest` still work beside it.
 

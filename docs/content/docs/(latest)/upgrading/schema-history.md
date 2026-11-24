@@ -1,6 +1,6 @@
 ---
 title: "Schema history"
-description: "Reference for every change to the content format: what upgradePack rewrites in a pack at each schema from 5 to 30, the first-party plugins' own steps, the command log steps, and the problems the checker reports for your own content written in an older form."
+description: "Each change to the content format and what upgradePack rewrites in an older pack, schema by schema."
 ---
 A [pack](/docs/reference/glossary#pack), such as a mod, records the [`SCHEMA`](/docs/reference/content#schema) it was written for, and [`upgradePack`](/docs/reference/content#upgradepack) carries an older one forward when [`loadGame`](/docs/reference/content#loadgame) loads it. This page lists what each schema changed, and so what the upgrade rewrites. Your own content isn't upgraded, so the [content checker](/docs/reference/checks) reports what it finds in an older form. [Content, packs and the base](/docs/explanation/content-and-packs) explains why. In the showcase, Small Town, `examples/showcase/src/game.ts` lays the player's mods over the content with `loadGame`, which upgrades each one.
 

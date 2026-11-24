@@ -1,6 +1,6 @@
 ---
 title: "Organise your game's files"
-description: "How-to for splitting a game's content into files as it grows: src/game.ts assembles, src/world/ holds what the whole game shares by kind, src/story/ holds the story by area, and npm run check finds a key declared twice."
+description: "Split a growing game's content into files by kind and by area, and let npm run check find a key declared twice."
 ---
 Use this when one content file has grown too long to find your way around, or before you start a game with places, people and weeks of story. Every template and example already follows this layout. [Content, packs and the base](/docs/explanation/content-and-packs) explains how `loadGame` merges the files.
 

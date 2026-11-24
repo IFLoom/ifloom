@@ -1,6 +1,6 @@
 ---
 title: "Find out why a choice doesn't show"
-description: "Troubleshooting for a choice or an action that is missing or greyed out: every reason the engine hides one or refuses it, in the order it asks, and how to see which with whyNot, explain, the debug card, the playtest transcript and ifloom check."
+description: "Find out why a choice or an action is missing or greyed out, from every reason the engine hides or refuses one."
 ---
 Use this when a choice or an action you wrote isn't on screen, or is greyed out when you expect it to work. The engine hides a choice for a few reasons and refuses one for a few more, and it can tell you which. Find your symptom in the tables, then ask the engine to confirm it.
 

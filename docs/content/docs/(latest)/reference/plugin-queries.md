@@ -1,6 +1,6 @@
 ---
 title: "Queries and partners"
-description: "Reference for a plugin's queries, cooperates and the PartnerQueries the first-party plugins ask each other, with Query, QueryArgs, QueryAnswer, CastContact, SenderView and pluginQuery."
+description: "A query is an answer one plugin gives and another asks for by name, so plugins work together without importing each other."
 ---
 A query is an answer one plugin gives and another asks for by full name, such as `places/here`, so plugins work together without importing each other. A plugin declares its answers in its [`queries`](#queries) and names the plugins it works with in [`cooperates`](#cooperates). [How plugins work](/docs/explanation/plugins#plugins-cooperate-by-name) explains why plugins reach each other only by name, and [Make plugins work together](/docs/how-to/make-plugins-work-together) puts two together.
 

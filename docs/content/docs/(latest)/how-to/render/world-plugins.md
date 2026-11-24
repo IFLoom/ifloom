@@ -1,6 +1,6 @@
 ---
 title: "Render the calendar, locations and people"
-description: "How-to for rendering the calendar, places and cast plugins in a UI of your own, in plain JS, React and Vue: the clock, the location the player is at with its exits and the things lying there, and the people here and everyone met."
+description: "Render the time of day, the location the player is at with its exits, and the people here in a UI of your own."
 ---
 Render the world around the story: the time of day from the [calendar](/docs/reference/plugins/calendar), the [location](/docs/reference/glossary#location) the player is at from [places](/docs/reference/plugins/places), and the people from the [cast](/docs/reference/plugins/cast). Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
 

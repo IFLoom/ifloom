@@ -1,6 +1,6 @@
 ---
 title: "Game state"
-description: "Reference for GameState, field by field: the turn, the open scene, stats, the kv store, entities and what is held, plugins' state, what was seen and chosen, and CarryOver."
+description: "GameState, field by field, the one plain object that holds a game in progress and is its save."
 ---
 `GameState` is one game in progress, a plain object that serialises to JSON and is the save. [Commands](/docs/reference/commands) take one state and return the next, and nothing else in the engine holds state. [State, commands and the view](/docs/explanation/state-and-commands) explains why, and [Run a game in code](/docs/how-to/run-a-game-in-code) shows a state changing command by command.
 

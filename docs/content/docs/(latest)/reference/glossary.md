@@ -1,6 +1,6 @@
 ---
 title: "Glossary"
-description: "One definition for each word the IFLoom docs use, alphabetical, with links to the explanation and the reference entry for each."
+description: "One definition for each word the IFLoom docs use, with links to the explanation and the reference entry for each."
 ---
 Each word the docs use has one meaning, defined here in a sentence or two. Every entry links to the page that explains the idea and the reference entry that documents it. Code names, such as `drawChoices` or `RoomScene`, keep their spelling even where the prose word differs.
 

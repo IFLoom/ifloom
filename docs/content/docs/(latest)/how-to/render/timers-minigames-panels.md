@@ -1,6 +1,6 @@
 ---
 title: "Render timers, minigames and panels"
-description: "How-to for rendering the parts of a game that run in real time or open over the story, in a UI of your own in plain JS, React and Vue: countdowns for timers, a running minigame with its inputs, and a panel such as a shop's counter."
+description: "Render timer countdowns, a running minigame and an open panel in a UI of your own, in plain JS, React or Vue."
 ---
 Render the countdowns of running timers, a minigame while the player plays it, and a [panel](/docs/reference/glossary#panel) open over the story. Set up the runner first, with `startClock` beside it, as [Start your own UI](/docs/how-to/render/start) shows. The engine keeps no clock, so timers and minigames stand still until something sends ticks.
 

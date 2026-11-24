@@ -1,6 +1,6 @@
 ---
 title: "State, commands and the view"
-description: "Explanation of the loop at the heart of IFLoom: one plain state, commands run through apply, effects and conditions as data, locks, triggers and notices, the view a UI renders, the runner, and saves."
+description: "The loop at the heart of a game, where commands change one plain state and a UI renders a view of it."
 ---
 This page explains how a game moves from one moment to the next. The engine keeps a game in progress as one plain state. The player changes it only by sending commands, and a UI only ever renders a view of it. Every other part of the engine hangs off that loop.
 

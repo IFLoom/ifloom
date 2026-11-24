@@ -1,6 +1,6 @@
 ---
 title: "Render cheats, unlocks and debug"
-description: "How-to for rendering the cheats, unlocks and debug plugins in a UI of your own, in plain JS, React and Vue: a cheat menu, a box for entering supporter codes, and a debug readout with commands that ignore locks."
+description: "Render a cheat menu, a box for supporter codes and a debug readout in a UI of your own, in plain JS, React or Vue."
 ---
 Render the tools that sit outside the story: the player's cheats from [cheats](/docs/reference/plugins/cheats), a box for codes from [unlocks](/docs/reference/plugins/unlocks), and a readout for yourself from [debug](/docs/reference/plugins/debug). Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
 

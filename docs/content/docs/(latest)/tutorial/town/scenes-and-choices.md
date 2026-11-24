@@ -1,6 +1,6 @@
 ---
 title: "2. Write scenes and choices"
-description: "Step 2 of the town tutorial. Replaces the template's story with two scenes, a bedroom and a kitchen, and choices that move between them."
+description: "Replace the template's story with a bedroom and a kitchen, and choices that move between them."
 ---
 By the end of this step the game opens in the bedroom on moving day, and two choices take the player down to the kitchen and back.
 

@@ -1,6 +1,6 @@
 ---
 title: "Flowing scenes"
-description: "Reference for a scene that reads on as the player chooses: FlowChoice, BlockExtras, state.flow with FlowState and FlowStep, and the builders text, say, when, fold, cases, decide, choice, point, jump, image, minigame and panel."
+description: "A flowing scene reads on as the player chooses, with builders that write its body and state that keeps its path."
 ---
 A flowing scene stops partway through its body at a decision, and reads on once the player chooses. The choice's own blocks come next, then the blocks after the decision, so the earlier words stay on the page. A scene flows when its [body](/docs/reference/scenes#block) holds a decision, a point, a minigame or a panel, and the engine's builders write each block. [Write a flowing scene](/docs/how-to/write-a-flowing-scene) writes one, and [Turns, scenes and the room](/docs/explanation/turns-and-time#how-the-engine-runs-a-scene) explains how the engine runs a scene.
 

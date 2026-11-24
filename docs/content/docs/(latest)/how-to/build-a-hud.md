@@ -1,6 +1,6 @@
 ---
 title: "Build a HUD"
-description: "How-to for a heads-up display of your own in plain JS, React or Vue: a stat bar that turns red as it runs low, a strip of unread counts, an objective line from the tracked quest, and where to put them."
+description: "Build a heads-up display of your own with a stat bar, unread counts and the tracked quest's objective, in plain JS, React or Vue."
 ---
 Use this when the React UI's stat list, notice strip and quest log are too plain for your game. Each piece of a HUD reads the [view](/docs/reference/view), which is the same whatever renders it, so each tab below reads the same fields. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In React, each piece reads the view with [`useGame`](/docs/reference/react/components#usegame) and sits in your layout beside the React UI's parts. The examples use the showcase's stats and plugins.
 

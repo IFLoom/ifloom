@@ -1,6 +1,6 @@
 ---
 title: "Effects"
-description: "Reference for Effect and every kind of effect (stats, kv, scenes and storylet draws, turns, entities and holders, notices, audio, minigames, timers, rolls, panels, points and calls), with applyEffects."
+description: "Every kind of effect, one change to the state written as data, and applyEffects, which runs a list of them."
 ---
 An effect is one change to the [state](/docs/reference/state), written as plain data. Choices, actions, triggers and timers carry lists of effects, and so does a plugin's content, such as a thing's use in the [inventory plugin](/docs/reference/plugins/inventory). [State, commands and the view](/docs/explanation/state-and-commands#effects-and-conditions-are-data) explains why effects are data, and [Write your own condition, effect or macro](/docs/how-to/write-your-own-condition-or-effect) adds one of the game's own.
 

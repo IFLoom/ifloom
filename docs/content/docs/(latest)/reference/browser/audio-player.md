@@ -1,6 +1,6 @@
 ---
 title: "The audio player"
-description: "Reference for @ifloom/audio: startAudio, which plays view.audio in the browser, its AudioOptions, the AudioPlayer it returns and the AudioLike element a test can fake."
+description: "The audio player in @ifloom/audio, which plays view.audio in the browser with plain audio elements."
 ---
 `@ifloom/audio` plays a game's sound in the browser. The engine works out what should be playing in [`view.audio`](/docs/reference/audio#audioview) and plays nothing itself, and the audio player follows a runner and plays it with the browser's own `HTMLAudioElement`. It needs no framework and no build step, and it works from a page opened from disk. [Add music and sound](/docs/how-to/add-music-and-sound) declares the tracks it plays, and [Play sound](/docs/how-to/render/pictures-and-sound#play-sound) starts it in each framework.
 

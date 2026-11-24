@@ -1,6 +1,6 @@
 ---
 title: "Storylets"
-description: "Reference for StoryletFields and the scene effect's from: scenes drawn at random from a named set by weight and condition, the seeded draw, and its checks."
+description: "A storylet is a scene drawn at random from a named set by weight and condition, with the seeded draw and its checks."
 ---
 A storylet is a scene an effect draws at random from a named set, such as the small things that happen while the player sits in the café. A scene in content's `scenes` joins a set with its [`StoryletFields`](#storyletfields), and the [`scene` effect](#scene) with `from` draws one of the scenes eligible now. [Offer a random scene](/docs/how-to/offer-a-random-scene) sets one up, with recipes for once, at most and a cooldown, and [Why IFLoom works this way](/docs/explanation/design#the-same-save-gives-the-same-draws) explains why a draw can't be had again by reloading.
 

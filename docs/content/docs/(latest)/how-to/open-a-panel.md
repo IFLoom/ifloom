@@ -1,6 +1,6 @@
 ---
 title: "Open a shop, a job board or another panel"
-description: "How-to for opening a panel over the story: a vendor's counter from a location, the job board from a person's scene, a thing the player uses or an app, a panel of your own, and closing it."
+description: "Open a vendor's counter, a job board or a panel of your own over the story from a location, a scene, a thing or an app."
 ---
 Use this to put a shop's counter, a job board or a screen of your own over the story. A [panel](/docs/reference/glossary#panel) never opens because of where the player is. Your content opens it by name with the [`panel` effect](/docs/reference/effects#panel), so it can sit wherever it fits the town. The shop and jobs plugins write the effect for you:
 

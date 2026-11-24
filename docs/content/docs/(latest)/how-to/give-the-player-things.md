@@ -1,6 +1,6 @@
 ---
 title: "Give the player things to hold and use"
-description: "How-to for things the player holds: declare a kind and its things, give them in play or make new ones, make a thing usable with the inventory plugin, let the player drop and give things away, and give one thing a trait for each plugin."
+description: "Give the player things to hold, and let them use, drop and give those things away with the inventory plugin."
 ---
 Use this for anything the player carries, such as a sandwich, a note under the door or the photos they take. A [thing](/docs/reference/glossary#thing) is an entity a [holder](/docs/reference/glossary#holder) holds, so the engine needs no plugin to keep it. Each plugin adds one thing the player can do with it:
 

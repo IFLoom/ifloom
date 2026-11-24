@@ -1,6 +1,6 @@
 ---
 title: "The runner"
-description: "Reference for createRunner and the Runner: its snapshot, options, undo history, backlog, autosave, settings, new games, helpers, the command log and replay."
+description: "The runner is the one object a UI drives, with undo, a backlog, saves, autosave and a snapshot for its listeners."
 ---
 The runner is the one object a UI drives. It wraps [`apply`](/docs/reference/commands#apply) with undo and redo, a backlog of what was shown, a command log, saving, loading and autosave, and it hands its listeners one value, the [snapshot](#runnersnapshot), whenever any part of it changes. [State, commands and the view](/docs/explanation/state-and-commands#the-runner-adds-what-every-ui-wants) explains why the runner sits beside `apply`, and [Run a game in code](/docs/how-to/run-a-game-in-code) drives one in Node.
 

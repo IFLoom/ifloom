@@ -1,6 +1,6 @@
 ---
 title: "First-party plugins"
-description: "Reference index of the first-party plugins: each package, what it adds, and the plugins each one cooperates with."
+description: "Every first-party plugin, what it adds and the plugins it cooperates with."
 ---
 Writing a plugin of your own? See [Plugin API](/docs/reference/plugin-api).
 

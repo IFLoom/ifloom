@@ -1,6 +1,6 @@
 ---
 title: "Presentation hints"
-description: "Reference for the ui hints and inline pieces the React UI reads from content: transitions, reveals, dice, countdowns, tilted pictures, folds, stat bars and pips, speaker colours, ui settings, and checkUiHints with its types."
+description: "The ui hints and inline pieces the React UI reads from content, such as transitions, reveals, dice and stat bars, and checkUiHints."
 ---
 This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

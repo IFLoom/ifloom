@@ -1,6 +1,6 @@
 ---
 title: "Render quests, achievements and statuses"
-description: "How-to for rendering the quests, achievements and statuses plugins in a UI of your own, in plain JS, React and Vue: a quest log with tracking and news, an achievements page with secret ones and progress, and the statuses in play."
+description: "Render a quest log, an achievements page and the statuses in play in a UI of your own, in plain JS, React or Vue."
 ---
 Render how far the player has come and what's affecting them now: the [quests](/docs/reference/plugins/quests) in a log, the [achievements](/docs/reference/plugins/achievements) on a page, and the [statuses](/docs/reference/plugins/statuses) beside the stats. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
 

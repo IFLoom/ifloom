@@ -1,6 +1,6 @@
 ---
 title: "Write a plugin's React UI"
-description: "How-to for giving a plugin a React UI in its /react subpath: the package's exports and optional peers, pluginKit and usePlugin, components a game can replace and parts it can style, the <id>Ui module, styling with the kit's parts, a stylesheet of its own, and a test."
+description: "Give a plugin a React UI in its /react subpath, with components a game can replace and parts it can style, and test it."
 ---
 This how-to is for `@ifloom/react`, the optional React UI. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 

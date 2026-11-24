@@ -83,7 +83,28 @@ export type PluginContext<S> = CustomContext & {
  * through `apply` does nothing, as one in the turn's own rules does, and
  * `profile`, what a view is shown of the plugin's profile namespace.
  */
-export type ContextOptions = { picks?: Record<string, string>; ending?: boolean; profile?: unknown }
+export type ContextOptions = { picks?: Record<string, string>; ending?: boolean; profile?: unknown; before?: GameState }
+
+/**
+ * What `onTurn` and `onTurnDone` are handed, the game's and every plugin's:
+ * the context, with `before`, the state as the turn ended, before the
+ * counter moved on and `resets` were put back. Its `apply` ends no turn: a
+ * `turn` effect applied here does nothing.
+ */
+export type TurnContext<S = any> = PluginContext<S> & {
+  /** The state as the turn ended, before the counter moved on and `resets` were put back. */
+  before: GameState
+}
+
+/**
+ * An effect that stands for other effects, in a plugin's or the game's
+ * `macros`: it works out from the state the effects it stands for and returns
+ * them, anything content can write, another macro included. Content calls it
+ * as any effect, `{ 'game/payRent': {} }`, and because what it returns is
+ * effects, a button's price, the locks and the guards see what it would do
+ * before it runs.
+ */
+export type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
 
 /**
  * Why a plugin will not let a command through. A string is a refusal, as a
@@ -166,8 +187,17 @@ export type Plugin<S = any, V = unknown> = {
   /**
    * Effects content can apply, by name. Each takes the state as the effects
    * before it left it and returns the next one, so two in one list compose.
+   * What one does is hidden from prices and guards until it runs; an effect
+   * that only stands for other effects is a `macro` instead.
    */
   effects?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState>
+  /**
+   * Effects that stand for other effects, by name, called by content as any
+   * effect is: each returns the effects it stands for, worked out from the
+   * state, so a button's price and the guards see what it would do. A name is
+   * an effect's or a macro's, never both. See `Macro`.
+   */
+  macros?: Record<string, Macro<S>>
   /** Commands a button can send, by name. */
   commands?: Record<string, PluginCommand<S>>
   /**
@@ -202,20 +232,25 @@ export type Plugin<S = any, V = unknown> = {
    * and as `{ value: 'id/name', with }` for a badge or a stat's ceiling.
    */
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-  /** A hook: at the start of each turn, after the game's own `rules.onTurn` and before any `onTurnDone`. Returns the next state. */
-  onTurn?: (state: GameState, context: PluginContext<S>) => GameState
   /**
-   * A hook: the end of a turn, once every plugin's `onTurn` has run (and the
-   * game's `rules.onTurnDone`), so it sees what they did: the calendar's new
-   * day, a status worn off. Returns the next state.
+   * A hook: the end of a turn, once the counter has moved on and `resets` are
+   * back, in the order the hooks run (the game's first). Returns the next
+   * state. `context.before` is the state as the turn ended, and a `turn`
+   * effect applied through `context.apply` does nothing.
    */
-  onTurnDone?: (state: GameState, context: PluginContext<S>) => GameState
+  onTurn?: (state: GameState, context: TurnContext<S>) => GameState
+  /**
+   * A hook: the end of a turn, once every `onTurn` has run, so it sees what
+   * they did: the calendar's new day, a status worn off. In the same order
+   * and with the same context as `onTurn`. Returns the next state.
+   */
+  onTurnDone?: (state: GameState, context: TurnContext<S>) => GameState
   /**
    * A hook: one of the player's stats just changed, by a `stat` effect.
    * `before` is the state before it, `after` the state with it, `by` how far
    * it moved. Return `before` to say it did not take, `after` to let it, or
-   * `after` with more besides. Runs after the game's `rules.onStat`, in
-   * plugin order, each seeing what the one before returned.
+   * `after` with more besides. Runs in the order the hooks run (the
+   * game's first), each seeing what the one before returned.
    */
   onStat?: (before: GameState, after: GameState, stat: string, by: number, context: PluginContext<S>) => GameState
   /**
@@ -235,6 +270,12 @@ export type Plugin<S = any, V = unknown> = {
   price?: (state: GameState, effects: readonly Effect[], context: PluginContext<S>) => string[] | undefined
   /** Where the game is, in a few words for a header or a save: "Day 3 · Wednesday morning". */
   label?: (state: GameState, context: PluginContext<S>) => string | undefined
+  /**
+   * The name a save is listed under, such as the name the player typed, kept
+   * as `SaveMeta.playerName` and shown for `@you`'s lines. The first that
+   * answers names it (the game's first); with none, saves have no name.
+   */
+  saveName?: (state: GameState, context: PluginContext<S>) => string | undefined
   /**
    * What the screen shows while no scene is open: a room's description, a
    * shop front, a dashboard's heading. The first plugin that answers fills it;
@@ -448,12 +489,8 @@ export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game
   }
   if (options.picks) context.picks = options.picks
   if (options.profile !== undefined) context.profile = options.profile
+  if (options.before) (context as TurnContext<S>).before = options.before
   return context
-}
-
-/** The context the game's own hooks are handed, for this state: as a plugin's, with no state of its own. */
-export function rulesContext(state: GameState, game: Game): PluginContext<undefined> {
-  return pluginContext(rulesPlugin(game) ?? { id: GAME_ID, version: 1 }, state, game)
 }
 
 /**
@@ -506,18 +543,19 @@ const asPlugins = new WeakMap<GameRules, Plugin>()
 
 /**
  * The game's own code as a plugin with the id `game`, so content calls it as
- * it calls a plugin (`{ 'game/tired': true }`), and its hooks and providers run
- * where a plugin's do. Its turn hooks, stat hook and effects are run by the
- * engine itself; see `endTurn`, the `stat` effect and `customEffect`.
- * Undefined for a game with no rules.
+ * it calls a plugin (`{ 'game/tired': true }`), and every hook and provider of
+ * it runs where a plugin's does, first, with a plugin's context. Every member
+ * is a plugin's but `migrations`: the game's carry the whole save from one
+ * version of the game to the next, so `loadState` runs them after the plugins'
+ * own, and the plugin `game` has none. Undefined for a game with no rules.
  */
 export function rulesPlugin(game: Game | undefined): Plugin | undefined {
   const rules = game?.rules
   if (!rules) return undefined
   let plugin = asPlugins.get(rules)
   if (!plugin) {
-    const { onTurn: _onTurn, onTurnDone: _onTurnDone, onStat: _onStat, effects: _effects, migrations: _migrations, saveName: _saveName, ...members } = rules
-    plugin = { ...(members as Omit<Plugin, 'id' | 'version'>), id: GAME_ID, version: 1 }
+    const { migrations: _migrations, ...members } = rules
+    plugin = { ...members, id: GAME_ID, version: 1 }
     asPlugins.set(rules, plugin)
   }
   return plugin
@@ -526,7 +564,9 @@ export function rulesPlugin(game: Game | undefined): Plugin | undefined {
 /**
  * The game's rules, then its plugins, in the order their hooks and
  * providers run: the game's own code comes first, as if it were the first
- * plugin.
+ * plugin. Every hook and provider is run over this one list, by the
+ * functions below (`runTurnHooks`, `runStatHooks`, `pluginGuards` and the
+ * rest), and the plugins' states are started and carried over it too.
  */
 export function pluginsOf(game: Game | undefined): readonly Plugin[] {
   const rules = rulesPlugin(game)
@@ -561,7 +601,7 @@ export function pluginName(name: string): { plugin: string; name: string } | und
   return { plugin: name.slice(0, at), name: name.slice(at + 1) }
 }
 
-function member<K extends CallTable | 'values' | 'queries'>(
+function member<K extends CallTable | 'macros' | 'values' | 'queries'>(
   game: Game | undefined,
   full: string,
   which: K,
@@ -588,6 +628,13 @@ export function pluginEffect(game: Game | undefined, name: string, ending = fals
   return (state: GameState, args: PluginArgs) => found.fn(state, args, pluginContext(found.plugin, state, game, { ending }))
 }
 
+/** A macro by full name, the game's (`game/payRent`) or a plugin's, ready to work out the effects it stands for. */
+export function pluginMacro(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => EffectRef[]) | undefined {
+  const found = member(game, name, 'macros')
+  if (!found || !game) return undefined
+  return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
+}
+
 /** A plugin's command by full name: why not, and run. */
 export function pluginCommand(game: Game | undefined, name: string) {
   const found = member(game, name, 'commands')
@@ -609,34 +656,34 @@ export function pluginValue(game: Game | undefined, name: string) {
   return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
 }
 
-/** Every plugin's `onTurn` hook, in the order the game lists them, as a turn ends: an effect they apply can end no turn. */
-export function runTurnHooks(game: Game, state: GameState): GameState {
+/** Every `onTurn` hook, the game's then each plugin's, as a turn ends: `before` is the state the turn ended on, and an effect they apply can end no turn. */
+export function runTurnHooks(game: Game, state: GameState, before: GameState = state): GameState {
   let next = state
-  for (const plugin of game.plugins ?? []) {
-    if (plugin.onTurn) next = plugin.onTurn(next, pluginContext(plugin, next, game, { ending: true }))
+  for (const plugin of pluginsOf(game)) {
+    if (plugin.onTurn) next = plugin.onTurn(next, pluginContext(plugin, next, game, { ending: true, before }) as TurnContext)
   }
   return next
 }
 
-/** Every plugin's `onTurnDone` hook, in order, once the turn's `onTurn` hooks have all run. */
-export function runTurnDoneHooks(game: Game, state: GameState): GameState {
+/** Every `onTurnDone` hook, the game's then each plugin's, once the turn's `onTurn` hooks have all run. */
+export function runTurnDoneHooks(game: Game, state: GameState, before: GameState = state): GameState {
   let next = state
-  for (const plugin of game.plugins ?? []) {
-    if (plugin.onTurnDone) next = plugin.onTurnDone(next, pluginContext(plugin, next, game, { ending: true }))
+  for (const plugin of pluginsOf(game)) {
+    if (plugin.onTurnDone) next = plugin.onTurnDone(next, pluginContext(plugin, next, game, { ending: true, before }) as TurnContext)
   }
   return next
 }
 
-/** Every plugin's `onStat` hook, in order, on a stat the player just had changed: each gets what the one before returned. */
+/** Every `onStat` hook, the game's then each plugin's, on a stat the player just had changed: each gets what the one before returned. */
 export function runStatHooks(game: Game, before: GameState, after: GameState, stat: string, by: number): GameState {
   let next = after
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     if (plugin.onStat) next = plugin.onStat(before, next, stat, by, pluginContext(plugin, next, game))
   }
   return next
 }
 
-/** Every plugin's `onCommand` hook, in order. */
+/** Every `onCommand` hook, the game's then each plugin's. */
 export function runCommandHooks(game: Game, before: GameState, after: GameState): GameState {
   let next = after
   for (const plugin of pluginsOf(game)) {
@@ -673,6 +720,15 @@ export function pluginPrices(game: Game, state: GameState, effects: readonly Eff
 export function pluginLabel(game: Game, state: GameState): string | null {
   const parts = pluginsOf(game).flatMap((plugin) => plugin.label?.(state, pluginContext(plugin, state, game)) || [])
   return parts.length ? parts.join(' · ') : null
+}
+
+/** The name a save is listed under: the first that answers, the game's `saveName` then each plugin's, or null. */
+export function pluginSaveName(game: Game, state: GameState): string | null {
+  for (const plugin of pluginsOf(game)) {
+    const name = plugin.saveName?.(state, pluginContext(plugin, state, game))
+    if (name) return name
+  }
+  return null
 }
 
 /** The first plugin's room scene, with the id its blocks are drawn under, or undefined if none answers. */

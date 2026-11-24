@@ -34,21 +34,18 @@ export type TurnsShape = {
 }
 
 /**
- * The end of a turn: the counter moves on, `resets` are put back, then the
- * game's `rules.onTurn`, every plugin's `onTurn` hook, the game's
- * `rules.onTurnDone`, which sees what the plugins did (the calendar's new day,
- * say), and last every plugin's `onTurnDone`. `before` is the state the turn ended on, which both rules are handed
- * as `before`. What
+ * The end of a turn: the counter moves on, `resets` are put back, then every
+ * `onTurn` hook and then every `onTurnDone` hook, the game's first in each,
+ * so an `onTurnDone` sees what the `onTurn` hooks did (the calendar's new
+ * day, say). `before` is the state the turn ended on, which every one of
+ * them is handed as `context.before`. What
  * runs here runs with `ending` set, so a `turn` effect among it (applied by
  * the game's hook or a plugin's through its context) does nothing: a turn
  * ending inside a turn's end would end the turn again, and again.
  */
 export function endTurn(state: GameState, game: Game, cx: FeatureContext, before: GameState = state): GameState {
   const begun = { ...state, turn: state.turn + 1, kv: { ...state.kv, ...game.resets } }
-  const ruled = game.rules?.onTurn ? game.rules.onTurn(begun, cx.turnContext(begun, game, before)) : begun
-  const hooked = cx.turnHooks(ruled, game)
-  const done = game.rules?.onTurnDone ? game.rules.onTurnDone(hooked, cx.turnContext(hooked, game, before)) : hooked
-  return cx.turnDoneHooks(done, game)
+  return cx.turnDoneHooks(cx.turnHooks(begun, game, before), game, before)
 }
 
 export const turns = defineFeature<TurnsShape>({

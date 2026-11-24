@@ -306,6 +306,12 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   for (const plugin of pluginsOf(game)) checkPlugin(plugin)
 
   function checkPlugin(plugin: Plugin) {
+    // A call by name finds one function: an effect or a macro, never both.
+    for (const name of Object.keys(plugin.macros ?? {})) {
+      if (plugin.effects && Object.hasOwn(plugin.effects, name)) {
+        say(undefined, `plugin ${plugin.id}`, `"${plugin.id}/${name}" is both an effect and a macro; give one of them another name`)
+      }
+    }
     for (const entry of plugin.references?.content?.(game) ?? []) {
       check({ plugin: plugin.id, list: entry.list, id: entry.id }, `${entry.list} ${entry.id}`, entry.refs)
     }

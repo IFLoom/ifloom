@@ -345,7 +345,7 @@ A single action, the game's Count the till and end the week button, runs the wee
 
 It runs four steps, in order:
 
-1. **Takings and wages.** Two of the [game's own effects](/docs/reference/effects#computed-effects), in its `rules`, work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`statValue`](/docs/reference/stats#statvalue):
+1. **Takings and wages.** Two of the game's own [macros](/docs/reference/effects#computed-effects), in its `rules`, work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`statValue`](/docs/reference/stats#statvalue):
 
    ```ts
    function total(state: GameState, game: Game, kind: string, stat: string): number {

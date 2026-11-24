@@ -53,7 +53,7 @@ function game(): Game {
     },
   }
   // The game's own roll for how a post does; here, always the same.
-  const rules: GameRules = { effects: { roll: () => [feed.react('sunset', { likes: 12, from: 'Ava', text: 'Wow' })] } }
+  const rules: GameRules = { macros: { roll: () => [feed.react('sunset', { likes: 12, from: 'Ava', text: 'Wow' })] } }
   const loaded = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules })
   expect(loaded.problems).toEqual([])
   return loaded.game
@@ -143,7 +143,7 @@ describe('words in a post’s effect', () => {
     const key = fields[0].key
     const { game: translated, problems } = loadGame(
       [{ name: 'base', data: feeds }],
-      { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules: { effects: { roll: () => [] } } },
+      { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules: { macros: { roll: () => [] } } },
       { packs: [{ id: 'mod:fr', schema: SCHEMA, actions: game().actions, words: { [key]: 'Coucher de soleil.' } }] },
     )
     expect(problems).toEqual([])

@@ -147,7 +147,7 @@ const town: Content = {
 const rules: GameRules = {
   values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
   // How a post did: the game's own roll, here a fixed one.
-  effects: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, feed.react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'Love this' })] },
+  macros: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, feed.react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'Love this' })] },
 }
 
 function game(): Game {

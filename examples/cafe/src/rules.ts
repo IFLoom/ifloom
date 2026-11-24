@@ -19,7 +19,7 @@ function total(state: GameState, game: Game, kind: string, stat: string): number
 
 /** The week's sums: worked out from the state, so they are the game's own code. */
 export const rules: GameRules = {
-  effects: {
+  macros: {
     // Each dish sells by its price and quality, and the kitchen's skill decides how many go out.
     takings: (state, _args, { game }): EffectRef[] => {
       if (entitiesOf(state, game, 'staff').length === 0) return []

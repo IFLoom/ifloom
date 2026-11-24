@@ -9,8 +9,6 @@
 export type {
   Game,
   GameRules,
-  RulesCommand,
-  RulesContext,
   ActionDef,
   ButtonDef,
   Blocked,
@@ -26,7 +24,7 @@ export type {
 export { sceneOf } from './game.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, statOf, statLevel, statValue } from './stats.ts'
-export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, Query, ValueRef } from './custom.ts'
+export type { CommandRef, CustomContext, EffectRef, PluginCall, Query, ValueRef } from './custom.ts'
 // The registries a plugin (or the game) augments to type its calls by name, its queries and its view
 export type {
   CommandCall,
@@ -48,6 +46,7 @@ export type {
   CheckTools,
   ContentReferences,
   DefinedPlugin,
+  Macro,
   Plugin,
   PluginArgs,
   PluginCommand,
@@ -59,6 +58,7 @@ export type {
   Refusal,
   RoomScene,
   StatModifier,
+  TurnContext,
 } from './plugin.ts'
 export { definePlugin, pluginQuery } from './plugin.ts'
 export type { SpeakerView } from './speakers.ts'

@@ -36,7 +36,10 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     const { game } = withCafe()
     const named = {
       ...game,
-      rules: { ...game.rules, saveName: (state: { kv: Record<string, unknown> }) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null) },
+      rules: {
+        ...game.rules,
+        saveName: (state: { kv: Record<string, unknown> }) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
+      },
     }
     const state = { ...startingState(game), kv: { playerName: 'Robin' } }
     expect((await saves(named, driver()).write('1', state)).playerName).toBe('Robin')

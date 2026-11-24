@@ -163,7 +163,7 @@ feed.react('river', { from: 'ava', text: 'Lovely!' })   // a comment, in its wor
 feed.react('ava.cake', { likes: 1 })                        // the player likes Ava's post
 ```
 
-How a post does is usually rolled. Put the roll in one of the [game's own effects](/docs/reference/custom#effects), in its `rules`, that returns `feed.react(...)`. It runs in its turn, after the `feed/post` before it, and the plugin effects it returns run there and then. See [Effects run in order](/docs/reference/plugins#effects-run-in-order). The showcase's `postLatest` effect, in `examples/showcase/src/rules.ts`, does this.
+How a post does is usually rolled. Put the roll in one of the game's own [macros](/docs/reference/custom#macros), in its `rules`, that returns `feed.react(...)`. It runs in its turn, after the `feed/post` before it, and the plugin effects it returns run there and then. See [Effects run in order](/docs/reference/plugins#effects-run-in-order). The showcase's `postLatest` macro, in `examples/showcase/src/rules.ts`, does this.
 
 ## A worked example
 
@@ -231,7 +231,7 @@ const town: Content = {
 
 // The game's own code: how the photo did, 3 to 12 likes, and Ava always says something.
 const rules: GameRules = {
-  effects: {
+  macros: {
     howItDid: (_state, _args, { roll }) => [
       feed.react('river', { likes: 3 + roll(10, 'river.likes') }),
       feed.react('river', { from: 'ava', text: 'comment.nice' }),
@@ -316,7 +316,7 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 | `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `feed.post(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is its words, as written. An id already posted, or a feed the plugin wasn't given, does nothing. |
 | `{ 'feed/react': { post, likes?, from?, text? } }` | `feed.react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is the comment's words and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
-They work in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), a message reply's, a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), and what one of the game's own effects returns. Written out, a post is `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
+They work in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), a message reply's, a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), and what one of the game's own macros returns. Written out, a post is `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ## Commands
 

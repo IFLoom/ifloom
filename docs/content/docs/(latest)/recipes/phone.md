@@ -188,7 +188,7 @@ const camera: AppDef = {
             { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
             { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
           ],
-          // postLatest is the game's own effect, in its rules: it posts the newest photo to the feed and rolls its likes.
+          // postLatest is the game's own macro, in its rules: it posts the newest photo to the feed and rolls its likes.
           effects: [{ 'game/postLatest': true }, { kv: 'postedToday', to: true }],
         },
       ],

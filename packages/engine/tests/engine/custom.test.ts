@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
-import { buildEffects, previewEffects, type CustomEffect } from '../../src/custom.ts'
+import { buildEffects, previewEffects } from '../../src/custom.ts'
 import { apply, applyEffects } from '../../src/reduce.ts'
-import { definePlugin } from '../../src/plugin.ts'
+import { definePlugin, type Macro } from '../../src/plugin.ts'
 import { effectsOf, whyNot } from '../../src/availability.ts'
 import { renderAction } from '../../src/screen.ts'
 import { fillTokens } from '../../src/prose.ts'
@@ -25,7 +25,7 @@ describe('custom functions belong to their game', () => {
   it('runs a custom effect by name, and drops one the game does not have', () => {
     const game = {
       ...fixture(),
-      rules: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ stat: 'coins', by: Number(args.by) }] } },
+      rules: { macros: { tip: (_state: unknown, args: Record<string, unknown>) => [{ stat: 'coins', by: Number(args.by) }] } },
     }
     expect(buildEffects(game, [{ 'game/tip': { by: 2 } }])).toEqual([{ 'game/tip': { by: 2 } }])
     expect(buildEffects(game, [{ 'game/nothing': true }])).toEqual([])
@@ -36,8 +36,8 @@ describe('custom functions belong to their game', () => {
 
   it('runs a custom effect in its turn, on the state the effects before it left', () => {
     // Doubles the coins the player has when it runs.
-    const double: CustomEffect = (state) => [{ stat: 'coins', by: state.stats.coins }]
-    const game = { ...fixture(), rules: { effects: { double } } }
+    const double: Macro = (state) => [{ stat: 'coins', by: state.stats.coins }]
+    const game = { ...fixture(), rules: { macros: { double } } }
     const state = applyEffects(begin(game), game, buildEffects(game, [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]))
     // 3 + 4 = 7, doubled to 14, doubled to 28.
     expect(state.stats.coins).toBe(28)
@@ -57,7 +57,7 @@ describe('custom functions belong to their game', () => {
       plugins: [tides],
       rules: {
         conditions: { highTide: (_state, _args, { query }) => query<boolean>('tides/high') === true },
-        effects: {
+        macros: {
           wade: (_state, _args, { game, value, roll }) => {
             seen.push(game.id, roll(6, 'wade'), roll(6, 'wade'))
             return [{ stat: 'coins', by: Number(value('tides/height', { times: 2 })) }]

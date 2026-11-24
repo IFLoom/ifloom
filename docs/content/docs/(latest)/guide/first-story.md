@@ -235,7 +235,7 @@ export default defineGame({
       id: 'last-bus',
       title: 'The Last Bus',
       rules: {
-        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
       },
     }),
 })
@@ -395,7 +395,7 @@ export default defineGame({
       id: 'last-bus',
       title: 'The Last Bus',
       rules: {
-        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
       },
     }),
   /** Where `ifloom playtest` starts: a player who has already typed a name. */

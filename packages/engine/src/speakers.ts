@@ -10,6 +10,7 @@ import { entityImage, entityUi, protagonist, speakerRef, PLAYER, YOU, type Entit
 import type { EntityUi, Ui } from './features/ui.ts'
 import { entityName } from './prose.ts'
 import { artSrc, type SpeakerFinder } from './sceneBody.ts'
+import { pluginSaveName } from './plugin.ts'
 import { stringOf } from './strings.ts'
 
 /** Who is speaking, or who sent something, as the screen draws them. */
@@ -41,11 +42,11 @@ export function speakerOf(state: GameState, game: Game, id: string): SpeakerView
 
 /**
  * The name the player's own lines show: the name a save is listed under
- * (`rules.saveName`, such as the name the player typed), else the game's
+ * (the first `saveName` that answers, such as the name the player typed), else the game's
  * string `you` (`You` in English).
  */
 export function playerName(state: GameState, game: Game): string {
-  return game.rules?.saveName?.(state) ?? stringOf(game, 'you')
+  return pluginSaveName(game, state) ?? stringOf(game, 'you')
 }
 
 /**

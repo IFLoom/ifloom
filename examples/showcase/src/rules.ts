@@ -19,7 +19,7 @@ declare module '@ifloom/engine' {
 
 /**
  * How the town runs: energy back overnight, the cat's name, and one effect
- * worked out from the state. What's locked when, and what each day resets,
+ * worked out from the state, a macro. What's locked when, and what each day resets,
  * are content, in the story.
  */
 export const rules: GameRules = {
@@ -30,7 +30,8 @@ export const rules: GameRules = {
     catName: (state) => (typeof state.kv.catName === 'string' ? state.kv.catName : 'The cat'),
   },
   // Content calls these as `game/…`: `{{catName}}`, `{ 'game/postLatest': true }`.
-  effects: {
+  // A macro is an effect that stands for others: it returns plain effects, so a button's price sees them.
+  macros: {
     // Post the newest photo, and roll how it does. It returns plain effects, a plugin's
     // included, and draws its dice from the save's seed, so the same save gets the same likes.
     postLatest: (state, _args, { game, roll }) => {

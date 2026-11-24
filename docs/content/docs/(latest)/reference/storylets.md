@@ -99,7 +99,7 @@ const rules: GameRules = {
       return typeof last !== 'number' || state.turn - last >= Number(args.turns ?? 1)
     },
   },
-  effects: {
+  macros: {
     stamp: (state, args) => [{ kv: String(args.key), to: state.turn }],
   },
 }
@@ -117,13 +117,13 @@ Sam turns up at most once every three days. Stamp the key in every way out of th
 
 ### A chance that it happens at all
 
-A draw always opens something while any storylet is eligible. To make an event rare, put an ordinary storylet in the same set with a bigger weight, such as a `cafe.ordinary` visit where nothing happens. With the window seat at weight 1 and an ordinary visit at weight 3, the window seat comes up about one sit in four. For a chance worked out from the state, such as 20% plus 8% per rank, roll it in one of the game's own [effects](/docs/reference/custom#effects) with [`chance`](/docs/reference/random#chance) and return the draw only when it comes up:
+A draw always opens something while any storylet is eligible. To make an event rare, put an ordinary storylet in the same set with a bigger weight, such as a `cafe.ordinary` visit where nothing happens. With the window seat at weight 1 and an ordinary visit at weight 3, the window seat comes up about one sit in four. For a chance worked out from the state, such as 20% plus 8% per rank, roll it in one of the game's own [macros](/docs/reference/custom#macros) with [`chance`](/docs/reference/random#chance) and return the draw only when it comes up:
 
 ```ts
-import { chance, type CustomEffect } from '@ifloom/engine'
+import { chance, type Macro } from '@ifloom/engine'
 
-// in rules.effects, called as { 'game/maybeSomething': { rank: 2 } }
-const maybeSomething: CustomEffect = (state, args) =>
+// in rules.macros, called as { 'game/maybeSomething': { rank: 2 } }
+const maybeSomething: Macro = (state, args) =>
   chance(20 + 8 * Number(args.rank ?? 0), 100, state.seed, state.turn, 'cafe.event')
     ? [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }]
     : []

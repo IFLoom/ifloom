@@ -285,7 +285,7 @@ Notes and photos are [things the player holds](/docs/reference/entities#notes-ph
 
 `story/ava.ts` and `story/sam.ts`, `data.feed`, have Ava's and Sam's posts. They appear from days 1 and 2 (`when: calendar.day({ gte: 1 })`, with the calendar's day counting from 0).
 
-The player's own post is the camera's `post` action. Its `{ 'game/postLatest': true }` effect is one of the [game's own effects](/docs/reference/custom#effects), in `src/rules.ts`. It takes the newest photo, posts it with the feed plugin's `feed.post`, rolls the likes with its context's [`roll`](/docs/reference/custom#customcontext), drawn from the save's seed, and has Ava `react`. It returns plain effects, including plugin effects, so the same save always gets the same likes.
+The player's own post is the camera's `post` action. Its `{ 'game/postLatest': true }` effect is one of the game's own [macros](/docs/reference/custom#macros), in `src/rules.ts`. It takes the newest photo, posts it with the feed plugin's `feed.post`, rolls the likes with its context's [`roll`](/docs/reference/custom#customcontext), drawn from the save's seed, and has Ava `react`. It returns plain effects, including plugin effects, so the same save always gets the same likes.
 
 ### Resets each turn
 

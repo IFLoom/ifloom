@@ -447,17 +447,17 @@ The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't
 
 ## Computed effects
 
-Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next rung of this ladder", declare an effect in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front:
+Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next rung of this ladder", declare a [macro](/docs/reference/custom#macros) in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front. It returns the effects it stands for:
 
 ```ts
-type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => Effect[]
+type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
 ```
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
-  effects: {
+  macros: {
     bumpVisits: (state, args) => {
       const now = Number(state.storylines.ava?.kv.visits ?? 0)
       return [{ kv: 'visits', of: 'storyline:ava', to: now + Number(args.by ?? 1) }]
@@ -470,17 +470,17 @@ export const rules: GameRules = {
 effects: [{ 'game/bumpVisits': { by: 1 } }, { scene: null }]
 ```
 
-The game's effect runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own, which runs in its turn too. The arguments are passed as `args`, or `{}` for `true`. See [Calls by name](/docs/reference/custom) for conditions and values worked out the same way.
+The macro runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another macro, which runs in its turn too. An effect in the game's `rules.effects` returns the next state instead, as a plugin's does (see [Effects](/docs/reference/custom#effects)). The arguments are passed as `args`, or `{}` for `true`. See [Calls by name](/docs/reference/custom) for conditions and values worked out the same way.
 
 A [plugin](/docs/reference/plugins)'s effect is called the same way, with the plugin's id in front: `{ 'quests/start': { quest: 'letter' } }`. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
 - A button's price, a guard and a lock see a computed effect worked out against the state on screen, before anything applies. In play it's worked out again in its turn.
-- Effects that return calls to the game's effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
+- Macros that return calls to macros run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
 - A name that neither the game nor its plugins declare does nothing. The [content checker](/docs/reference/checks) reports it.
 
 ## See it in an example
 
-- The Corner Café: the `end-week` action in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts) runs two of the game's own effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ turn: true }`. The `hiring` scene's choices `create` new staff.
+- The Corner Café: the `end-week` action in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts) runs two of the game's own macros, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ turn: true }`. The `hiring` scene's choices `create` new staff.
 - The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ kv: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ turn: true }` and a `scene` effect.
 - Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` action draws a storylet with `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }`, the park's `arrows` action starts a minigame, its `skim` action rolls two dice against 8, and Ava's choices raise her friendship with `{ stat: 'friendship', by: 5, of: cast.character('ava') }`.

@@ -41,7 +41,7 @@ It never throws on bad content. It returns the problems in the order it found th
 `warnings` lists what may go wrong in play but isn't a mistake in the content, in the same shape as a problem. So far that's a token that may print nothing (see [Tokens](#tokens)). [`ifloom check`](/docs/cli#ifloom-check) prints each as `warning: …` and doesn't fail on them. [`loadGame`](/docs/reference/loader#loadgame) returns only problems, so call `checkGame(game)` for the warnings.
 
 **Gotchas:**
-- It doesn't run the game's own code. An [effect in `rules`](/docs/reference/custom#effects) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
+- It doesn't run the game's own code. A [macro in `rules`](/docs/reference/custom#macros) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
 - A key content or a pack can't hold, such as `rules`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `content has no "rules", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
 - It checks only some [tokens](/docs/reference/prose#tokens) in prose (see [Tokens](#tokens)). A plain `{{breadPrice}}` that names nothing is left on screen as written, so you can see it.
 

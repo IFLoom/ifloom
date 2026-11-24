@@ -16,7 +16,7 @@
  * plugin's context does. That keeps the registry free of import cycles. Core
  * features aren't plugins: see ADR 0007.
  */
-import type { EffectRef, TurnContext } from '../custom.ts'
+import type { EffectRef } from '../custom.ts'
 import type { ActionDef, CarryOver, Game, Scene, SceneView } from '../game.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
@@ -29,14 +29,12 @@ export type FeatureContext = {
   holds: (state: GameState, game: Game, condition: Condition | undefined) => boolean
   /** Apply effects; while `ending` is true, a `turn` effect does nothing. */
   runEffects: (state: GameState, game: Game, effects: readonly Effect[], ending: boolean) => GameState
-  /** Every plugin's `onTurn` hook, as a turn ends. */
-  turnHooks: (state: GameState, game: Game) => GameState
-  /** Every plugin's `onTurnDone` hook, as a turn ends, after the game's `rules.onTurnDone`. */
-  turnDoneHooks: (state: GameState, game: Game) => GameState
-  /** The game's `rules.onStat`, then every plugin's `onStat`, on a stat of the player's that just changed. */
+  /** Every `onTurn` hook, the game's then each plugin's, as a turn ends: `before` is the state the turn ended on. */
+  turnHooks: (state: GameState, game: Game, before: GameState) => GameState
+  /** Every `onTurnDone` hook, the game's then each plugin's, once the `onTurn` hooks have run. */
+  turnDoneHooks: (state: GameState, game: Game, before: GameState) => GameState
+  /** Every `onStat` hook, the game's then each plugin's, on a stat of the player's that just changed. */
   statHooks: (before: GameState, after: GameState, stat: string, by: number, game: Game) => GameState
-  /** What `rules.onTurn` is handed: `before` is the state as the turn ended, and its `apply` ends no turn. */
-  turnContext: (state: GameState, game: Game, before: GameState) => TurnContext
   /** What a command would apply, worked out before it runs, as `effectsOf` says. */
   effectsOf: (state: GameState, game: Game, command: Command) => Effect[]
   /** Effects as content writes them (custom calls among them) as the effects they stand for. */

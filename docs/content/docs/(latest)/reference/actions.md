@@ -52,7 +52,7 @@ type ActionDef = ButtonDef
 | `irreversible` | A warning that it can't be undone, which the UI shows on it. |
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, passed to the button as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. |
 
-This is the showcase's coffee, a room action of the café, with an effect of the game's own added to count the cups:
+This is the showcase's coffee, a room action of the café, with a [macro](/docs/reference/custom#macros) of the game's own added to count the cups:
 
 ```ts
 import type { ActionDef, GameRules } from '@ifloom/engine'
@@ -67,7 +67,7 @@ const coffee: ActionDef = {
 
 // The game's own code, in its rules.
 const rules: GameRules = {
-  effects: {
+  macros: {
     countCoffee: () => [{ kv: 'coffees', by: 1 }],
   },
 }
@@ -95,7 +95,7 @@ actions: [{ id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] }]
 The engine keeps no time of day. An action that takes time says so in its `effects`, with the [calendar plugin](/docs/plugins/calendar)'s [`pass`](/docs/plugins/calendar#effects), as in `effects: [calendar.pass(2), ...]`.
 
 **Gotchas.**
-- One of the game's own effects sees the state before the cost was paid.
+- One of the game's own macros sees the state before the cost was paid.
 - The [content checker](/docs/reference/checks) checks what an action names. It doesn't look inside the game's code, and an effect nobody declares does nothing.
 - An action's `command` can't be the action itself. The checker says so, and the engine leaves such a command out.
 

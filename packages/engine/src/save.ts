@@ -1,7 +1,7 @@
 import { stringOf } from './strings.ts'
 import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
-import { pluginOf, pluginLabel } from './plugin.ts'
+import { pluginOf, pluginLabel, pluginSaveName } from './plugin.ts'
 import type { GameState } from './types.ts'
 import { loadState } from './intake.ts'
 import { fail, ok, type Result } from './result.ts'
@@ -21,7 +21,7 @@ export type SaveMeta = {
   turn: number
   /** When and where the game was, in plugins' words ("Day 3 · Wednesday morning · The café"), or null if none says. */
   when: string | null
-  /** What `rules.saveName` gave for the state, such as the name the player typed, or null. */
+  /** What the first `saveName` that answers gave for the state (the game's `rules.saveName`, then each plugin's), such as the name the player typed, or null. */
   playerName: string | null
   /** The ids of the packs the game was loaded with; a missing mod is reported on load. */
   packs: string[]
@@ -120,7 +120,7 @@ export function saves(game: Game, driver: SaveDriver): Saves {
       played: extra.played ?? 0,
       turn: state.turn,
       when,
-      playerName: game.rules?.saveName?.(state) ?? null,
+      playerName: pluginSaveName(game, state),
       packs: game.packs ?? [],
       plugins: Object.fromEntries((game.plugins ?? []).map((plugin) => [plugin.id, plugin.version])),
       gameVersion: state.gameVersion ?? game.version ?? 1,

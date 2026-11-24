@@ -349,7 +349,7 @@ A data scene reads:
 - **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame)), with tokens filled in for the save
 - **variants** drawn as described below
 - **`once`** from the choice's record in [`chosen`](/docs/reference/state#chosen): with `per: 'turn'`, spent while it was last picked this turn, and with `per: 'game'`, once it has been picked
-- **conditions and the game's own effects** from the game
+- **conditions and the game's own macros and effects** from the game
 
 ### How variants are drawn
 

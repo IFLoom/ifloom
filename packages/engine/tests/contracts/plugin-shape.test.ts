@@ -38,11 +38,11 @@ const MEMBERS = {
   // How content and command logs written for an older version are carried forward.
   upgrades: ['contentVersion', 'contentMigrations', 'commandVersion', 'commandMigrations'],
   // Tables of named functions content and code call, and its words.
-  tables: ['conditions', 'effects', 'commands', 'queries', 'values', 'strings'],
+  tables: ['conditions', 'effects', 'macros', 'commands', 'queries', 'values', 'strings'],
   // Hooks: at an event, the next state.
   hooks: ['onTurn', 'onTurnDone', 'onStat', 'onCommand'],
   // Providers: answers, never a change to the state.
-  providers: ['guard', 'price', 'label', 'scene', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
+  providers: ['guard', 'price', 'label', 'saveName', 'scene', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; the content it brings, under the game's;
   // and which fields of its content are words a translation can replace.
   declares: ['traits', 'content', 'words', 'callWords'],
@@ -146,6 +146,7 @@ describe('the plugin shape (ADR 0009)', () => {
       onCommand: 'hook',
       conditions: 'table',
       effects: 'table',
+      macros: 'table',
       values: 'table',
       queries: 'table',
       commands: 'table',
@@ -161,8 +162,8 @@ describe('the plugin shape (ADR 0009)', () => {
       profile: 'provider',
     }
     expect(Object.entries(rules).filter(([name, role]) => (role === 'hook') !== /^on[A-Z]/.test(name))).toEqual([])
-    // The game's rules declare what a plugin can, by the same names, besides the name a save is listed under.
-    expect(Object.keys(rules).filter((name) => !allowed.has(name))).toEqual(['saveName'])
+    // The game's rules declare what a plugin can, by the same names, and nothing else.
+    expect(Object.keys(rules).filter((name) => !allowed.has(name))).toEqual([])
   })
 
   it('keeps content out of options: each option is a setting, and none is a list of entries', () => {

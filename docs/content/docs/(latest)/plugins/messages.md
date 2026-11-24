@@ -148,7 +148,7 @@ type ReplyDef = {
 | `id` | Unique within the message. |
 | `label` | Its words, as written, with tokens filled in, as a [data scene choice](/docs/reference/scenes#choice)'s are. Its id if left out. A translation gives it other words under `messages/messages.<message>.replies.<reply>.label`. |
 | `when` | The reply is only on offer while this holds. |
-| `effects` | What sending it does, in order. These can be plain effects, one of the [game's own](/docs/reference/custom#effects) or a plugin's. |
+| `effects` | What sending it does, in order. These can be plain effects, one of the game's own [macros](/docs/reference/custom#macros) or a plugin's. |
 
 This is the showcase's text from Ava. It arrives once a day has passed since the player first talked to her:
 

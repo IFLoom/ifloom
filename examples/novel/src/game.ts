@@ -37,7 +37,7 @@ export function theLetter(): Loaded {
           return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
         },
       },
-      saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+      saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
     },
   })
 }

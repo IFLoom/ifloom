@@ -13,7 +13,7 @@
  */
 import { stringOf } from './strings.ts'
 import { holds } from './condition.ts'
-import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
+import { buildEffects, customCall, customCondition, customValue } from './custom.ts'
 import { bakedScene } from './game.ts'
 import { actionOf } from './action.ts'
 import { sceneContext } from './context.ts'
@@ -24,8 +24,8 @@ import {
   pluginAudio,
   pluginCommand,
   pluginEffect,
+  pluginMacro,
   pluginStatModifiers,
-  rulesContext,
   runStatHooks,
   runTurnDoneHooks,
   runTurnHooks,
@@ -46,17 +46,9 @@ export function featureContext(): FeatureContext {
   return (context ??= {
     holds,
     runEffects,
-    turnHooks: (state, game) => runTurnHooks(game, state),
-    turnDoneHooks: (state, game) => runTurnDoneHooks(game, state),
-    statHooks: (before, after, stat, by, game) => {
-      const ruled = game.rules?.onStat ? game.rules.onStat(before, after, stat, by, rulesContext(after, game)) : after
-      return runStatHooks(game, before, ruled, stat, by)
-    },
-    turnContext: (state, game, before) => ({
-      ...customContext(state, game),
-      before,
-      apply: (effects, on = state) => runEffects(on, game, buildEffects(game, effects), true),
-    }),
+    turnHooks: (state, game, before) => runTurnHooks(game, state, before),
+    turnDoneHooks: (state, game, before) => runTurnDoneHooks(game, state, before),
+    statHooks: (before, after, stat, by, game) => runStatHooks(game, before, after, stat, by),
     buildEffects: (game, refs) => buildEffects(game, refs),
     effectsOf: (state, game, command) => effectsOf(state, game, command),
     weighted,
@@ -138,7 +130,7 @@ const callCondition: ConditionEntry<Condition> = {
   },
 }
 
-/** How deep the game's own effects are running inside each other: ten deep is a loop, not a design. */
+/** How deep macros are running inside each other: ten deep is a loop, not a design. */
 let customDepth = 0
 
 /** The core's effects: none. A call by name is `callEffect`. */
@@ -156,7 +148,7 @@ const callEffect: EffectEntry<Effect> = {
     const fromPlugin = pluginEffect(game, call.custom, cx.ending)
     if (fromPlugin) return fromPlugin(state, call.with ?? {})
     // A plugin the game no longer has does nothing, as an unknown effect of the game's does.
-    const fn = customEffect(game, call.custom)
+    const fn = pluginMacro(game, call.custom)
     if (!fn || customDepth >= 10) return state
     customDepth += 1
     try {

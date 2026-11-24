@@ -2,7 +2,7 @@
 title: "Randomness"
 description: "Seeded randomness: the save's seed, and draw, drawOne, chance and weighted for draws that replay the same."
 ---
-To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. In the game's own code, the context's `roll(max, name)` does this for you (see [`CustomContext`](/docs/reference/custom#customcontext)). The functions here are for code that names its own parts, such as a plugin's. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
+To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. In the game's own code, the context's `roll(max, name)` does this for you (see [`CustomContext`](/docs/reference/custom#customcontext), part of every plugin's and the game's context). The functions here are for code that names its own parts, such as a plugin's. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
 
 ```ts
 import { hash, draw, drawOne, chance, weighted } from '@ifloom/engine'

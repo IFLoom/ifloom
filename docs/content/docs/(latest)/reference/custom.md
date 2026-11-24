@@ -1,6 +1,6 @@
 ---
 title: "Calls by name"
-description: "Conditions, effects and values worked out in code, the game's own in rules or a plugin's, that content calls by name, and what they're given."
+description: "Conditions, effects, macros and values worked out in code, the game's own in rules or a plugin's, that content calls by name, and what they're given."
 ---
 Most content is data, such as conditions, effects and prose, which a tool can read, a mod can ship and the [content checker](/docs/reference/checks) can check. When something has to be worked out in code, such as whether it's market day or what a loaf costs today, you declare a function in the game's [`rules`](/docs/reference/rules) and content calls it by name, with `game/` in front.
 
@@ -9,7 +9,7 @@ import type { GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
   conditions: { marketDay: (state) => state.turn % 7 === 5 },
-  effects: { tip: (state, args) => [{ stat: 'coins', by: -Number(args.by ?? 1) }] },
+  macros: { tip: (state, args) => [{ stat: 'coins', by: -Number(args.by ?? 1) }] },
   values: { breadPrice: (state) => (state.kv.marketDay ? 4 : 5) },
 }
 ```
@@ -17,22 +17,23 @@ export const rules: GameRules = {
 | In `rules` | Content writes | Where |
 |---|---|---|
 | `conditions` | `{ 'game/marketDay': true }` | Any [condition](/docs/reference/conditions#calls) |
-| `effects` | `{ 'game/tip': { by: 2 } }` | Any list of [effects](/docs/reference/effects#computed-effects): a choice's, an [action](/docs/reference/actions#actiondef)'s, a [trigger](/docs/reference/triggers)'s, an [`each`](/docs/reference/effects#each)'s, a thing's use in the [inventory](/docs/plugins/inventory), what another of the game's effects returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
+| `macros` | `{ 'game/tip': { by: 2 } }` | Any list of [effects](/docs/reference/effects#computed-effects): a choice's, an [action](/docs/reference/actions#actiondef)'s, a [trigger](/docs/reference/triggers)'s, an [`each`](/docs/reference/effects#each)'s, a thing's use in the [inventory](/docs/plugins/inventory), what another macro returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
+| `effects` | `{ 'game/keepDiary': {} }` | The same places as a macro |
 | `values` | `{{breadPrice}}`, or `{ value: 'game/breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
 
-A [plugin](/docs/reference/plugins)'s conditions, effects and values are called the same way, with the plugin's id and a `/` in front, as in `{ 'quests/done': { quest: 'bread' } }` or `{{quests/updates}}`. The game's own code is called as if it were a plugin whose id is `game`, which is why no plugin can have that id.
+A [plugin](/docs/reference/plugins)'s conditions, effects, macros and values are called the same way, with the plugin's id and a `/` in front, as in `{ 'quests/done': { quest: 'bread' } }` or `{{quests/updates}}`. The game's own code is called as if it were a plugin whose id is `game`, which is why no plugin can have that id.
 
 There's no global registry. Each game owns its own functions, so two games on one page, or a test next to a game, never see each other's. Everything that reads one takes the game, and finds nothing without it.
 
 ## What a function is given
 
-Every one of the game's functions gets the state and a [`CustomContext`](#customcontext). A condition, an effect and a value also get their arguments as `args`, or `{}` for `true`. A plugin's functions get the same context and more, so the game's own can do what a plugin's condition can: ask a plugin's [query](/docs/reference/plugins#queries), read a plugin's value, and draw a seeded number.
+Every one of the game's functions gets the state and the same context a plugin's function gets, a [`PluginContext`](/docs/reference/plugins#plugincontext). A condition, an effect, a macro and a value also get their arguments as `args`, or `{}` for `true`. So the game's own code can ask a plugin's [query](/docs/reference/plugins#queries), read a plugin's value, draw a seeded number, apply effects, and read and write the game's [own state](/docs/reference/rules#the-games-own-state) as `slice`, `get` and `set`.
 
 ```ts
-import type { CustomEffect } from '@ifloom/engine'
+import type { Macro } from '@ifloom/engine'
 
 // Tips are better in the evening, by the calendar plugin's clock.
-const tips: CustomEffect = (state, args, { query }) => {
+const tips: Macro = (state, args, { query }) => {
   const evening = query('calendar/now')?.period === 'evening'
   return [{ stat: 'coins', by: evening ? 4 : 2 }]
 }
@@ -54,12 +55,12 @@ type CustomContext = {
 - `value` reads a [value](#values) by its full name, a plugin's (`messages/unread`) or the game's own (`game/breadPrice`), asked with `args`. It's `undefined` when nobody has one by that name.
 - `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`. The same save on the same turn always draws the same number, so a replay plays the same. Use a different `name` for each draw.
 
-A [plugin's context](/docs/reference/plugins#plugincontext) has all of these too, and the game's hooks get a [`RulesContext`](/docs/reference/rules#rulescontext), which adds `apply`.
+This is the part of every context that needs no plugin. A [`PluginContext`](/docs/reference/plugins#plugincontext) has all of it, and adds `slice`, `get`, `set`, `apply` and `beats`.
 
 ## Conditions
 
 ```ts
-type CustomCondition = (state: GameState, args: PluginArgs, context: CustomContext) => boolean
+conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
 ```
 
 A test worked out from several values rather than read from one. Content calls it as `{ 'game/name': true }` anywhere a [`Condition`](/docs/reference/conditions) goes, such as a block's `when`, a lock or a schedule entry. Its arguments arrive as `args`, so one function can serve several tests.
@@ -79,18 +80,22 @@ export const rules: GameRules = {
 
 **Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it.
 
-## Effects
+## Macros
 
 ```ts
-type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
+macros?: Record<string, Macro<S>>
+
+type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
 type EffectRef = Effect
 ```
 
-Effects worked out from the state. One runs in its turn: when the effects before it in the list have applied, its function is called with the state they left, and the effects it returns apply there and then. The list it returns can hold anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own. `EffectRef` is another name for [`Effect`](/docs/reference/effects#effect), kept for code written when the two differed.
+A macro is an effect that stands for other effects. Its function works out from the state which effects to apply and returns them. Content calls it as any effect, `{ 'game/tip': { by: 2 } }`. Most of the game's own effects are macros, because what they return can be seen before they run.
+
+One runs in its turn: when the effects before it in the list have applied, its function is called with the state they left, and the effects it returns apply there and then. The list it returns can hold anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another macro. `EffectRef` is another name for [`Effect`](/docs/reference/effects#effect), kept for code written when the two differed.
 
 ```ts
 export const rules: GameRules = {
-  effects: {
+  macros: {
     bumpVisits: (state, args) => {
       const now = Number(state.storylines.ava?.kv.visits ?? 0)
       return [{ kv: 'visits', of: 'storyline:ava', to: now + Number(args.by ?? 1) }]
@@ -106,18 +111,47 @@ Because each one sees the effects before it, two in a row compose. Here the seco
 
 ```ts
 export const rules: GameRules = {
-  effects: { double: (state) => [{ stat: 'coins', by: state.stats.coins }] },
+  macros: { double: (state) => [{ stat: 'coins', by: state.stats.coins }] },
 }
 
 effects: [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]
 ```
 
 **Gotchas.**
-- A button's price, and what a plugin's [guard](/docs/reference/plugins#guards-prices-and-labels) or a [lock](/docs/reference/locks) sees, is worked out before the button is pressed. For those, the game's effect is called with the state on screen. When the effects run, it's called again in its turn, so it can return something different if the effects before it changed what it reads.
+- A button's price, and what a [guard](/docs/reference/plugins#guards-prices-and-labels) or a [lock](/docs/reference/locks) sees, is worked out before the button is pressed. For those, the macro is called with the state on screen and they see the effects it returns, so a macro that ends a turn is priced as one. When the effects run, it's called again in its turn, so it can return something different if the effects before it changed what it reads.
 - Inside an [`each`](/docs/reference/effects#each), the function runs once per entity, on the state the entities before it left.
-- One of the game's effects that returns another runs that one in its turn too. This stops at 10 deep, so an effect that names itself does nothing past that rather than hanging.
+- A macro that returns another runs that one in its turn too. This stops at 10 deep, so a macro that names itself does nothing past that rather than hanging.
 
 The showcase has one: [`postLatest`](/docs/guide/showcase#feeds-and-an-effect-worked-out-in-code) posts the newest photo and rolls its likes.
+
+## Effects
+
+```ts
+effects?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState>
+```
+
+An effect that changes the state itself and returns the next one, as a plugin's [effect](/docs/reference/plugins#effects-run-in-order) does. Use one when what it does isn't a list of effects, such as writing the game's [own state](/docs/reference/rules#the-games-own-state) with `context.set`. It can still apply effects with `context.apply`.
+
+```ts
+import type { GameRules } from '@ifloom/engine'
+
+type Diary = { entries: string[] }
+
+export const rules: GameRules<Diary> = {
+  start: () => ({ entries: [] }),
+  effects: {
+    // Write a line in the diary, and the evening's quiet does you good.
+    keepDiary: (state, args, { slice, set, apply }) => apply([{ stat: 'energy', by: 5 }], set({ entries: [...slice.entries, String(args.text ?? '')] })),
+  },
+}
+
+// a choice
+effects: [{ 'game/keepDiary': { text: 'Met Ava at the café.' } }]
+```
+
+**Gotchas.**
+- Prices, guards and locks can't see inside it, because it returns a state, not effects. Here a guard sees `{ 'game/keepDiary': … }` and not the energy it adds. Write it as a [macro](#macros) if it only stands for other effects.
+- A name is an effect's or a macro's, never both. The [content checker](/docs/reference/checks) reports `"game/tip" is both an effect and a macro`.
 
 ## PluginCall
 
@@ -185,7 +219,7 @@ commandOf({ 'places/go': { id: 'cafe' } })
 ## Values
 
 ```ts
-type CustomValue = (state: GameState, args: PluginArgs, context: CustomContext) => string | number
+values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
 type ValueRef = { value: string; with?: PluginArgs }
 ```
 
@@ -222,7 +256,7 @@ amountOf(state, town, { value: 'messages/unread', with: { channel: 'texts' } }) 
 function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[]
 ```
 
-The effects the reducer would run: a call to an effect that neither the game nor its plugins declare is left out, since it would do nothing, and everything else is kept as written. Nothing is worked out yet, so it needs no state.
+The effects the reducer would run: a call to an effect or a macro that neither the game nor its plugins declare is left out, since it would do nothing, and everything else is kept as written. Nothing is worked out yet, so it needs no state.
 
 ```ts
 import { buildEffects } from '@ifloom/engine'
@@ -233,5 +267,5 @@ buildEffects(town, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has a value, `catName`, that the flat's prose prints as `{{catName}}`, and an effect, `postLatest`, which the phone's camera app in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts) runs as `{ 'game/postLatest': true }`.
-- The Corner Café: [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) works out the week's `takings` and `wages` as effects, and `payroll` as a value the hiring scene prints.
+- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has a value, `catName`, that the flat's prose prints as `{{catName}}`, and a macro, `postLatest`, which the phone's camera app in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts) runs as `{ 'game/postLatest': true }`.
+- The Corner Café: [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) works out the week's `takings` and `wages` as macros, and `payroll` as a value the hiring scene prints.

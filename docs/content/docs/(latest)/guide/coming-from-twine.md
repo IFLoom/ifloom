@@ -272,12 +272,12 @@ That covers shared words. A scene can't include another scene's choices, so a sh
 <<pay 4>>
 ```
 
-A widget that changes the state is one of the [game's own effects](/docs/reference/custom#effects): a function in the game's `rules` that returns effects, called by name from content with `game/` in front. A widget that answers a question is one of its conditions:
+A widget that changes the state is one of the game's own [macros](/docs/reference/custom#macros): a function in the game's `rules` that returns effects, called by name from content with `game/` in front. A widget that answers a question is one of its conditions:
 
 ```ts
 // src/rules.ts
 export const rules: GameRules = {
-  effects: {
+  macros: {
     payFor: (_state, args) => {
       const price = Number(args.price ?? 0)
       return [

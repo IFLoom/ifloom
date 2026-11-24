@@ -535,7 +535,7 @@ function total(state: GameState, game: Game, kind: string, stat: string): number
   return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
 }
 
-// in the café's rules.effects, called as { 'game/wages': true }
+// in the café's rules.macros, called as { 'game/wages': true }
 wages: (state, _args, { game }) => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
 ```
 

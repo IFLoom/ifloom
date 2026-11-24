@@ -8,7 +8,7 @@
 import { fail, ok, type Result } from './result.ts'
 import { stringOf } from './strings.ts'
 import type { Game } from './game.ts'
-import { rulesPlugin, type Plugin, type PluginSlice } from './plugin.ts'
+import { pluginsOf, type PluginSlice } from './plugin.ts'
 import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
 import { choiceKey, collectionKind } from './upgrade.ts'
 import { hash } from './random.ts'
@@ -40,15 +40,9 @@ export const FIELDS: { [K in keyof GameState]-?: Field<K> } = {
   gameVersion: { start: (game) => game.version },
 }
 
-/** The game's plugins, after the game's own rules as the plugin `game` when they keep a state (`rules.start`). */
-function withRules(game: Game): readonly Plugin[] {
-  const rules = game.rules?.start ? rulesPlugin(game) : undefined
-  return rules ? [rules, ...(game.plugins ?? [])] : (game.plugins ?? [])
-}
-
 function startingPlugins(game: Game): Record<string, PluginSlice> {
   const out: Record<string, PluginSlice> = {}
-  for (const plugin of withRules(game)) {
+  for (const plugin of pluginsOf(game)) {
     if (plugin.start) out[plugin.id] = { version: plugin.version, state: plugin.start(game) }
   }
   return out
@@ -371,7 +365,7 @@ function carryEngine(data: Saved, game: Game): GameState | null {
 function carryPlugins(state: GameState, game: Game): GameState | string {
   let plugins = state.plugins ?? {}
   let changed = !state.plugins
-  for (const plugin of withRules(game)) {
+  for (const plugin of pluginsOf(game)) {
     const slice = plugins[plugin.id]
     if (!slice) {
       if (!plugin.start) continue

@@ -33,7 +33,7 @@ jobs:
       # Every package's dist/, as a game installed from npm gets it.
       - run: npm run build
       # Tests, the format, lint and typecheck (vp check, tsc), the docs' links and build, and the examples, all from src/.
-      - run: bash scripts/verify.sh
+      - run: bash scripts/verify.sh --full
         env:
           IFLOOM_SITE: ifloom-site
       # The built packages, used as their users will: plain Node, and a type-check against the .d.ts files.

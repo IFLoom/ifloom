@@ -5,7 +5,7 @@
  * composes it.
  */
 import type { Game } from '../game.ts'
-import { fail, ok, type Result } from '../result.ts'
+import { fail, type Result } from '../result.ts'
 import type { LoadedSave, SaveListing, SaveMeta, Saves } from '../save.ts'
 import { stringOf } from '../strings.ts'
 import type { GameState } from '../types.ts'
@@ -27,7 +27,7 @@ export type SaveKeeper = {
   changed(before: GameState, after: GameState, ticking: boolean, played: () => number): void
   /** Save `state` to a slot now, or why not. */
   save(slot: string, state: GameState, name: string | undefined, played: number): Promise<Result<SaveMeta>>
-  /** Read a slot: the save, null when it's empty, or why it can't be read (the driver's failure reported, as a write's is). */
+  /** Read a slot: the save, null when it's empty, or why it can't be read. */
   load(slot: string): Promise<Result<LoadedSave | null>>
   /** Settles when every write queued so far, and the first listing, are done. */
   settled(): Promise<void>
@@ -36,7 +36,7 @@ export type SaveKeeper = {
 export type SaveOptions = {
   saves?: Saves
   autosave?: AutosaveOptions
-  /** Told when a write fails. */
+  /** Told the driver's error whenever the store answers a failure it caused. */
   onError?: (error: unknown) => void
   /** Why the game refuses saving in this state, or undefined when it allows it. */
   refuses: (state: GameState) => string | undefined
@@ -46,67 +46,45 @@ export type SaveOptions = {
 
 export function saveKeeper(game: Game, options: SaveOptions): SaveKeeper {
   const { saves: given, autosave, onError, refuses, changedList } = options
-  let queue: Promise<SaveMeta | null> = Promise.resolve(null)
+  let queue: Promise<unknown> = Promise.resolve()
   let listed: readonly SaveListing[] = []
 
-  /** Queue a write. A failure is reported and does not stop the ones after it. */
-  function queueWrite(write: () => Promise<SaveMeta>): Promise<SaveMeta | null> {
-    const next = queue.then(write).catch((error: unknown) => {
-      onError?.(error)
-      return null
-    })
-    queue = next
-    return next
+  /** Tell `onError` about a failure the driver caused, and pass the answer on. */
+  function reported<T>(result: Result<T>): Result<T> {
+    if (!result.ok && result.cause !== undefined) onError?.(result.cause)
+    return result
+  }
+
+  /** Change the listing, and say so. */
+  function relist(entries: readonly SaveListing[]): void {
+    listed = sortedSaves(entries)
+    changedList()
   }
 
   const store: Saves | undefined = given && {
     driver: given.driver,
     async write(slot, toSave, extra) {
-      const meta = await given.write(slot, toSave, extra)
-      listed = sortedSaves([meta, ...listed.filter((entry) => entry.slot !== meta.slot)])
-      changedList()
-      return meta
+      const written = reported(await given.write(slot, toSave, extra))
+      if (written.ok) relist([written.value, ...listed.filter((entry) => entry.slot !== slot)])
+      return written
     },
-    read: (slot) => load(slot),
-    list: () => given.list(),
+    read: async (slot) => reported(await given.read(slot)),
+    list: async () => reported(await given.list()),
     async remove(slot) {
-      try {
-        await given.remove(slot)
-      } catch (error) {
-        onError?.(error)
-        return
-      }
-      if (!listed.some((entry) => entry.slot === slot)) return
-      listed = listed.filter((entry) => entry.slot !== slot)
-      changedList()
+      const removed = reported(await given.remove(slot))
+      if (removed.ok && listed.some((entry) => entry.slot === slot)) relist(listed.filter((entry) => entry.slot !== slot))
+      return removed
     },
-    exportSlot: (slot) => given.exportSlot(slot),
+    exportSlot: async (slot) => reported(await given.exportSlot(slot)),
     importText: (text) => given.importText(text),
-  }
-
-  /** A slot read back. A driver that fails is reported, and answered with a reason the player can read. */
-  async function load(slot: string): Promise<Result<LoadedSave | null>> {
-    if (!given) return fail(stringOf(game, 'noSaves'))
-    try {
-      return await given.read(slot)
-    } catch (error) {
-      onError?.(error)
-      return fail(stringOf(game, 'notLoaded'))
-    }
   }
 
   // The saves as they are when the runner starts, before any write it queues; `settled` waits for them.
   if (store) {
-    queue = queue
-      .then(async () => {
-        listed = await store.list()
-        changedList()
-        return null
-      })
-      .catch((error: unknown) => {
-        onError?.(error)
-        return null
-      })
+    queue = queue.then(async () => {
+      const first = await store.list()
+      if (first.ok) relist(first.value)
+    })
   }
 
   /** Whether the autosave policy wants a save now. */
@@ -125,21 +103,20 @@ export function saveKeeper(game: Game, options: SaveOptions): SaveKeeper {
       // While the game's `saveable` refuses, autosave waits for the next change that's due.
       if (!store || !due(before, after, ticking) || refuses(after) !== undefined) return
       const slot = autosave?.slot ?? 'auto'
-      void queueWrite(() => store.write(slot, after, { played: played() }))
+      // A write that fails is reported, and the ones after it still run.
+      queue = queue.then(() => store.write(slot, after, { played: played() }))
     },
     async save(slot, state, name, played) {
       if (!store) return fail(stringOf(game, 'noSaves'))
       const refused = refuses(state)
       if (refused !== undefined) return fail(refused)
       await queue
-      try {
-        return ok(await store.write(slot, state, { name, played }))
-      } catch (error) {
-        onError?.(error)
-        return fail(stringOf(game, 'notSaved'))
-      }
+      return store.write(slot, state, { name, played })
     },
-    load,
+    async load(slot) {
+      if (!store) return fail(stringOf(game, 'noSaves'))
+      return store.read(slot)
+    },
     async settled() {
       await queue
     },

@@ -135,8 +135,11 @@ See [saves](/docs/reference/saves).
 | `pluginUnreadable` | `That save's {plugin} is from a version this game cannot read.` | `{plugin}` |
 | `noSaves` | `This game keeps no saves.` | The runner's `save` or `load`, in a runner with no `saves` |
 | `emptySlot` | `Nothing is saved there.` | The runner's `load`, on an empty slot |
-| `notSaved` | `The game could not be saved.` | The runner's `save`, when the driver fails |
-| `notLoaded` | `The game could not be loaded.` | The runner's `load` (and `runner.saves.read`), when the driver fails |
+| `notSaved` | `The game could not be saved.` | The save store's `write` and the runner's `save`, when the driver fails |
+| `notLoaded` | `The game could not be loaded.` | The save store's `read` and the runner's `load`, when the driver fails |
+| `notListed` | `The saves could not be read.` | The save store's `list`, when the driver fails |
+| `notRemoved` | `The save could not be deleted.` | The save store's `remove`, when the driver fails |
+| `notExported` | `The save could not be exported.` | The save store's `exportSlot`, when the driver fails |
 | `turnLabel` | `Turn {turn}` | `{turn}` is the [turn](/docs/reference/state#turn), counted from 1. It's a save's [default name](/docs/reference/saves#savemeta) when no plugin says when or where the save is. |
 
 The engine keeps no time of day, places or people, so it has no words for them. The plugins that keep them have their own strings:

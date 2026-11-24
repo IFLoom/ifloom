@@ -1,4 +1,4 @@
-import { stringOf } from './strings.ts'
+import { stringOf, type StringKey } from './strings.ts'
 import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
 import { pluginOf, pluginLabel, pluginSaveName } from './plugin.ts'
@@ -70,28 +70,32 @@ export type SaveExtra = {
   savedAt?: number
 }
 
-/** One game's saves, as `saves` gives them. */
+/**
+ * One game's saves, as `saves` gives them. Nothing here rejects: when the
+ * driver fails, each answers a failure in words a player can read, with the
+ * driver's error as its `cause`.
+ */
 export interface Saves {
   /** Where the saves are kept. */
   readonly driver: SaveDriver
-  /** Write a state to a slot, and return what the save says about itself. Rejects only if the driver fails. */
-  write(slot: string, state: GameState, extra?: SaveExtra): Promise<SaveMeta>
+  /** Write a state to a slot: what the save says about itself, or `notSaved` if the driver fails. */
+  write(slot: string, state: GameState, extra?: SaveExtra): Promise<Result<SaveMeta>>
   /**
    * A slot read back, carried forward and checked against this game. The
-   * value is null when the slot is empty; a failure says why the save can't be read.
-   * Rejects only if the driver fails.
+   * value is null when the slot is empty; a failure says why the save can't
+   * be read, or is `notLoaded` if the driver fails.
    */
   read(slot: string): Promise<Result<LoadedSave | null>>
   /**
    * Every save this game has, newest first, then any that can't be read, as
    * `{ slot, broken }` with the reason, by slot. Tell them apart with
-   * `'broken' in entry`; a broken one can still be removed. Rejects if the driver fails.
+   * `'broken' in entry`; a broken one can still be removed. `notListed` if the driver fails.
    */
-  list(): Promise<SaveListing[]>
-  /** Delete a slot. Nothing happens if it is empty. Rejects if the driver fails. */
-  remove(slot: string): Promise<void>
-  /** A save as text a player can keep as a file, or null if the slot is empty. Rejects if the driver fails. */
-  exportSlot(slot: string): Promise<string | null>
+  list(): Promise<Result<SaveListing[]>>
+  /** Delete a slot. Nothing happens if it is empty. `notRemoved` if the driver fails. */
+  remove(slot: string): Promise<Result<void>>
+  /** A save as text a player can keep as a file, or null if the slot is empty. `notExported` if the driver fails. */
+  exportSlot(slot: string): Promise<Result<string | null>>
   /** Text from a file a player picked, checked against this game: the save, or why it was refused. */
   importText(text: string): Result<LoadedSave>
 }
@@ -157,35 +161,47 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     return ok({ meta, state, missingPacks, missingPlugins })
   }
 
+  /** Run a step on the driver: its answer, or a failure in the game's words with the driver's error as its cause. */
+  async function attempt<T>(reason: StringKey, step: () => Promise<Result<T>>): Promise<Result<T>> {
+    try {
+      return await step()
+    } catch (error) {
+      return fail(stringOf(game, reason), error)
+    }
+  }
+
   return {
     driver,
-    async write(slot, state, extra = {}) {
-      const file: SaveFile = { ifloom: 1, meta: meta(slot, state, extra), state }
-      await driver.set(key(slot), JSON.stringify(file))
-      return file.meta
-    },
-    async read(slot) {
-      const text = await driver.get(key(slot))
-      return text === null ? ok(null) : read(text)
-    },
-    async list() {
-      const out: SaveMeta[] = []
-      const broken: BrokenSave[] = []
-      for (const k of await driver.keys(prefix)) {
-        const text = await driver.get(k)
-        if (text === null) continue
-        const loaded = read(text)
-        if (!loaded.ok) broken.push({ slot: k.slice(prefix.length), broken: loaded.reason })
-        else out.push(loaded.value.meta)
-      }
-      return [...out.sort((a, b) => b.savedAt - a.savedAt), ...broken.sort((a, b) => a.slot.localeCompare(b.slot))]
-    },
-    async remove(slot) {
-      await driver.remove(key(slot))
-    },
-    async exportSlot(slot) {
-      return driver.get(key(slot))
-    },
+    write: (slot, state, extra = {}) =>
+      attempt('notSaved', async () => {
+        const file: SaveFile = { ifloom: 1, meta: meta(slot, state, extra), state }
+        await driver.set(key(slot), JSON.stringify(file))
+        return ok(file.meta)
+      }),
+    read: (slot) =>
+      attempt('notLoaded', async () => {
+        const text = await driver.get(key(slot))
+        return text === null ? ok(null) : read(text)
+      }),
+    list: () =>
+      attempt('notListed', async () => {
+        const out: SaveMeta[] = []
+        const broken: BrokenSave[] = []
+        for (const k of await driver.keys(prefix)) {
+          const text = await driver.get(k)
+          if (text === null) continue
+          const loaded = read(text)
+          if (!loaded.ok) broken.push({ slot: k.slice(prefix.length), broken: loaded.reason })
+          else out.push(loaded.value.meta)
+        }
+        return ok([...out.sort((a, b) => b.savedAt - a.savedAt), ...broken.sort((a, b) => a.slot.localeCompare(b.slot))])
+      }),
+    remove: (slot) =>
+      attempt('notRemoved', async () => {
+        await driver.remove(key(slot))
+        return ok(undefined)
+      }),
+    exportSlot: (slot) => attempt('notExported', async () => ok(await driver.get(key(slot)))),
     importText: read,
   }
 }

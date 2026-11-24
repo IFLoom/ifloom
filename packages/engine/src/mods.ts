@@ -64,18 +64,22 @@ export function readMod(text: string, gameId: string): Result<ModFile> {
   return ok({ ...(mod as ModFile), pack: { ...mod.pack, id: `mod:${mod.id}` } })
 }
 
-/** One game's installed mods, as `mods` gives them. */
+/**
+ * One game's installed mods, as `mods` gives them. Nothing here rejects: when
+ * the driver fails, each answers a failure that says so, with the driver's
+ * error as its `cause`.
+ */
 export interface Mods {
-  /** Every installed mod, on or off, in name order. */
-  list(): Promise<InstalledMod[]>
+  /** Every installed mod, on or off, in name order. One stored unreadably is left out. */
+  list(): Promise<Result<InstalledMod[]>>
   /** Add a mod from a file's text, on, replacing one with the same id. The mod, or why it can't be added. */
   add(text: string): Promise<Result<InstalledMod>>
   /** Remove a mod. Nothing happens if it isn't installed. */
-  remove(id: string): Promise<void>
+  remove(id: string): Promise<Result<void>>
   /** Turn a mod on or off. Nothing happens if it isn't installed. */
-  setEnabled(id: string, enabled: boolean): Promise<void>
+  setEnabled(id: string, enabled: boolean): Promise<Result<void>>
   /** The packs of the mods that are on, in name order, to load over the game's content as `packs`. */
-  packs(): Promise<Pack[]>
+  packs(): Promise<Result<Pack[]>>
 }
 
 /**
@@ -85,14 +89,36 @@ export interface Mods {
 export function mods(gameId: string, driver: SaveDriver): Mods {
   const prefix = `${gameId}.mod.`
   const key = (id: string) => `${prefix}${id}`
-  async function list(): Promise<InstalledMod[]> {
-    const out: InstalledMod[] = []
-    for (const k of await driver.keys(prefix)) {
-      const text = await driver.get(k)
-      if (text) out.push(JSON.parse(text) as InstalledMod)
+
+  /** Run a step on the driver: its answer, or `reason` with the driver's error as its cause. */
+  async function attempt<T>(reason: string, step: () => Promise<Result<T>>): Promise<Result<T>> {
+    try {
+      return await step()
+    } catch (error) {
+      return fail(reason, error)
     }
-    return out.sort((a, b) => a.name.localeCompare(b.name))
   }
+
+  /** A stored mod, or undefined if what is stored can't be read. */
+  function parsed(text: string | null): InstalledMod | undefined {
+    if (!text) return undefined
+    try {
+      return JSON.parse(text) as InstalledMod
+    } catch {
+      return undefined
+    }
+  }
+
+  const list = () =>
+    attempt('The mods could not be read.', async () => {
+      const out: InstalledMod[] = []
+      for (const k of await driver.keys(prefix)) {
+        const mod = parsed(await driver.get(k))
+        if (mod) out.push(mod)
+      }
+      return ok(out.sort((a, b) => a.name.localeCompare(b.name)))
+    })
+
   return {
     list,
     async add(text) {
@@ -107,19 +133,25 @@ export function mods(gameId: string, driver: SaveDriver): Mods {
         enabled: true,
         pack: mod.pack,
       }
-      await driver.set(key(mod.id), JSON.stringify(installed))
-      return ok(installed)
+      return attempt('The mod could not be added.', async () => {
+        await driver.set(key(mod.id), JSON.stringify(installed))
+        return ok(installed)
+      })
     },
-    async remove(id) {
-      await driver.remove(key(id))
-    },
-    async setEnabled(id, enabled) {
-      const text = await driver.get(key(id))
-      if (!text) return
-      await driver.set(key(id), JSON.stringify({ ...(JSON.parse(text) as InstalledMod), enabled }))
-    },
+    remove: (id) =>
+      attempt('The mod could not be removed.', async () => {
+        await driver.remove(key(id))
+        return ok(undefined)
+      }),
+    setEnabled: (id, enabled) =>
+      attempt('The mod could not be changed.', async () => {
+        const mod = parsed(await driver.get(key(id)))
+        if (mod) await driver.set(key(id), JSON.stringify({ ...mod, enabled }))
+        return ok(undefined)
+      }),
     async packs() {
-      return (await list()).filter((mod) => mod.enabled).map((mod) => mod.pack)
+      const listed = await list()
+      return listed.ok ? ok(listed.value.filter((mod) => mod.enabled).map((mod) => mod.pack)) : listed
     },
   }
 }

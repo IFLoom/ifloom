@@ -45,6 +45,8 @@ type Profile = {
 | `update(namespace, change)` | Calls `change` with what the namespace holds now and stores what it returns, with no other write in between. Returning `undefined` or the same value leaves it alone. Resolves to what it holds afterwards. |
 | `subscribe(listener)` | Calls `listener(namespace, value)` after every write. Returns a function that stops it. |
 
+When the driver fails, `get`, `set` and `update` reject with its error, and the profile carries on with the next call. In UI code, use [`runner.profile`](/docs/reference/runner#the-runners-members) instead. It's the same profile, but it never rejects: a read the driver fails answers `undefined`, a write it fails is dropped, and the runner's `onSaveError` hears about each. So a UI keeps working in a browser that refuses storage, such as a private window.
+
 Use `update` whenever the new value depends on the old one, so two writes at once don't lose each other:
 
 ```ts continues

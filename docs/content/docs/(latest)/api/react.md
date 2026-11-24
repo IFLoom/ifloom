@@ -1447,7 +1447,7 @@ type ModsState = {
 | `changed` | `boolean` |  |  | Whether anything changed since the game was built, so a restart would differ. |
 | `restart` | `(() => void) \| undefined` |  |  | Build the game again with the mods as they are now: the provider's `onChange`. Undefined if it gave none. |
 | `problemsFor` | `(id: string) => string[]` |  |  | The problems the loader found in one mod. |
-| `message` | `string \| null` |  |  | Why the last file could not be added, or null. |
+| `message` | `string \| null` |  |  | Why the last file could not be added, or the mods could not be read or changed, or null. |
 
 ## mountGame
 
@@ -2166,8 +2166,8 @@ type SavesState = {
   save: (name?: string) => Promise<boolean>
   overwrite: (slot: string) => Promise<boolean>
   load: (slot: string) => Promise<boolean>
-  remove: (slot: string) => Promise<void>
-  exportFile: (slot: string) => Promise<void>
+  remove: (slot: string) => Promise<boolean>
+  exportFile: (slot: string) => Promise<boolean>
   importFile: (file: File) => Promise<boolean>
   message: string | null
   missingPacks: string[]
@@ -2184,10 +2184,10 @@ type SavesState = {
 | `save` | `(name?: string) => Promise<boolean>` |  |  | Save in a new slot (the next free number), with the player's `name` for it if given. True if it was written. |
 | `overwrite` | `(slot: string) => Promise<boolean>` |  |  | Save over an existing slot. True if it was written. |
 | `load` | `(slot: string) => Promise<boolean>` |  |  | Load a slot. True if it loaded. |
-| `remove` | `(slot: string) => Promise<void>` |  |  | Delete a slot. |
-| `exportFile` | `(slot: string) => Promise<void>` |  |  | Download a slot as a `.json` file the player can keep. |
+| `remove` | `(slot: string) => Promise<boolean>` |  |  | Delete a slot. True if it was deleted; if not, `message` says why. |
+| `exportFile` | `(slot: string) => Promise<boolean>` |  |  | Download a slot as a `.json` file the player can keep. True if it was there to download; if it failed, `message` says why. |
 | `importFile` | `(file: File) => Promise<boolean>` |  |  | Load a save from a file the player kept. True if it loaded. |
-| `message` | `string \| null` |  |  | Why the last save, load or import failed, or null. |
+| `message` | `string \| null` |  |  | Why the last save, load, delete, export or import failed, or null. |
 | `missingPacks` | `string[]` |  |  | Packs the last loaded save was made with that this game doesn't have. |
 | `missingPlugins` | `string[]` |  |  | Plugins the last loaded save was made with that this game doesn't have. |
 

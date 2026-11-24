@@ -101,7 +101,6 @@ describe('the runner and the profile', () => {
     const g = game()
     const prof = profile(g, memoryDriver())
     const runner = createRunner(g, begin(g), { profile: prof })
-    expect(runner.profile).toBe(prof)
     runner.apply({ type: 'setting', id: 'hints', to: false })
     runner.apply({ type: 'setting', id: 'hints', to: 'maybe' })
     await runner.settled()
@@ -270,5 +269,27 @@ describe('the runner and the profile', () => {
     await runner.settled()
     expect(errors).toHaveLength(1)
     expect(runner.state.settings.hints).toBe(false)
+  })
+
+  it('hands a UI a profile that never rejects, reporting what the driver fails', async () => {
+    const g = game()
+    const gone = (): Promise<never> => Promise.reject(new Error('no storage here'))
+    const errors: unknown[] = []
+    const runner = createRunner(g, begin(g), { profile: profile(g, { ...memoryDriver(), get: gone, set: gone }), onSaveError: (error) => errors.push(error) })
+    await runner.settled()
+    errors.length = 0
+    expect(await runner.profile?.get('ui:gate')).toBeUndefined()
+    await expect(runner.profile?.set('ui:gate', { confirmedAt: 1 })).resolves.toBeUndefined()
+    expect(await runner.profile?.update('ui:sections', () => ({ saves: true }))).toBeUndefined()
+    expect(errors).toEqual([new Error('no storage here'), new Error('no storage here'), new Error('no storage here')])
+  })
+
+  it('reads and writes through the profile it was given', async () => {
+    const g = game()
+    const prof = profile(g, memoryDriver())
+    const runner = createRunner(g, begin(g), { profile: prof })
+    await runner.profile?.set('ui:gate', { confirmedAt: 1 })
+    expect(await prof.get('ui:gate')).toEqual({ confirmedAt: 1 })
+    expect(await runner.profile?.update<{ n: number }>('ui:count', (now) => ({ n: (now?.n ?? 0) + 1 }))).toEqual({ n: 1 })
   })
 })

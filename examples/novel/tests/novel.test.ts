@@ -150,7 +150,7 @@ describe('The Letter', () => {
 
   it('lists a save under the name the reader typed', async () => {
     const store = saves(game, memoryDriver())
-    expect((await store.write('1', startingState(game, { kv: { playerName: 'Robin' } }))).playerName).toBe('Robin')
-    expect((await store.write('2', startingState(game))).playerName).toBeNull()
+    expect(await store.write('1', startingState(game, { kv: { playerName: 'Robin' } }))).toMatchObject({ ok: true, value: { playerName: 'Robin' } })
+    expect(await store.write('2', startingState(game))).toMatchObject({ ok: true, value: { playerName: null } })
   })
 })

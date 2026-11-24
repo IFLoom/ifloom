@@ -72,23 +72,27 @@ A pack in a file has only what JSON can hold: scenes, storylines, stats, the sta
 function mods(gameId: string, driver: SaveDriver): Mods
 
 interface Mods {
-  list(): Promise<InstalledMod[]>
+  list(): Promise<Result<InstalledMod[]>>
   add(text: string): Promise<Result<InstalledMod>>
-  remove(id: string): Promise<void>
-  setEnabled(id: string, enabled: boolean): Promise<void>
-  packs(): Promise<Pack[]>
+  remove(id: string): Promise<Result<void>>
+  setEnabled(id: string, enabled: boolean): Promise<Result<void>>
+  packs(): Promise<Result<Pack[]>>
 }
 ```
 
 One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers). In a browser, use [`indexedDbDriver()`](/docs/browser#indexeddbdriver), so a mod survives a reload and needs no server.
 
-| Member | What it does |
-|---|---|
-| `list()` | Every mod added, on or off, sorted by name. |
-| `add(text)` | Reads a file's text and keeps the mod, switched on, as [below](#what-add-checks). Returns a `Result` with it, or the refusal. A mod with the same `id` as one already there replaces it, and is switched on again. |
-| `remove(id)` | Forgets the mod. |
-| `setEnabled(id, enabled)` | Turns a mod on or off. A mod that's off stays in the list but is left out of the game. An unknown id does nothing. |
-| `packs()` | The packs of the mods that are on, in name order. Pass them to `loadGame` as `packs`, over the game's content. |
+Every member answers a [`Result`](/docs/reference/runner#result) and never rejects. When the driver fails, such as IndexedDB in a private window that refuses it, the member fails with a reason the player can read, and the driver's error is the failure's `cause`.
+
+| Member | What it does | When the driver fails |
+|---|---|---|
+| `list()` | Every mod added, on or off, sorted by name. A mod stored in a way that can't be read is left out. | `The mods could not be read.` |
+| `add(text)` | Reads a file's text and keeps the mod, switched on, as [below](#what-add-checks). Its `Result` holds the mod, or says why it was refused. A mod with the same `id` as one already there replaces it, and is switched on again. | `The mod could not be added.` |
+| `remove(id)` | Forgets the mod. | `The mod could not be removed.` |
+| `setEnabled(id, enabled)` | Turns a mod on or off. A mod that's off stays in the list but is left out of the game. An unknown id does nothing. | `The mod could not be changed.` |
+| `packs()` | The packs of the mods that are on, in name order. Pass them to `loadGame` as `packs`, over the game's content. | `The mods could not be read.` |
+
+These reasons are English, like the ones `add` refuses a file with, because the store has no game to take strings from.
 
 ### What add checks
 
@@ -137,7 +141,10 @@ import { smallTown } from './game.ts'
 
 // The player's mods live in IndexedDB; they're loaded over the town at start-up.
 export const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const built = smallTown({ mods: await modStore.packs() })
+// Where the browser refuses IndexedDB, the town starts without them.
+const packs = await modStore.packs()
+if (!packs.ok) console.warn(packs.reason, packs.cause)
+const built = smallTown({ mods: packs.ok ? packs.value : [] })
 export const game = built.game
 // Each problem as a line; a mod's start with `mod:<id> `, which the manager below files under its mod.
 export const problems = built.problems.map(describeProblem)
@@ -176,14 +183,17 @@ import type { Mods } from '@ifloom/engine'
 export async function modManager(store: Mods, problems: string[]): Promise<HTMLElement> {
   const section = document.createElement('section')
   section.appendChild(document.createElement('h2')).textContent = 'Mods'
-  for (const mod of await store.list()) {
+  const installed = await store.list()
+  if (!installed.ok) section.appendChild(document.createElement('p')).textContent = installed.reason
+  for (const mod of installed.ok ? installed.value : []) {
     const label = section.appendChild(document.createElement('label'))
     const box = label.appendChild(document.createElement('input'))
     box.type = 'checkbox'
     box.checked = mod.enabled
     box.onchange = async () => {
-      await store.setEnabled(mod.id, box.checked)
-      location.reload()
+      const changed = await store.setEnabled(mod.id, box.checked)
+      if (!changed.ok) alert(changed.reason)
+      else location.reload()
     }
     label.append(` ${mod.name}`)
     for (const line of problems.filter((problem) => problem.startsWith(`mod:${mod.id} `))) {
@@ -214,9 +224,11 @@ import { GameShell } from '@ifloom/react'
 import { smallTown } from './game.ts'
 import './styles.css'
 
-// The player's mods live in IndexedDB; they're loaded over the town at start-up.
+// The player's mods live in IndexedDB; they're loaded over the town at start-up. Without the storage, the town starts without them.
 const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const built = smallTown({ withDebug: import.meta.env.DEV, mods: await modStore.packs() })
+const modPacks = await modStore.packs()
+if (!modPacks.ok) console.warn(modPacks.reason, modPacks.cause)
+const built = smallTown({ withDebug: import.meta.env.DEV, mods: modPacks.ok ? modPacks.value : [] })
 const { game } = built
 const problems = built.problems.map(describeProblem)
 if (problems.length) console.warn(problems.join('\n'))
@@ -246,12 +258,15 @@ import { modStore, problems } from './runner.ts'
 const installed = ref<InstalledMod[]>([])
 const refused = ref('')
 onMounted(async () => {
-  installed.value = await modStore.list()
+  const listed = await modStore.list()
+  if (listed.ok) installed.value = listed.value
+  else refused.value = listed.reason
 })
 
 async function toggle(mod: InstalledMod) {
-  await modStore.setEnabled(mod.id, !mod.enabled)
-  location.reload()
+  const changed = await modStore.setEnabled(mod.id, !mod.enabled)
+  if (!changed.ok) refused.value = changed.reason
+  else location.reload()
 }
 
 async function addFile(event: Event) {
@@ -286,8 +301,9 @@ async function addFile(event: Event) {
   let refused = $state('')
 
   async function toggle(mod: InstalledMod) {
-    await modStore.setEnabled(mod.id, !mod.enabled)
-    location.reload()
+    const changed = await modStore.setEnabled(mod.id, !mod.enabled)
+    if (!changed.ok) refused = changed.reason
+    else location.reload()
   }
 
   async function addFile(event: Event) {
@@ -301,8 +317,8 @@ async function addFile(event: Event) {
 
 <section>
   <h2>Mods</h2>
-  {#await installed then mods}
-    {#each mods as mod (mod.id)}
+  {#await installed then listed}
+    {#each listed.ok ? listed.value : [] as mod (mod.id)}
       <label><input type="checkbox" checked={mod.enabled} onchange={() => toggle(mod)} /> {mod.name}</label>
       {#each problems.filter((problem) => problem.startsWith(`mod:${mod.id} `)) as line (line)}<p>{line}</p>{/each}
     {/each}

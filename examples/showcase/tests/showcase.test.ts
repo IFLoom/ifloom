@@ -26,6 +26,8 @@ import {
   type Command,
   type GameState,
   type CommandRef,
+  type Pack,
+  type Result,
 } from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
@@ -46,6 +48,12 @@ import { checkUiHints } from '@ifloom/react'
 import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
 import supporterPack from '../src/unlocks/supporter.ts'
+
+/** The packs a mod store answered, failing the test if it couldn't read them. */
+function packsOf(result: Result<Pack[]>): Pack[] {
+  if (!result.ok) throw new Error(result.reason)
+  return result.value
+}
 
 /** The town on a given day at a given time; a day is a turn here. */
 const on = (state: GameState, day: number, period: string): GameState => clock.write({ ...state, turn: day }, { day, period })
@@ -565,7 +573,7 @@ describe('Small Town', () => {
     const { readFileSync } = await import('node:fs')
     const store = mods('small-town', memoryDriver())
     await store.add(readFileSync(new URL('../mods/fog-season.json', import.meta.url), 'utf8'))
-    const modded = smallTown({ mods: await store.packs() })
+    const modded = smallTown({ mods: packsOf(await store.packs()) })
     expect(modded.problems).toEqual([])
     expect(modded.game.prose?.variants('street.weather')).toContain('street.weather.fog')
     const fresh = startingState(modded.game)
@@ -583,7 +591,7 @@ describe('Small Town', () => {
     const { readFileSync } = await import('node:fs')
     const store = mods('small-town', memoryDriver())
     await store.add(readFileSync(new URL('../mods/french.json', import.meta.url), 'utf8'))
-    const french = smallTown({ mods: await store.packs() })
+    const french = smallTown({ mods: packsOf(await store.packs()) })
     expect(french.problems).toEqual([])
     const intro = view(startingState(french.game), french.game).scene
     expect(intro.title).toBe('Le jour du déménagement')

@@ -124,3 +124,27 @@ function frozenCopy(value: unknown): unknown {
   }
   return freeze(JSON.parse(JSON.stringify(value)))
 }
+
+/**
+ * The profile as `runner.profile` hands it out: one that never rejects. A
+ * read the driver fails answers undefined, and a write it fails is dropped,
+ * each told to `onError`, so a UI can call it without a `catch`.
+ */
+export function reportingProfile(profile: Profile, onError: ((error: unknown) => void) | undefined): Profile {
+  async function reported<T>(step: Promise<T>): Promise<T | undefined> {
+    try {
+      return await step
+    } catch (error) {
+      onError?.(error)
+      return undefined
+    }
+  }
+  return {
+    get: <T>(namespace: string) => reported(profile.get<T>(namespace)),
+    set: async (namespace, value) => {
+      await reported(profile.set(namespace, value))
+    },
+    update: <T>(namespace: string, change: (current: T | undefined) => T | undefined) => reported(profile.update<T>(namespace, change)),
+    subscribe: (listener) => profile.subscribe(listener),
+  }
+}

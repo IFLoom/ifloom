@@ -24,8 +24,9 @@ export async function titleScreen(root: HTMLElement, runner: Runner, start: () =
     await runner.newGame()
     start()
   }
-  // Newest first; a save that can't be read is never the one to continue.
-  const newest = (await runner.saves?.list())?.find((save) => !('broken' in save))
+  // Newest first; a save that can't be read is never the one to continue. Without storage, there's nothing to continue.
+  const listed = await runner.saves?.list()
+  const newest = listed?.ok ? listed.value.find((save) => !('broken' in save)) : undefined
   if (newest) {
     const carryOn = buttons.appendChild(document.createElement('button'))
     carryOn.textContent = 'Continue'
@@ -83,7 +84,8 @@ import { runner, view } from './runner.ts'
 const emit = defineEmits<{ start: [] }>()
 const newest = ref<string | null>(null)
 onMounted(async () => {
-  newest.value = (await runner.saves?.list())?.find((save) => !('broken' in save))?.slot ?? null
+  const listed = await runner.saves?.list()
+  newest.value = (listed?.ok ? listed.value : []).find((save) => !('broken' in save))?.slot ?? null
 })
 
 async function newGame() {
@@ -130,7 +132,7 @@ const started = ref(false)
 
   // New game, and Continue from the newest save once there is one (the autosave counts).
   let { onstart }: { onstart: () => void } = $props()
-  const newest = runner.saves?.list().then((saves) => saves.find((save) => !('broken' in save))?.slot ?? null)
+  const newest = runner.saves?.list().then((listed) => (listed.ok ? listed.value : []).find((save) => !('broken' in save))?.slot ?? null)
 
   async function newGame() {
     await runner.newGame()
@@ -169,9 +171,9 @@ const started = ref(false)
 
 The runner gives you what a title screen needs:
 
-- [`runner.saves.list()`](/docs/reference/saves#saves) lists the saves newest first, the autosave among them, then any that can't be read, as `{ slot, broken }`.
+- [`runner.saves.list()`](/docs/reference/saves#saves) lists the saves newest first, the autosave among them, then any that can't be read, as `{ slot, broken }`. It answers a [`Result`](/docs/reference/runner#result), which fails where the browser refuses storage, so the title screen offers only New game then.
 - [`runner.newGame()`](/docs/reference/runner#newgame) starts afresh with the player's stored settings.
-- [`runner.load`](/docs/reference/runner#the-runners-members) loads a slot. It returns a string when a save can't be read, so show that to the player.
+- [`runner.load`](/docs/reference/runner#the-runners-members) loads a slot. Its `Result` fails with a `reason` when a save can't be read, so show that to the player.
 
 A subtitle, a picture or credits are markup you add to your own screen.
 

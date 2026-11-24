@@ -142,7 +142,7 @@ type RunnerOptions = {
 | `backlog` | Keeps what was shown, turn by turn. `true` turns it on with the defaults below. | off |
 | `autosave` | Saves by itself after commands. Does nothing without `saves`. | off |
 | `now` | The clock for time played, and for when `finished` is recorded, in milliseconds. Tests pass their own. | `Date.now` |
-| `onSaveError` | Told when the save driver fails, with the error: an autosave, `save`, `load`, a read or removal through `runner.saves`, the first listing of the saves, or a [profile](/docs/reference/profile) write. Later writes still run. | failures dropped |
+| `onSaveError` | Told when the save driver fails, with the error: an autosave, `save`, `load`, any call through `runner.saves` or `runner.profile`, the first listing of the saves, or a [profile](/docs/reference/profile) write. Later writes still run. | failures dropped |
 | `profile` | The [profile](/docs/reference/profile) the runner writes settings (`core:settings`), [`finished`](#finished) (`core:finished`) and plugins' namespaces to. You need it to change a `ui` setting. | none |
 
 ## HistoryOptions
@@ -259,10 +259,12 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 ## Result
 
 ```ts shape
-type Result<T> = { ok: true; value: T } | { ok: false; reason: string }
+type Result<T> = { ok: true; value: T } | { ok: false; reason: string; cause?: unknown }
 ```
 
 What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay) and [`upgradePack`](/docs/reference/loader#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
+
+When the failure came from an error that was thrown, such as a save driver's when storage is missing, `cause` holds that error, for a log. `reason` is still the words to show the player.
 
 ```ts given
 const result = runner.apply({ type: 'choose', id: 'chat' })
@@ -313,14 +315,14 @@ interface Runner {
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
 | `snapshot()` | The [`RunnerSnapshot`](#runnersnapshot): everything a UI draws, in one value. The same object until any part of it changes. |
 | `log()` | The [`CommandLog`](#commandlog): the start state and every command since. Always kept. |
-| `saves` | The [`Saves`](/docs/reference/saves#saves) store the runner was made with, or `undefined`, watched so that what it writes and removes shows in the snapshot's `saves`. A save menu deletes, exports and imports through it. When the driver fails, its `read` answers `The game could not be loaded.` and its `remove` leaves the save listed, and both tell `onSaveError`. Its `write`, `list` and `exportSlot` reject, as the store's do. |
+| `saves` | The [`Saves`](/docs/reference/saves#saves) store the runner was made with, or `undefined`, watched so that what it writes and removes shows in the snapshot's `saves`. A save menu deletes, exports and imports through it. Like the store, each member answers a [`Result`](#result) and never rejects. When the driver fails, it answers the store's [reason](/docs/reference/saves#when-the-driver-fails), tells `onSaveError`, and leaves the snapshot's `saves` as it was. |
 | `offers` | `{ undo: boolean, backlog: boolean }`: whether the game turned on `history` and `backlog`, so a menu shows only what's on offer. |
 | `played()` | Time played in milliseconds, counting from the time recorded in any save loaded. |
 | `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to a [`Result`](#result) with its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where. It fails with `This game keeps no saves.` without `saves`, with the reason from the game's [`saveable`](/docs/reference/game#saveable) while that refuses saving (check [`view().saving`](/docs/reference/view#saving) first to grey the button out), and with `The game could not be saved.` when the driver throws, which `onSaveError` hears about too. |
 | `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/docs/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to a [`Result`](#result) with the [`LoadedSave`](/docs/reference/saves#loadedsave). It fails with `Nothing is saved there.` for an empty slot, `This game keeps no saves.` without `saves`, the reason the save can't be read, or `The game could not be loaded.` when the driver throws, which `onSaveError` hears about too. On a failure the runner is unchanged. |
 | `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/docs/reference/saves), exactly as `load` would. The [`LoadedSave`](/docs/reference/saves#loadedsave) has already been through `loadState`. |
 | `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, the profile has been read for the settings and the plugins' views, and the saves have been listed. |
-| `profile` | The [`Profile`](/docs/reference/profile) the runner was made with, or `undefined`. |
+| `profile` | The [`Profile`](/docs/reference/profile) the runner was made with, or `undefined`, for a UI's own namespaces. Unlike the profile itself, it never rejects: a read the driver fails answers `undefined`, a write it fails is dropped, and `onSaveError` hears about each. |
 | `setSetting(id, to)` | Changes a setting of either kind. See [below](#setsetting). |
 | `newGame(start?)` | Starts a new game in place, with [`StartOptions`](/docs/reference/commands#startoptions). See [below](#newgame). |
 | `subscribe(listener)` | Calls `listener(snapshot)` with each new [snapshot](#runnersnapshot): after every change of state (a command, an undo, a redo, a load or a new game), and with the same state when a `ui` setting changes, when what the plugins' views show of the profile changes, when the saves list changes and when a helper reports. Returns a function that stops it. |

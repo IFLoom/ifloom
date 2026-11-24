@@ -57,8 +57,8 @@ describe('the game’s own migrations', () => {
     expect(startingState(game).gameVersion).toBe(3)
     expect(startingState(before)).not.toHaveProperty('gameVersion')
     const store = saves(game, memoryDriver())
-    expect((await store.write('1', startingState(game))).gameVersion).toBe(3)
-    expect((await saves(before, memoryDriver()).write('1', startingState(before))).gameVersion).toBe(1)
+    expect(unwrap(await store.write('1', startingState(game))).gameVersion).toBe(3)
+    expect(unwrap(await saves(before, memoryDriver()).write('1', startingState(before))).gameVersion).toBe(1)
   })
 
   it('run each step from the save’s version up, after the engine’s and plugins’ migrations', () => {

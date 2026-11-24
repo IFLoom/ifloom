@@ -59,7 +59,7 @@ function localStorageDriver(storage?: StorageLike): SaveDriver
 
 Saves in `globalThis.localStorage`, or in the Web Storage you pass. It works everywhere but it's small, around 5MB per origin. In Chromium every page opened from disk shares one origin, so every `file://` game the player has shares those 5MB.
 
-The driver looks for the storage when a save is first read or written, not when you make it. Where there's none (Node, a locked-down iframe), that read or write rejects with `localStorage is not available here`. The runner's `save` and `load` answer that with `The game could not be saved.` or `The game could not be loaded.`, and tell `onSaveError`.
+The driver looks for the storage when a save is first read or written, not when you make it. Where there's none (Node, a locked-down iframe), that read or write rejects with `localStorage is not available here`. The [save store](/docs/reference/saves#when-the-driver-fails) answers that with a reason such as `The game could not be saved.` or `The game could not be loaded.`, and the runner tells `onSaveError`.
 
 ### StorageLike
 
@@ -261,12 +261,12 @@ The choices the number keys pick, in order: the open scene's choices, or the roo
 function nextSlot(listing: readonly SaveListing[]): string
 ```
 
-The slot for a new save: one more than the highest numbered slot in the listing from [`saves.list()`](/docs/reference/saves#saves), as a string, so `'1'` for the first save. Slots with other names, such as `'auto'` and `'quick'`, are passed over. A save that can't be read still holds its number, so a new save never writes over it.
+The slot for a new save: one more than the highest numbered slot in a listing of the saves, as a string, so `'1'` for the first save. Pass it the runner's snapshot's [`saves`](/docs/reference/runner#runnersnapshot), which the runner keeps up to date, or the value of [`saves.list()`](/docs/reference/saves#saves). Slots with other names, such as `'auto'` and `'quick'`, are passed over. A save that can't be read still holds its number, so a new save never writes over it.
 
 ```ts given
 import { nextSlot } from '@ifloom/browser'
 
-const saved = await runner.save(nextSlot(await runner.saves!.list()), 'Before the café')
+const saved = await runner.save(nextSlot(runner.snapshot().saves), 'Before the café')
 ```
 
 ## Revealed prose

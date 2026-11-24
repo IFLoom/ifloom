@@ -89,6 +89,31 @@ describe('the React UI’s screens', () => {
     await act(async () => void fireEvent.click(within(document.querySelector('[data-save-slot="1"]') as HTMLElement).getByRole('button', { name: 'Load' })))
     await waitFor(() => expect(runner.state.kv).toEqual(saved.kv))
   })
+
+  it('says why an export or a delete failed when the storage goes away, rather than rejecting', async () => {
+    const g = game()
+    const inner = memoryDriver()
+    let gone = false
+    const guarded =
+      <A extends unknown[], R>(step: (...args: A) => Promise<R>) =>
+      (...args: A): Promise<R> =>
+        gone ? Promise.reject(new Error('no storage here')) : step(...args)
+    const driver = { name: inner.name, get: guarded(inner.get), set: guarded(inner.set), remove: guarded(inner.remove), keys: guarded(inner.keys) }
+    const errors: unknown[] = []
+    const runner = play({ saves: saves(g, driver), onSaveError: (error) => errors.push(error) })
+    await runner.save('1')
+    click(screen.getByRole('button', { name: 'Saves' }))
+    await waitFor(() => expect(document.querySelector('[data-save-slot="1"]')).toBeTruthy())
+    gone = true
+    const row = document.querySelector('[data-save-slot="1"]') as HTMLElement
+    await act(async () => void fireEvent.click(within(row).getByRole('button', { name: 'Export' })))
+    await waitFor(() => expect(document.querySelector('[data-saves]')?.textContent).toContain('The save could not be exported.'))
+    await act(async () => void fireEvent.click(within(row).getByRole('button', { name: 'Delete' })))
+    await waitFor(() => expect(document.querySelector('[data-saves]')?.textContent).toContain('The save could not be deleted.'))
+    // Still listed, since it wasn't deleted.
+    expect(document.querySelector('[data-save-slot="1"]')).toBeTruthy()
+    expect(errors).toEqual([new Error('no storage here'), new Error('no storage here')])
+  })
 })
 
 describe('the mod manager', () => {
@@ -111,7 +136,7 @@ describe('the mod manager', () => {
     await waitFor(() => expect(document.querySelector('[data-mod="extra"]')).toBeTruthy())
     expect(document.querySelector('[data-mod="extra"]')?.textContent).toContain('no prose for "x"')
     await act(async () => void fireEvent.click(within(document.querySelector('[data-mod="extra"]') as HTMLElement).getByRole('button', { name: 'On' })))
-    await waitFor(async () => expect((await store.list())[0].enabled).toBe(false))
+    await waitFor(async () => expect(await store.list()).toMatchObject({ ok: true, value: [{ enabled: false }] }))
     click(screen.getByRole('button', { name: 'Restart with these mods' }))
     expect(restarted).toBe(1)
   })
@@ -158,7 +183,7 @@ describe('the mod manager', () => {
     expect(within(section).getByRole('status').textContent).toContain('Changes to mods take effect when the game restarts.')
     await act(async () => void fireEvent.click(within(row).getByRole('button', { name: 'Delete' })))
     await waitFor(() => expect(section.querySelector('[data-mod="naps"]')).toBeNull())
-    expect(await store.list()).toEqual([])
+    expect(await store.list()).toEqual({ ok: true, value: [] })
     click(within(section).getByRole('button', { name: 'Restart with these mods' }))
     expect(restarted).toBe(1)
   })

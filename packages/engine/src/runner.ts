@@ -15,7 +15,7 @@ import { commandUpgrade, commandVersions } from './upgrade.ts'
 import { commandOf, type CommandRef } from './custom.ts'
 import { backlogAfter, backlogLimit, type BacklogEntry, type BacklogOptions } from './runner/backlog.ts'
 import { history as historyOf, type HistoryOptions, type Step } from './runner/history.ts'
-import { profileKeeper } from './runner/profile.ts'
+import { profileKeeper, reportingProfile } from './runner/profile.ts'
 import { saveKeeper, type AutosaveOptions } from './runner/saves.ts'
 import { settingsKeeper } from './runner/settings.ts'
 
@@ -35,8 +35,10 @@ export type RunnerOptions = {
   /** The clock for time played. `Date.now` if left out; tests pass their own. */
   now?: () => number
   /**
-   * Told when the driver fails: an autosave, `save`, `load`, a removal or a
-   * profile write. Later writes still run; without this, a failure is dropped.
+   * Told the error when the driver fails: an autosave, `save`, `load`, any
+   * call through `runner.saves` or `runner.profile`, the first listing of the
+   * saves, or a profile write. Later writes still run; without this, a
+   * failure is dropped.
    */
   onSaveError?: (error: unknown) => void
   /**
@@ -191,9 +193,8 @@ export interface Runner {
   /**
    * The saves this runner writes to, for a menu that reads, exports or
    * imports them. Undefined without `saves`. What it writes and removes
-   * shows in the snapshot's `saves`. Its `read` and `remove` tell
-   * `onSaveError` when the driver fails, `read` answering why and `remove`
-   * leaving the save listed; its `write`, `list` and `exportSlot` reject.
+   * shows in the snapshot's `saves`. Like the store, it never rejects: when
+   * the driver fails, each call answers why and tells `onSaveError`.
    */
   readonly saves: Saves | undefined
   /** Whether the game turned on undo, and the backlog: what a menu should offer. */
@@ -221,7 +222,12 @@ export interface Runner {
    * and the profile first read for the settings and the plugins' views.
    */
   settled(): Promise<void>
-  /** The profile this runner writes settings and `finished` to. Undefined without `profile`. */
+  /**
+   * The profile this runner writes settings and `finished` to, for a UI's own
+   * namespaces. Undefined without `profile`. It never rejects: a read the
+   * driver fails answers undefined, and a write it fails is dropped, each
+   * told to `onSaveError`.
+   */
   readonly profile: Profile | undefined
   /**
    * Change a setting of either kind, checked against its declaration. A
@@ -458,7 +464,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       await kept.settled()
       await saving.settled()
     },
-    profile: options.profile,
+    profile: options.profile && reportingProfile(options.profile, options.onSaveError),
     setSetting(id: string, to: KvValue): Result<KvValue> {
       const change = settings.change(id, to)
       if (!('command' in change)) return change

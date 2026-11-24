@@ -1554,8 +1554,8 @@ type SavesState = {
   save: (name?: string) => Promise<boolean>
   overwrite: (slot: string) => Promise<boolean>
   load: (slot: string) => Promise<boolean>
-  remove: (slot: string) => Promise<void>
-  exportFile: (slot: string) => Promise<void>
+  remove: (slot: string) => Promise<boolean>
+  exportFile: (slot: string) => Promise<boolean>
   importFile: (file: File) => Promise<boolean>
   message: string | null
   missingPacks: string[]
@@ -1572,10 +1572,10 @@ type SavesState = {
 | `save` | Saves in a new slot, the next free number, with `name` if you give one. `true` if it was written. |
 | `overwrite` | Saves over a slot, with the default name. `true` if it was written. |
 | `load` | Loads a slot. `true` if it loaded. |
-| `remove` | Deletes a slot. |
-| `exportFile` | Downloads a slot as `<game>-<slot>.json`. |
+| `remove` | Deletes a slot. Resolves to `true` if it was deleted. If storage refused, `message` says why and the slot stays listed. |
+| `exportFile` | Downloads a slot as `<game>-<slot>.json`. Resolves to `true` if there was a save to download. If storage refused, `message` says why. |
 | `importFile` | Loads a save from a file the player kept. `true` if it loaded. |
-| `message` | Why the last save, load or import failed, or `null`. |
+| `message` | Why the last save, load, delete, export or import failed, or `null`. |
 | `missingPacks`, `missingPlugins` | What the last loaded save was made with that this game doesn't have. |
 
 ### Backlog
@@ -1667,12 +1667,12 @@ type ModsState = {
 | `available` | `false` when the provider was given no `mods`. |
 | `list` | The mods the player has added, as [`InstalledMod`](/docs/reference/mods#installedmod)s. |
 | `add` | Adds a mod from a file. `true` if it was added. Otherwise `message` says why. |
-| `toggle` | Turns a mod on or off. |
-| `remove` | Removes a mod. |
+| `toggle` | Turns a mod on or off. If storage refused, `message` says why and nothing changed. |
+| `remove` | Removes a mod. If storage refused, `message` says why and nothing changed. |
 | `changed` | Whether anything changed since the game was built, so a restart would differ. |
 | `restart` | The provider's `onChange`, which builds the game again. `undefined` if it gave none. |
 | `problemsFor` | The loader's problems for one mod. |
-| `message` | Why the last file couldn't be added, or `null`. |
+| `message` | Why the last file couldn't be added, or why the mods couldn't be read or changed, or `null`. |
 
 ## Pages
 

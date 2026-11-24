@@ -63,7 +63,7 @@ A driver stores strings by key. It knows nothing about saves: the save store dec
 - `keys(prefix)` returns the whole key of every entry that starts with `prefix`, in any order. The save store lists a game's saves with it, and sorts them itself.
 - Values are JSON text, kept exactly as given. A save holds the whole game state, so don't put a small size limit on it.
 - Keys can hold any character, because a slot is whatever name the game gives it. A driver that turns keys into file names or URLs must escape them, and undo that in `keys`.
-- A failure rejects the promise. The save store passes the rejection on. The [runner](/docs/reference/runner#runneroptions) reports it to `onSaveError`, and its `save` and `load` answer with a reason the player can read instead.
+- A failure rejects the promise. The save store catches it and answers a failing [`Result`](/docs/reference/runner#result) with a reason the player can read, and the driver's error as its `cause`. The [runner](/docs/reference/runner#runneroptions) also reports that error to `onSaveError`.
 
 ### memoryDriver
 
@@ -89,29 +89,34 @@ To keep saves somewhere the engine doesn't ship a driver for, write one that kee
 function saves(game: Game, driver: SaveDriver): Saves
 ```
 
-One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. A save that can't be read is answered with a [`Result`](/docs/reference/runner#result), never thrown. A driver that fails is another matter: every member but `importText` rejects with the driver's error. The [runner's](/docs/reference/runner#the-runners-members) `save` and `load` turn that into a `Result`.
+One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. Each one answers a [`Result`](/docs/reference/runner#result) and never rejects, so a UI can call it without a `catch`. A save that can't be read fails with why. A driver that fails, such as `localStorage` in a locked-down browser or a private window, fails with one of the reasons [below](#when-the-driver-fails), and the driver's error is the failure's `cause`, for a log.
 
 Slots are names your game picks, such as `'auto'` for the runner's autosave, `'quick'` for a quicksave key, or `'1'`, `'2'` and `'3'` for a save screen. There's no fixed number of them.
 
 | Member | What it does |
 |---|---|
 | `driver` | The [driver](#savedriver) the store was made with. Read its `name` to show where saves are kept, or pass it to [`profile`](/docs/reference/profile) or [`mods`](/docs/reference/mods) to keep their data in the same place. |
-| `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is a [`SaveExtra`](#saveextra): the save's name, the time played and when it was written, each made up if left out. It rejects only if the driver fails. |
+| `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there. Its `Result` holds the save's [`SaveMeta`](#savemeta). `extra` is a [`SaveExtra`](#saveextra): the save's name, the time played and when it was written, each made up if left out. |
 | `read(slot)` | The slot read back, as a `Result` whose value is the [`LoadedSave`](#loadedsave), or `null` if the slot is empty. It fails with the reason a save can't be read. |
-| `list()` | Every save this game has, as [`SaveListing`](#savelisting)s: the `SaveMeta` of each one that can be read, newest first by `savedAt`, then each one that can't, as `{ slot, broken }`, by slot. |
-| `remove(slot)` | Empties a slot. |
-| `exportSlot(slot)` | The save as text, for the player to keep as a file. `null` if the slot is empty. |
+| `list()` | Every save this game has, as a `Result` holding [`SaveListing`](#savelisting)s: the `SaveMeta` of each one that can be read, newest first by `savedAt`, then each one that can't, as `{ slot, broken }`, by slot. |
+| `remove(slot)` | Empties a slot. Its `Result` holds nothing. |
+| `exportSlot(slot)` | The save as text, for the player to keep as a file, or `null` if the slot is empty. |
 | `importText(text)` | Reads text from a file the player picked, with the same checks as `read`, as a `Result` with the `LoadedSave`. Synchronous, and writes nothing. |
 
 ```ts fragment
 // A load screen. A save that can't be read can still be deleted.
-for (const entry of await store.list()) {
-  if ('broken' in entry) addBrokenRow(entry.broken, () => store.remove(entry.slot))
-  else addRow(entry.name, new Date(entry.savedAt), entry.played)
-}
+const listing = await store.list()
+if (!listing.ok) showMessage(listing.reason)
+else
+  for (const entry of listing.value) {
+    if ('broken' in entry) addBrokenRow(entry.broken, () => store.remove(entry.slot))
+    else addRow(entry.name, new Date(entry.savedAt), entry.played)
+  }
 
 // The player's own copy, and back again.
-download('corner-cafe.save', await store.exportSlot('1'))
+const exported = await store.exportSlot('1')
+if (!exported.ok) showMessage(exported.reason)
+else if (exported.value !== null) download('corner-cafe.save', exported.value)
 const loaded = store.importText(await pickedFile.text())
 if (!loaded.ok) showMessage(loaded.reason)
 else await store.write('1', loaded.value.state, { name: loaded.value.meta.name, played: loaded.value.meta.played })
@@ -135,6 +140,28 @@ The state inside the file is loaded with [`loadState`](#loadstate), which carrie
 **Gotchas.**
 - `write` without `played` records `0`. The runner passes the time played for you. When you write an imported save yourself, pass `loaded.meta.played` on.
 - `write` without `name` makes one from the state, so an imported save written that way loses the player's name for it. Pass `loaded.meta.name`.
+
+### When the driver fails
+
+Each member but `importText` reaches the driver, and answers its own reason when the driver rejects:
+
+| Member | Reason | String |
+|---|---|---|
+| `write` | `'The game could not be saved.'` | `notSaved` |
+| `read` | `'The game could not be loaded.'` | `notLoaded` |
+| `list` | `'The saves could not be read.'` | `notListed` |
+| `remove` | `'The save could not be deleted.'` | `notRemoved` |
+| `exportSlot` | `'The save could not be exported.'` | `notExported` |
+
+A game rewords them in the [strings table](/docs/reference/strings#saves). The failure's `cause` is what the driver rejected with:
+
+```ts given
+import { memoryDriver, saves } from '@ifloom/engine'
+
+const store = saves(game, memoryDriver())
+const written = await store.write('quick', state)
+if (!written.ok) console.error(written.reason, written.cause)
+```
 
 ### SaveExtra
 
@@ -170,7 +197,7 @@ The keys don't carry the save format's version. That's stored inside each save a
 type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 ```
 
-A save as it's written, as JSON: the tag `ifloom: 1`, the save's details, and the state. This is the text `exportSlot` returns.
+A save as it's written, as JSON: the tag `ifloom: 1`, the save's details, and the state. This is the text `exportSlot` answers with.
 
 `ifloom` is the format of this envelope, the wrapping of `meta` around `state`. It's 1, and it's separate from [`SAVE_VERSION`](#save_version), the format of the state inside, which the state carries as `state.version` and [`loadState`](#loadstate) carries forward. A file without `ifloom: 1` isn't read as a save.
 
@@ -459,7 +486,7 @@ The [content checker](/docs/reference/checks) reports a `version` that isn't a w
 
 ## Drawing it
 
-A save screen lists [`runner.saves.list()`](#saves), each entry a [`SaveMeta`](#savemeta) with its `name`, or a save that can't be read with why. Load one with [`runner.load(slot)`](/docs/reference/runner#the-runners-members), and save with `runner.save(slot)`, in a new slot from [`nextSlot`](/docs/browser#nextslot). Grey the Save button out while [`view.saving`](/docs/reference/view#saving) says the game refuses saving.
+A save screen lists the runner's snapshot's [`saves`](/docs/reference/runner#the-saves-list), which the runner keeps up to date, each entry a [`SaveMeta`](#savemeta) with its `name`, or a save that can't be read with why. Load one with [`runner.load(slot)`](/docs/reference/runner#the-runners-members), and save with `runner.save(slot)`, in a new slot from [`nextSlot`](/docs/browser#nextslot). Grey the Save button out while [`view.saving`](/docs/reference/view#saving) says the game refuses saving.
 
 The React UI's [`GameMenu`](/docs/react/components#gamemenu) opens its [`SavesMenu`](/docs/react/components#savesmenu), which you can also place yourself, and [`useSaves`](/docs/react/components#usesaves) has everything it does without its look. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 

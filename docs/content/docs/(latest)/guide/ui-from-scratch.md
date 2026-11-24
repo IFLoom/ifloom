@@ -234,12 +234,12 @@ The template has no menu. Add one at the end of `draw`, before the stats:
   undo.onclick = () => runner.undo()
 
   add(menu, 'button', 'Save').onclick = async () => {
-    const saved = await runner.save(nextSlot(await runner.saves!.list()))
+    const saved = await runner.save(nextSlot(runner.snapshot().saves))
     showMessage(saved.ok ? `Saved as ${saved.value.name}.` : saved.reason)
   }
 
   add(menu, 'button', 'Continue').onclick = async () => {
-    const latest = (await runner.saves!.list()).find((entry) => !('broken' in entry))
+    const latest = runner.snapshot().saves.find((entry) => !('broken' in entry))
     if (!latest) return showMessage('Nothing is saved yet.')
     const loaded = await runner.load(latest.slot)
     if (!loaded.ok) showMessage(loaded.reason)
@@ -257,7 +257,7 @@ document.body.append(message)
 const showMessage = (text: string) => (message.textContent = text)
 ```
 
-`browserRunner` gave the runner undo, saves and an autosave each turn, so there's nothing else to set up. `list()` gives the newest save first, the autosave included, so Continue picks up wherever the player was. A load calls the listener, so the page redraws by itself.
+`browserRunner` gave the runner undo, saves and an autosave each turn, so there's nothing else to set up. The snapshot's `saves` lists the newest save first, the autosave included, and the runner keeps it up to date, so Continue picks up wherever the player was. A load calls the listener, so the page redraws by itself.
 
 ## 10. Add a setting
 

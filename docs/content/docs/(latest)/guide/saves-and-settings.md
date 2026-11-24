@@ -65,12 +65,12 @@ saveButton.title = reason ?? ''
 
 ## A load screen
 
-[`runner.saves`](/docs/reference/runner#the-runners-members) is the store the runner was made with. Its `list()` gives every save, newest first, with the details a load screen shows. A save that can't be read is still listed, as `{ slot, broken }`, so the player can delete it.
+The runner lists its saves when it starts and keeps the list up to date as you save and delete, in its snapshot's `saves`. It has every save, newest first, with the details a load screen shows. A save that can't be read is still listed, as `{ slot, broken }`, so the player can delete it.
 
 ```ts given
 import { nextSlot } from '@ifloom/browser'
 
-const listing = await runner.saves!.list()
+const listing = runner.snapshot().saves
 for (const entry of listing) {
   if ('broken' in entry) console.log(`${entry.slot}: can't be read (${entry.broken})`)
   else console.log(`${entry.slot}: ${entry.name}, saved ${new Date(entry.savedAt).toLocaleString()}`)
@@ -80,7 +80,19 @@ for (const entry of listing) {
 await runner.save(nextSlot(listing))
 ```
 
-[`nextSlot`](/docs/browser#nextslot) comes from [`@ifloom/browser`](/docs/browser), the helpers for any UI. It skips named slots such as `auto` and `quick`. The store also exports a slot as text for the player to keep, and imports it again (see [`saves`](/docs/reference/saves#saves)).
+[`nextSlot`](/docs/browser#nextslot) comes from [`@ifloom/browser`](/docs/browser), the helpers for any UI. It skips named slots such as `auto` and `quick`.
+
+To delete a save, or export one as text for the player to keep, go through [`runner.saves`](/docs/reference/runner#the-runners-members), the store the runner was made with, so the snapshot's list follows. Each of its calls answers a [`Result`](/docs/reference/runner#result) and never rejects, so a browser that refuses storage gives you a reason to show rather than an error:
+
+```ts given
+const removed = await runner.saves!.remove('2')
+if (!removed.ok) alert(removed.reason) // 'The save could not be deleted.'
+
+const exported = await runner.saves!.exportSlot('1')
+if (exported.ok && exported.value !== null) console.log(exported.value) // the save as JSON text
+```
+
+The store also imports a save from that text again (see [`saves`](/docs/reference/saves#saves)).
 
 ## Settings
 

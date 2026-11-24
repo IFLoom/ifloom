@@ -15,9 +15,11 @@ const driver = localStorageDriver(window.localStorage)
 const stored = profile({ id: 'small-town' }, driver)
 const unlocked = await unlockedPacks('small-town', stored)
 
-// The player's mods live in IndexedDB; they're loaded over the town at start-up.
+// The player's mods live in IndexedDB; they're loaded over the town at start-up. Without the storage, the town starts without them.
 const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const built = smallTown({ withDebug: import.meta.env.DEV, unlocked: unlocked.packs, mods: await modStore.packs() })
+const modPacks = await modStore.packs()
+if (!modPacks.ok) console.warn(modPacks.reason, modPacks.cause)
+const built = smallTown({ withDebug: import.meta.env.DEV, unlocked: unlocked.packs, mods: modPacks.ok ? modPacks.value : [] })
 const { game } = built
 const problems = built.problems.map(describeProblem)
 if (problems.length) console.warn(problems.join('\n'))

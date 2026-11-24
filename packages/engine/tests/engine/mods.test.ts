@@ -34,11 +34,30 @@ describe('mods', () => {
   it('are kept by a driver, on or off, and give the packs of the ones that are on', async () => {
     const store = mods('fixture', memoryDriver())
     expect(unwrap(await store.add(mod()))).toMatchObject({ id: 'night-market', enabled: true })
-    expect((await store.packs()).map((pack) => pack.id)).toEqual(['mod:night-market'])
+    expect(unwrap(await store.packs()).map((pack) => pack.id)).toEqual(['mod:night-market'])
     await store.setEnabled('night-market', false)
-    expect(await store.packs()).toEqual([])
+    expect(unwrap(await store.packs())).toEqual([])
     await store.remove('night-market')
-    expect(await store.list()).toEqual([])
+    expect(unwrap(await store.list())).toEqual([])
+  })
+
+  it('answer a driver that fails with a reason and its error, never a rejection', async () => {
+    const gone = (): Promise<never> => Promise.reject(new Error('no storage here'))
+    const store = mods('fixture', { ...memoryDriver(), get: gone, set: gone, remove: gone, keys: gone })
+    const failed = (reason: string) => ({ ok: false, reason, cause: new Error('no storage here') })
+    expect(await store.list()).toEqual(failed('The mods could not be read.'))
+    expect(await store.packs()).toEqual(failed('The mods could not be read.'))
+    expect(await store.add(mod())).toEqual(failed('The mod could not be added.'))
+    expect(await store.remove('night-market')).toEqual(failed('The mod could not be removed.'))
+    expect(await store.setEnabled('night-market', false)).toEqual(failed('The mod could not be changed.'))
+  })
+
+  it('leave out a mod stored unreadably', async () => {
+    const driver = memoryDriver()
+    const store = mods('fixture', driver)
+    await store.add(mod())
+    await driver.set('fixture.mod.torn', '{ half a mod')
+    expect(unwrap(await store.list()).map((entry) => entry.id)).toEqual(['night-market'])
   })
 
   it("load over the game's content as packs, and saves record them, not the content", async () => {
@@ -47,10 +66,10 @@ describe('mods', () => {
     const { game: base } = withCafe()
     const { scenes, storylines, actions, stats, packs: _p, ...rest } = base
     const own = { scenes, storylines, actions, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
-    const { game, problems } = loadGame([own], rest, { packs: await store.packs() })
+    const { game, problems } = loadGame([own], rest, { packs: unwrap(await store.packs()) })
     expect(problems.filter((problem) => problem.pack === 'mod:night-market')).toEqual([])
     expect(game.prose?.line('cafe.counter')).toBe('Lanterns over the counter tonight.')
-    const meta = await saves(game, memoryDriver()).write('1', startingState(game))
+    const meta = unwrap(await saves(game, memoryDriver()).write('1', startingState(game)))
     expect(meta.packs).toEqual(['mod:night-market'])
   })
 })

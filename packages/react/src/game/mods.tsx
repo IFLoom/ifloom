@@ -23,7 +23,7 @@ export type ModsState = {
   restart: (() => void) | undefined
   /** The problems the loader found in one mod. */
   problemsFor: (id: string) => string[]
-  /** Why the last file could not be added, or null. */
+  /** Why the last file could not be added, or the mods could not be read or changed, or null. */
   message: string | null
 }
 
@@ -33,7 +33,12 @@ export function useMods(): ModsState {
   const [list, setList] = useState<InstalledMod[]>([])
   const [message, setMessage] = useState<string | null>(null)
   const [changed, setChanged] = useState(false)
-  const refresh = useCallback(async () => setList(mods ? await mods.store.list() : []), [mods])
+  const refresh = useCallback(async () => {
+    if (!mods) return setList([])
+    const listed = await mods.store.list()
+    if (listed.ok) setList(listed.value)
+    else setMessage(listed.reason)
+  }, [mods])
   useEffect(() => {
     void refresh()
   }, [refresh])
@@ -55,13 +60,15 @@ export function useMods(): ModsState {
     async toggle(id) {
       const mod = list.find((each) => each.id === id)
       if (!mods || !mod) return
-      await mods.store.setEnabled(id, !mod.enabled)
-      await after()
+      const changed = await mods.store.setEnabled(id, !mod.enabled)
+      setMessage(changed.ok ? null : changed.reason)
+      if (changed.ok) await after()
     },
     async remove(id) {
       if (!mods) return
-      await mods.store.remove(id)
-      await after()
+      const removed = await mods.store.remove(id)
+      setMessage(removed.ok ? null : removed.reason)
+      if (removed.ok) await after()
     },
     changed,
     restart: mods?.onChange,

@@ -22,13 +22,13 @@ export type SavesState = {
   overwrite: (slot: string) => Promise<boolean>
   /** Load a slot. True if it loaded. */
   load: (slot: string) => Promise<boolean>
-  /** Delete a slot. */
-  remove: (slot: string) => Promise<void>
-  /** Download a slot as a `.json` file the player can keep. */
-  exportFile: (slot: string) => Promise<void>
+  /** Delete a slot. True if it was deleted; if not, `message` says why. */
+  remove: (slot: string) => Promise<boolean>
+  /** Download a slot as a `.json` file the player can keep. True if it was there to download; if it failed, `message` says why. */
+  exportFile: (slot: string) => Promise<boolean>
   /** Load a save from a file the player kept. True if it loaded. */
   importFile: (file: File) => Promise<boolean>
-  /** Why the last save, load or import failed, or null. */
+  /** Why the last save, load, delete, export or import failed, or null. */
   message: string | null
   /** Packs the last loaded save was made with that this game doesn't have. */
   missingPacks: string[]
@@ -89,13 +89,17 @@ export function useSaves(): SavesState {
       return true
     },
     async remove(slot) {
-      if (!store) return
-      await store.remove(slot)
+      if (!store) return false
+      const removed = await store.remove(slot)
+      setMessage(removed.ok ? null : removed.reason)
+      return removed.ok
     },
     async exportFile(slot) {
-      if (!store) return
-      const text = await store.exportSlot(slot)
-      if (text === null) return
+      if (!store) return false
+      const exported = await store.exportSlot(slot)
+      setMessage(exported.ok ? null : exported.reason)
+      if (!exported.ok || exported.value === null) return false
+      const text = exported.value
       const game = slots.find((meta) => meta.slot === slot)?.game ?? runner.game.id
       const link = document.createElement('a')
       link.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
@@ -103,6 +107,7 @@ export function useSaves(): SavesState {
       link.click()
       // Let the download start before the link goes.
       setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+      return true
     },
     async importFile(file) {
       if (!store) return false

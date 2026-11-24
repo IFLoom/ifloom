@@ -12,6 +12,7 @@
 import type { Game } from '../game.ts'
 import type { Condition } from '../types.ts'
 import { defineFeature, type PackMerge } from './feature.ts'
+import type { WordWalk } from '../words.ts'
 
 /** One row of a phrase: its words, shown while `when` holds (always, without one). Tokens in the words are filled. */
 export type PhraseRow = { when?: Condition; text: string }
@@ -293,9 +294,30 @@ function merge(): PackMerge<PhrasesShape['game'], PhrasesShape['pack']> {
   }
 }
 
+/** Each phrase's words: each row's, by the phrase's full name and the row's place, `phrase.<name>.<n>`. */
+function phraseWords(game: Game, walk: WordWalk) {
+  for (const [name, phrase] of Object.entries(game.phrases ?? {})) {
+    // A phrase with arguments keeps its rows in `rows`; its key in the table is the same.
+    const withArgs = isPhraseWithArgs(phrase)
+    const rows: unknown = withArgs ? phrase.rows : phrase
+    if (!Array.isArray(rows)) continue
+    walk.source = { list: 'phrase', id: name }
+    const at = withArgs ? ['phrases', name, 'rows'] : ['phrases', name]
+    rows.forEach((row, index) =>
+      walk.field(
+        `phrase.${name}.${index}`,
+        typeof row === 'object' && row !== null ? (row as { text?: unknown }).text : undefined,
+        [...at, index, 'text'],
+        `phrase ${name}`,
+      ),
+    )
+  }
+}
+
 export const phrases = defineFeature<PhrasesShape>({
   name: 'phrases',
   pack: { merge },
+  content: { phrases: { declares: (phrases) => flatPhrases(phrases).map(([name]) => `phrase "${name}"`), words: phraseWords } },
   lists: ['phrase'],
   check: (game, tools) => {
     const all = Object.entries(game.phrases ?? {})

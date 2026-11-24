@@ -22,6 +22,7 @@ import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
 import type { Amount, Command, Condition, Effect, GameState, StartOptions } from '../types.ts'
+import type { WordPart, WordWalk } from '../words.ts'
 
 /** The core's helpers a feature can call. The core hands one to every hook that needs it. */
 export type FeatureContext = {
@@ -208,6 +209,8 @@ export type FeatureShape = {
   lists?: string
   /** What `MigrationTools.fill` fills for it, by name: `'settings'`. */
   fill?: string
+  /** The keys of its `pack` only a pack holds, never the game's content: `'patches'`. */
+  packOnly?: string
 }
 
 type Part<T extends FeatureShape, K extends keyof FeatureShape> = T[K] extends object ? T[K] : {}
@@ -220,7 +223,65 @@ export type FieldsOf<S> = { [K in keyof S]-?: StateField<S[K]> }
  * answer for: a feature with references has a `resolve`.
  */
 export type FeatureSpec<T extends FeatureShape> = FeatureParts<T> &
-  (keyof Part<T, 'references'> extends never ? unknown : { resolve: (game: Game, tools: ResolveTools) => Resolvers<Part<T, 'references'>> })
+  (keyof Part<T, 'references'> extends never ? unknown : { resolve: (game: Game, tools: ResolveTools) => Resolvers<Part<T, 'references'>> }) &
+  (keyof Part<T, 'pack'> extends never ? unknown : { pack: PackSpec<T>; content: ContentKeys<T> })
+
+/** How a feature's pack keys merge: a later pack's entries over an earlier one's. */
+type PackSpec<T extends FeatureShape> = { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<Part<T, 'game'>, Part<T, 'pack'>> }
+
+type PackOnly<T extends FeatureShape> = T extends { packOnly: infer P } ? P : never
+
+/** What each of a feature's pack keys holds, every key said, so a new key can't go unchecked or untranslated. */
+export type ContentKeys<T extends FeatureShape> = {
+  [K in keyof Part<T, 'pack'>]-?: ContentKey<NonNullable<Part<T, 'pack'>[K]>> & (K extends PackOnly<T> ? { packOnly: true } : { packOnly?: undefined })
+}
+
+/**
+ * What one pack key holds, beside how it merges: what a piece of content
+ * declares under it, for the report of one thing declared twice across a
+ * game's content, and the words in it a translation can give other words for.
+ */
+export type ContentKey<V> = {
+  /**
+   * What one piece of content declares under it, each worded as the report
+   * names it: `scene "cafe.counter"`. Null for a key whose entries add up
+   * across files, such as `saveable`, so declares nothing twice.
+   */
+  declares: ((value: V) => readonly string[]) | null
+  /**
+   * The fields of the merged game under it that a player reads, walked into
+   * `walk`, as `translatableFields` lists them. Null for a key with none a
+   * translation gives, or whose words another key's walk covers.
+   */
+  words: ((game: Game, walk: WordWalk) => void) | null
+  /** Only a pack holds it, never the game's content, as `patches`. */
+  packOnly?: true
+}
+
+/** What a list by id declares: each entry, by its noun and id, `stat "energy"`. */
+export const byId =
+  (noun: string) =>
+  (list: readonly { id: string }[]): string[] =>
+    list.map((entry) => `${noun} "${entry.id}"`)
+
+/** What a record declares: each key, by its noun, `kv "phase"`. */
+export const byKey =
+  (noun: string) =>
+  (record: object): string[] =>
+    Object.keys(record).map((key) => `${noun} "${key}"`)
+
+/** What a key that holds one value declares: the key, by its noun. */
+export const once = (noun: string) => (): string[] => [noun]
+
+/**
+ * The words of each entry of one of the game's lists, by the shape of its
+ * words, under `<noun>.<id>.<field>`: `action.wait.label`. `noun` is the list
+ * as the feature's problems name it.
+ */
+export const listWords =
+  (list: keyof Game, noun: string, shape: WordPart) =>
+  (_game: Game, walk: WordWalk): void =>
+    walk.list(list, noun, shape)
 
 /** What a feature can declare, each part optional. */
 type FeatureParts<T extends FeatureShape> = {
@@ -253,8 +314,10 @@ type FeatureParts<T extends FeatureShape> = {
   fill?: { part: T['fill'] & string; unversioned?: boolean; run: (state: GameState, game: Game) => GameState }
   /** What every load adds that the game declares and the save lacks, whatever the game's version. */
   loaded?: (state: GameState, game: Game) => GameState
-  /** Its pack key: how a later pack's entries go over an earlier one's. */
-  pack?: { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<Part<T, 'game'>, Part<T, 'pack'>> }
+  /** Its pack keys: how a later pack's entries go over an earlier one's. Required with a `pack` in its shape. */
+  pack?: PackSpec<T>
+  /** What each of its pack keys declares and the words in it. Required with a `pack` in its shape. */
+  content?: ContentKeys<T>
   /** The lists its problems name, which `pack.merge` answers for. */
   lists?: readonly (T['lists'] & string)[]
   /** Its own checks on the game's content. */

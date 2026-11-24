@@ -20,7 +20,7 @@ import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { GameState, Range } from '../types.ts'
 import { bounded, inRange, wanted } from '../range.ts'
-import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
+import { byId, defineFeature, listWords, mergedById, type FeatureContext } from './feature.ts'
 import { minigameAdvanced, minigameDue, minigamePlay, minigameTimedOut } from './minigames.ts'
 
 /** A timer a game declares: how long it runs, and what happens when it runs out. */
@@ -246,6 +246,7 @@ export const timers = defineFeature<TimersShape>({
   pack: mergedById<TimersShape['game'], TimersShape['pack'], TimerDef>({ base: (game) => game.timers, pack: (pack) => pack.timers }, (game, list) => {
     game.timers = list
   }),
+  content: { timers: { declares: byId('timer'), words: listWords('timers', 'timer', { label: true, effects: 'effects' }) } },
   lists: ['timer'],
   check: (game, tools) => {
     const list = game.timers ?? []

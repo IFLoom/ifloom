@@ -6,7 +6,7 @@
 import { stringOf } from '../strings.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState } from '../types.ts'
-import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
+import { byId, defineFeature, listWords, mergedById, type FeatureContext } from './feature.ts'
 
 /**
  * Something the player types or picks, written to a kv key: a name for a
@@ -116,6 +116,7 @@ export const inputs = defineFeature<InputsShape>({
   pack: mergedById<InputsShape['game'], InputsShape['pack'], InputDef>({ base: (game) => game.inputs, pack: (pack) => pack.inputs }, (game, list) => {
     game.inputs = list
   }),
+  content: { inputs: { declares: byId('input'), words: listWords('inputs', 'input', { label: true, options: [{ label: true }] }) } },
   lists: ['input'],
   check: (game, tools) => {
     tools.twice(

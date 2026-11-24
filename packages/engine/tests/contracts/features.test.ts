@@ -66,6 +66,7 @@ describe('core features are leaves', () => {
       'features/actions.ts',
       'features/audio.ts',
       'features/changes.ts',
+      'features/ending.ts',
       'features/entities.ts',
       'features/feature.ts',
       'features/flows.ts',
@@ -153,6 +154,7 @@ describe('the registry', () => {
       rolls: { conditions: ['roll'], effects: ['roll'], commands: [] },
       phrases: { conditions: [], effects: [], commands: [] },
       changes: { conditions: [], effects: [], commands: [] },
+      ending: { conditions: [], effects: [], commands: [] },
     })
     // The core keeps only what is no feature's: the conditions that hold by their parts, and the plugins' seam.
     const owned = new Set(Object.values(featureKinds).flatMap((kinds) => [...kinds.conditions, ...kinds.effects, ...kinds.commands]))

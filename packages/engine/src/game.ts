@@ -281,7 +281,7 @@ export type CarryOver = {
   held?: string[] | 'all'
 }
 
-/** The fields of a game the core reads itself. The features' (settings, stats, audio, media) are in `features/`. */
+/** The fields of a game the core reads itself. The features' (settings, stats, audio, media, the ending) are in `features/`. */
 type CoreGame = {
   id: string
   title: string
@@ -292,13 +292,6 @@ type CoreGame = {
    * your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out.
    */
   version?: number
-  /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
-  carryOver?: CarryOver
-  /**
-   * When the game counts as finished. The runner records the first time it
-   * holds in the profile's `core:finished`, so a title screen can offer New Game+.
-   */
-  finished?: Condition
   /** The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. */
   packs?: string[]
   prose?: ProseStore

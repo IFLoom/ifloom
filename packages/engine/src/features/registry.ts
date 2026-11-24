@@ -15,7 +15,7 @@ import { entities, type EntitiesShape } from './entities.ts'
 import { holdings, type HoldingsShape } from './holdings.ts'
 import { inputs, type InputsShape } from './inputs.ts'
 import { locks, type LocksShape } from './locks.ts'
-import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
+import type { ConditionEntry, CommandEntry, ContentKey, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
 import { media, type MediaShape } from './media.ts'
 import { minigames, type MinigamesShape } from './minigames.ts'
 import { flowsFeature, type FlowsShape } from './flows.ts'
@@ -34,6 +34,7 @@ import { kv, type KvShape } from './kv.ts'
 import { rolls, type RollsShape } from './rolls.ts'
 import { phrases, type PhrasesShape } from './phrases.ts'
 import { changes, type ChangesShape } from './changes.ts'
+import { ending, type EndingShape } from './ending.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
 type Shapes =
@@ -61,6 +62,7 @@ type Shapes =
   | RollsShape
   | PhrasesShape
   | ChangesShape
+  | EndingShape
 
 /**
  * The core features, in the order their after-command steps, views, checks,
@@ -80,7 +82,9 @@ type Shapes =
  * rolls a command keeps for the view include any a hook or a trigger made;
  * phrases anywhere, since it only merges and checks; changes very last, after
  * the plugins' hooks and every other step, so the stats it compares are
- * what the command left once everything had run.
+ * what the command left once everything had run; the ending anywhere, since
+ * it only merges and checks (last, so `finished` is checked after the rest,
+ * as it always was).
  */
 export const FEATURES = [
   turns,
@@ -107,6 +111,7 @@ export const FEATURES = [
   rolls,
   phrases,
   changes,
+  ending,
 ] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never
@@ -129,6 +134,8 @@ export type FeaturePack = Merged<'pack'>
 export type FeatureView = Merged<'view'>
 /** The features' kinds of `Reference`, by the key that tells each apart. */
 export type FeatureReferences = Merged<'references'>
+/** The features' pack keys only a pack holds, never the game's content. */
+export type FeaturePackOnly = Shapes extends infer T ? (T extends { packOnly: infer L } ? L : never) : never
 /** The lists the features' problems name. */
 export type FeatureList = Shapes extends infer T ? (T extends { lists: infer L } ? L : never) : never
 
@@ -254,6 +261,15 @@ export const runnerHooks: readonly RunnerHooks[] = all.flatMap((feature) => (fea
 
 /** The features with a pack key, in order. */
 export const packFeatures = all.filter((feature) => feature.pack)
+
+/**
+ * What each feature's pack keys hold, by key, in the features' order: what
+ * a piece of content declares under each, and the words in it. Every key of
+ * `Pack` a feature brings is here: `defineFeature` makes each feature say.
+ */
+export const contentKeys = merged((feature) => (feature.content ?? {}) as Record<string, unknown>, 'pack key') as unknown as {
+  [K in keyof FeaturePack]-?: ContentKey<NonNullable<FeaturePack[K]>>
+}
 
 /**
  * The complete tables: the core's own entries and every feature's. The types

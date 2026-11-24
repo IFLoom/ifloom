@@ -6,7 +6,7 @@
 import { stringOf } from '../strings.ts'
 import type { Game } from '../game.ts'
 import type { KvValue, Range } from '../types.ts'
-import { defineFeature } from './feature.ts'
+import { byId, defineFeature, listWords } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /**
@@ -270,6 +270,7 @@ export const settings = defineFeature<SettingsShape>({
       }
     },
   },
+  content: { settings: { declares: byId('setting'), words: listWords('settings', 'setting', { label: true, options: [{ label: true }] }) } },
   lists: ['setting'],
   // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
   fill: {

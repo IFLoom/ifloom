@@ -9,7 +9,7 @@ import type { ActionDef, Blocked, Game, Once, Reason } from '../game.ts'
 import type { Command, Condition, Effect, GameState } from '../types.ts'
 import { commandOf } from '../calls.ts'
 import type { Reference } from '../references.ts'
-import { defineFeature, mergedById, type CommandContext, type FeatureContext } from './feature.ts'
+import { byId, defineFeature, listWords, mergedById, type CommandContext, type FeatureContext } from './feature.ts'
 import { lockedBy } from './locks.ts'
 import { clampStat, lackingLine, statOf, statValue } from './stats.ts'
 
@@ -200,6 +200,7 @@ export const actions = defineFeature<ActionsShape>({
     undefined,
     'action',
   ),
+  content: { actions: { declares: byId('action'), words: listWords('actions', 'action', 'button') } },
   lists: ['action'],
   check: (game, tools) => {
     tools.twice(

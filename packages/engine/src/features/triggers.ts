@@ -7,7 +7,7 @@
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { Condition, Effect, GameState } from '../types.ts'
-import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
+import { byId, defineFeature, listWords, mergedById, type FeatureContext } from './feature.ts'
 
 /**
  * Effects that happen by themselves: the first time `when` holds after a
@@ -64,6 +64,7 @@ export const triggers = defineFeature<TriggersShape>({
   pack: mergedById<TriggersShape['game'], TriggersShape['pack'], TriggerDef>({ base: (game) => game.triggers, pack: (pack) => pack.triggers }, (game, list) => {
     game.triggers = list
   }),
+  content: { triggers: { declares: byId('trigger'), words: listWords('triggers', 'trigger', { effects: 'effects' }) } },
   lists: ['trigger'],
   check: (game, tools) => {
     tools.twice(

@@ -5,7 +5,7 @@
  */
 import type { Game } from '../game.ts'
 import type { Command, Condition, Effect, GameState } from '../types.ts'
-import { appended, defineFeature, type FeatureContext } from './feature.ts'
+import { appended, defineFeature, listWords, type FeatureContext } from './feature.ts'
 
 /**
  * Something the player cannot do for now, and why.
@@ -116,6 +116,13 @@ export const locks = defineFeature<LocksShape>({
       game.locks = list
     },
   ),
+  content: {
+    // Locks are added, each file its own; only a lock's id, when it has one, names it.
+    locks: {
+      declares: (locks) => locks.flatMap((lock) => (lock.id === undefined ? [] : [`lock "${lock.id}"`])),
+      words: listWords('locks', 'lock', { reason: true }),
+    },
+  },
   lists: ['lock'],
   check: (game, tools) => {
     ;(game.locks ?? []).forEach((lock, index) => {

@@ -552,6 +552,7 @@ export const audio = defineFeature<AudioShape>({
       }
     },
   },
+  content: { audio: { declares: (audio) => Object.keys(audio.tracks ?? {}).map((key) => `track "${key}"`), words: null } },
   lists: ['track', 'channel', 'audio'],
   // The manifest and its files.
   check: (game, tools) => {

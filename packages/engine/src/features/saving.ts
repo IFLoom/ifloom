@@ -8,7 +8,7 @@
 import type { Blocked, Game } from '../game.ts'
 import { reasonOf } from '../strings.ts'
 import type { Condition, GameState } from '../types.ts'
-import { appended, defineFeature } from './feature.ts'
+import { appended, defineFeature, listWords } from './feature.ts'
 
 /** Whether the player can save now, and why not: what `view.saving` holds. */
 export type SavingView = {
@@ -58,6 +58,8 @@ export const saving = defineFeature<SavingShape>({
       game.saveable = list
     },
   ),
+  // Saveable entries are added, each file its own, so none is declared twice.
+  content: { saveable: { declares: null, words: listWords('saveable', 'saveable', { reason: true }) } },
   lists: ['saveable'],
   check: (game, tools) => {
     ;(game.saveable ?? []).forEach((entry, index) => tools.check({ list: 'saveable', id: String(index) }, 'saveable', [{ when: entry.when }]))

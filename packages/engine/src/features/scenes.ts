@@ -12,7 +12,8 @@ import type { SceneView } from '../game.ts'
 import type { Condition, GameState, Range } from '../types.ts'
 import { emphasis, INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
-import { defineFeature, lastWins, together, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
+import { byId, defineFeature, lastWins, once, together, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
+import type { WordWalk } from '../words.ts'
 import { inRange, wanted } from '../range.ts'
 import { costEffects, costRefusal, payCost } from './actions.ts'
 import { everyBlock, flowBlockReferences, jumpOf, sceneChoices, stepped, withoutJump } from './flows.ts'
@@ -124,6 +125,7 @@ export type ScenesShape = {
     introScene?: string
   }
   lists: 'scene' | 'introScene'
+  packOnly: 'patches'
   references: {
     /** A scene, as a gate (`{ seen }`), as somewhere an effect goes, or as a button opens it. */
     scene: { scene: string; as?: 'gate' | 'go' | 'open' }
@@ -382,6 +384,21 @@ function witnessed(before: GameState, after: GameState): GameState {
   return { ...after, seen: { ...after.seen, [id]: oneMore(after.seen[id], after.turn) } }
 }
 
+/** Each data scene's words: its title, body, choices and picture's hotspots, under `scene.<id>`. */
+function sceneWords(game: Game, walk: WordWalk) {
+  game.scenes.forEach((scene, index) => {
+    if (!('body' in scene) || !Array.isArray(scene.body)) return
+    const entry = `scene.${scene.id}`
+    const where = `scene ${scene.id}`
+    const at = ['scenes', index]
+    walk.source = { list: 'scene', id: scene.id }
+    walk.field(`${entry}.title`, scene.title, [...at, 'title'], where)
+    walk.blocks(scene.body, entry, [...at, 'body'], where)
+    scene.choices?.forEach((choice, n) => walk.choice(choice, entry, [...at, 'choices', n], where))
+    walk.part({ hotspots: [{ label: true }] }, scene.picture, entry, `${entry}.picture`, [...at, 'picture'], where)
+  })
+}
+
 export const scenes = defineFeature<ScenesShape>({
   name: 'scenes',
   state: {
@@ -507,6 +524,11 @@ export const scenes = defineFeature<ScenesShape>({
       },
     ),
   ),
+  content: {
+    scenes: { declares: byId('scene'), words: sceneWords },
+    patches: { declares: null, packOnly: true, words: null },
+    introScene: { declares: once('introScene'), words: null },
+  },
   lists: ['scene', 'introScene'],
   check: (game, tools) => {
     if (game.introScene !== undefined && !game.scenes.some((scene) => scene.id === game.introScene)) {

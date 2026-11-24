@@ -408,6 +408,7 @@ export const media = defineFeature<MediaShape>({
       }
     },
   },
+  content: { media: { declares: (media) => Object.keys(media.pools ?? {}).map((key) => `pool "${key}"`), words: null } },
   lists: ['pool'],
   // The pools and their files. What asks for a pool is checked where it is.
   check: (game, tools) => {

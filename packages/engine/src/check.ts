@@ -40,12 +40,12 @@ export type Checked = {
 
 /**
  * What a problem is about, for `loadGame` to name the pack it came from.
- * Undefined is the game itself: its actions, `finished`, `carryOver`.
+ * Undefined is the game itself.
  */
 export type Source = { list: CoreList; id: string } | { list: FeatureList; id?: string } | { plugin: string; list: string; id: string } | undefined
 
 /** The lists the core keeps itself. The features' lists are their own (`FeatureList`). */
-export type CoreList = 'prose' | 'finished' | 'carryOver'
+export type CoreList = 'prose'
 
 /** A problem as a line: `pack · where · what`. */
 export function describeProblem(problem: Problem): string {
@@ -298,7 +298,6 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   const cx = featureContext()
   for (const featureCheck of featureChecks) featureCheck(game, tools, cx)
 
-  check({ list: 'finished', id: 'finished' }, 'finished', [{ when: game.finished }])
   // What a New Game+ carries, in the order the game lists it, each key checked by the feature that carries it.
   for (const key of Object.keys(game.carryOver ?? {})) carryChecks[key as keyof typeof carryChecks]?.(game, tools)
 

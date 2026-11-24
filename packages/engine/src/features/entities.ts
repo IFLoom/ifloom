@@ -39,7 +39,8 @@ import type { Reference } from '../references.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState, Range } from '../types.ts'
 import { withUi, type EntityUi, type Ui } from './ui.ts'
-import { defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
+import { byId, defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
+import type { WordShape, WordWalk } from '../words.ts'
 import { bounded, inRange, wanted } from '../range.ts'
 import { statOf, statView, type StatView } from './stats.ts'
 import { artSrc, spokenIds } from '../sceneBody.ts'
@@ -382,6 +383,59 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
   }
 }
 
+/** The shapes of the traits the game's rules and plugins declare words for, by trait id. */
+function traitShapes(game: Game): Map<string, WordShape> {
+  const out = new Map<string, WordShape>()
+  for (const trait of game.rules?.traits ?? []) if (trait.words) out.set(trait.id, trait.words)
+  for (const plugin of game.plugins ?? []) for (const trait of plugin.traits ?? []) if (trait.words) out.set(trait.id, trait.words)
+  return out
+}
+
+/**
+ * Kinds' words, then entities': their own, then their traits'. A trait's
+ * words an entity has from its kind's default are named by the kind's key,
+ * so a translation gives them once.
+ */
+function kindWords(game: Game, walk: WordWalk) {
+  const shapes = traitShapes(game)
+  const fromKind = new Map<string, Map<string, string>>()
+  ;(game.kinds ?? []).forEach((kind, index) => {
+    const entry = `kind.${kind.id}`
+    const where = `kind ${kind.id}`
+    walk.source = { list: 'kind', id: kind.id }
+    walk.part({ label: true, plural: true }, kind, entry, entry, ['kinds', index], where)
+    for (const [id, data] of Object.entries(kind.traits ?? {})) {
+      const shape = shapes.get(id)
+      if (!shape) continue
+      const before = walk.spots.length
+      walk.part(shape, data, entry, `${entry}.traits.${id}`, ['kinds', index, 'traits', id], where)
+      const own = new Map<string, string>()
+      for (const spot of walk.spots.slice(before)) own.set(`${id} ${spot.key.slice(entry.length)} ${spot.text}`, spot.key)
+      fromKind.set(kind.id, new Map([...(fromKind.get(kind.id) ?? []), ...own]))
+    }
+  })
+  ;(game.entities ?? []).forEach((entity, index) => {
+    const ref = `${entity.of}:${entity.id}`
+    walk.source = { list: 'entity', id: ref }
+    walk.part({ name: true, description: true }, entity, `entity.${ref}`, `entity.${ref}`, ['entities', index], `entity ${ref}`)
+  })
+  for (const [id, byRef] of Object.entries(game.traits ?? {})) {
+    const shape = shapes.get(id)
+    if (!shape) continue
+    for (const [ref, data] of Object.entries(byRef ?? {})) {
+      const entry = `entity.${ref}`
+      const kind = ref.slice(0, ref.indexOf(':'))
+      walk.source = { list: 'trait', id: `${id} ${ref}` }
+      const before = walk.spots.length
+      walk.part(shape, data, entry, `${entry}.traits.${id}`, ['traits', id, ref], `entity ${ref}`)
+      for (const spot of walk.spots.slice(before)) {
+        const kinds = fromKind.get(kind)?.get(`${id} ${spot.key.slice(entry.length)} ${spot.text}`)
+        if (kinds !== undefined) spot.key = kinds
+      }
+    }
+  }
+}
+
 export const entities = defineFeature<EntitiesShape>({
   name: 'entities',
   state: {
@@ -488,6 +542,15 @@ export const entities = defineFeature<EntitiesShape>({
     },
   },
   pack: { merge },
+  content: {
+    kinds: { declares: byId('kind'), words: kindWords },
+    // An entity's words and its traits' are walked with its kind's, which name a trait's words an entity has from its kind.
+    entities: { declares: (entities) => entities.map((entity) => `entity "${entity.of}:${entity.id}"`), words: null },
+    traits: {
+      declares: (traits) => Object.entries(traits).flatMap(([id, rows]) => Object.keys(rows ?? {}).map((ref) => `trait "${id}" on "${ref}"`)),
+      words: null,
+    },
+  },
   lists: ['kind', 'entity', 'trait'],
   // What older saves copied from content (names, and values equal to where they start) is dropped, so it reads from content again.
   loaded: (state, game) => tidied(state, game),

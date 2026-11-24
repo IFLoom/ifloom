@@ -9,7 +9,7 @@ import { entityOf, entityStat, hasEntity, ofKind, ownerOf, statOwnerProblem, wri
 import { notify } from '../notices.ts'
 import type { Amount, Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
-import { defineFeature, type FeatureContext } from './feature.ts'
+import { byId, defineFeature, listWords, type FeatureContext } from './feature.ts'
 import { withUi, type StatUi, type Ui } from './ui.ts'
 import { inRange, wanted } from '../range.ts'
 
@@ -557,6 +557,7 @@ export const stats = defineFeature<StatsShape>({
       }
     },
   },
+  content: { stats: { declares: byId('stat'), words: listWords('stats', 'stat', { label: true, format: true, lacking: true, levels: { notice: true } }) } },
   lists: ['stat'],
   // A kept stat of the player's the save lacks starts at its start. An entity's reads its start until play changes it.
   fill: {

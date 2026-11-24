@@ -96,7 +96,7 @@ const table = Object.fromEntries(translatableFields(game).map((field) => [field.
 console.log(JSON.stringify(table, null, 2))
 ```
 
-It lists the fields of every scene, action, storyline, kind, entity, stat, setting, input, lock, saveable reason, trigger, timer and minigame, the traits each plugin declares words for, and each plugin's content. A field is listed once even when several share its key, such as a kind's trait default that every entity of the kind has.
+It lists the fields of every storyline, trigger, scene, minigame, timer, action, input, setting, stat, kind and entity (with the words of the traits plugins declare words for), lock, saveable reason and phrase, in that order, then each plugin's content. A field is listed once even when several share its key, such as a kind's trait default that every entity of the kind has.
 
 [`ifloom words`](/docs/cli#ifloom-words) prints this list for a game, and `ifloom words --out words.en.json` writes the table above to a file.
 

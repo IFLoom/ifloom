@@ -13,7 +13,7 @@ import { stringOf } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { Condition, GameState } from '../types.ts'
-import { defineFeature, mergedById, type FeatureCheckTools, type FeatureContext } from './feature.ts'
+import { byId, defineFeature, listWords, mergedById, type FeatureCheckTools, type FeatureContext } from './feature.ts'
 
 /** A state a transition can go to at random: its id, or its id with a weight (1 if left out). */
 export type MinigameTarget = string | { state: string; weight?: number }
@@ -450,6 +450,23 @@ export const minigames = defineFeature<MinigamesShape>({
       game.minigames = list
     },
   ),
+  content: {
+    minigames: {
+      declares: byId('minigame'),
+      words: listWords('minigames', 'minigame', {
+        title: true,
+        states: {
+          '*': {
+            label: true,
+            after: { effects: 'effects' },
+            on: [{ label: true, effects: 'effects' }],
+            always: [{ effects: 'effects' }],
+            final: { effects: 'effects' },
+          },
+        },
+      }),
+    },
+  },
   lists: ['minigame'],
   check: (game, tools) => {
     const list = game.minigames ?? []

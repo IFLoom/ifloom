@@ -1,11 +1,9 @@
 import type { PluginEntry } from './plugin.ts'
-import { flatPhrases } from './features/phrases.ts'
-import type { CarryOver, Game } from './game.ts'
-import type { Condition } from './types.ts'
+import type { Game } from './game.ts'
 import { memberKey, proseStore, type VariantMember } from './prose.ts'
 import type { Flat } from './types.ts'
 import { checkContent, type Problem, type Source } from './check.ts'
-import { listOwners, packFeatures, type FeaturePack } from './features/registry.ts'
+import { contentKeys, listOwners, packFeatures, type FeaturePack, type FeaturePackOnly } from './features/registry.ts'
 import type { PackMerge } from './features/feature.ts'
 import { upgradePack } from './upgrade.ts'
 import { layWords } from './words.ts'
@@ -23,7 +21,7 @@ export { SCHEMA } from './upgrade.ts'
 
 export type { Patch } from './features/scenes.ts'
 
-/** What content and packs both declare, beside each feature's key. */
+/** What content and packs both declare, beside each feature's keys: the words, and plugin content. */
 type Declarations = {
   /** Player-facing words by key, over the engine's and plugins' own. */
   strings?: Record<string, string>
@@ -51,14 +49,6 @@ type Declarations = {
    * same id, as its scenes do.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
-  /**
-   * When the game counts as finished. The runner records the first time it
-   * holds in the profile's `core:finished`, so a title screen can offer New
-   * Game+. A pack's replaces the content's.
-   */
-  finished?: Condition
-  /** What a New Game+ carries over from the game before. A pack's replaces the content's, whole. */
-  carryOver?: CarryOver
 }
 
 /**
@@ -72,7 +62,7 @@ export type Content = Flat<
     /** What problems call this content, such as `story.cafe`. Without one, they say `content`. */
     name?: string
   } & Declarations &
-    Omit<FeaturePack, 'patches'>
+    Omit<FeaturePack, FeaturePackOnly>
 >
 
 /**
@@ -111,50 +101,6 @@ export type LoadOptions = {
   packs?: readonly Pack[]
 }
 
-/** Every key a declaration holds, the core's and the features'. Typed complete, so a new key that isn't listed here fails to compile. */
-const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true } = {
-  strings: true,
-  prose: true,
-  words: true,
-  variants: true,
-  data: true,
-  finished: true,
-  carryOver: true,
-  scenes: true,
-  patches: true,
-  storylines: true,
-  triggers: true,
-  inputs: true,
-  settings: true,
-  stats: true,
-  audio: true,
-  media: true,
-  minigames: true,
-  timers: true,
-  kinds: true,
-  entities: true,
-  traits: true,
-  actions: true,
-  locks: true,
-  resets: true,
-  saveable: true,
-  kv: true,
-  introScene: true,
-  ui: true,
-  phrases: true,
-  changes: true,
-}
-
-/**
- * The keys content and a pack can hold. A key that isn't here is reported,
- * not quietly dropped: an `id` and `schema` belong to a pack. A pack's `overrides` is dropped without a word: packs once needed it
- * to replace content on purpose, and every pack does that now.
- */
-const { patches: _patches, ...CONTENT_DECLARATION_KEYS } = DECLARATION_KEYS
-const CONTENT_KEYS: { [K in keyof Content]-?: true } = { ...CONTENT_DECLARATION_KEYS, name: true }
-const PACK_KEYS: { [K in keyof Pack]-?: true } = { ...DECLARATION_KEYS, id: true, schema: true, plugins: true }
-const IGNORED_PACK_KEYS = new Set(['overrides'])
-
 /** What the base once held that is the game's code now, in `rules`. */
 const CODE_KEYS = new Set(['custom', 'migrations', 'saveName'])
 
@@ -170,34 +116,18 @@ const BASE_KEYS: { [K in keyof GameBase]-?: true } = {
 /** One thing content declares, as a problem names it: `scene "cafe.counter"`. */
 type Declared = string
 
-/** Ids of a list by id, worded with their noun. */
-const byId =
-  (noun: string, list: (content: Content) => readonly { id: string }[] | undefined) =>
-  (content: Content): Declared[] =>
-    (list(content) ?? []).map((entry) => `${noun} "${entry.id}"`)
-
 /** Keys of a record, worded with their noun. */
-const byKey =
-  (noun: string, record: (content: Content) => object | undefined) =>
-  (content: Content): Declared[] =>
-    Object.keys(record(content) ?? {}).map((key) => `${noun} "${key}"`)
-
-/** A key that holds one thing, declared by the content that gives it. */
-const once =
-  (noun: string, value: (content: Content) => unknown) =>
-  (content: Content): Declared[] =>
-    value(content) === undefined ? [] : [noun]
+const byKey = (noun: string, record: object | undefined): Declared[] => Object.keys(record ?? {}).map((key) => `${noun} "${key}"`)
 
 /**
- * What each content key declares, for the report of one thing declared twice
- * across the game's content. Typed complete, so a new key has to say. Null for
- * its name, which declares nothing.
+ * What each key the core declares itself declares, for the report of one
+ * thing declared twice across the game's content. Typed complete, so a new
+ * key has to say. Each feature's keys say in its `content`.
  */
-const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | null } = {
-  name: null,
-  strings: byKey('string', (content) => content.strings),
-  prose: byKey('prose', (content) => content.prose),
-  words: byKey('words', (content) => content.words),
+const CORE_DECLARES: { [K in keyof Declarations]-?: (content: Content) => Declared[] } = {
+  strings: (content) => byKey('string', content.strings),
+  prose: (content) => byKey('prose', content.prose),
+  words: (content) => byKey('words', content.words),
   // Content appends to a variants name, so only the same line listed twice is a clash.
   variants: (content) =>
     Object.entries(content.variants ?? {}).flatMap(([name, members]) => members.map((member) => `variants "${name}" line "${memberKey(member)}"`)),
@@ -205,32 +135,35 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
     Object.entries(content.data ?? {}).flatMap(([plugin, lists]) =>
       Object.entries(lists).flatMap(([list, entries]) => entries.map((entry) => `${plugin}/${list} "${entry.id}"`)),
     ),
-  scenes: byId('scene', (content) => content.scenes),
-  storylines: byId('storyline', (content) => content.storylines),
-  triggers: byId('trigger', (content) => content.triggers),
-  inputs: byId('input', (content) => content.inputs),
-  settings: byId('setting', (content) => content.settings),
-  stats: byId('stat', (content) => content.stats),
-  minigames: byId('minigame', (content) => content.minigames),
-  timers: byId('timer', (content) => content.timers),
-  // Every file's tracked stats are added together.
-  changes: null,
-  phrases: (content) => flatPhrases(content.phrases).map(([name]) => `phrase "${name}"`),
-  kinds: byId('kind', (content) => content.kinds),
-  entities: (content) => (content.entities ?? []).map((entity) => `entity "${entity.of}:${entity.id}"`),
-  traits: (content) => Object.entries(content.traits ?? {}).flatMap(([id, rows]) => Object.keys(rows ?? {}).map((ref) => `trait "${id}" on "${ref}"`)),
-  audio: byKey('track', (content) => content.audio?.tracks),
-  media: byKey('pool', (content) => content.media?.pools),
-  finished: once('finished', (content) => content.finished),
-  carryOver: once('carryOver', (content) => content.carryOver),
-  actions: byId('action', (content) => content.actions),
-  // Locks and saveable entries are added, each file its own; only a lock's id, when it has one, names it.
-  locks: (content) => (content.locks ?? []).flatMap((lock) => (lock.id === undefined ? [] : [`lock "${lock.id}"`])),
-  saveable: null,
-  resets: byKey('reset', (content) => content.resets),
-  kv: byKey('kv', (content) => content.kv),
-  introScene: once('introScene', (content) => content.introScene),
-  ui: byKey('ui hint', (content) => content.ui),
+}
+
+/** The features' pack keys: every one is the game's content too, but those only a pack holds. */
+const FEATURE_KEYS = Object.keys(contentKeys) as (keyof FeaturePack)[]
+const PACK_ONLY = new Set<string>(FEATURE_KEYS.filter((key) => contentKeys[key].packOnly))
+
+/**
+ * The keys content and a pack can hold. A key that isn't here is reported,
+ * not quietly dropped: an `id` and `schema` belong to a pack. A pack's `overrides` is dropped without a word: packs once needed it
+ * to replace content on purpose, and every pack does that now.
+ */
+const keys = (...lists: readonly string[][]) => Object.fromEntries(lists.flat().map((key) => [key, true]))
+const CONTENT_KEYS = keys(
+  Object.keys(CORE_DECLARES),
+  ['name'],
+  FEATURE_KEYS.filter((key) => !PACK_ONLY.has(key)),
+) as { [K in keyof Content]-?: true }
+const PACK_KEYS = keys(Object.keys(CORE_DECLARES), ['id', 'schema', 'plugins'], FEATURE_KEYS) as { [K in keyof Pack]-?: true }
+const IGNORED_PACK_KEYS = new Set(['overrides'])
+
+/** Everything one piece of content declares: the core's keys, then each feature's, as its `content` says. */
+function declarations(content: Content): Declared[] {
+  const out = Object.values(CORE_DECLARES).flatMap((read) => read(content))
+  for (const key of FEATURE_KEYS) {
+    const value = (content as Record<string, unknown>)[key]
+    const declares = contentKeys[key].declares as ((value: unknown) => readonly Declared[]) | null
+    if (value !== undefined && declares) out.push(...declares(value))
+  }
+  return out
 }
 
 /** What problems call a piece of content. */
@@ -291,23 +224,17 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
   /** Which piece of content declared each thing first, by its place in the list, to report a second one. */
   const declaredBy = new Map<Declared, number>()
   const declaredTwice = (piece: Content, index: number) => {
-    for (const read of Object.values(DECLARES)) {
-      for (const what of new Set(read?.(piece) ?? [])) {
-        const first = declaredBy.get(what)
-        if (first === undefined) {
-          declaredBy.set(what, index)
-          continue
-        }
-        const earlier = content[first]
-        const both = earlier.name !== undefined && piece.name !== undefined ? `, in ${earlier.name} and ${piece.name}` : ''
-        problems.push({ pack: contentName(piece), where: what, what: `declared twice${both}` })
+    for (const what of new Set(declarations(piece))) {
+      const first = declaredBy.get(what)
+      if (first === undefined) {
+        declaredBy.set(what, index)
+        continue
       }
+      const earlier = content[first]
+      const both = earlier.name !== undefined && piece.name !== undefined ? `, in ${earlier.name} and ${piece.name}` : ''
+      problems.push({ pack: contentName(piece), where: what, what: `declared twice${both}` })
     }
   }
-
-  /** What a game's single values come to: the last content or pack that gives each wins. */
-  let finished: { value: Condition; from: string } | undefined
-  let carryOver: { value: CarryOver; from: string } | undefined
 
   /** Merge one piece of content or one pack into what came before it. */
   const add = (piece: Content | Pack, from: string) => {
@@ -315,10 +242,8 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     addWords(piece, from)
   }
 
-  /** What the core merges itself from a piece: words, plugin data and its single values. */
+  /** What the core merges itself from a piece: words and plugin data. */
   function addWords(piece: Content | Pack, from: string) {
-    if (piece.finished !== undefined) finished = { value: piece.finished, from }
-    if (piece.carryOver !== undefined) carryOver = { value: piece.carryOver, from }
     Object.assign(prose, piece.prose ?? {})
     for (const key of Object.keys(piece.prose ?? {})) proseFrom.set(key, from)
     Object.assign(strings, piece.strings ?? {})
@@ -359,12 +284,12 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     const from = contentName(piece)
     for (const key of Object.keys(piece)) {
       if (Object.hasOwn(CONTENT_KEYS, key)) continue
-      const why = key === 'id' || key === 'schema' || key === 'plugins' || key === 'patches' ? `; a pack has one, and goes in \`packs\`` : ''
+      const why = key === 'id' || key === 'schema' || key === 'plugins' || PACK_ONLY.has(key) ? `; a pack has one, and goes in \`packs\`` : ''
       problems.push({ pack: from, where: 'content', what: `content has no "${key}", so it was left out${why}` })
     }
     declaredTwice(piece, index)
     // A key content can't hold is left out, so a pack given as content doesn't patch or override anything.
-    const { patches: _patches, ...kept } = piece as Content & { patches?: unknown }
+    const kept = Object.fromEntries(Object.entries(piece).filter(([key]) => !PACK_ONLY.has(key))) as Content
     add(kept, from)
   })
 
@@ -397,8 +322,6 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     storylines: [],
     packs: packs.map((pack) => pack.id),
     strings,
-    ...(finished ? { finished: finished.value } : {}),
-    ...(carryOver ? { carryOver: carryOver.value } : {}),
     data: Object.fromEntries(
       [...data].map(([plugin, lists]) => [
         plugin,
@@ -421,9 +344,7 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     // A feature's list: the feature's merge knows.
     const owner = Object.hasOwn(listOwners, source.list) ? listOwners[source.list as keyof typeof listOwners] : undefined
     if (owner) return merges.get(owner.name)?.from(source.list, source.id) ?? 'base'
-    // The core's own lists: what the game finishes on and carries over, and prose.
-    if (source.list === 'finished') return finished?.from ?? 'base'
-    if (source.list === 'carryOver') return carryOver?.from ?? 'base'
+    // The core's own list: prose.
     return proseFrom.get(source.id ?? '') ?? 'base'
   }
   problems.push(...checkContent(game, [], packOf).problems)

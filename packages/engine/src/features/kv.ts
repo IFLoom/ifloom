@@ -8,7 +8,7 @@ import { storylineOf } from '../storylines.ts'
 import type { Game } from '../game.ts'
 import type { Reference } from '../references.ts'
 import type { Amount, GameState, KvValue, Range } from '../types.ts'
-import { defineFeature, mergedByKey, type FeatureContext } from './feature.ts'
+import { byKey, defineFeature, mergedByKey, type FeatureContext } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /** What `of` names for a storyline's keys: `'storyline:baker'`. */
@@ -211,6 +211,7 @@ export const kv = defineFeature<KvShape>({
       }
     },
   },
+  content: { kv: { declares: byKey('kv'), words: null }, resets: { declares: byKey('reset'), words: null } },
   lists: ['reset', 'kv'],
   // The keys a new game starts with and the ones the game resets each turn, at those values, where the save lacks them.
   fill: {

@@ -6,7 +6,7 @@
 import { emptyStoryline, storylineOf, storylineOpen } from '../storylines.ts'
 import type { StorylineDef } from '../game.ts'
 import type { StorylineState } from '../types.ts'
-import { defineFeature, mergedById } from './feature.ts'
+import { byId, defineFeature, listWords, mergedById } from './feature.ts'
 
 /** What the storylines feature adds, as types. */
 export type StorylinesShape = {
@@ -66,6 +66,7 @@ export const storylines = defineFeature<StorylinesShape>({
   pack: mergedById<StorylinesShape['game'], StorylinesShape['pack'], StorylineDef>({ pack: (pack) => pack.storylines }, (game, list) => {
     game.storylines = list
   }),
+  content: { storylines: { declares: byId('storyline'), words: listWords('storylines', 'storyline', { name: true }) } },
   lists: ['storyline'],
   // A storyline the game added since the save was made starts empty, whatever the game's version.
   loaded: (state, game) => {

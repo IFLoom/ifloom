@@ -19,7 +19,7 @@
  * file could hold, with no functions in it.
  */
 import { INLINE_MARKUP, UI_NAME, uiParts } from '../sceneBody.ts'
-import { defineFeature, mergedByKey } from './feature.ts'
+import { byKey, defineFeature, mergedByKey } from './feature.ts'
 
 /** Hints on a scene, and on a room scene (a place's), for the UI that draws it. Empty here; a UI package augments it. */
 export interface SceneUi {}
@@ -145,6 +145,7 @@ export const ui = defineFeature<UiShape>({
       game.ui = hints as Ui<GameUi>
     },
   ),
+  content: { ui: { declares: byKey('ui hint'), words: null } },
   lists: ['ui'],
   check: (game, tools) => tools.check({ list: 'ui' }, 'ui', [{ ui: game.ui }]),
   resolve: () => ({ ui: (ref) => uiProblems(ref.ui) }),

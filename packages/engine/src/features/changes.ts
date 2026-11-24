@@ -122,6 +122,8 @@ export const changes = defineFeature<ChangesShape>({
   name: 'changes',
   requires: ['stats', 'entities'],
   pack: { merge },
+  // Every file's tracked stats are added together.
+  content: { changes: { declares: null, words: null } },
   lists: ['changes'],
   check: (game, tools) => {
     const stats = game.changes?.stats

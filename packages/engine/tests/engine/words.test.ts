@@ -6,7 +6,8 @@ import { startingState } from '../../src/intake.ts'
 import { apply } from '../../src/reduce.ts'
 import { view } from '../../src/view.ts'
 import { choice, decide, say, text } from '../../src/flow.ts'
-import { translatableFields } from '../../src/words.ts'
+import { translatableFields, wordSpots } from '../../src/words.ts'
+import { contentKeys } from '../../src/features/registry.ts'
 
 /** A plugin with a list of its own content and a trait, each saying which of its fields are words. */
 const signs = definePlugin({
@@ -163,5 +164,35 @@ describe('the words table', () => {
     expect(loadGame([clash], { id: 'h', title: 'H' }).problems.map(describeProblem)).toEqual([
       'clash · scene hall · two fields with different words share the words key "scene.hall.text.door"; give a block of words an id, or rename one',
     ])
+  })
+
+  it('reaches the words of every feature that has some, and a translation of every key lands', () => {
+    // Content with an entry in every list a feature says has words, beside the café's.
+    const every: Content = {
+      name: 'every',
+      settings: [{ id: 'pace', label: 'Pace', type: 'choice', options: [{ value: 'slow', label: 'Slow' }], default: 'slow' }],
+      locks: [{ when: { kv: 'closed' }, deny: ['action'], reason: 'The café is shut.' }],
+      saveable: [{ when: { kv: 'busy' }, reason: 'Not while serving.' }],
+      triggers: [{ id: 'bell', when: { kv: 'bell' }, effects: [{ notify: 'The bell rings' }] }],
+      timers: [{ id: 'kettle', label: 'The kettle', ms: 1000, effects: [{ notify: 'The kettle boils' }] }],
+      minigames: [{ id: 'darts', title: 'Darts', start: 'throw', states: { throw: { label: 'Throw', final: {} } } }],
+      phrases: { mood: [{ text: 'cheerful' }] },
+    }
+    const base = { id: 'cafe', title: 'Café', plugins: [signs] }
+    const { game, problems } = loadGame([cafe, every], base)
+    expect(problems).toEqual([])
+    // Each key whose feature says it has words gives some: a key the walk misses would never be translated.
+    const reached = new Set(wordSpots(game).map((spot) => spot.at[0]))
+    const withWords = Object.entries(contentKeys).flatMap(([key, entry]) => (entry.words ? [key] : []))
+    expect(withWords.filter((key) => !reached.has(key))).toEqual([])
+    // A translation that names every key lands in every field.
+    const fields = translatableFields(game)
+    const words = Object.fromEntries(fields.map((field) => [field.key, `T(${field.key})`]))
+    const translated = loadGame([cafe, every], base, { packs: [{ id: 'all', schema: SCHEMA, words }] })
+    expect(translated.problems).toEqual([])
+    // Read where each field sat: a hashed key follows its words, so the translated game names it anew.
+    const at = (path: readonly (string | number)[]) =>
+      path.reduce<unknown>((value, step) => (value as Record<string | number, unknown>)?.[step], translated.game)
+    expect(wordSpots(game).filter((spot) => at(spot.at) !== `T(${spot.key})`)).toEqual([])
   })
 })

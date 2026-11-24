@@ -15,10 +15,10 @@
  * own words, else its place in the list.
  */
 import type { Game } from './game.ts'
-import type { Block, Choice, DataScene } from './scene.ts'
+import type { Block, Choice } from './scene.ts'
 import { hash } from './random.ts'
 import { callOf } from './calls.ts'
-import { isPhraseWithArgs } from './features/phrases.ts'
+import { contentKeys } from './features/registry.ts'
 
 /** One field of a game's content a translation can give other words for. */
 export type WordField = {
@@ -72,46 +72,52 @@ const BUTTON: WordShape = {
   effects: 'effects',
 }
 
-/** The core's lists that are walked by shape: the list in the game, the noun keys start with, and its words. */
-const CORE: readonly { list: keyof Game; noun: string; shape: WordPart; name?: (entry: Record<string, unknown>, index: number) => string }[] = [
-  { list: 'actions', noun: 'action', shape: 'button' },
-  { list: 'storylines', noun: 'storyline', shape: { name: true } },
-  { list: 'stats', noun: 'stat', shape: { label: true, format: true, lacking: true, levels: { notice: true } } },
-  { list: 'settings', noun: 'setting', shape: { label: true, options: [{ label: true }] } },
-  { list: 'inputs', noun: 'input', shape: { label: true, options: [{ label: true }] } },
-  { list: 'locks', noun: 'lock', shape: { reason: true } },
-  { list: 'saveable', noun: 'saveable', shape: { reason: true } },
-  { list: 'triggers', noun: 'trigger', shape: { effects: 'effects' } },
-  { list: 'timers', noun: 'timer', shape: { label: true, effects: 'effects' } },
-  {
-    list: 'minigames',
-    noun: 'minigame',
-    shape: {
-      title: true,
-      states: {
-        '*': {
-          label: true,
-          after: { effects: 'effects' },
-          on: [{ label: true, effects: 'effects' }],
-          always: [{ effects: 'effects' }],
-          final: { effects: 'effects' },
-        },
-      },
-    },
-  },
-]
+/**
+ * What a feature's words walk is lent (`ContentKey.words`): the fields it
+ * finds go in, under their keys, with where each sits in the game.
+ */
+export type WordWalk = {
+  /** The fields found so far, in order. A walk may rename one it just found, as entities do a trait's words from a kind. */
+  readonly spots: readonly WordSpot[]
+  /** The entry being walked, for the problems about its fields. */
+  source: WordSource | undefined
+  /** A field of words at `key`, if it has any. */
+  field(key: string, text: unknown, at: WordPath, where: string): void
+  /** One part of a shape at `key`, in the entry keyed `entry`, which choices, blocks and notices are named under. */
+  part(part: WordPart, value: unknown, entry: string, key: string, at: WordPath, where: string): void
+  /** A body's words, as deep as a flow goes. */
+  blocks(value: unknown, entry: string, at: WordPath, where: string): void
+  /** A choice's words, under `<entry>.choice.<id>`, and what its `then` shows. */
+  choice(choice: Choice & { then?: Block[] }, entry: string, at: WordPath, where: string): void
+  /** Each entry of one of the game's lists by `shape`, under `<noun>.<id>`, with `noun` the list as problems name it. */
+  list(list: keyof Game, noun: string, shape: WordPart): void
+}
 
 /** Collects the fields it is shown, in order. */
-class Walk {
+class Walk implements WordWalk {
   readonly spots: WordSpot[] = []
   /** The words in each plugin call's arguments, by the call's full name, as its plugin's `callWords` declare them. */
   readonly calls: ReadonlyMap<string, WordShape>
 
-  constructor(calls: ReadonlyMap<string, WordShape> = new Map()) {
+  readonly game: Game
+
+  constructor(game: Game, calls: ReadonlyMap<string, WordShape>) {
+    this.game = game
     this.calls = calls
   }
   /** The entry being walked, for the problems about its fields. */
   source: WordSource | undefined
+
+  list(list: keyof Game, noun: string, shape: WordPart) {
+    const entries = this.game[list]
+    if (!Array.isArray(entries)) return
+    entries.forEach((item: unknown, index) => {
+      if (!isRecord(item)) return
+      const name = entryName(item, shape, index)
+      this.source = { list: noun, id: typeof item.id === 'string' ? item.id : String(index) }
+      this.part(shape, item, `${noun}.${name}`, `${noun}.${name}`, [list, index], `${noun} ${name}`)
+    })
+  }
 
   /** A field of words, if there are any. */
   field(key: string, text: unknown, at: WordPath, where: string) {
@@ -218,26 +224,6 @@ function entryName(item: unknown, part: WordPart, index: number): string {
   return words.length ? hashed(words.join('\n')) : String(index)
 }
 
-/** A scene's words: its title, body, choices and picture's hotspots. */
-function sceneWords(walk: Walk, scene: DataScene, index: number) {
-  const entry = `scene.${scene.id}`
-  const where = `scene ${scene.id}`
-  const at = ['scenes', index]
-  walk.source = { list: 'scene', id: scene.id }
-  walk.field(`${entry}.title`, scene.title, [...at, 'title'], where)
-  walk.blocks(scene.body, entry, [...at, 'body'], where)
-  scene.choices?.forEach((choice, n) => walk.choice(choice, entry, [...at, 'choices', n], where))
-  walk.part({ hotspots: [{ label: true }] }, scene.picture, entry, `${entry}.picture`, [...at, 'picture'], where)
-}
-
-/** The shapes of the traits the game's plugins declare words for, by trait id. */
-function traitShapes(game: Game): Map<string, WordShape> {
-  const out = new Map<string, WordShape>()
-  for (const trait of game.rules?.traits ?? []) if (trait.words) out.set(trait.id, trait.words)
-  for (const plugin of game.plugins ?? []) for (const trait of plugin.traits ?? []) if (trait.words) out.set(trait.id, trait.words)
-  return out
-}
-
 /**
  * Every field of the game's content a translation can give other words for,
  * with where it sits. A field whose key another has too is listed for each:
@@ -246,69 +232,9 @@ function traitShapes(game: Game): Map<string, WordShape> {
 export function wordSpots(game: Game): WordSpot[] {
   const calls = new Map<string, WordShape>()
   for (const plugin of game.plugins ?? []) for (const [name, shape] of Object.entries(plugin.callWords ?? {})) calls.set(`${plugin.id}/${name}`, shape)
-  const walk = new Walk(calls)
-  ;(game.scenes ?? []).forEach((scene, index) => {
-    if ('body' in scene && Array.isArray(scene.body)) sceneWords(walk, scene as unknown as DataScene, index)
-  })
-  for (const { list, noun, shape } of CORE) {
-    const entries = game[list]
-    if (!Array.isArray(entries)) continue
-    entries.forEach((item: unknown, index) => {
-      if (!isRecord(item)) return
-      const name = entryName(item, shape, index)
-      walk.source = { list: noun, id: typeof item.id === 'string' ? item.id : String(index) }
-      walk.part(shape, item, `${noun}.${name}`, `${noun}.${name}`, [list, index], `${noun} ${name}`)
-    })
-  }
-  // Kinds, then entities: their own words, then their traits'. A trait's words an entity has from its
-  // kind's default are named by the kind's key, so a translation gives them once.
-  const shapes = traitShapes(game)
-  const fromKind = new Map<string, Map<string, string>>()
-  ;(game.kinds ?? []).forEach((kind, index) => {
-    const entry = `kind.${kind.id}`
-    const where = `kind ${kind.id}`
-    walk.source = { list: 'kind', id: kind.id }
-    walk.part({ label: true, plural: true }, kind, entry, entry, ['kinds', index], where)
-    for (const [id, data] of Object.entries(kind.traits ?? {})) {
-      const shape = shapes.get(id)
-      if (!shape) continue
-      const before = walk.spots.length
-      walk.part(shape, data, entry, `${entry}.traits.${id}`, ['kinds', index, 'traits', id], where)
-      const own = new Map<string, string>()
-      for (const spot of walk.spots.slice(before)) own.set(`${id} ${spot.key.slice(entry.length)} ${spot.text}`, spot.key)
-      fromKind.set(kind.id, new Map([...(fromKind.get(kind.id) ?? []), ...own]))
-    }
-  })
-  ;(game.entities ?? []).forEach((entity, index) => {
-    const ref = `${entity.of}:${entity.id}`
-    walk.source = { list: 'entity', id: ref }
-    walk.part({ name: true, description: true }, entity, `entity.${ref}`, `entity.${ref}`, ['entities', index], `entity ${ref}`)
-  })
-  for (const [id, byRef] of Object.entries(game.traits ?? {})) {
-    const shape = shapes.get(id)
-    if (!shape) continue
-    for (const [ref, data] of Object.entries(byRef ?? {})) {
-      const entry = `entity.${ref}`
-      const kind = ref.slice(0, ref.indexOf(':'))
-      walk.source = { list: 'trait', id: `${id} ${ref}` }
-      const before = walk.spots.length
-      walk.part(shape, data, entry, `${entry}.traits.${id}`, ['traits', id, ref], `entity ${ref}`)
-      for (const spot of walk.spots.slice(before)) {
-        const kinds = fromKind.get(kind)?.get(`${id} ${spot.key.slice(entry.length)} ${spot.text}`)
-        if (kinds !== undefined) spot.key = kinds
-      }
-    }
-  }
-  // Phrases: each row's words, by the phrase's full name and the row's place.
-  for (const [name, phrase] of Object.entries(game.phrases ?? {})) {
-    // A phrase with arguments keeps its rows in `rows`; its key in the table is the same.
-    const withArgs = isPhraseWithArgs(phrase)
-    const rows: unknown = withArgs ? phrase.rows : phrase
-    if (!Array.isArray(rows)) continue
-    walk.source = { list: 'phrase', id: name }
-    const at = withArgs ? ['phrases', name, 'rows'] : ['phrases', name]
-    rows.forEach((row, index) => walk.field(`phrase.${name}.${index}`, isRecord(row) ? row.text : undefined, [...at, index, 'text'], `phrase ${name}`))
-  }
+  const walk = new Walk(game, calls)
+  // Each feature's pack keys, in the features' order, as each says where its words are.
+  for (const key of Object.values(contentKeys)) key.words?.(game, walk)
   // Each plugin's content, by the shape it gives each list of its data.
   for (const plugin of game.plugins ?? []) {
     for (const [list, shape] of Object.entries(plugin.words ?? {})) {

@@ -84,14 +84,21 @@ function fromTemplate(file: string): string {
     .replaceAll('TODO:', 'TODO(new-plugin):')
 }
 
+/** Every @ifloom package has the engine's version, and names another by its caret range. */
+const { version } = JSON.parse(readFileSync(join(root, 'packages', 'engine', 'package.json'), 'utf8')) as { version: string }
+const range = `^${version}`
+
 const files: Record<string, string> = {
   'package.json': `${JSON.stringify(
     {
       name: `@ifloom/plugin-${name}`,
-      version: '0.0.0',
-      private: true,
+      version,
       license: 'MIT',
       description: `TODO(new-plugin): what @ifloom/plugin-${name} adds, in one sentence.`,
+      keywords: ['ifloom', 'interactive-fiction', 'plugin', name],
+      homepage: `https://ifloom.dev/docs/reference/plugins/${name}`,
+      bugs: { url: 'https://github.com/IFLoom/ifloom/issues' },
+      repository: { type: 'git', url: 'git+https://github.com/IFLoom/ifloom.git', directory: `packages/plugin-${name}` },
       type: 'module',
       exports: {
         '.': { 'ifloom-source': './src/index.ts', types: './dist/index.d.ts', import: './dist/index.js', default: './dist/index.js' },
@@ -104,9 +111,11 @@ const files: Record<string, string> = {
       },
       files: ['dist', 'src'],
       scripts: { build: 'tsdown' },
-      peerDependencies: { '@ifloom/engine': '^0.0.0', '@ifloom/react': '^0.0.0', react: '^19.0.0', 'react-dom': '^19.0.0', '@types/react': '^19.0.0' },
+      engines: JSON.parse(readFileSync(join(root, 'packages', 'cli', 'package.json'), 'utf8')).engines as unknown,
+      publishConfig: { access: 'public', provenance: true },
+      peerDependencies: { '@ifloom/engine': range, '@ifloom/react': range, react: '^19.0.0', 'react-dom': '^19.0.0', '@types/react': '^19.0.0' },
       peerDependenciesMeta: Object.fromEntries(['@ifloom/react', 'react', 'react-dom', '@types/react'].map((peer) => [peer, { optional: true }])),
-      devDependencies: { '@ifloom/react': '^0.0.0', '@types/react': '^19.3.0' },
+      devDependencies: { '@ifloom/react': range, '@types/react': '^19.3.0' },
     },
     null,
     2,
@@ -135,6 +144,30 @@ export default define(['src/index.ts', 'src/react/index.tsx'])
   'src/react/index.tsx': fromTemplate('src/react/index.tsx'),
 
   'tests/react.test.tsx': fromTemplate('tests/react.test.tsx'),
+
+  'README.md': `# @ifloom/plugin-${name}
+
+TODO(new-plugin): what it adds, in one sentence. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
+
+## Install
+
+\`\`\`sh
+npm install @ifloom/plugin-${name}
+\`\`\`
+
+It needs \`@ifloom/engine\` as a peer, which npm 7 and later installs for you. Its React UI is the \`@ifloom/plugin-${name}/react\` subpath, for a game that renders with \`@ifloom/react\`.
+
+## Docs
+
+- [${title}](https://ifloom.dev/docs/reference/plugins/${name}) explains the plugin, its content and its view.
+- [API](https://ifloom.dev/docs/api/plugin-${name}) lists every export with its signature and fields.
+
+## Licence
+
+MIT. See [LICENSE](./LICENSE).
+`,
+
+  LICENSE: readFileSync(join(root, 'LICENSE'), 'utf8'),
 }
 
 for (const [file, text] of Object.entries(files)) {

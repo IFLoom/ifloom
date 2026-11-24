@@ -58,7 +58,7 @@ echo "Built and packed every package."
 
 # create-ifloom's tarball, unpacked: its bin bundles what it needs, so nothing is installed for it.
 mkdir -p "$out/create-ifloom"
-tar xzf "$out/packs/create-ifloom-0.0.0.tgz" -C "$out/create-ifloom"
+tar xzf "$out/packs/create-ifloom-$(node -p 'require("./packages/create-ifloom/package.json").version').tgz" -C "$out/create-ifloom"
 
 failed=()
 for pm in "${managers[@]}"; do
@@ -99,8 +99,8 @@ const [checkout, dir, packs, pm] = process.argv.slice(2)
 // Each @ifloom package the game lists, from its tarball. Until they're on npm, a
 // required peer the game doesn't list (the React UI's @ifloom/audio, say) is
 // listed too, as no package manager could fetch it from the registry.
-const tarball = (name) => `file:${join(packs, readdirSync(packs).find((file) => file === `ifloom-${name.slice('@ifloom/'.length)}-0.0.0.tgz`))}`
 const manifest = (name) => JSON.parse(readFileSync(join(checkout, 'packages', name.slice('@ifloom/'.length), 'package.json'), 'utf8'))
+const tarball = (name) => `file:${join(packs, readdirSync(packs).find((file) => file === `ifloom-${name.slice('@ifloom/'.length)}-${manifest(name).version}.tgz`))}`
 const file = join(dir, 'package.json')
 const pkg = JSON.parse(readFileSync(file, 'utf8'))
 const listed = new Set()
@@ -125,7 +125,7 @@ EOF
       npm) install='npm install --no-audit --no-fund --loglevel=error' ;;
       pnpm) install='pnpm install --reporter=append-only --config.strict-dep-builds=false' ;;
       # Yarn 1, or Yarn 2 and later with node_modules (create-ifloom writes the .yarnrc.yml itself), since Vite doesn't support Plug'n'Play.
-      # Yarn 1 caches a tarball by name and version, so it gets a fresh cache: the packs are all 0.0.0, whatever they hold.
+      # Yarn 1 caches a tarball by name and version, so it gets a fresh cache: a pack keeps its version, whatever it holds.
       yarn) [[ $(yarn --version) == 1.* ]] && install="yarn install --non-interactive --silent --cache-folder $out/yarn-cache" || install='echo "nodeLinker: node-modules" > .yarnrc.yml && yarn install' ;;
       bun) install='bun install' ;;
     esac

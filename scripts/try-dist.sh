@@ -15,7 +15,9 @@ unset NODE_OPTIONS
 [[ "${1:-}" == "--no-build" ]] || npm run build --silent >/dev/null
 
 out=$(mktemp -d "${TMPDIR:-/tmp}/ifloom-dist-XXXXXX")
-trap 'rm -rf "$out"' EXIT
+# A folder of its own for npx, so nothing there resolves through the consumer's link to the checkout.
+npx=$(mktemp -d "${TMPDIR:-/tmp}/ifloom-npx-XXXXXX")
+trap 'rm -rf "$out" "$npx"' EXIT
 # The consumer sees the checkout's node_modules, where each @ifloom package links to its folder.
 ln -s "$checkout/node_modules" "$out/node_modules"
 
@@ -70,6 +72,24 @@ JS
 printf '\n== the ifloom command\n'
 "$checkout/node_modules/.bin/ifloom" help >/dev/null
 echo "  ifloom help runs from dist/bin.js"
+
+# `npx ifloom`: the unscoped ifloom package, from its tarball, with the @ifloom/cli it depends on and the engine
+# that one peers on from theirs, since they may not be on npm yet. The rest (Vite) comes from the registry.
+mkdir -p "$npx/packs"
+npm pack -w ifloom -w @ifloom/cli -w @ifloom/engine --pack-destination "$npx/packs" --silent >/dev/null
+node --input-type=module - "$npx" <<'JS'
+import { readdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+const [dir] = process.argv.slice(2)
+const packs = readdirSync(join(dir, 'packs'))
+const pack = (prefix) => `file:./packs/${packs.find((file) => new RegExp(`^${prefix}-\\d`).test(file))}`
+writeFileSync(
+  join(dir, 'package.json'),
+  JSON.stringify({ private: true, dependencies: { ifloom: pack('ifloom'), '@ifloom/engine': pack('ifloom-engine') }, overrides: { '@ifloom/cli': pack('ifloom-cli') } }),
+)
+JS
+(cd "$npx" && npm install --no-audit --no-fund --loglevel=error >/dev/null && npx --no-install ifloom help >/dev/null && node node_modules/ifloom/bin.js help >/dev/null)
+echo "  npx ifloom help runs from the ifloom package's tarball"
 
 printf '\n== type-check a consumer against the .d.ts files\n'
 cat > "$out/tsconfig.json" <<'JSON'

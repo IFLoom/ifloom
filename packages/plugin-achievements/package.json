@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-achievements",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Achievements for IFLoom: earned by conditions or effects, with secret ones and progress counts, and kept in the player's profile across saves.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "achievements"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/achievements",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-achievements"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

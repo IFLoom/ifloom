@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-jobs",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Jobs for IFLoom: hiring requirements, shifts that cost time or energy and pay a wage, promotion ladders, and getting fired.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "jobs"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/jobs",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-jobs"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

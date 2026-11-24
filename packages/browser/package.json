@@ -1,9 +1,24 @@
 {
   "name": "@ifloom/browser",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Browser helpers for IFLoom games with any framework or none: the minigame clock, keyboard shortcuts, save-slot numbers and reveal timing.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "browser",
+    "saves",
+    "localstorage"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/browser",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/browser"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -19,6 +34,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"

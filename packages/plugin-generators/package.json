@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-generators",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Generators for IFLoom: named pools of values and templates that make new entities from them, seeded and replay-exact.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "generators"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/generators",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-generators"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -19,6 +33,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"

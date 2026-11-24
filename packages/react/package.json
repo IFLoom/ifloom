@@ -1,9 +1,24 @@
 {
   "name": "@ifloom/react",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "The React UI for IFLoom games: components that draw the view, for authors to use, restyle and extend. Other frameworks use the engine directly.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "react",
+    "ui",
+    "components"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/react",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/react"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -30,6 +45,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

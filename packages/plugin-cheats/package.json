@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-cheats",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Cheats for IFLoom: a panel of effects the player can use at any time, free for everyone or refused until a condition (a supporter unlock, say) holds, with a log of what was used.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "cheats"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/cheats",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-cheats"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

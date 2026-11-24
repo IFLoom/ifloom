@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-shop",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Shops for IFLoom: vendors that sell entities for any spendable stat, stock the vendor holds and restocks, selling back, and seeded daily discounts.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "shop"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/shop",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-shop"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

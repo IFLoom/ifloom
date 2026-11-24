@@ -23,8 +23,7 @@ execFileSync(join(root, 'node_modules/.bin/vp'), ['run', 'build:all'], { cwd: ro
 
 const workspaces = readdirSync(join(root, 'packages'))
   .sort()
-  .map((dir) => JSON.parse(readFileSync(join(root, 'packages', dir, 'package.json'), 'utf8')) as { name: string; scripts?: Record<string, string> })
-  .filter((manifest) => manifest.scripts?.build)
+  .map((dir) => JSON.parse(readFileSync(join(root, 'packages', dir, 'package.json'), 'utf8')) as { name: string })
   .flatMap((manifest) => ['-w', manifest.name])
 mkdirSync(packs, { recursive: true })
 execFileSync('npm', ['pack', ...workspaces, '--pack-destination', packs, '--silent'], { cwd: root, stdio: ['ignore', 'ignore', 'inherit'] })

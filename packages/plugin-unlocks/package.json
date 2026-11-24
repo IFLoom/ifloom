@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-unlocks",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Unlock codes for IFLoom: codes a player enters, checked against a slow hash, that open cheats and scenes, and content the build encrypts under the code.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "unlocks"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/unlocks",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-unlocks"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

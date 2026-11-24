@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-feed",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Feeds for IFLoom: timelines of posts that appear when the story allows, the player's own posts, and the reactions they get.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "feed"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/feed",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-feed"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

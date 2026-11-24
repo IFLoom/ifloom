@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-debug",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Debug commands for IFLoom: set a stat or variable, jump to a scene, set the time, go anywhere. Leave it out of release builds.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "debug"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/debug",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-debug"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

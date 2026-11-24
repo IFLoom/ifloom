@@ -1,9 +1,24 @@
 {
   "name": "@ifloom/cli",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "The IFLoom command line: dev, build a game into one HTML file, and check it.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "cli",
+    "vite",
+    "build"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/cli",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "bin": {
     "ifloom": "./bin.js"
@@ -48,6 +63,10 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"

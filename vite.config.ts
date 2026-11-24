@@ -13,7 +13,7 @@
  * found by watching it run, so a task runs again only when one of them
  * changes (`npx vp cache clean` empties it). A cached build restores dist/.
  */
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { defineConfig } from 'vite-plus'
 
@@ -49,7 +49,11 @@ for (const { dir, manifest } of built) {
 tasks['build:all'] = { command: 'echo "Built every package."', dependsOn: built.map(({ dir }) => `build:${dir}`) }
 
 // Typecheck: each project with its own tsconfig, which reads the packages' src/ through `ifloom-source`.
-const projects = [...packages.map(({ dir }) => `packages/${dir}`), ...['showcase', 'novel', 'cafe'].map((name) => `examples/${name}`)]
+// The `ifloom` package is one bin.js, with no TypeScript and no tsconfig.
+const projects = [
+  ...packages.filter(({ dir }) => existsSync(join(root, 'packages', dir, 'tsconfig.json'))).map(({ dir }) => `packages/${dir}`),
+  ...['showcase', 'novel', 'cafe'].map((name) => `examples/${name}`),
+]
 for (const project of projects) {
   tasks[`typecheck:${project.split('/')[1]}`] = { command: `tsc --noEmit -p ${project}`, cache: { input: [{ auto: true }, '!**/dist/**'], output: [] } }
 }

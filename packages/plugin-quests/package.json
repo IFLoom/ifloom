@@ -1,9 +1,23 @@
 {
   "name": "@ifloom/plugin-quests",
   "version": "0.0.0",
-  "private": true,
   "license": "MIT",
   "description": "Quests for IFLoom: what the player is doing, how far they have got, and the hint for what comes next.",
+  "keywords": [
+    "ifloom",
+    "interactive-fiction",
+    "plugin",
+    "quests"
+  ],
+  "homepage": "https://ifloom.dev/docs/reference/plugins/quests",
+  "bugs": {
+    "url": "https://github.com/IFLoom/ifloom/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IFLoom/ifloom.git",
+    "directory": "packages/plugin-quests"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +39,13 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0",

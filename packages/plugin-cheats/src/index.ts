@@ -128,10 +128,6 @@ function cheatIn(game: Game, id: unknown): CheatDef | undefined {
   return cheatsOf(game).find((cheat) => cheat.id === wanted)
 }
 
-function sliceOf(state: GameState): CheatsState {
-  return (state.plugins?.[ID]?.state as CheatsState | undefined) ?? { used: [] }
-}
-
 function timesUsed(slice: CheatsState, cheat?: string): number {
   return cheat === undefined ? slice.used.length : slice.used.filter((use) => use.cheat === cheat).length
 }
@@ -217,7 +213,7 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
         run: (state, args, context) => {
           const cheat = cheatIn(context.game, args.id)!
           const next = context.apply(cheat.effects ?? [], state)
-          const slice = sliceOf(next)
+          const slice = context.get(next)
           return context.set({ used: [...slice.used, { cheat: cheat.id, turn: state.turn }] }, next)
         },
       },

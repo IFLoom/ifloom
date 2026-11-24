@@ -24,11 +24,19 @@ export type CallTable = 'conditions' | 'effects' | 'commands'
 /**
  * What every plugin function is handed besides the game state: what a game's
  * own functions get (the game, `query`, `value` and `roll`; see
- * `CustomContext`), the plugin's own state, typed, and `set` to return the
- * game state with the plugin's state replaced.
+ * `CustomContext`), the plugin's own state, typed, `get` to read it from a
+ * later game state and `set` to return the game state with it replaced.
  */
 export type PluginContext<S> = CustomContext & {
+  /** The plugin's state in the game state the function was handed: `get()`. */
   slice: S
+  /**
+   * The plugin's state in the state the function was handed, or in `on`, for
+   * a function that has already changed the game state (applied effects, say)
+   * and wants the plugin's state as it is now. Its starting state (`start`)
+   * when the save has none yet. The read that matches `set`.
+   */
+  get: (on?: GameState) => S
   /**
    * The game state with the plugin's state replaced: on the state the function
    * was handed, or on `on`, for a function that has already changed other parts
@@ -432,6 +440,7 @@ export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game
   const context: PluginContext<S> = {
     ...customContext(state, game),
     slice: readSlice(plugin, state, game),
+    get: (on = state) => readSlice(plugin, on, game),
     set: (next, on = state) => writeSlice(plugin, on, next),
     apply: (effects, on = state) => runEffects(on, game, buildEffects(game, effects), options.ending ?? false),
     beats: (blocks, id) => styledBeats(blockBeats(state, game, blocks, id, options.picks)),

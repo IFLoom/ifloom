@@ -334,10 +334,6 @@ function limited(game: Game, good: GoodDef): boolean {
   return good.stock !== undefined || isUnique(game, good.entity)
 }
 
-function sliceOf(state: GameState): ShopState {
-  return (state.plugins?.[ID]?.state as ShopState | undefined) ?? emptyState()
-}
-
 /**
  * How many the vendor has now, or null for a good that never runs out: what
  * it holds, topped up to the good's `stock` when a restock is due. A unique
@@ -480,7 +476,7 @@ function sellEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: C
 /** The state with the good's stock marked as topped up for now, once what the vendor holds is written. */
 function recordStocked(state: GameState, one: One, good: GoodDef, context: PluginContext<ShopState>): GameState {
   if (!limited(context.game, good)) return state
-  const slice = sliceOf(state)
+  const slice = context.get(state)
   const record: StockRecord = { at: restockKey(state, good, context) }
   return context.set({ stocked: { ...slice.stocked, [one.id]: { ...slice.stocked[one.id], [good.entity]: record } } }, state)
 }
@@ -491,7 +487,7 @@ function settleStock(state: GameState, context: PluginContext<ShopState>): GameS
   for (const one of everyVendor(state, context.game)) {
     for (const good of one.vendor.goods) {
       if (!limited(context.game, good) || !entityOf(next, context.game, good.entity)) continue
-      const slice = sliceOf(next)
+      const slice = context.get(next)
       const record = slice.stocked[one.id]?.[good.entity]
       if (record && record.at === restockKey(next, good, context) && record.left === undefined) continue
       next = recordStocked(context.apply(topUp(next, slice, one, good, context), next), one, good, context)

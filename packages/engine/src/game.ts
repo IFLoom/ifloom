@@ -349,8 +349,10 @@ export type RulesContext<S = any> = CustomContext & {
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   /** The game's own state, as `rules.start` began it and `set` last wrote it. Undefined with no `start`. */
   slice: S
-  /** The state with the game's own state replaced. */
-  set: (next: S) => GameState
+  /** The game's own state in the state the function was handed, or in `on`. See `PluginContext.get`. */
+  get: (on?: GameState) => S
+  /** The state with the game's own state replaced: the state the function was handed, or `on`. */
+  set: (next: S, on?: GameState) => GameState
   /** Only in `view`: where the pool picks it makes are written. See `PluginContext.picks`. */
   picks?: Record<string, string>
   /** Blocks drawn as beats, as a scene's body is. See `PluginContext.beats`. */

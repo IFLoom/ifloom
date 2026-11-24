@@ -234,7 +234,7 @@ describe('a smartphone on the sidebar', () => {
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ type: 'list', entries: [{ id: 'ava', actions: [{ label: 'Call', disabled: undefined }] }] })
     state = run(state, g, cast.call('ava'))
     expect(state.sceneId).toBe('ava.call')
-    expect(places.where(state)).toBe('house')
+    expect(places.where(state, g)).toBe('house')
     const night = clock.write(begin(g), { day: 1, period: 'night' })
     expect(apply(night, g, cast.call('ava')).reason).toBe('Straight to voicemail.')
   })

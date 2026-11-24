@@ -738,14 +738,14 @@ runner.apply(calendar.sleep())
 console.log(runner.snapshot().canUndo) // false
 runner.apply(places.go('high-street'))
 runner.undo()
-console.log(places.where(runner.state)) // 'house'
+console.log(places.where(runner.state, runner.game)) // 'house'
 runner.redo()
 
 await runner.save('1', 'Before the café')
 runner.apply(places.go('cafe'))
 runner.apply(cast.talk('ruth'))
 await runner.load('1')
-console.log(places.where(runner.state)) // 'high-street'
+console.log(places.where(runner.state, runner.game)) // 'high-street'
 ```
 
 Next, read the [core concepts](/docs/guide/concepts) behind what you just used, or [Small Town](/docs/guide/showcase), a bigger game in the same shape.

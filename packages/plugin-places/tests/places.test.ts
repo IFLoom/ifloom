@@ -89,7 +89,7 @@ describe('places', () => {
   it('start where the game says, and fill the screen with the room', () => {
     const { game: g } = game()
     const state = startingState(g)
-    expect(places.where(state)).toBe('house')
+    expect(places.where(state, g)).toBe('house')
     const screen = view(state, g)
     expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', key: 'room:house' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
@@ -113,7 +113,7 @@ describe('places', () => {
   it('are walked between by exit, and offer what there is to do there', () => {
     const { game: g } = game()
     const state = walk(g, startingState(g), 'street', 'cafe')
-    expect(places.where(state)).toBe('cafe')
+    expect(places.where(state, g)).toBe('cafe')
     expect(view(state, g).actions.map((action) => action.id)).toEqual(['coffee', 'nap'])
     expect(apply(state, g, { type: 'action', id: 'coffee' }).state.kv.coffee).toBe(true)
     expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'action', id: 'coffee' })).toBe('There is no coffee here.')
@@ -167,7 +167,7 @@ describe('places', () => {
   it('move the player at once by effect, closing any scene, with no exit needed', () => {
     const { game: g } = game()
     const state = apply(startingState(g), g, { type: 'action', id: 'hop' }).state
-    expect(places.where(state)).toBe('park')
+    expect(places.where(state, g)).toBe('park')
   })
 
   it('run the doorstep on arrival by exit, while its condition holds, and not on a move', () => {
@@ -198,7 +198,7 @@ describe('places', () => {
   it('leave a game nowhere with no start, and nothing on the screen but its buttons', () => {
     const { game: g } = game({})
     const state = startingState(g)
-    expect(places.where(state)).toBeNull()
+    expect(places.where(state, g)).toBeNull()
     expect(view(state, g).scene).toMatchObject({ title: 'Town', body: '' })
     expect(shown(state, g)).toEqual({ location: null, exits: [], things: [] })
   })
@@ -475,7 +475,7 @@ describe('places', () => {
       const { game: g, problems } = loadGame([boat], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' })] })
       expect(problems).toEqual([])
       const aboard = walk(g, startingState(g), 'vessel:ferry')
-      expect(places.where(aboard)).toBe('vessel:ferry')
+      expect(places.where(aboard, g)).toBe('vessel:ferry')
       expect(shown(aboard, g).location).toMatchObject({ id: 'vessel:ferry', ref: 'vessel:ferry', name: 'The ferry' })
       expect(pluginQuery(g, 'places/holder')!(aboard)).toBe('vessel:ferry')
     })

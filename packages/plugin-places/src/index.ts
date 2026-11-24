@@ -35,6 +35,7 @@ import {
   lockOn,
   lockedOut,
   parseRef,
+  pluginQuery,
   reasonOf,
   stringOf,
   renderAction,
@@ -280,11 +281,6 @@ export function locationOf(state: GameState, game: Game, ref: string | null | un
 
 /** A place content declares, by id or reference, for a check, which has no state. */
 const declaredLocation = (game: Game, id: string): Place | undefined => declared(game).get(locationRef(id))
-
-/** Where the player is, read straight from the state: no game needed. */
-function where(state: GameState): string | null {
-  return (state.plugins?.[ID]?.state as PlacesState | undefined)?.at ?? null
-}
 
 /** A reference to one of the game's places, which must carry the trait. */
 const placeEntry = (id: string): Reference => ({ entity: locationRef(id), carrying: TRAIT })
@@ -564,6 +560,8 @@ const within = (...places: string[]): Condition => ({ [`${ID}/within`]: { locati
 /** The effect that puts the player somewhere at once. */
 const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: { location: place } })
 /** A `blocked` entry: refused anywhere but these places, with `reason` (the plugin's `places/notHere` string, "Not here.", if left out). */
+/** Where the player is, by the place's id: the `places/here` query, asked of the game's places plugin. Null when nowhere. */
+const where = (state: GameState, game: Game): string | null => (pluginQuery(game, `${ID}/here`)?.(state) as string | null | undefined) ?? null
 const onlyAt = (places: string[], reason?: Reason): Blocked => ({ when: { not: at(...places) }, reason: reason ?? { string: `${ID}/notHere` } })
 
 /**

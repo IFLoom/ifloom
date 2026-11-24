@@ -117,11 +117,6 @@ export function statusOf(game: Game, id: string): StatusDef | undefined {
   return statusesOf(game).find((def) => def.id === id)
 }
 
-/** The plugin's state in this game state, read without a context: after other effects have changed it. */
-function sliceOf(state: GameState): StatusesState {
-  return (state.plugins?.[ID]?.state as StatusesState | undefined) ?? emptyState()
-}
-
 /** The modifiers of every stack of these statuses, summed per stat: adds added, multipliers multiplied. */
 function combined(game: Game, active: readonly ActiveRecord[]): StatModifier[] {
   const byStat = new Map<string, { add: number; multiply: number }>()
@@ -165,7 +160,7 @@ function statusesView(record: StatusesState, game: Game): StatusesView {
 function applyTo(state: GameState, id: string, context: PluginContext<StatusesState>): GameState {
   const def = statusOf(context.game, id)
   if (!def) return state
-  const slice = sliceOf(state)
+  const slice = context.get(state)
   const turns = Math.max(1, Math.floor(def.turns))
   const at = slice.active.findIndex((entry) => entry.id === id)
   const current = at >= 0 ? slice.active[at] : undefined
@@ -187,7 +182,7 @@ function applyTo(state: GameState, id: string, context: PluginContext<StatusesSt
 
 /** The state with every stack of the status taken off, running its `end` effects once per stack if asked. */
 function removeFrom(state: GameState, id: string, runEnd: boolean, context: PluginContext<StatusesState>): GameState {
-  const slice = sliceOf(state)
+  const slice = context.get(state)
   const current = slice.active.find((entry) => entry.id === id)
   if (!current) return state
   let next = context.set({ active: slice.active.filter((entry) => entry !== current) }, state)
@@ -200,14 +195,14 @@ function removeFrom(state: GameState, id: string, runEnd: boolean, context: Plug
 function endTurn(state: GameState, context: PluginContext<StatusesState>): GameState {
   const { game } = context
   let next = state
-  for (const record of sliceOf(state).active) {
+  for (const record of context.get(state).active) {
     const turn = statusOf(game, record.id)?.effects?.turn
     if (turn?.length) for (let n = 0; n < record.left.length; n += 1) next = context.apply(turn, next)
   }
   // The `turn` effects may have applied or removed statuses: count down what is active now.
   const ended: string[] = []
   const active: ActiveRecord[] = []
-  for (const record of sliceOf(next).active) {
+  for (const record of context.get(next).active) {
     const left = record.left.map((turns) => turns - 1)
     const kept = left.filter((turns) => turns > 0)
     for (let n = kept.length; n < left.length; n += 1) ended.push(record.id)

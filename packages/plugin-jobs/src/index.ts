@@ -202,10 +202,6 @@ function jobIn(game: Game, id: unknown): JobDef | undefined {
   return jobsOf(game).find((job) => job.id === String(id ?? ''))
 }
 
-function sliceOf(state: GameState): JobsState {
-  return (state.plugins?.[ID]?.state as JobsState | undefined) ?? emptyState()
-}
-
 /** The day: the calendar's, or the turn without one. */
 function dayOf(state: GameState, game: Game): number {
   return (pluginQuery(game, 'calendar/now')?.(state) as { day: number } | undefined)?.day ?? state.turn
@@ -284,7 +280,7 @@ function shiftEffects(job: JobDef, held: HeldJob | undefined): Effect[] {
 }
 
 function hired(state: GameState, job: JobDef, context: PluginContext<JobsState>): GameState {
-  const slice = sliceOf(state)
+  const slice = context.get(state)
   if (slice.held[job.id]) return state
   const fired = { ...slice.fired }
   delete fired[job.id]
@@ -293,7 +289,7 @@ function hired(state: GameState, job: JobDef, context: PluginContext<JobsState>)
 }
 
 function firedFrom(state: GameState, job: JobDef, context: PluginContext<JobsState>): GameState {
-  const slice = sliceOf(state)
+  const slice = context.get(state)
   if (!slice.held[job.id]) return state
   const held = { ...slice.held }
   delete held[job.id]
@@ -313,7 +309,7 @@ function review(before: GameState, after: GameState, context: PluginContext<Jobs
   const from = dayOf(before, game)
   const to = dayOf(after, game)
   for (const job of jobsOf(game)) {
-    let held = sliceOf(next).held[job.id]
+    let held = context.get(next).held[job.id]
     if (!held) continue
     // The days that ended in this command, not counting the day they were hired.
     let missed = 0
@@ -322,7 +318,8 @@ function review(before: GameState, after: GameState, context: PluginContext<Jobs
     }
     if (missed) {
       held = { ...held, missed: held.missed + missed }
-      next = context.set({ ...sliceOf(next), held: { ...sliceOf(next).held, [job.id]: held } }, next)
+      const now = context.get(next)
+      next = context.set({ ...now, held: { ...now.held, [job.id]: held } }, next)
     }
     const fire = job.fire
     if (fire && ((fire.missed !== undefined && held.missed >= fire.missed) || (fire.when && holds(next, game, fire.when)))) {
@@ -336,7 +333,8 @@ function review(before: GameState, after: GameState, context: PluginContext<Jobs
       rank += 1
     }
     if (rank !== held.rank) {
-      next = context.set({ ...sliceOf(next), held: { ...sliceOf(next).held, [job.id]: { ...held, rank } } }, next)
+      const now = context.get(next)
+      next = context.set({ ...now, held: { ...now.held, [job.id]: { ...held, rank } } }, next)
       next = notify(next, { id: `job.${job.id}.rank`, title: stringOf(game, 'jobs/promoted', { title: job.ranks[rank].name }), tag: 'jobs' })
     }
   }
@@ -484,7 +482,7 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
           const pay = effects.filter((effect) => 'stat' in effect && 'by' in effect && typeof effect.by === 'number' && effect.by > 0)
           const before = effects.filter((effect) => !pay.includes(effect))
           let next = context.apply([...before, ...(job.shift.effects ?? []), ...pay])
-          const slice = sliceOf(next)
+          const slice = context.get(next)
           const record = slice.held[job.id] ?? held
           next = context.set({ ...slice, held: { ...slice.held, [job.id]: { ...record, shifts: record.shifts + 1, lastWorked: today } } }, next)
           return next

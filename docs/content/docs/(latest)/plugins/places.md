@@ -366,7 +366,7 @@ Walking it through:
 
 ```ts
 let state = startingState(game)
-places.where(state)                        // 'flat'
+places.where(state, game)                  // 'flat'
 view(state, game).when              // 'Day 1 · Monday morning · Your flat'
 view(state, game).scene.title       // 'Your flat'
 view(state, game).scene.body        // 'Boxes, mostly. The radiator knocks when it feels like it.'
@@ -718,7 +718,7 @@ The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/p
 type PlacesState = { at: string | null }
 ```
 
-What the plugin keeps in a save, at `state.plugins.places`: the id of the place the player is in, or `null` for nowhere. A UI reads the view, not this. Code reads it with [`places.where(state)`](#helpers).
+What the plugin keeps in a save, at `state.plugins.places`: the id of the place the player is in, or `null` for nowhere. A UI reads the view, not this. Code reads it with [`places.where(state, game)`](#helpers).
 
 The engine once kept the player's location itself, at `state.locationId`. [`loadState`](/docs/reference/saves#loadstate) carries a save from then (save version 5 or older) forward, moving `locationId` to `plugins.places` as `{ version: 1, state: { at } }`. A save that already has a `places` entry keeps it.
 
@@ -746,7 +746,7 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 ```ts
 const places: {
   (options?: PlacesOptions): DefinedPlugin<PlacesState, PlacesView>
-  where(state: GameState): string | null
+  where(state: GameState, game: Game): string | null
   go(to: string): CommandRef
   pickUp(ref: EntityRef): CommandRef
   locationRef(id: string): EntityRef
@@ -766,7 +766,7 @@ const LOCATION = 'location'
 |---|---|
 | `locationsOf` | Every entity in the game now with the `places/location` trait, as references: the places content declares, in its order, then those made in play. |
 | `locationOf` | The [`Place`](#the-location-trait) trait of the place with this id or reference, one content declares or one made in play, or `undefined`. `undefined` for `null`. |
-| `places.where` | Where the player is, read straight from the state with no game needed: the place's id, or `null`. |
+| `places.where` | Where the player is: the place's id, or `null`. It asks the game's places plugin, so it reads a save with no places state yet as the plugin's `start`. |
 | `places.go` | The [`places/go`](#commands) command. |
 | `places.pickUp` | The [`places/pickUp`](#commands) command. |
 | `places.locationRef` | A place's [entity](#each-place-is-an-entity): `places.locationRef('park')` is `'location:park'`. A reference is returned as written. |
@@ -774,8 +774,6 @@ const LOCATION = 'location'
 | `places.at`, `places.within` | The [conditions](#conditions). |
 | `places.move` | The [`places/move`](#effects) effect. |
 | `places.onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an action: `{ when: { not: places.at(...places) }, reason }`, which refuses it anywhere else. The reason is the [`places/notHere`](#strings) string, `Not here.`, if left out. |
-
-`places.where` reads the state alone.
 
 ## Checks
 

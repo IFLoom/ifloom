@@ -267,10 +267,6 @@ export async function unlockedPacks(
   return { packs, problems }
 }
 
-function sliceOf(state: { plugins?: Record<string, { state: unknown } | undefined> }): UnlocksState {
-  return (state.plugins?.[ID]?.state as UnlocksState | undefined) ?? { unlocked: [] }
-}
-
 /** The codes started on each runner, for `enterCode`. */
 const started = new WeakMap<Runner, (code: string) => Promise<Result<Entered>>>()
 
@@ -285,6 +281,8 @@ const started = new WeakMap<Runner, (code: string) => Promise<Result<Entered>>>(
  */
 export function startUnlocks(runner: Runner, options: { content?: Readonly<Record<string, LockedContent>> } = {}): () => void {
   const game = runner.game
+  // Its own state, read through the plugin so a save with none yet reads as its start.
+  const plugin = unlocksPlugin()
   const content = options.content ?? lockedContent()
   const defs = () => unlocksOf(game)
   // The unlocks this player has, checked against this release's hashes.
@@ -304,7 +302,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
     if (recording || stopped) return
     recording = true
     try {
-      const has = sliceOf(runner.state).unlocked
+      const has = plugin.read(runner.state, game).unlocked
       for (const id of known) if (!has.includes(id)) runner.apply(recordUnlock(id))
     } finally {
       recording = false

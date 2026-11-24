@@ -301,11 +301,6 @@ function deliver(state: GameState, message: MessageDef, context: PluginContext<M
 /** A save's slice before anything has happened. */
 const empty = (): MessagesState => ({ arrived: [], replied: {}, repliedOn: {}, read: {}, due: null })
 
-/** The slice of a state, or an empty one. */
-function sliceOf(state: GameState): MessagesState {
-  return (state.plugins?.[ID]?.state as MessagesState | undefined) ?? empty()
-}
-
 /** Whether a condition's arguments give any bound of a range. */
 const ranged = (args: Range) => args.gte !== undefined || args.gt !== undefined || args.lte !== undefined || args.lt !== undefined
 
@@ -412,7 +407,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
        */
       draw: (state, args, context) => {
         const pool = String(args.pool ?? '')
-        const slice = sliceOf(state)
+        const slice = context.slice
         const eligible = messagesOf(context.game).filter((message) => message.drawnFrom?.includes(pool) && holds(state, context.game, message.when))
         const drawn = weighted(eligible, (message) => message.weight, 'messages/draw', pool, state.seed, state.turn, slice.arrived.length)
         return drawn ? deliver(state, drawn, context, slice) : state
@@ -423,7 +418,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
        * Nothing when no message waits.
        */
       due: (state, _args, context) => {
-        const slice = sliceOf(state)
+        const slice = context.slice
         const message = slice.due && messagesOf(context.game).find((entry) => entry.id === slice.due!.key)
         if (!message) return slice.due ? context.set({ ...slice, due: null }, state) : state
         return deliver(state, message, context, { ...slice, due: null })
@@ -486,7 +481,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       let next = after
       for (const message of messagesOf(context.game)) {
         if (message.drawnFrom?.length) continue
-        const slice = sliceOf(next)
+        const slice = context.get(next)
         // A message with `after` is asked of the state as it now is, so one can wait on an arrival in this same command.
         if (latest(slice, message.id) !== undefined || slice.due?.key === message.id || !holds(message.after ? next : after, context.game, message.when))
           continue

@@ -283,6 +283,7 @@ type Plugin<S = any, V = unknown> = {
 ```ts
 type PluginContext<S> = CustomContext & {
   slice: S
+  get: (on?: GameState) => S
   set: (next: S, on?: GameState) => GameState
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   picks?: Record<string, string>
@@ -297,6 +298,7 @@ Every plugin function gets this alongside the game state. It has everything one 
 - `value(name, args?)` reads a [value](/docs/reference/custom#values) by name, a plugin's or the game's own, about the state the function was handed.
 - `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`.
 - `slice` is the plugin's own state, typed. If the save has none yet, it's `start(game)`, or `undefined` for a plugin with no `start`.
+- `get(on?)` reads the plugin's state from `on`, which defaults to the state the function was handed, so `get()` is `slice`. Like `slice`, it's `start(game)` when that state has none yet.
 - `set(next, on?)` returns a game state with the plugin's state replaced by `next`. It writes onto `on`, which defaults to the state the function was handed.
 - `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
 - `apply(effects, on?)` applies a list of [effects](/docs/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
@@ -316,7 +318,14 @@ const moved = { ...state, kv: { ...state.kv, stamped: true } }
 return set({ ...slice, stamps: slice.stamps + 1 }, moved)
 ```
 
-`slice` is still the plugin's state as it was in the state handed in. `on` only changes where the new state is written.
+`slice` is still the plugin's state as it was in the state handed in. `on` only changes where the new state is written. To read the plugin's state after something else may have changed it, such as effects that run the plugin's own effects, read it with `get(next)` and write it with `set(..., next)`:
+
+```ts
+const next = apply([{ stat: 'energy', by: 15 }])
+return set({ ...get(next), free: get(next).free - 1 }, next)
+```
+
+Don't read `state.plugins[id]` yourself: `get` knows the plugin's starting state, and it stays right when the save's layout changes.
 
 ## PluginArgs
 
@@ -1512,7 +1521,7 @@ type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
 }
 ```
 
-Declares a plugin, and returns it with typed `read` and `write` for its own state and `viewIn` for its slice of the view. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice` and `set`. `S` is the plugin's state and `V` what its `view` returns. Name both, `definePlugin<LoyaltyState, LoyaltyView>(...)`, since TypeScript can't work out one when you give the other.
+Declares a plugin, and returns it with typed `read` and `write` for its own state and `viewIn` for its slice of the view. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice`, `get` and `set`, which need no game. `S` is the plugin's state and `V` what its `view` returns. Name both, `definePlugin<LoyaltyState, LoyaltyView>(...)`, since TypeScript can't work out one when you give the other.
 
 `read` returns the plugin's state, or its starting state if the save has none yet. `write` returns the game state with the plugin's state replaced, labelled with the plugin's current version.
 

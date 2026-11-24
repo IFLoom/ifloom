@@ -104,13 +104,14 @@ A save from before the game had a `start` loads with it fresh. To reshape it lat
 type RulesContext<S = any> = CustomContext & {
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   slice: S
-  set: (next: S) => GameState
+  get: (on?: GameState) => S
+  set: (next: S, on?: GameState) => GameState
   picks?: Record<string, string>
   profile?: unknown
 }
 ```
 
-What the game's hooks, commands and providers are handed besides the state: a [called function's](/docs/reference/custom#customcontext) context (`game`, `query`, `value` and a seeded `roll`) and `apply`, which applies effects as content would. `slice` and `set` read and write the game's [own state](#the-games-own-state), as a plugin's context does its own. In `view`, `picks` and `profile` are what a plugin's view gets.
+What the game's hooks, commands and providers are handed besides the state: a [called function's](/docs/reference/custom#customcontext) context (`game`, `query`, `value` and a seeded `roll`) and `apply`, which applies effects as content would. `slice`, `get` and `set` read and write the game's [own state](#the-games-own-state), as a [plugin's context](/docs/reference/plugins#plugincontext) does its own: `get(on?)` and `set(next, on?)` work on `on` when you pass one, else on the state the function was handed. In `view`, `picks` and `profile` are what a plugin's view gets.
 
 ## commands
 

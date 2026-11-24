@@ -10,6 +10,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A plugin's context has [`get(on?)`](/docs/reference/plugins#plugincontext), the read that matches `set(next, on?)`: the plugin's state in a later game state, such as one its effects have changed, or its `start` when that state has none yet. The game's own [`RulesContext`](/docs/reference/rules#rulescontext) has `get` too, and its `set` takes `on`.
 - `messages/replied` takes a range of days, counted from the day the reply was sent: `messages.replied('ava.hi', undefined, { gte: 2 })` is "two days or more after you replied". Saves keep the day of each reply (the plugin's state version 4); an older save takes each reply's day to be its arrival's.
 - A message can have `effects`, run as it arrives, in the same command. A trigger on `messages/arrived` runs a command later, since triggers are tested before the plugins deliver; the Messages page says so.
 - `messages.messageRead(message)` writes the `messages/read` condition. `messages.read` is still the command that marks a thread read.
@@ -236,6 +237,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** [`places.where(state, game)`](/docs/plugins/places#helpers) takes the game, and asks the game's places plugin, so a save with no places state yet reads as its `start`.
 - The React UI has one root. `GameShell` now plays the game's sound itself (its new `audio` prop, as `mountGame` has it) and draws the pages round the whole layout, so a game drawing `GameShell` by hand needs no `useAudio`. A `useAudio` beside `GameShell` or `mountGame` takes over from their player rather than adding a second, so no sound plays twice.
 - The React UI's `Scene` draws the inputs on offer while it's open between its words and its choices. `InputFields` in a layout now draws only the inputs on offer outside a scene.
 - `wardrobeUi` no longer puts a Wearing section in the side column. The `wardrobe` panel is opened by a closet place's button or any `{ panel: 'wardrobe' }`, and a layout can still place `WardrobeSection`.

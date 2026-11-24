@@ -59,7 +59,7 @@ describe('the debugger', () => {
       sceneId: 'ending',
     })
     expect(clock.read(state, g)).toEqual({ day: 6, period: 'evening' })
-    expect(places.where(state)).toBe('island')
+    expect(places.where(state, g)).toBe('island')
     expect(run(state, g, debug.scene()).sceneId).toBeNull()
   })
 

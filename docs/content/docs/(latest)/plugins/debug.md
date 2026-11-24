@@ -146,7 +146,7 @@ set(debug.go('cafe'))                                  // and the places plugin
 set(debug.scene('ava.hi'))
 
 state.stats.coins    // 40
-places.where(state)         // 'cafe'
+places.where(state, game)   // 'cafe'
 state.sceneId        // 'ava.hi'
 state.turn           // 4
 

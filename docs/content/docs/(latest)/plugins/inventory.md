@@ -151,6 +151,17 @@ const market: Content = {
 
 With all three, the player buys the scarf from the stall, wears it, eats a pie, and gives the scarf back to the stall with `inventory.give('clothing:scarf', 'vendor:stall')`. It comes off as it goes, and the stall has it to sell again. With only the shop, the same content sells both, and nothing is worn or eaten. With only the wardrobe, the scarf can be worn once something gives it to the player. A game without a plugin leaves its `data` out, since the loader reports data for a plugin the game doesn't have.
 
+## Strings
+
+| Key | English |
+|---|---|
+| `inventory/haveNone` | `You have no {thing}.` |
+| `inventory/doesNothing` | `The {thing} does not do anything.` |
+| `inventory/cantGiveTo` | `You can’t give things to {to}.` |
+| `inventory/giveToSelf` | `You already have it.` |
+
+`{thing}` is the thing's name. A thing the game doesn't have is refused with the engine's own [`noSuchThing`](/docs/reference/strings#refusals).
+
 ## The view
 
 `view(state, game).plugins.inventory` is an `InventoryView`: what you hold, with a button to use each thing that has a use and one to drop it, built with the engine's [`renderAction`](/docs/reference/view#renderaction) so a UI draws them like any other button.
@@ -161,6 +172,17 @@ Its [React UI](#drawing-it) draws it with [`InventoryCard`](#inventorycard), in 
 
 ```ts shape
 type InventoryView = { things: InventoryThing[] }
+```
+
+| Field | What it is |
+|---|---|
+| `things` | What you hold: the protagonist's things while one is played, then the player's, each in the game's order of its entities. A thing whose `visible` doesn't hold is left out, as in `view.held`. |
+
+### InventoryThing
+
+One thing you hold, with its buttons.
+
+```ts shape
 type InventoryThing = {
   ref: EntityRef
   name: string
@@ -175,7 +197,6 @@ type InventoryThing = {
 
 | Field | What it is |
 |---|---|
-| `things` | What you hold: the protagonist's things while one is played, then the player's, each in the game's order of its entities. A thing whose `visible` doesn't hold is left out, as in `view.held`. |
 | `ref` | The thing, such as `'item:sandwich'`. |
 | `name`, `description` | Its name and description, with prose tokens filled in. `description` is `null` when it has none. |
 | `image` | Its picture's path, through `artSrc`, or `null`. |
@@ -280,17 +301,6 @@ function inventoryKindsOf(game: Game): { id: string }[] | undefined
 ```
 
 The game's `data.inventory.kinds`, merged from its content and packs, or `undefined` when it lists none, for every kind.
-
-## Strings
-
-| Key | English |
-|---|---|
-| `inventory/haveNone` | `You have no {thing}.` |
-| `inventory/doesNothing` | `The {thing} does not do anything.` |
-| `inventory/cantGiveTo` | `You can’t give things to {to}.` |
-| `inventory/giveToSelf` | `You already have it.` |
-
-`{thing}` is the thing's name. A thing the game doesn't have is refused with the engine's own [`noSuchThing`](/docs/reference/strings#refusals).
 
 ## Checks
 

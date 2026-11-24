@@ -123,8 +123,6 @@ Anyone with the `cast/person` trait is a person, whatever their kind. A café ga
 const cast: {
   person(def: PersonDef): EntityDef
 }
-
-type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
 ```
 
 Writes a character for your content's `entities`: an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `character` (or `of`) with the `cast/person` trait. You give the entity's fields and the trait's side by side, and `cast.person()` sorts them: `fullName`, `pronouns`, `home`, `schedule`, `talk`, `call`, `storyline`, `met` and `portrait` go in the trait, and the rest stay on the entity.
@@ -135,6 +133,14 @@ import { cast } from '@ifloom/plugin-cast'
 cast.person({ id: 'sam', name: 'Sam', description: 'Neighbour', home: 'park', talk: 'sam.hi' })
 // { id: 'sam', name: 'Sam', description: 'Neighbour', of: 'character',
 //   traits: { 'cast/person': { home: 'park', talk: 'sam.hi' } } }
+```
+
+#### PersonDef
+
+What `cast.person()` takes: the entity's fields and the [`Person`](#person-1) trait's, side by side.
+
+```ts shape
+type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
 ```
 
 The entity's fields that matter most to a character:
@@ -369,7 +375,7 @@ import { AWAY, type Person } from '@ifloom/plugin-cast'
 const schedule: Person['schedule'] = [{ location: AWAY, when: calendar.weekday(6) }]   // away on Sundays
 ```
 
-The [checks](#checks) accept it as a place. A pack written before schema 26 wrote it `'offstage'`, which loading rewrites.
+The [checks](#checks) accept it as a place. An older pack wrote it `'offstage'`, which loading rewrites.
 
 ## Calls
 
@@ -547,6 +553,22 @@ Talking to someone doesn't set the speaker, because a scene names its own. A spo
 
 A character with no `image` has no picture as a speaker. The cast's own view still guesses `art/<kind>/<id>.jpg` for their card, but the scene doesn't, so give everyone who speaks an `image`.
 
+## Strings
+
+The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `cast/...`. `{name}` is the character's `name`.
+
+| Key | English |
+|---|---|
+| `cast/talk` | `Talk` |
+| `cast/noSuchPerson` | `There is no such person.` |
+| `cast/notHere` | `{name} is not here.` |
+| `cast/notTaking` | `{name} is not taking this right now.` |
+| `cast/nothingToSay` | `{name} has nothing to say just now.` |
+| `cast/cannotCall` | `You cannot reach {name} from here.` |
+| `cast/notPickingUp` | `{name} does not pick up.` |
+
+Both commands also use the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too. A character's `call.busy` and a talk option's `label` are plain text written into the content.
+
 ## The view
 
 `view(state, game).plugins.cast` is a `CastView`.
@@ -612,22 +634,6 @@ In the café on Monday morning, Ava's card is:
 ```
 
 A met person who's elsewhere is in `people` with their button greyed out: `Ava is not here.`
-
-## Strings
-
-The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `cast/...`. `{name}` is the character's `name`.
-
-| Key | English |
-|---|---|
-| `cast/talk` | `Talk` |
-| `cast/noSuchPerson` | `There is no such person.` |
-| `cast/notHere` | `{name} is not here.` |
-| `cast/notTaking` | `{name} is not taking this right now.` |
-| `cast/nothingToSay` | `{name} has nothing to say just now.` |
-| `cast/cannotCall` | `You cannot reach {name} from here.` |
-| `cast/notPickingUp` | `{name} does not pick up.` |
-
-Both commands also use the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too. A character's `call.busy` and a talk option's `label` are plain text written into the content.
 
 ## Drawing it
 

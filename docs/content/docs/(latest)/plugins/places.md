@@ -93,8 +93,6 @@ The options are code, not content, so a mod can't change them. Everything a mod 
 const places: {
   location(def: PlaceDef): EntityDef
 }
-
-type PlaceDef = Omit<EntityDef, 'of' | 'ui'> & Place & { of?: string }
 ```
 
 Writes a place for your content's `entities`. You give it the entity's fields and the `places/location` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `location` with the trait's fields in `traits['places/location']`. Give `of` to make the place an entity of another kind, such as a boat the player can step aboard.
@@ -105,6 +103,14 @@ import { places } from '@ifloom/plugin-places'
 places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }] })
 // { id: 'cafe', of: 'location', name: 'The Corner Café', description: 'Café',
 //   traits: { 'places/location': { exits: ['high-street'], body: [{ prose: 'place.cafe' }] } } }
+```
+
+#### PlaceDef
+
+What `places.location()` takes: the entity's fields and the [location trait](#the-location-trait)'s, side by side.
+
+```ts shape
+type PlaceDef = Omit<EntityDef, 'of' | 'ui'> & Place & { of?: string }
 ```
 
 The entity's own fields are the place's:
@@ -545,6 +551,23 @@ places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', ex
 
 Walk back out to the high street and the ambience stops, because the street names none. A place's audio is the third of [four levels](/docs/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/docs/reference/effects#audio) both win over it, and it wins over the game's default. A room inside another doesn't take its parent's audio, so give the back room its own if it should sound the same. Nothing plays while the player is nowhere.
 
+## Strings
+
+The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `places/...`.
+
+| Key | English |
+|---|---|
+| `places/noSuchPlace` | `There is no such place.` |
+| `places/alreadyHere` | `You are already here.` |
+| `places/cannotGetThere` | `You cannot get there from here.` |
+| `places/pickUp` | `Pick up` |
+| `places/notLyingHere` | `There is no {thing} here.` |
+| `places/notHere` | `Not here.`, the reason [`places.onlyAt()`](#helpers) writes when you give none. |
+
+`places/go` also uses the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too.
+
+[`onlyAt`](#helpers) given no reason writes `{ string: 'places/notHere' }`, a [`Reason`](/docs/reference/actions#reason) by key, so rewording `places/notHere` rewords every one.
+
 ## The view
 
 `view(state, game).plugins.places` is a `PlacesView`.
@@ -731,24 +754,7 @@ type PlacesState = { at: string | null }
 
 What the plugin keeps in a save, at `state.plugins.places`: the id of the place the player is in, or `null` for nowhere. A UI reads the view, not this. Code reads it with [`places.where(state, game)`](#helpers).
 
-The engine once kept the player's location itself, at `state.locationId`. [`loadState`](/docs/reference/saves#loadstate) carries a save from then (save version 5 or older) forward, moving `locationId` to `plugins.places` as `{ version: 1, state: { at } }`. A save that already has a `places` entry keeps it.
-
-## Strings
-
-The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `places/...`.
-
-| Key | English |
-|---|---|
-| `places/noSuchPlace` | `There is no such place.` |
-| `places/alreadyHere` | `You are already here.` |
-| `places/cannotGetThere` | `You cannot get there from here.` |
-| `places/pickUp` | `Pick up` |
-| `places/notLyingHere` | `There is no {thing} here.` |
-| `places/notHere` | `Not here.`, the reason [`places.onlyAt()`](#helpers) writes when you give none. |
-
-`places/go` also uses the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too.
-
-[`onlyAt`](#helpers) given no reason writes `{ string: 'places/notHere' }`, a [`Reason`](/docs/reference/actions#reason) by key, so rewording `places/notHere` rewords every one.
+The engine once kept the player's location itself, at `state.locationId`. [`loadState`](/docs/reference/saves#loadstate) carries a save from then forward, moving `locationId` to `plugins.places` as the plugin's state, `{ at }`. A save that already has a `places` entry keeps it.
 
 ## For code
 
@@ -814,7 +820,7 @@ A place named by something that isn't one is reported as `"item:paper" has no pl
 
 A place's `image`, as any entity's, and a picture layer's file are listed in the checker's [`files`](/docs/reference/checks#fileref).
 
-A pack that still lists places in `data.places.locations`, as content did before schema 24, is [carried forward](#older-content) for you. Your own content isn't, so write each place with `places.location()`.
+A pack that still lists places in `data.places.locations`, as older content did, is [carried forward](#older-content) for you. Your own content isn't, so write each place with `places.location()`.
 
 ```text
 base · options start · unknown entity "location:nowhere"
@@ -828,9 +834,9 @@ town · trait places/location on location:cafe · hotspot menu: names choice "or
 
 ## Older content
 
-A pack written for schema 23 or older kept its places in `data.places.locations`. [`upgradePack`](/docs/reference/loader#upgradepack) carries it forward: each place becomes an entity of the kind `location`, with its `name` and `tags`, its old `tag` as the `desc` and its old `art` as the `image` (an empty `art` is dropped), and the rest in the `places/location` trait. Prose and strings that print `{{v:places/tag}}` print `{{v:places/desc}}` instead. Saves need nothing, because a place's entity was `location:<id>` before too.
+A pack written before places were entities kept them in `data.places.locations`. [`upgradePack`](/docs/reference/loader#upgradepack) carries it forward: each place becomes an entity of the kind `location`, with its `name` and `tags`, its old `tag` as the `desc` and its old `art` as the `image` (an empty `art` is dropped), and the rest in the `places/location` trait. Prose and strings that print `{{v:places/tag}}` print `{{v:places/desc}}` instead. Saves need nothing, because a place's entity was `location:<id>` before too.
 
-A pack written for schema 27 or older gave a place's layered picture as `stage`. Its step (content version 28) names it `picture`, on an entity, on a kind or in a `traits` row, and moves the `words` keys for its hotspots from `…traits.places/location.stage.hotspots…` to `…traits.places/location.picture.hotspots…`.
+An older pack gave a place's layered picture as `stage`. `upgradePack` names it `picture`, on an entity, on a kind or in a `traits` row, and moves the `words` keys for its hotspots from `…traits.places/location.stage.hotspots…` to `…traits.places/location.picture.hotspots…`.
 
 ## Gotchas
 

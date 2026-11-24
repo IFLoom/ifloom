@@ -313,7 +313,6 @@ type JobView = {
   work: RenderedChoice | null
   quit: RenderedChoice | null
 }
-type RankView = { id: string; name: string; pay: Price | null }
 ```
 
 | Field | What it is |
@@ -327,6 +326,14 @@ type RankView = { id: string; name: string; pay: Price | null }
 | `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the reason of the first `blocked` entry that holds. |
 | `work` | The button that works a shift, or `null` when not hired. Its `price` is the shift's cost, and its `disabled` says why not. |
 | `quit` | The button that leaves the job, labelled with the `jobs/quit` string, or `null` when not hired. |
+
+### RankView
+
+One rank of a job as the view shows it: its id, its name and what a shift at it pays, as a [`Price`](/docs/reference/view#price).
+
+```ts shape
+type RankView = { id: string; name: string; pay: Price | null }
+```
 
 ## Drawing it
 
@@ -411,10 +418,24 @@ The jobs plugin's view ([`JobsView`](/docs/plugins/jobs#jobsview): `jobs`), the 
 
 ```ts shape
 type JobsState = { held: Record<string, HeldJob>; fired: Record<string, number> }
+```
+
+What the plugin keeps in a save, at `state.plugins.jobs`: each job the player holds, by id, and each job they were fired from, with the day. A save from before the plugin was added loads with no jobs held.
+
+### HeldJob
+
+One job the player holds.
+
+```ts shape
 type HeldJob = { rank: number; shifts: number; missed: number; hiredOn: number; lastWorked: number | null }
 ```
 
-What the plugin keeps in a save, at `state.plugins.jobs`: each job the player holds, with their rank (from 0), shifts worked and missed, the day they were hired and the day of their last shift, and each job they were fired from, with the day. A save from before the plugin was added loads with no jobs held.
+| Field | What it is |
+|---|---|
+| `rank` | The rank held, by its place in the job's ranks, from 0. |
+| `shifts`, `missed` | Shifts worked and missed in all. |
+| `hiredOn` | The day they were hired. |
+| `lastWorked` | The day of their last shift, or `null` before the first. |
 
 ## For code
 

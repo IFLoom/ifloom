@@ -74,7 +74,6 @@ const town: Content = {
 
 ```ts shape
 type PoolDef = { id: string; values: PoolEntry[] }
-type PoolEntry = KvValue | { value: KvValue; weight?: number }
 ```
 
 | Field | What it is |
@@ -83,6 +82,14 @@ type PoolEntry = KvValue | { value: KvValue; weight?: number }
 | `values` | What to pick from: strings, numbers or `true`/`false`. Write a value as it is, or as `{ value, weight }` to make it more or less likely. A value of weight 4 comes up four times as often as one of weight 1, the weight when it's left out. A weight of 0 is never picked. |
 
 The draw is the engine's [`weighted`](/docs/reference/random#weighted).
+
+#### PoolEntry
+
+One value of a pool: the value as it is, or with a weight.
+
+```ts shape
+type PoolEntry = KvValue | { value: KvValue; weight?: number }
+```
 
 ### TemplateDef
 
@@ -180,10 +187,23 @@ const generators: {
 
 ```ts shape
 function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity
-type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 ```
 
 What the template draws for the `n`th entity of its kind made in play, without making it: the fields that come from pools and ranges, each only when the template has it. `stats` holds every stat drawn, before the effect leaves out the ones equal to what the entity would read anyway. The effect passes the number the next one will get. Use it to preview a template, or in a test.
+
+#### GeneratedEntity
+
+What `drawEntity` returns: the drawn fields of one entity, before it's made.
+
+```ts shape
+type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
+```
+
+| Field | What it is |
+|---|---|
+| `name`, `description`, `image` | Drawn from the template's field of the same name. Absent when the template has none. |
+| `stats` | Every stat the template draws, by id. |
+| `kv` | Every kv key the template draws, by key. |
 
 ### templateKind
 

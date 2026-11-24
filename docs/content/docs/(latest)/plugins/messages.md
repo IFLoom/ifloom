@@ -625,13 +625,21 @@ type MessagesState = {
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.messages`. It holds every arrival, oldest first, and the reply sent to each, the day it was sent and which have been read, by the arrival's key. `due` is the message waiting to arrive, if one is: its id, its thread and whether the thread shows typing. A UI reads the view, not this.
+What the plugin keeps in a save, at `state.plugins.messages`. A UI reads the view, not this.
 
-A save from before `repliedOn` (the plugin's state version 3) loads with each reply's day taken to be its arrival's day, because the old save didn't keep when it was sent.
+| Field | What it is |
+|---|---|
+| `arrived` | Every [arrival](#arrival), oldest first. |
+| `replied` | The reply sent to each arrival, by the arrival's key. |
+| `repliedOn` | The day each reply was sent, by the arrival's key: the calendar's day, or the turn without it. |
+| `read` | The arrivals the player has opened, by key. |
+| `due` | The message waiting to arrive, if one is: its key, its thread and whether the thread shows typing. `null` when none waits. |
 
-A save from before `after` (the plugin's state version 2) loads with nothing waiting.
+A save from before `repliedOn` loads with each reply's day taken to be its arrival's day, because the old save didn't keep when it was sent.
 
-A save from before pools (the plugin's state version 1) kept one arrival per message by id. It loads with each of those as an arrival keyed by the message's id, so its replies and reads carry over. Its day is taken to be its turn, because the old save didn't keep the day.
+A save from before `after` loads with nothing waiting.
+
+A save from before pools kept one arrival per message by id. It loads with each of those as an arrival keyed by the message's id, so its replies and reads carry over. Its day is taken to be its turn, because the old save didn't keep the day.
 
 ### Arrival
 
@@ -644,7 +652,14 @@ type Arrival = {
 }
 ```
 
-One arrival of a message. `key` is the message's id for its first arrival, then `<id>~2`, `<id>~3` and on. `turn` is the turn it arrived on, and `day` the calendar's day, or the turn in a game without the calendar.
+One arrival of a message.
+
+| Field | What it is |
+|---|---|
+| `key` | The message's id for its first arrival, then `<id>~2`, `<id>~3` and on. |
+| `message` | The message's id. |
+| `turn` | The turn it arrived on. |
+| `day` | The calendar's day it arrived on, or the turn in a game without the calendar. |
 
 ## For code
 
@@ -699,7 +714,7 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 - **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `calendar.period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`calendar.day({ gte: 2 })`) or a scene seen.
 - **A trigger on an arrival runs a command late.** The engine tests [triggers](/docs/reference/triggers#when-triggers-fire) before the plugins' hooks, and the plugin delivers messages in its hook, so a trigger whose `when` is `messages.arrived('ava.hi')` fires on the command after the one the message came in. To do something as a message comes, such as start a timer, put it in the message's `effects`, or in the effect that brings the message.
 - **A message arrives once, unless it's in a pool.** After that it stays, whatever `when` does. A message with `drawnFrom` never arrives by `when` alone; only a draw brings it, as often as it's drawn. See [Messages that come again](#messages-that-come-again).
-- **A reply's label is its words.** Before schema 25 it was the prose line `<message>#<reply>`. A pack of an older schema gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
+- **A reply's label is its words.** In older content it was the prose line `<message>#<reply>`. An older pack gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
 - **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
 - **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title`, the message's first line as its `text` (cut to 80 characters) and the channel as its `tag`. A message that arrives in a thread whose last notice is still unseen replaces that notice, so a burst of five texts is one notice showing the newest line, not five. So `view.notices.byTag.texts` counts threads with news the player hasn't dismissed, rather than every message. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.

@@ -390,15 +390,27 @@ type UnlocksView = {
   unlocked: number
   total: number
 }
+```
 
+| Field | What it is |
+|---|---|
+| `unlocks` | Every unlock, in the order the game declares them. |
+| `unlocked` | How many are unlocked. |
+| `total` | How many there are. |
+
+### UnlockView
+
+One unlock as the player sees it.
+
+```ts shape
 type UnlockView = { id: string; name: string; description: string; unlocked: boolean }
 ```
 
 | Field | What it is |
 |---|---|
-| `unlocks` | Every unlock, in the order the game declares them. `unlocked` is whether this save has it recorded. `description` is `''` without one. |
-| `unlocked` | How many are unlocked. |
-| `total` | How many there are. |
+| `id`, `name` | The unlock's id and name. |
+| `description` | Its description, or `''` without one. |
+| `unlocked` | Whether this save has it recorded. |
 
 ## Drawing it
 

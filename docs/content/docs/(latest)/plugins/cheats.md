@@ -307,10 +307,17 @@ The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `chea
 
 ```ts shape
 type CheatsState = { used: CheatUse[] }
-type CheatUse = { cheat: string; turn: number }
 ```
 
-What the plugin keeps in a save, at `state.plugins.cheats`: every use of a cheat, oldest first, with the [turn](/docs/reference/state#turn) it was used on. A save from before the plugin was added loads with nothing used.
+What the plugin keeps in a save, at `state.plugins.cheats`: every use of a cheat, oldest first. A save from before the plugin was added loads with nothing used.
+
+### CheatUse
+
+One use of a cheat: the cheat's id and the [turn](/docs/reference/state#turn) it was used on.
+
+```ts shape
+type CheatUse = { cheat: string; turn: number }
+```
 
 ## For code
 

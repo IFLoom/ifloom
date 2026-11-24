@@ -398,7 +398,15 @@ type QuestsState = {
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.quests`. It holds the turn each quest started and finished, how many stages of each are done, the tracked quest, and how far each quest had got when the player last looked. A UI reads the view, not this.
+What the plugin keeps in a save, at `state.plugins.quests`. A UI reads the view, not this.
+
+| Field | What it is |
+|---|---|
+| `started` | The turn each quest started, by quest id. |
+| `reached` | How many of each started quest's stages are done. |
+| `done` | The turn each quest finished. |
+| `tracked` | The quest the player has pinned, or `null`. |
+| `seen` | How far each quest had got when the player last looked at it: stages done, plus one once finished. |
 
 ## For code
 

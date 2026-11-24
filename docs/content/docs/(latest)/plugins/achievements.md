@@ -86,7 +86,7 @@ type AchievementDef = {
 | `image` | A picture for a UI to show, through [`artSrc`](/docs/reference/prose#artsrc). Checked by `ifloom check`. |
 | `secret` | Shown as `???`, with no description, picture or progress, until it's earned. |
 | `when` | Earned the first time this [condition](/docs/reference/conditions) holds after a command. |
-| `progress` | A count towards it. See [Progress](#progress). |
+| `progress` | A count towards it. See [`ProgressDef`](#progressdef). |
 
 An achievement is earned:
 
@@ -94,7 +94,9 @@ An achievement is earned:
 - otherwise, the first time `progress` reaches its target, if it has one
 - at any time by the [`achievements/grant`](#effects) effect, so one with neither is earned only that way
 
-### Progress
+### ProgressDef
+
+A count towards an achievement, shown as a bar until it's earned.
 
 ```ts shape
 type ProgressDef = { value: Amount; target: number }
@@ -250,7 +252,7 @@ Its words are in `ACHIEVEMENTS_WORDS`. A game rewords any of them with `ui.<key>
 function AchievementList(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-Every [achievement](/docs/plugins/achievements) the game has, in the order it declares them, under a heading with how many are earned (`ui.achievements` and `ui.achievementsCount`, `1 of 3`). Each one (`data-achievement`) shows its picture, its title and its description. An earned one carries `data-earned` and an **Earned** badge (`ui.achievementEarned`). It counts as earned when this save or any other earned it, since the profile remembers it. A secret one not yet earned carries `data-secret` and shows as `???`, with no description or progress. One with [progress](/docs/plugins/achievements#progress) not yet earned has a bar (a `progressbar` labelled with its title) and `5 of 20` under it (`ui.achievementProgress`).
+Every [achievement](/docs/plugins/achievements) the game has, in the order it declares them, under a heading with how many are earned (`ui.achievements` and `ui.achievementsCount`, `1 of 3`). Each one (`data-achievement`) shows its picture, its title and its description. An earned one carries `data-earned` and an **Earned** badge (`ui.achievementEarned`). It counts as earned when this save or any other earned it, since the profile remembers it. A secret one not yet earned carries `data-secret` and shows as `???`, with no description or progress. One with [progress](/docs/plugins/achievements#progressdef) not yet earned has a bar (a `progressbar` labelled with its title) and `5 of 20` under it (`ui.achievementProgress`).
 
 `title` replaces the heading, and `false` leaves it out, as the page and the dialog do. It draws nothing in a game without the plugin.
 

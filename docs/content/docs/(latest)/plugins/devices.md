@@ -369,7 +369,7 @@ An app's `disabled` in the view is this same answer, so a lock that stops openin
 
 `devices/home` and `devices/close` are refused by locks, and with `There is no such device.` for a device the plugin wasn't given. `devices/close` is refused with `That is put away.` for a device that isn't out.
 
-**Gotcha.** Before schema 29, `devices/close` took a device back to its home screen. A pack written for an older schema has its `devices/close` carried to `devices/home`, and so does an older command log, but your game's own content isn't upgraded: write `devices.home(device)` where you meant that.
+**Gotcha.** `devices/close` once took a device back to its home screen. An older pack has its `devices/close` carried to `devices/home`, and so does an older command log, but your game's own content isn't upgraded: write `devices.home(device)` where you meant that.
 
 You can reword the plugin's own lines (see [Strings](#strings)).
 
@@ -597,7 +597,13 @@ type DeviceState = {
 }
 ```
 
-Which device is out, from the view, and how to bring one out and put it away. `openId` and `device` are the device that's out (the first, if several are), or `null`. `open(id)` sends that device's `home` command, and `close()` the `close` command of the one that's out. Every call reads the same game state, so a button of yours and the dialog always agree.
+Which device is out, from the view, and how to bring one out and put it away. Every call reads the same game state, so a button of yours and the dialog always agree.
+
+| Field | What it is |
+|---|---|
+| `openId`, `device` | The device that's out (the first, if several are), by id and as its view, or `null`. |
+| `open` | `open(id)` sends that device's `home` command. |
+| `close` | Sends the `close` command of the device that's out. |
 
 ::include[../../../../snippets/react/use-device.tsx]
 
@@ -636,7 +642,7 @@ type DevicesState = { shown: Record<string, string | null> }
 
 This is what the plugin keeps in a save, at `state.plugins.devices`. Each device that's out is in `shown`, with the id of the app open on it, or `null` on its home screen. A device not in `shown` is put away. A UI should read the view, not this.
 
-A save from version 1 of the plugin, which kept only the app open on each device, loads with every device put away.
+A save from the plugin's first release, which kept only the app open on each device, loads with every device put away.
 
 ## For code
 

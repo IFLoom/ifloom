@@ -280,10 +280,17 @@ The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/sta
 
 ```ts shape
 type StatusesState = { active: ActiveRecord[] }
-type ActiveRecord = { id: string; left: number[] }
 ```
 
-What the plugin keeps in a save, at `state.plugins.statuses`: each active status, with the turns left on each of its stacks, oldest first. A save from before the plugin was added loads with nothing active. A save from when the plugin was called `@ifloom/plugin-effects` kept it at `state.plugins.effects`, and loads with it moved here.
+What the plugin keeps in a save, at `state.plugins.statuses`: each active status, in the order they were first applied. A save from before the plugin was added loads with nothing active. A save from when the plugin was called `@ifloom/plugin-effects` kept it at `state.plugins.effects`, and loads with it moved here.
+
+### ActiveRecord
+
+One active status: its id and the turns left on each of its stacks, oldest first.
+
+```ts shape
+type ActiveRecord = { id: string; left: number[] }
+```
 
 ## For code
 

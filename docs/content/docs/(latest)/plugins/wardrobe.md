@@ -72,7 +72,11 @@ The raincoat has `at: 'player'`, so the player starts holding it, which the coat
 const wardrobe: {
   wearable(slot: string): { 'wardrobe/wearable': Wearable }
 }
+```
 
+#### Wearable
+
+```ts shape
 type Wearable = { slot: string }
 ```
 
@@ -84,7 +88,13 @@ The slot a thing is worn in. It's a [trait](/docs/reference/entities#traits), so
 const wardrobe: {
   closet(options?: Closet): { 'wardrobe/closet': Closet }
 }
+```
 
+#### Closet
+
+What the `wardrobe/closet` trait holds: `label`, the words on its button (the `wardrobe/open` string if left out).
+
+```ts shape
 type Closet = { label?: string }
 ```
 

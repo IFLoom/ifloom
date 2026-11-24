@@ -480,14 +480,14 @@ type FeedState = {
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.feed`. It holds:
+What the plugin keeps in a save, at `state.plugins.feed`. A UI reads the view, not this.
 
-- the turn each post appeared on
-- the player's own posts, oldest first
-- the likes and comments added to other people's posts
-- how many of other people's posts each feed had when the player last looked
-
-A UI reads the view, not this.
+| Field | What it is |
+|---|---|
+| `appeared` | The turn each post appeared on, by post id. |
+| `own` | The player's own posts, oldest first. |
+| `reactions` | The likes and comments added to other people's posts since they appeared, by post id. |
+| `seen` | How many of other people's posts each feed had when the player last looked, by feed id. |
 
 ### OwnPost
 
@@ -504,9 +504,18 @@ type OwnPost = {
 }
 ```
 
-A post the player made, as the state keeps it, with the turn it was posted. `text` is its words, as written, and tokens in it are filled as it's shown.
+A post the player made, as the state keeps it.
 
-The plugin's state is at version 2. A save made at version 1 kept a `day` on each of the player's posts. When you load it, the plugin's [migration](/docs/reference/plugins) moves that number to `turn` unchanged. Nothing else changed.
+| Field | What it is |
+|---|---|
+| `id` | The post's own id. |
+| `feed` | The feed it was posted to. |
+| `turn` | The turn it was posted on. |
+| `text` | Its words, as written. Tokens in it are filled as it's shown. |
+| `image`, `video` | Its picture or video, if it has one. |
+| `likes`, `comments` | What other people added to it. |
+
+An older save kept a `day` on each of the player's posts. When you load it, the plugin's [migration](/docs/reference/plugins) moves that number to `turn` unchanged.
 
 ### Comment
 
@@ -563,7 +572,7 @@ The player's own posts and reactions are made by effects, and those are checked 
 - **A post appears once.** After that it stays, whatever `when` does.
 - **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unread` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
 - **A feed the game doesn't have counts nothing.** `feed/unread` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
-- **A post's words are kept in the save.** A post the player made, and a comment, keep the words they were made with, so a translation loaded later doesn't change them. A save from version 2 of the feed, which kept a prose key, gets that key's words when it loads. A `text` that is a prose key the game has is reported where content writes it.
+- **A post's words are kept in the save.** A post the player made, and a comment, keep the words they were made with, so a translation loaded later doesn't change them. An older save, which kept a prose key, gets that key's words when it loads. A `text` that is a prose key the game has is reported where content writes it.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
 - **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a `blocked` entry, as the showcase does with its `postedToday` kv key.
 - **React after posting.** `feed/react` on a post that isn't there yet does nothing. Put the reaction after the `feed/post` in the list, or in a later command.

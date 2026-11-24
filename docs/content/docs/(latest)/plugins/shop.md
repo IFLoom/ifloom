@@ -87,8 +87,6 @@ The kind is unlisted (`listed: false`) because what the player holds already rea
 const shop: {
   vendor(def: VendorDef): EntityDef
 }
-
-type VendorDef = Omit<EntityDef, 'of'> & Vendor & { of?: string }
 ```
 
 Writes a vendor for your content's `entities`. You give it the entity's fields and the `shop/vendor` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `vendor` with the trait's fields in `traits['shop/vendor']`.
@@ -100,6 +98,14 @@ shop.vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', pr
 // { id: 'kiosk', of: 'vendor', name: 'The kiosk', traits: { 'shop/vendor': { goods: [{ entity: 'food:paper', price: { coins: 1 } }] } } }
 ```
 
+#### VendorDef
+
+What `shop.vendor()` takes: the entity's fields and the [vendor trait](#the-vendor-trait)'s, side by side.
+
+```ts shape
+type VendorDef = Omit<EntityDef, 'of'> & Vendor & { of?: string }
+```
+
 | Field | What it is |
 |---|---|
 | `id` | Unique among the entities of its kind. Commands name a vendor of the `vendor` kind by it, and its entity is `'vendor:<id>'`. |
@@ -109,6 +115,10 @@ shop.vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', pr
 The entity's other fields work as on any entity.
 
 ### The vendor trait
+
+What makes an entity a vendor: its goods, its opening hours and what it buys back.
+
+#### Vendor
 
 ```ts shape
 type Vendor = {
@@ -182,7 +192,6 @@ type GoodDef = {
   restock?: Restock
   when?: Condition
 }
-type Restock = 'turn' | 'day'
 ```
 
 | Field | What it is |
@@ -192,6 +201,14 @@ type Restock = 'turn' | 'day'
 | `stock` | How many the vendor holds. See [Stock](#stock). Never runs out if left out. |
 | `restock` | When the vendor's stock comes back up to `stock`: every `'turn'`, or every `'day'` (the calendar's day, or a turn without it). Never, if left out. |
 | `when` | Offered only while this holds. Otherwise the vendor doesn't list it, and buying it is refused as if it weren't for sale. |
+
+#### Restock
+
+When a good's stock comes back up: every turn, or every day.
+
+```ts shape
+type Restock = 'turn' | 'day'
+```
 
 ### Stock
 
@@ -214,7 +231,13 @@ A unique thing is always sold from the vendor's stock, since there's only one of
 const shop: {
   sellable(price: Record<string, number>): { 'shop/sellable': Sellable }
 }
+```
 
+#### Sellable
+
+What the `shop/sellable` trait holds: one thing's price, by stat.
+
+```ts shape
 type Sellable = { price: Record<string, number> }
 ```
 
@@ -231,6 +254,10 @@ entities: [
 The checker reports a good with neither a price nor the trait.
 
 ### Discounts
+
+#### DiscountDef
+
+How a vendor marks its goods down each day.
 
 ```ts shape
 type DiscountDef = { off: number; count?: number }
@@ -479,12 +506,24 @@ The shop plugin's view ([`ShopView`](/docs/plugins/shop#shopview): `vendors`), t
 
 ```ts shape
 type ShopState = { stocked: Record<string, Record<EntityRef, StockRecord>> }
-type StockRecord = { at: number; left?: number }
 ```
 
 What the plugin keeps in a save, at `state.plugins.shop`. The stock itself is what each vendor's entity holds, in [`state.held`](/docs/reference/state#held). For each vendor and good with a stock, the plugin keeps the turn or day it last topped the stock up (`at`, 0 for a good that never restocks). When the turn or day moves on past `at`, the stock is back in full without anything having to run. `left` is a count an older save carried in that isn't written to what the vendor holds yet.
 
 A save from before the plugin was added loads with every stock full. A save from the plugin's first version, which counted how many of each item had gone, is carried forward: each count becomes what the vendor has left, under the good whose thing has the item's id.
+
+#### StockRecord
+
+When the plugin last topped up one vendor's stock of one good.
+
+```ts shape
+type StockRecord = { at: number; left?: number }
+```
+
+| Field | What it is |
+|---|---|
+| `at` | The turn or day of the last top-up. `0` for a good that never restocks. |
+| `left` | A count an older save carried in that isn't written to what the vendor holds yet. Usually absent. |
 
 ## For code
 
@@ -547,7 +586,7 @@ When the game loads, the plugin checks the `shop/vendor` trait on each vendor, a
 
 A command that names a vendor or thing the game doesn't have gives `unknown entity "vendor:…"` or `unknown entity "…"` where it's written, and one that names an entity that isn't a vendor gives `"…" has no shop/vendor trait`. The `shop/sellable` trait's price is checked on each entity that has it.
 
-A pack that still lists vendors in `data.shop.vendors`, as content did before schema 24, is carried forward by [`upgradePack`](/docs/reference/loader#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
+A pack that still lists vendors in `data.shop.vendors`, as older content did, is carried forward by [`upgradePack`](/docs/reference/loader#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
 
 ## Gotchas
 

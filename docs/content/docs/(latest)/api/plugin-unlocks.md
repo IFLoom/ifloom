@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/plugin-unlocks` and `@ifloom/plugin-unlock
 
 ### codeFits
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#codefits).
 
 Returns true when the code is the unlock's code.
 
@@ -25,7 +25,7 @@ Uses: [`UnlockDef`](#unlockdef).
 
 ### contentScript
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#contentscript).
 
 Returns the script `ifloom build` puts in the page's head, which holds the encrypted content by unlock.
 
@@ -78,7 +78,7 @@ type Entered = {
 
 ### envName
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#envname).
 
 Returns the name of the environment variable `ifloom build` reads an unlock's code from, such as `IFLOOM_UNLOCK_SUPPORTER` for `supporter`.
 
@@ -89,7 +89,7 @@ function envName(unlock: string): string
 
 ### ITERATIONS
 
-Const.
+Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#iterations).
 
 The number of PBKDF2 rounds for an unlock without its own `iterations`. It makes guessing codes one by one take a long time.
 
@@ -100,7 +100,7 @@ const ITERATIONS: 600000
 
 ### lockContent
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockcontent).
 
 Returns an unlock's packs encrypted under its code, for the page, as `ifloom build` does with each file in
 `src/unlocks/`. The packs must be data, as a mod's are.
@@ -117,7 +117,7 @@ Uses: [`UnlockDef`](#unlockdef), [`Pack`](/docs/api/engine#pack), [`LockedConten
 
 ### LockedContent
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockedcontent).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockedcontent-1).
 
 An unlock's encrypted packs as `ifloom build` writes them into the page.
 
@@ -142,7 +142,7 @@ type LockedContent = {
 
 ### lockedContent
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockedcontent).
 
 Returns the encrypted content `ifloom build` put in the page, by unlock. Returns an empty record in a page without any.
 
@@ -155,7 +155,7 @@ Uses: [`LockedContent`](#lockedcontent).
 
 ### normaliseCode
 
-Function.
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#normalisecode).
 
 Returns a code in the form the plugin checks, Unicode-normalised, without spaces or hyphens, in capitals. So
 `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
@@ -230,7 +230,7 @@ Uses: [`Profile`](/docs/api/engine#profile), [`LockedContent`](#lockedcontent), 
 
 ### unlockHash
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockhash).
 
 Returns the hash of a code for an unlock, in hex, the value for the unlock's `hash`. `ifloom unlock-hash` prints
 it, so you never write the code into the game.
@@ -263,7 +263,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`UnlocksState`]
 
 ### unlocksOf
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksof).
 
 Returns the game's unlocks, from `data.unlocks.unlocks` in its content and packs.
 
@@ -381,7 +381,7 @@ type UnlockView = {
 
 ### UNLOCKS_WORDS
 
-Const.
+Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocks_words).
 
 The unlocks plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -414,7 +414,7 @@ const UNLOCKS_WORDS: {
 
 ### UnlocksControls
 
-Type.
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockscontrols).
 
 The unlocks plugin's view with the code box's state and a function that enters a code, as `useUnlocks` returns it.
 

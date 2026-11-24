@@ -65,7 +65,7 @@ type DebugView = {
 
 ### DEBUG_WORDS
 
-Const.
+Const. Explained in [Debug](/docs/reference/plugins/debug#debug_words).
 
 The debug plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -134,7 +134,7 @@ const DebugCard: ComponentType<{ className?: string; }>
 
 ### DebugControls
 
-Type.
+Type. Explained in [Debug](/docs/reference/plugins/debug#debugcontrols).
 
 The debug plugin's view with the refused buttons, the state, the command log and undo and redo, as `useDebug`
 returns it. Send the plugin's helpers with `useGame().send`, such as `send(debug.stat('coins', 50))`.

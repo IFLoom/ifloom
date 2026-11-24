@@ -42,7 +42,7 @@ type AppDef = {
 
 ### appsOf
 
-Function. Explained in [Devices](/docs/reference/plugins/devices#devicesof-and-appsof).
+Function. Explained in [Devices](/docs/reference/plugins/devices#appsof).
 
 Returns the game's apps on every device, `data.devices.apps` from its content and packs, in declared order.
 
@@ -133,7 +133,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`DevicesView`](
 
 ### devicesOf
 
-Function. Explained in [Devices](/docs/reference/plugins/devices#devicesof-and-appsof).
+Function. Explained in [Devices](/docs/reference/plugins/devices#devicesof).
 
 Returns the game's devices, `data.devices.devices` from its content and packs, in declared order.
 
@@ -324,7 +324,7 @@ Uses: [`DeviceView`](#deviceview).
 
 ### DeviceState
 
-Type.
+Type. Explained in [Devices](/docs/reference/plugins/devices#devicestate).
 
 The device that's out and the controls to bring a device out or put it away, as `useDevice` returns them. The
 state comes from the save, so every UI agrees.
@@ -378,7 +378,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### OpenAppState
 
-Type.
+Type. Explained in [Devices](/docs/reference/plugins/devices#openappstate).
 
 The app being rendered and its device, as `useOpenApp` returns them.
 

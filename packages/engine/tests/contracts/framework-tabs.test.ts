@@ -22,12 +22,9 @@ import { codeOf, includesOf } from '../../../../docs/lib/snippets.ts'
  * tabs, and every UI block in it included from `docs/snippets/`, which is
  * type-checked and tested, never pasted.
  *
- * Until the reference and plugin pages are rewritten, their old
- * `## Drawing it` sections are held to the same: a full group, every UI block
- * from `docs/snippets/`. The one exception is a Svelte tab a page had before
- * Svelte was deferred, which stays as it was written. Its React-only blocks document the React UI's
- * default for the feature (a plugin's `/react` subpath, say), so they may
- * stand outside a group.
+ * A plugin page's `## React UI` section documents the React UI's default for
+ * the plugin (its `/react` subpath), so its React-only blocks may stand
+ * outside a group.
  *
  * Pages under `react/` document the optional React UI, so they stay React.
  * Two more pages are about one framework by design: the guide's worked
@@ -65,8 +62,8 @@ const PAGES = import.meta.glob('../../../../docs/content/docs/**/*.{md,mdx}', {
 const TABS = ['Plain JS', 'React', 'Vue', 'Svelte']
 const REQUIRED = ['Plain JS', 'React', 'Vue']
 const GROUP = 'framework'
-/** The sections whose React-only blocks document the React UI's default: a plugin page's `## React UI`, and `## Drawing it` until the last one goes. */
-const DRAWING = ['Drawing it', 'React UI']
+/** The sections whose React-only blocks document the React UI's default: a plugin page's `## React UI`. */
+const DRAWING = ['React UI']
 
 /** Pages that may show a UI snippet in one framework only. */
 const ALLOWED = [/\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/, /\/api\//]
@@ -83,7 +80,7 @@ type Block = {
   end: number
   /** Only blank lines between it and the next block. */
   adjacentToNext: boolean
-  /** Under a `## Drawing it` heading, whose React-only blocks document the React UI's default. */
+  /** Under a `## React UI` heading, whose React-only blocks document the React UI's default. */
   drawing: boolean
   /** The `##` heading it's under, or '' before the first. */
   section: string
@@ -270,23 +267,6 @@ describe('the docs', () => {
       }
     }
     expect(sections).toBeGreaterThanOrEqual(10)
-    expect(problems).toEqual([])
-  })
-
-  it('draw each feature in a "Drawing it" section: a full group of tabs, every UI block from docs/snippets/', () => {
-    const problems: string[] = []
-    let sections = 0
-    for (const page of pages) {
-      const drawing = page.blocks.filter((block) => block.drawing)
-      if (!/(^|\/)(reference|plugins)\//.test(page.path) || !page.source.includes('\n## Drawing it\n')) continue
-      sections++
-      if (!groupsOf(drawing).some((group) => !groupProblem(group))) problems.push(`${page.path}: no full group of framework tabs`)
-      for (const block of drawing) {
-        if ((isUi(block) || TABS.includes(block.tab ?? '')) && block.tab !== 'Svelte' && !block.included?.startsWith(SNIPPETS))
-          problems.push(`${page.path}:${block.line}: written in the page, not included from docs/snippets/`)
-      }
-    }
-    expect(sections).toBeGreaterThan(0)
     expect(problems).toEqual([])
   })
 })

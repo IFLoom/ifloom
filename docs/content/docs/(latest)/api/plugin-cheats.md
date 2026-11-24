@@ -41,7 +41,7 @@ type CheatDef = {
 
 ### cheatOf
 
-Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsof-and-cheatof).
+Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheatof).
 
 Returns the game's cheat with the id `id`, or undefined when there is none.
 
@@ -75,7 +75,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`CheatsState`](
 
 ### cheatsOf
 
-Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsof-and-cheatof).
+Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsof).
 
 Returns the game's cheats, `data.cheats.cheats` from its content and packs, in declared order.
 
@@ -178,7 +178,7 @@ type CheatView = {
 
 ### CheatGroup
 
-Type.
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatgroup).
 
 A group of the cheats panel, a heading and the cheats under it. The cheats with no group form one with a null name.
 
@@ -213,7 +213,7 @@ const CheatPanel: ComponentType<{ className?: string; }>
 
 ### CHEATS_WORDS
 
-Const.
+Const. Explained in [Cheats](/docs/reference/plugins/cheats#cheats_words).
 
 The cheats plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -247,7 +247,7 @@ const CheatsButton: ComponentType<{ className?: string; }>
 
 ### CheatsControls
 
-Type.
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatscontrols).
 
 The cheats plugin's view with its cheats grouped and a way to use one, as `useCheats` returns it.
 

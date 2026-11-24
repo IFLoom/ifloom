@@ -1,176 +1,209 @@
 ---
 title: "Debug"
-description: "Commands for testing that ignore locks: set a stat, a kv key, what someone holds, the scene, the turn, the clock or the place."
+description: "Reference for @ifloom/plugin-debug: commands that ignore locks and set a stat, a kv key, what a holder holds, the scene, the clock, the turn or the location, the readout view, React UI, helpers and strings."
 ---
-`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, set how many of a thing the player (or anyone who can hold things) holds, put a scene on screen, set the [calendar](/docs/reference/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/reference/plugins/places) map.
+`@ifloom/plugin-debug` adds commands that set the state by hand while you test, so you reach the state you want to look at without playing up to it. Each command ignores [locks](/docs/reference/locks), pays no cost and needs no exit, and the view adds a readout of the locks that are on, the triggers that have fired and the seed. The plugin is for you, so a release build leaves it out, where the [cheats](/docs/reference/plugins/cheats) plugin gives the player cheats in the release. It needs no other plugin, and it [cooperates](/docs/reference/plugins#cooperates) with the [calendar](/docs/reference/plugins/calendar) for the clock and with [places](/docs/reference/plugins/places) for the map. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Debug a game](/docs/how-to/debug-a-game) adds it to development builds only.
 
-You'd want it while you build and test a game, so you can get straight to the state you want to look at without playing up to it. It's for you, not the player, so leave it out of release builds.
-
-To give the player cheats in the released game, such as +20 coins or a supporter-only shortcut, use the [cheats plugin](/docs/reference/plugins/cheats) instead. Its cheats are content you write, with effects and reasons the player reads, and its log records each use.
-
-To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `debug()` to the game's `plugins` in development builds only. [Leave it out of release builds](#leave-it-out-of-release-builds) shows how.
+In the showcase: `examples/showcase/src/game.ts`, which adds `debug()` only when `withDebug` is set, and `examples/showcase/src/main.tsx`, which sets it from `import.meta.env.DEV`.
 
 ```ts
 import { debug, type DebugView } from '@ifloom/plugin-debug'
 ```
 
-Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. Its [React UI](#drawing-it) draws a [debug card](#debugcard) for it when the game has it.
+## debug
 
-## Install
+The plugin's factory, which returns the plugin with the id `debug`. It takes no options and keeps no state. Every field of its result is in [`debug`](/docs/api/plugin-debug#debug), and its helpers are listed under [Functions](#functions).
 
-Add the package beside the engine. See [Adding one](/docs/reference/plugins#adding-one).
-
-```json
-{
-  "dependencies": {
-    "@ifloom/engine": "^0.0.0",
-    "@ifloom/plugin-debug": "^0.0.0"
-  }
-}
-```
-
-## Leave it out of release builds
-
-The plugin is only in a game whose `plugins` list has it. If you add it in development builds and leave it out of release builds, its commands, strings and view aren't there in the release. A debug command sent to a release build is refused like any command no plugin has.
-
-With Vite, `import.meta.env.DEV` is `true` under `vite` and `false` under `vite build`, and the bundler drops the branch that's never taken:
+A game has the plugin only while its `plugins` list has it, so a build without it has none of its commands, strings or view, and refuses a debug command as it does any command no plugin has. A save made with the plugin loads in a build without it, since nothing in the save depends on it. The save's [`meta.plugins`](/docs/reference/saves#savemeta) still records it, so [`LoadedSave`](/docs/reference/saves#loadedsave)'s `missingPlugins` lists `debug` in a release build. Anything a debug command set stays in the save.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
-import type { Plugin } from '@ifloom/engine/plugin'
 import { calendar } from '@ifloom/plugin-calendar'
-import { places } from '@ifloom/plugin-places'
-import { quests } from '@ifloom/plugin-quests'
 import { debug } from '@ifloom/plugin-debug'
+import { places } from '@ifloom/plugin-places'
 
-declare const town: Content // your content
+declare const town: Content
 
-const base: Plugin[] = [calendar(), places({ start: 'flat' }), quests()]
-
-const { game } = loadGame([town], {
+export const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  plugins: [...base, ...(import.meta.env.DEV ? [debug()] : [])],
+  plugins: [calendar(), places({ start: 'flat' }), ...(import.meta.env.DEV ? [debug()] : [])],
 })
 ```
 
-The [showcase](/docs/guide/showcase) does the same with a `withDebug` option on the function that builds its game.
-
-A save made with the plugin loads in a build without it. The plugin keeps no state, so nothing in the save depends on it. Its version is still recorded in the save's [`meta.plugins`](/docs/reference/saves#savemeta), so a release build lists `debug` in [`missingPlugins`](/docs/reference/saves#loadedsave) for a save made in development. Anything you set by hand is still in the save.
-
-## debug
-
-```ts shape
-function debug(): DefinedPlugin<null, DebugView>
-```
-
-The plugin, with the id `debug`. It has no state of its own. Call it once, when you build the game.
-
-It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/reference/plugins#cooperates)). `debug/time` sets the [calendar](/docs/reference/plugins/calendar)'s clock when the game has one, and `debug/go` moves the player on the [places](/docs/reference/plugins/places) map when the game has it. Each is refused when its partner is missing.
-
 ## Commands
 
-| Command | Helper | Does |
-|---|---|---|
-| `{ 'debug/stat': { stat, to, of? } }` | `debug.stat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
-| `{ 'debug/kv': { key, to } }` | `debug.kv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
-| `{ 'debug/held': { entity, to, at? } }` | `debug.held(entity, to, at?)` | Sets how many of a [thing](/docs/reference/entities#holding-things) a holder holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. Below 0 counts as 0, and a unique thing is taken from whoever had it. |
-| `{ 'debug/scene': { id } }` | `debug.scene(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
-| `{ 'debug/time': { day?, period? } }` | `debug.time({ day?, period? })` | Sets the [calendar](/docs/reference/plugins/calendar)'s clock, through its [`calendar/set`](/docs/reference/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
-| `{ 'debug/turn': { to } }` | `debug.turn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
-| `{ 'debug/go': { id } }` | `debug.go(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/reference/plugins/places#effects) effect, which closes any scene. |
+Every command sets [`ignoresLocks`](/docs/reference/plugin-api#ignoreslocks), so no lock stops it, even one that denies `'*'`, and none pays a cost. They still go through [`apply`](/docs/reference/commands#apply), so after one runs, [triggers](/docs/reference/triggers) fire, the scene left open counts as seen, and every plugin's [`onCommand`](/docs/reference/plugin-api#oncommand) hook runs. No command ends a turn, so neither [`rules.onTurn`](/docs/reference/rules#onturn) nor a plugin's `onTurn` runs, and the [`resets`](/docs/reference/rules#resets) kv keys stay as they are. A refusal comes from [Strings](#strings), where `{id}` is the name given.
 
-A command is refused, with a line from [Strings](#strings), when:
+### debug/stat
 
-- the game has no such stat, thing, scene or place
-- `debug/held`'s `at` can't hold things
-- `debug/stat`'s `of` names no entity in the game, or the stat isn't one the owner has (see [Gotchas](#gotchas))
-- the number given to `debug/stat` or `debug/held` isn't a finite number
-- a kv key's value isn't one the kv store can hold
-- the turn isn't a whole number from 0
-- the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/reference/plugins/calendar#queries) query)
+Puts a [stat](/docs/reference/stats) at `to`, held to its range, and with `of` puts an [entity](/docs/reference/glossary#entity)'s stat there.
 
-In a game with no calendar, `debug/time` is refused with `This game has no calendar.` In a game without the places plugin, `debug/go` is refused with `This game has no places.` Whether a place exists is asked of the places plugin's [`places/known`](/docs/reference/plugins/places#queries) query.
-
-### What they skip
-
-The commands set the state and nothing else, so you can get to the state you want to test without playing up to it. That also means:
-
-- **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
-- **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
-- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/reference/plugins/places#the-location-trait) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/reference/plugins/places#effects), so the place's [`arrive`](/docs/reference/plugins/places#arrival) doesn't run.
-- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`calendar.sleep()`](/docs/reference/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
-- **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
-
-They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `onCommand` hook runs. Setting a kv key that a trigger watches fires that trigger.
-
-### Helpers
-
-```ts shape
-const debug: {
-  (): DefinedPlugin<null, DebugView>
-  stat(stat: string, to: number, of?: string): CommandRef
-  kv(key: string, to: KvValue): CommandRef
-  held(entity: string, to: number, at?: string): CommandRef
-  scene(scene?: string): CommandRef
-  time(time: { day?: number; period?: string }): CommandRef
-  turn(turn: number): CommandRef
-  go(location: string): CommandRef
-}
-
-import type { CommandRef, KvValue } from '@ifloom/engine'
+```ts fragment
+{ 'debug/stat': { stat: 'coins', to: 40 } } // debug.stat('coins', 40)
+{ 'debug/stat': { stat: 'friendship', to: 25, of: 'character:ava' } } // debug.stat('friendship', 25, 'character:ava')
 ```
 
-Each one builds the command above, ready for [`apply`](/docs/reference/commands#apply) or a [runner](/docs/reference/runner).
+The command writes the value into the state and runs no `stat` effect, so neither the game's [`rules.onStat`](/docs/reference/rules#onstat) nor a plugin's `onStat` sees the change. The plugin refuses it, in this order:
 
-## A worked example
+1. With `There is no stat called luck.` (`debug/noSuchStat`) for a stat the game doesn't declare.
+2. With `There is nobody and nothing called character:ghost.` (`debug/noSuchEntity`) for an `of` the game doesn't have.
+3. With `That is not whose friendship it is.` (`debug/notTheirs`) when the stat isn't the owner's, a stat of the player's with no `of`, or one declared on the entity's kind with one.
+4. With `That needs a number.` (`debug/notANumber`) when `to` isn't a finite number, such as `'5'`, `null` or `NaN`.
 
-Say you want to test a chat with Ava in the [showcase](/docs/guide/showcase)'s café, a few days in, with money in the player's pocket and Ava already a friend, without playing moving day to get there:
+### debug/kv
+
+Sets a key in the [kv store](/docs/reference/glossary#kv) to `true`, `false`, a number or a word. The plugin refuses any other value, and sets any key, a misspelt one included.
+
+```ts fragment
+{ 'debug/kv': { key: 'catName', to: 'Biscuit' } } // debug.kv('catName', 'Biscuit')
+```
+
+### debug/held
+
+Sets how many of a [thing](/docs/reference/glossary#thing) a [holder](/docs/reference/glossary#holder) holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. A count below 0 counts as 0, and a unique thing is taken from whoever held it.
+
+```ts fragment
+{ 'debug/held': { entity: 'item:sandwich', to: 2 } } // debug.held('item:sandwich', 2)
+```
+
+The plugin refuses it with `There is nobody and nothing called item:pie.` for a thing the game doesn't have, with `vendor:kiosk can’t hold things.` (`debug/cantHold`) for an `at` that can't hold, and with `That needs a number.` for a `to` that isn't a finite number.
+
+### debug/scene
+
+Opens the scene `id` over any open scene, which the engine's [`scene`](/docs/reference/commands#scene) command refuses to do. With no `id`, it closes the open scene.
+
+```ts fragment
+{ 'debug/scene': { id: 'ava.hi' } } // debug.scene('ava.hi')
+{ 'debug/scene': {} } // debug.scene()
+```
+
+The plugin refuses it with `There is no scene called ava.bye.` (`debug/noSuchScene`) for a scene the game doesn't have.
+
+### debug/time
+
+Sets the calendar's clock through its [`calendar/set`](/docs/reference/plugins/calendar#calendarset) effect. `day` counts from 0, and a half left out stays as it is. The command leaves [`state.turn`](/docs/reference/state#turn) alone.
+
+```ts fragment
+{ 'debug/time': { day: 4, period: 'afternoon' } } // debug.time({ day: 4, period: 'afternoon' })
+```
+
+The plugin refuses it with `This game has no calendar.` (`debug/noCalendar`) in a game without the calendar. It refuses a day that isn't a whole number from 0, or a period that isn't one of the calendar's, with `A day is a whole number from 0, and a period one of morning, afternoon, evening, night, late.` (`debug/badTime`), where `{periods}` lists the calendar's periods from its `calendar/periods` [query](/docs/reference/plugins/calendar#queries).
+
+### debug/turn
+
+Sets [`state.turn`](/docs/reference/state#turn), the number of turns that have passed, and leaves the calendar's clock alone.
+
+```ts fragment
+{ 'debug/turn': { to: 4 } } // debug.turn(4)
+```
+
+The plugin refuses it with `A turn is a whole number from 0.` (`debug/notATurn`) for anything else.
+
+### debug/go
+
+Puts the player at the location `id` through the places plugin's [`places/move`](/docs/reference/plugins/places#placesmove) effect, which closes any open scene. It ignores the location's `blocked` entries, opening hours included, and runs nothing on arrival.
+
+```ts fragment
+{ 'debug/go': { id: 'cafe' } } // debug.go('cafe')
+```
+
+The plugin refuses it with `This game has no places.` (`debug/noPlaces`) in a game without places, and with `There is no location called moon.` (`debug/noSuchPlace`) for a location the places plugin's `places/known` [query](/docs/reference/plugins/places#queries) doesn't know.
+
+## View
+
+### DebugView
+
+The debug readout, in `view.plugins.debug`. Every field is in [`DebugView`](/docs/api/plugin-debug#debugview).
+
+`locks` lists every lock whose `when` holds now, in the order the game declares them, with its reason and what it denies. A lock with `effect` is listed while its `when` holds, even when it stops no command. `fired` is a copy of [`state.fired`](/docs/reference/state#fired), each trigger mapped to the turn it last fired on. `seed` is the save's [seed](/docs/reference/random), which every draw is hashed from.
+
+[Render a debug readout](/docs/how-to/render/player-tools#render-a-debug-readout) renders this view in Plain JS, React and Vue.
+
+## React UI
+
+The React UI is optional: the `@ifloom/plugin-debug/react` subpath renders a debug card for a game that uses [`@ifloom/react`](/docs/reference/react), and a game rendered another way never loads it. [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) adds it to a game.
+
+### debugUi
+
+The plugin's [`PluginUi`](/docs/reference/react/kit#pluginui), listed in `mountGame`'s `plugins`. It adds the [`DebugCard`](#debugcard) to the end of the story. It renders nothing in a build without the plugin, so a game lists it in every build. Its type is in [`debugUi`](/docs/api/plugin-debug#debugui).
+
+### DEBUG_WORDS
+
+The words the debug card uses, by key, which a game rewords as `ui.<key>` in its strings as it does the React UI's own. Its value is in [`DEBUG_WORDS`](/docs/api/plugin-debug#debug_words).
+
+| Key | Meaning |
+|---|---|
+| `ui.debug` | `Debug`, the card's title. |
+| `ui.seed` | `seed {seed}`, the note beside the title. |
+| `ui.debugSet`, `ui.debugWhy`, `ui.debugState`, `ui.debugLog` | `Set`, `Why not`, `State` and `Log`, the tabs' labels. |
+| `ui.debugStat`, `ui.debugKv`, `ui.debugHeld`, `ui.debugStatOf` | `Stat`, `kv key`, `Held` and `Stat of`, the labels of the forms that set a stat, a kv key, a count held and an entity's stat. |
+| `ui.debugGo`, `ui.debugScene`, `ui.debugTime`, `ui.debugTurn` | `Go`, `Scene`, `Time` and `Turn`, the labels of the forms that set the location, the scene, the clock and the turn. |
+| `ui.set` | `Set`, each form's button. |
+| `ui.closeScene` | `Close the scene`, the button that closes the open scene. |
+| `ui.locksOn`, `ui.noneOn` | `Locks on` and `None.`, the heading over the locks and the line while none is on. |
+| `ui.greyedOut`, `ui.nothingGreyed` | `Greyed out` and `Nothing.`, the heading over the disabled buttons and the line while there are none. |
+
+### DebugCard
+
+Renders the debug card from [`DebugView`](#debugview) and the runner, for the person testing the game. Its props are in [`DebugCard`](/docs/api/plugin-debug#debugcard).
+
+The heading shows the seed, with undo and redo buttons for the runner's history, disabled while there's nothing to undo or redo. Its four tabs hold:
+
+- **Set**: a form for each command, each showing its refusal beside it. The **Go** form shows only with places, and the **Time** form only with the calendar. The kv key form sends `true`, `false` and numbers as themselves, and a number box left empty is refused with `debug/notANumber`.
+- **Why not**: the locks that are on, and every disabled action, choice and person's button on screen with its reason.
+- **State**: the whole game state, as JSON.
+- **Log**: the [command log](/docs/reference/runner#commandlog), one command a line.
+
+It renders nothing in a game without the plugin. The forms' placeholders are in English and aren't words a game rewords. A game replaces it as `DebugCard` in [`components`](/docs/reference/react/components#components). Its parts are `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
+
+### useDebug
+
+Returns the debug view from the running game with the state, the log and the undo controls, or `null` in a game without the plugin. It re-renders when the snapshot changes. Its signature is in [`useDebug`](/docs/api/plugin-debug#usedebug).
+
+### DebugControls
+
+The value `useDebug` returns, a [`DebugView`](#debugview) with what the debug card shows. Every field is in [`DebugControls`](/docs/api/plugin-debug#debugcontrols).
+
+`greyed` lists the disabled buttons on screen, from the actions, the scene's choices and the people here. `state` is the runner's state, `log` its commands, and `canUndo`, `canRedo`, `undo` and `redo` its history. A component sends a debug command with [`useGame`](/docs/reference/react/components#usegame)'s `send`, such as `send(debug.stat('coins', 50))`.
+
+## Functions
+
+The helpers are properties of `debug` and return its [commands](#commands) as a [`CommandRef`](/docs/reference/custom#commandref), typed:
+
+- **`debug.stat(stat, to, of?)`** returns [`debug/stat`](#debugstat).
+- **`debug.kv(key, to)`** returns [`debug/kv`](#debugkv).
+- **`debug.held(entity, to, at?)`** returns [`debug/held`](#debugheld).
+- **`debug.scene(scene?)`** returns [`debug/scene`](#debugscene).
+- **`debug.time({ day?, period? })`** returns [`debug/time`](#debugtime).
+- **`debug.turn(turn)`** returns [`debug/turn`](#debugturn).
+- **`debug.go(location)`** returns [`debug/go`](#debuggo).
+
+A test sets up a chat with Ava in the café a few days in:
 
 ```ts
-import { apply, startingState, type CommandRef, type Game } from '@ifloom/engine'
-import { places } from '@ifloom/plugin-places'
+import { startingState, type Game } from '@ifloom/engine'
+import { play } from '@ifloom/engine/testing'
 import { debug } from '@ifloom/plugin-debug'
 
-declare const game: Game // the showcase, built with debug()
-
-let state = startingState(game) // moving day, behind a lock that denies '*'
-
-const set = (command: CommandRef) => (state = apply(state, game, command).state)
-set(debug.stat('coins', 40))
-set(debug.kv('catName', 'Biscuit'))
-set(debug.held('item:sandwich', 2))
-set(debug.stat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
-set(debug.turn(4))
-set(debug.time({ day: 4, period: 'afternoon' }))      // the game has the calendar
-set(debug.go('cafe'))                                  // and the places plugin
-set(debug.scene('ava.hi'))
-
-state.stats.coins    // 40
-places.where(state, game)   // 'cafe'
-state.sceneId        // 'ava.hi'
-state.turn           // 4
-
-apply(state, game, debug.stat('luck', 3)).reason     // 'There is no stat called luck.'
-apply(state, game, debug.stat('friendship', 5, 'character:ghost')).reason
-// 'There is nobody and nothing called character:ghost.'
-apply(state, game, debug.stat('friendship', 5)).reason // 'That is not whose friendship it is.'
-apply(state, game, debug.go('moon')).reason           // 'There is no location called moon.'
-apply(state, game, debug.held('item:sandwich', NaN)).reason // 'That needs a number.'
-apply(state, game, debug.time({ period: 'noon' })).reason
-// 'A day is a whole number from 0, and a period one of morning, afternoon, evening, night, late.'
-apply(state, game, debug.turn(-1)).reason            // 'A turn is a whole number from 0.'
+export function atTheCafe(game: Game) {
+  return play(
+    startingState(game),
+    game,
+    debug.stat('coins', 40),
+    debug.stat('friendship', 25, 'character:ava'),
+    debug.time({ day: 4, period: 'afternoon' }),
+    debug.go('cafe'),
+    debug.scene('ava.hi'),
+  )
+}
 ```
-
-The debug commands don't change the `phase` kv key, so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from a state with `phase` set to `open` and no scene, as the showcase's own `probes` do: `{ ...start, kv: { ...start.kv, phase: 'open' }, sceneId: null }`, where `start` is `startingState(game)`.
-
-A test does the same to start a scene from the state it needs. In the [React UI](/docs/react), the debug card sends these commands from a form.
 
 ## Strings
 
-These are the plugin's lines in the [strings table](/docs/reference/strings#plugins-strings). A game rewords them by their full key. `{id}` is the name that was given, and `{periods}` lists the calendar's periods, separated by commas.
+A game rewords these by their full key in its [strings](/docs/reference/strings#stringkey-and-strings). `{id}` is the name given, and `{periods}` lists the calendar's periods, separated by commas.
 
-| Key | English |
+| Key | Meaning |
 |---|---|
 | `debug/noSuchStat` | `There is no stat called {id}.` |
 | `debug/noSuchEntity` | `There is nobody and nothing called {id}.` |
@@ -184,128 +217,8 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 | `debug/noCalendar` | `This game has no calendar.` |
 | `debug/notATurn` | `A turn is a whole number from 0.` |
 
-## The view
+## Caveats
 
-`view(state, game).plugins.debug` is a `DebugView`, with what a debugger wants on screen.
-
-Its [React UI](#drawing-it) draws it with [`DebugCard`](#debugcard), and [`useDebug`](#usedebug) gives the same data with no markup.
-
-### DebugView
-
-```ts shape
-type DebugView = {
-  locks: { reason: string; deny: string[] }[]
-  fired: Record<string, number>
-  seed: number
-}
-```
-
-| Field | What it is |
-|---|---|
-| `locks` | Every [lock](/docs/reference/locks) whose `when` holds now, in the order the game lists them, with its reason and what it denies. A lock with `effect` is listed whenever its `when` holds, even if it stops no command right now. |
-| `fired` | The [triggers](/docs/reference/triggers) that have fired, with the turn each last fired on. It's a copy of [`state.fired`](/docs/reference/state). |
-| `seed` | The save's seed, which every [draw](/docs/reference/random) is hashed from. |
-
-## Drawing it
-
-`view.plugins.debug` is a [`DebugView`](#debugview): the locks that are on, how often each trigger fired, and the save's seed. Its commands, such as `debug.stat`, ignore locks (see [Commands](#commands)).
-
-`@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../../snippets/plain/debug.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../../snippets/react/mount-debug.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../../snippets/vue/Debug.vue]{meta='tab="Vue" tab-group="framework"'}
-
-The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.debug`, or from [`useDebug`](#usedebug) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
-
-### debugUi
-
-```ts shape
-const debugUi: PluginUi
-```
-
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build.
-
-Its words are in `DEBUG_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.closeScene': '…' }`.
-
-| Key | English |
-|---|---|
-| `ui.closeScene` | `Close the scene` |
-| `ui.debug` | `Debug` |
-| `ui.debugGo` | `Go` |
-| `ui.debugHeld` | `Held` |
-| `ui.debugKv` | `kv key` |
-| `ui.debugLog` | `Log` |
-| `ui.debugScene` | `Scene` |
-| `ui.debugSet` | `Set` |
-| `ui.debugStat` | `Stat` |
-| `ui.debugStatOf` | `Stat of` |
-| `ui.debugState` | `State` |
-| `ui.debugTime` | `Time` |
-| `ui.debugTurn` | `Turn` |
-| `ui.debugWhy` | `Why not` |
-| `ui.greyedOut` | `Greyed out` |
-| `ui.locksOn` | `Locks on` |
-| `ui.noneOn` | `None.` |
-| `ui.nothingGreyed` | `Nothing.` |
-| `ui.seed` | `seed {seed}` |
-| `ui.set` | `Set` |
-
-### DebugCard
-
-```tsx shape
-function DebugCard(props: { className?: string }): JSX.Element | null
-```
-
-A panel for the person testing the game, when the game has the [debug plugin](/docs/reference/plugins/debug). It draws nothing in a game without the plugin, so a release build that [leaves the plugin out](/docs/reference/plugins/debug#leave-it-out-of-release-builds) shows no panel.
-
-| Tab | What it has |
-|---|---|
-| **Set** | A form each for a stat, a kv key, how many of a thing you hold, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/reference/plugins/places) plugin, and the time form only when it has the [calendar](/docs/reference/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
-| **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
-| **State** | The whole game state, as JSON. |
-| **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
-
-The heading shows the seed, with **Undo** and **Redo** buttons for the runner's history. They're greyed out while there's nothing to undo or redo, and the runner only keeps history when it's made with `history`.
-
-The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Held**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](/docs/react/components#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
-
-**Gotchas.**
-
-- **The placeholders are in English.** Each form's placeholders (`stat`, `value`, `key` and the rest) aren't in the strings table.
-- **A number box needs a number.** An empty box, or words that aren't a number, are refused with `debug/notANumber` rather than set to 0.
-
-Replaceable as `DebugCard` in [`components`](/docs/react/components#components). Parts: `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
-
-### useDebug
-
-```ts shape
-function useDebug(): DebugControls | null
-
-type DebugControls = DebugView & {
-  greyed: RenderedChoice[]
-  state: GameState
-  log: Command[]
-  canUndo: boolean
-  canRedo: boolean
-  undo: () => void
-  redo: () => void
-}
-```
-
-The [debug](/docs/reference/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. The debug commands are the plugin's helpers: send one with [`useGame`](/docs/react/components#usegame)'s `send`, so `send(debug.stat('coins', 50))` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
-
-## Gotchas
-
-- **A number must be a number.** `to: '5'`, `to: ''` or `to: null` in a command written by hand is refused with `debug/notANumber`, and so are `NaN` and `Infinity`.
-- **A stat is held to its range** as the game declares it, so `debug.stat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
-- **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through a `stat` effect, so neither the game's [`rules.onStat`](/docs/reference/rules#onstat) nor a plugin's `onStat` sees the change.
-- **The stat must be the owner's.** With no `of`, it has to be one of the player's stats. With `of`, it has to be one declared on that entity's kind. Otherwise the command is refused with `That is not whose friendship it is.` (`debug/notTheirs`).
-- **A kv key isn't checked.** Any key is set, including a misspelt one.
-- **Never give the player a way to send these.** A debug command in a scene's choices or a game action would work in any build that still lists the plugin. Keep the plugin out of release builds, and keep the commands out of content.
-
-## See it in an example
-
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `debug()` only when `withDebug` is set, and [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) sets it from `import.meta.env.DEV`. The test `has the debugger only when built with it` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) checks both builds.
+- A stat stays in its declared range, so `debug.stat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`.
+- The commands don't change the `phase` kv key, so a lock on moving day still stops ordinary commands after them.
+- A debug command written into a choice or an action works in any build that lists the plugin, so content never sends one.

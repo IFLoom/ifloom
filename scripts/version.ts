@@ -7,7 +7,8 @@
  *   node scripts/version.ts 0.1.0
  *
  * It changes:
- * - the version of each package in packages/;
+ * - the version of each package in packages/, and of the checkout's root
+ *   package.json, which a release's tag names (`v0.1.0`);
  * - the range of each of those packages wherever a manifest names it: the
  *   packages, the examples, the CLI's templates, the docs' snippets and the
  *   tests' fixtures;
@@ -56,12 +57,14 @@ function write(file: string, before: string, after: string): void {
 }
 
 // The manifests: each package's version, and every range that names one.
-const manifests = [...packages, ...dirs('examples'), ...dirs('packages/cli/templates'), join(root, 'docs/snippets')].map((dir) => join(dir, 'package.json'))
+const manifests = [root, ...packages, ...dirs('examples'), ...dirs('packages/cli/templates'), join(root, 'docs/snippets')].map((dir) =>
+  join(dir, 'package.json'),
+)
 const fixtures = packages.flatMap((dir) => walk(join(dir, 'tests/fixtures'), (name) => name === 'package.json'))
 for (const file of [...manifests, ...fixtures]) {
   const before = readFileSync(file, 'utf8')
   const pkg = JSON.parse(before) as Manifest
-  if (packages.some((dir) => join(dir, 'package.json') === file)) pkg.version = version
+  if ([root, ...packages].some((dir) => join(dir, 'package.json') === file)) pkg.version = version
   for (const field of ['dependencies', 'devDependencies', 'peerDependencies'] as const)
     for (const name of Object.keys(pkg[field] ?? {})) if (names.has(name)) pkg[field]![name] = `^${version}`
   write(file, before, `${JSON.stringify(pkg, null, 2)}\n`)

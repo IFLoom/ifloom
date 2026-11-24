@@ -38,6 +38,11 @@ const everything = [
 const versions = new Map(packages.map(([, pkg]) => [pkg.name!, pkg.version!]))
 
 describe('how the packages depend on each other', () => {
+  it('gives every package the version of the checkout, which a release tag names', () => {
+    const version = (JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as Manifest).version
+    expect(packages.filter(([, pkg]) => pkg.version !== version).map(([dir, pkg]) => `${dir} ${pkg.version}`)).toEqual([])
+  })
+
   it('finds the packages', () => {
     expect(versions.get('@ifloom/engine')).toBeDefined()
     expect(everything.length).toBeGreaterThan(packages.length + 5)

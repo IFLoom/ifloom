@@ -1,12 +1,12 @@
 name: CI
 
-# Run by hand while the repo is private, to save Actions minutes. Vercel builds
-# and deploys the site itself, from IFLoom/ifloom-site.
-# The docs' check needs that repo too: SITE_TOKEN is a secret that can read it while it's private. At launch, add:
-#   push:
-#     branches: [main]
-#   pull_request:
+# On every push to main and every pull request, and by hand. Vercel builds and
+# deploys the site itself, from IFLoom/ifloom-site. The docs' check needs that
+# repo too: SITE_TOKEN is a secret that can read it while it's private.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:

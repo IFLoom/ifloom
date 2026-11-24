@@ -21,7 +21,7 @@
   },
   "type": "module",
   "bin": {
-    "ifloom": "./bin.js"
+    "ifloom": "bin.js"
   },
   "exports": {
     ".": {

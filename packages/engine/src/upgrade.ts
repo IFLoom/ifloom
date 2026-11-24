@@ -14,6 +14,7 @@
 import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
+import { carryChain, type Chain } from './chain.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
 export const SCHEMA = 30
@@ -32,8 +33,13 @@ export type PackContext = { entities?: readonly unknown[]; you?: readonly string
 
 /**
  * The steps that reshape a pack, keyed by the schema each upgrades *from*.
- * Every schema from the oldest the engine reads up to `SCHEMA - 1` has one: a
- * pack whose chain has a gap is too old to read.
+ * The lowest key is the oldest schema the engine reads: an older pack is too
+ * old. A schema above it with no step changed nothing the engine reads, so a
+ * pack goes on from it as it is (a plugin's own steps may still run there):
+ * 6 → 7 named plugin calls' arguments, 7 → 8 renamed the timed-effects plugin
+ * to statuses, 11 → 12 renamed the feed's `feed/unseen`, 13 → 14 made the
+ * cast's characters entities, 23 → 24 made places' locations and the shop's
+ * vendors entities, and 28 → 29 changed the devices plugin's `devices/close`.
  *
  * When the content format changes, bump `SCHEMA` and add the step that
  * reshapes the previous schema in the same change. A step returns a new pack
@@ -54,12 +60,6 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   // 5 → 6: one naming rule (ADR 0008) and one gating shape, wherever content
   // can hold them. Words and code are left as they are.
   5: (pack) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, toSchema6)])) as RawPack,
-  // 6 → 7: a plugin call's arguments are always named (ADR 0009). Every
-  // change was to a plugin's calls, values or tokens, so each plugin carries
-  // its own content forward.
-  6: (pack) => pack,
-  // 7 → 8: the timed-effects plugin is the statuses plugin; its own steps move its calls, content and strings.
-  7: (pack) => pack,
   // 8 → 9: an item's `kind` meant a genre the engine shouldn't know, so it's
   // gone. It becomes a tag, and gear's one at the start becomes the item's
   // `start`: `{ kind: 'gear' }` is `{ tags: ['gear'], start: 1 }`. (A place's
@@ -82,12 +82,8 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
         return [key, WORDS.has(key) ? value : deep(value, toSchema11)]
       }),
     ) as RawPack,
-  // 11 → 12: the feed plugin's value `feed/unseen` is `feed/unread`, which its own steps rename.
-  11: (pack) => pack,
   // 12 → 13: items and collections leave the engine; things are entities. See `toSchema13`.
   12: (pack) => toSchema13(pack),
-  // 13 → 14: the cast's characters are entities with the `cast/person` trait, which the cast's own steps move.
-  13: (pack) => pack,
   // 14 → 15: a kind's named conditions are its `flags`, no longer its `marks`.
   14: (pack) =>
     Array.isArray(pack.kinds)
@@ -130,9 +126,6 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   21: (pack) => toSchema22(pack),
   // 22 → 23: speech is written under an id, `@ava: "…"`, not a name. See `toSchema23`.
   22: (pack, context) => toSchema23(pack, context),
-  // 23 → 24: the places plugin's locations and the shop's vendors are entities with the `places/location`
-  // and `shop/vendor` traits, which those plugins' own steps move.
-  23: (pack) => pack,
   // 24 → 25: words are written in place. See `toSchema25`.
   24: (pack, context) => toSchema25(pack, context),
   // 25 → 26: one word each: a thing's line is its `description`, and a heading its `title`. See `toSchema26`.
@@ -141,9 +134,6 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   26: (pack) => toSchema27(pack),
   // 27 → 28: a scene's layered picture with hotspots is its `picture`, not its `stage`. See `toSchema28`.
   27: (pack) => toSchema28(pack),
-  // 28 → 29: nothing of the engine's. The devices plugin's `devices/close` puts a device away now, and its step
-  // carries an older `close`, which went back to the home screen, to `devices/home`.
-  28: (pack) => pack,
   // 29 → 30: a value is printed with a bare token, `{{v:game/x}}` as `{{x}}` and `{{v:plugin/x}}` as
   // `{{plugin/x}}`, wherever words are. See `toSchema30`. (Content's `phrases` and a `cases` block came in
   // too, and a minigame input's `label`, which need no step.)
@@ -1332,29 +1322,22 @@ function startingVersions(
 }
 
 /**
- * Bring every plugin's version in `at` up to `upTo` (or its own version, if
- * lower), running its steps in order, the game's plugins in their order.
- * Returns whether any version moved.
+ * Each plugin's own chain, from the version in `at` to its current one, for
+ * `runChain` to run beside the engine's, the game's plugins in their order.
+ * A version a plugin has no step from changed nothing of its.
  */
-function catchUp<T>(
+function pluginChains<T>(
   plugins: readonly Plugin[],
   at: Record<string, number>,
-  upTo: number,
   current: (plugin: Plugin) => number,
   stepOf: (plugin: Plugin, version: number) => ((value: T) => T) | undefined,
-  value: { now: T },
-): boolean {
-  let moved = false
-  for (const plugin of plugins) {
-    const target = Math.min(upTo, current(plugin))
-    while (at[plugin.id] < target) {
-      const step = stepOf(plugin, at[plugin.id])
-      if (step) value.now = step(value.now)
-      at[plugin.id] += 1
-      moved = true
-    }
-  }
-  return moved
+): Omit<Chain<T>, 'gap'>[] {
+  return plugins.map((plugin) => ({ from: at[plugin.id], to: current(plugin), step: (version) => stepOf(plugin, version) }))
+}
+
+/** The oldest schema a pack can be upgraded from: the first `PACK_STEPS` key, or `SCHEMA` with none. */
+function oldestSchema(): number {
+  return Math.min(SCHEMA, ...Object.keys(PACK_STEPS).map(Number))
 }
 
 const contentVersion = (plugin: Plugin) => plugin.contentVersion ?? 1
@@ -1380,14 +1363,11 @@ export function upgradePack(pack: { schema: number; plugins?: Record<string, num
   const from = pack.schema
   if (!Number.isInteger(from)) return fail(`has no schema number`)
   if (from > SCHEMA) return fail(`written for schema ${from}, this engine reads ${SCHEMA}`)
-  for (let version = from; version < SCHEMA; version += 1) {
-    if (!PACK_STEPS[version]) return fail(`written for schema ${from}, too old for this engine to read (it reads ${SCHEMA})`)
-  }
+  if (from < oldestSchema()) return fail(`written for schema ${from}, too old for this engine to read (it reads ${SCHEMA})`)
   const recorded = isRecord(pack.plugins) ? pack.plugins : {}
   const versions = startingVersions(plugins, recorded, from, contentVersion, 'content')
   if (!versions.ok) return versions
   const at = versions.value
-  const raw = { now: pack as RawPack }
   const toolsFor = (value: RawPack): ContentTools => ({
     ...TOOLS,
     prose: (key) => {
@@ -1400,16 +1380,21 @@ export function upgradePack(pack: { schema: number; plugins?: Record<string, num
     const step = plugin.contentMigrations?.[version]
     return step ? (value: RawPack): RawPack => ({ ...step(value, toolsFor(value)), schema: value.schema }) : undefined
   }
-  let changed = false
-  for (let version = from; version < SCHEMA; version += 1) {
-    catchUp(plugins, at, version + 1, contentVersion, stepOf, raw)
-    raw.now = { ...PACK_STEPS[version](raw.now, context), schema: version + 1 }
-    changed = true
-  }
-  if (catchUp(plugins, at, Infinity, contentVersion, stepOf, raw)) changed = true
-  if (!changed) return ok(pack as unknown as Pack)
-  const out: RawPack = { ...raw.now }
-  if (plugins.length || pack.plugins !== undefined) out.plugins = { ...recorded, ...at }
+  // A schema with no engine step changed nothing the engine reads; the pack's schema number moves on all the same.
+  const run = carryChain(
+    pack as RawPack,
+    {
+      from,
+      to: SCHEMA,
+      step: (version) => PACK_STEPS[version] && ((value: RawPack) => PACK_STEPS[version](value, context)),
+      stamp: (value, schema) => ({ ...value, schema }),
+    },
+    pluginChains(plugins, at, contentVersion, stepOf),
+  )
+  if (!run.moved) return ok(pack as unknown as Pack)
+  const out: RawPack = { ...run.value }
+  if (plugins.length || pack.plugins !== undefined)
+    out.plugins = { ...recorded, ...Object.fromEntries(plugins.map((plugin) => [plugin.id, contentVersion(plugin)])) }
   return ok(out as unknown as Pack)
 }
 
@@ -1439,14 +1424,8 @@ export function commandUpgrade(plugins: readonly Plugin[], from: Partial<Command
   const stepOf = (plugin: Plugin, version: number) => plugin.commandMigrations?.[version]
   return ok(<C>(command: C): C => {
     if (!isRecord(command) || typeof command.type !== 'string') return command
-    const at = { ...versions.value }
-    const value = { now: command as RawCommand }
-    for (let version = schema; version < SCHEMA; version += 1) {
-      catchUp(plugins, at, version + 1, commandVersion, stepOf, value)
-      const step = COMMAND_STEPS[version]
-      if (step) value.now = step(value.now)
-    }
-    catchUp(plugins, at, Infinity, commandVersion, stepOf, value)
-    return value.now as C
+    // A schema with no step changed no command.
+    const chains = pluginChains(plugins, versions.value, commandVersion, stepOf)
+    return carryChain(command as RawCommand, { from: schema, to: SCHEMA, step: (version) => COMMAND_STEPS[version] }, chains).value as C
   })
 }

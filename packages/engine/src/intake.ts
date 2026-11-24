@@ -12,6 +12,7 @@ import { pluginsOf, type PluginSlice } from './plugin.ts'
 import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
 import { choiceKey, collectionKind } from './upgrade.ts'
 import { hash } from './random.ts'
+import { carryChain, runChain } from './chain.ts'
 import { featureContext } from './core.ts'
 import type { StateField } from './features/feature.ts'
 import { entityDef } from './entities.ts'
@@ -338,14 +339,10 @@ function itemRef(game: Game, id: string): string {
 
 /** The engine's steps, then each field's load default. Null when the save's version can't be read. */
 function carryEngine(data: Saved, game: Game): GameState | null {
-  let state = data
-  let version = typeof state.version === 'number' ? state.version : 0
+  const version = typeof data.version === 'number' ? data.version : 0
   if (!Number.isInteger(version) || version < OLDEST || version > SAVE_VERSION) return null
-  while (version < SAVE_VERSION) {
-    const step = STEPS[version]
-    if (step) state = step(state, game)
-    version += 1
-  }
+  // A version with no step only added fields, which their load defaults below fill.
+  const state = carryChain(data, { from: version, to: SAVE_VERSION, step: (at) => STEPS[at] && ((saved: Saved) => STEPS[at](saved, game)) }).value
   let next = (state.version === SAVE_VERSION ? state : { ...state, version: SAVE_VERSION }) as Record<string, unknown>
   for (const [key, field] of Object.entries(FIELDS) as [string, Field<keyof GameState>][]) {
     if (!field.load) continue
@@ -377,17 +374,20 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
     if (slice.version > plugin.version) {
       return stringOf(game, 'pluginNewer', { plugin: plugin.id })
     }
-    let version = slice.version
-    let inner = slice.state
     // The same tools a game's step gets: the state as the engine carried it, filled from the game on request.
     const tools: MigrationTools = { game, fill: (parts) => fillDeclared(state, game, parts) }
-    while (version < plugin.version) {
-      const step = plugin.migrations?.[version]
-      if (!step) return stringOf(game, 'pluginUnreadable', { plugin: plugin.id })
-      inner = step(inner, tools)
-      version += 1
-    }
-    plugins = { ...plugins, [plugin.id]: { version, state: inner } }
+    // A plugin's state has no route past a version with no step.
+    const run = runChain(slice.state, {
+      from: slice.version,
+      to: plugin.version,
+      gap: 'refuse',
+      step: (at) => {
+        const step = plugin.migrations?.[at]
+        return step && ((inner: unknown) => step(inner, tools))
+      },
+    })
+    if (!run.ok) return stringOf(game, 'pluginUnreadable', { plugin: plugin.id })
+    plugins = { ...plugins, [plugin.id]: { version: plugin.version, state: run.value } }
     changed = true
   }
   return changed ? { ...state, plugins } : state
@@ -428,17 +428,17 @@ function fillDeclared(state: GameState, game: Game, parts?: readonly FillPart[])
  */
 function carryGame(state: GameState, game: Game): GameState | string {
   const target = game.version ?? 1
-  let version = state.gameVersion ?? 1
+  const version = state.gameVersion ?? 1
   if (version > target) return stringOf(game, 'gameNewer')
-  let next = state
-  while (version < target) {
-    const step = game.rules?.migrations?.[version]
-    if (step) {
-      const given = next
-      next = step(given, { game, fill: (parts) => fillDeclared(given, game, parts) })
-    }
-    version += 1
-  }
+  // A version with no step changed nothing the save keeps: it is carried forward as it is.
+  const next = carryChain(state, {
+    from: version,
+    to: target,
+    step: (at) => {
+      const step = game.rules?.migrations?.[at]
+      return step && ((given: GameState) => step(given, { game, fill: (parts) => fillDeclared(given, game, parts) }))
+    },
+  }).value
   if (game.version === undefined) return next
   return next.gameVersion === game.version ? next : { ...next, gameVersion: game.version }
 }

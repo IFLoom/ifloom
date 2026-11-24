@@ -22,7 +22,7 @@ const french: Pack = {
 }
 ```
 
-[`loadGame`](/docs/reference/loader#loadgame) lays the table over your content once everything is merged, and a later pack's words go over an earlier one's. The game's content files stay as they are. A key that names no field is a [problem](#problems). [Translating a game](/docs/recipes/translating) walks through making one.
+[`loadGame`](/docs/reference/content#loadgame) lays the table over your content once everything is merged, and a later pack's words go over an earlier one's. The game's content files stay as they are. A key that names no field is a [problem](#problems). [Translating a game](/docs/recipes/translating) walks through making one.
 
 The words table is for the words in your content. The engine's and plugins' own words (refusals such as "You can't afford that", the calendar's day names) are [strings](/docs/reference/strings), which a pack overrides in its `strings` table, as before.
 
@@ -167,7 +167,7 @@ Every first-party plugin declares its own: the quests' titles, summaries and hin
 
 ## Problems
 
-[`loadGame`](/docs/reference/loader#loadgame) and [`checkGame`](/docs/reference/checks) report:
+[`loadGame`](/docs/reference/content#loadgame) and [`checkGame`](/docs/reference/checks) report:
 
 | Problem | Where | Means |
 |---|---|---|

@@ -36,7 +36,7 @@ With the suit on, the player reads "The mirror says you look sharp." Otherwise i
 type Phrases = { [name: string]: Phrase | Phrases }
 ```
 
-The `phrases` key of [`Content`](/docs/reference/loader#content) and of a [`Pack`](/docs/reference/loader#pack).
+The `phrases` key of [`Content`](/docs/reference/content#content) and of a [`Pack`](/docs/reference/content#pack).
 
 - **A list of rows** is one phrase. Its rows are tried in order, and the first whose `when` holds gives the words. A row with no `when` always fits, so put one last as the otherwise.
 - **A plain string** is a phrase with one row and no condition, for words you might change later or a mod might replace.
@@ -121,7 +121,7 @@ A phrase also answers where a value is asked for by name, with `game/` in front:
 phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
 ```
 
-[`loadGame`](/docs/reference/loader#loadgame) flattens what your content and packs declare into `game.phrases`, by full name, with a plain string turned into one row: `{ 'outfit.verdict': [...], weather: [{ text: 'grey and close' }] }`. A phrase with arguments stays as `{ args, rows }`. A game you build by hand writes it this way.
+[`loadGame`](/docs/reference/content#loadgame) flattens what your content and packs declare into `game.phrases`, by full name, with a plain string turned into one row: `{ 'outfit.verdict': [...], weather: [{ text: 'grey and close' }] }`. A phrase with arguments stays as `{ args, rows }`. A game you build by hand writes it this way.
 
 Phrases merge by full name. Each is declared once across your content, and two files can add phrases to the same group. A pack's phrase replaces the one of that name whole, row list and arguments and all, and a pack can add new ones to a group:
 

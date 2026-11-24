@@ -110,7 +110,7 @@ The React UI draws a Settings page when you turn on its [pages](/docs/react#page
 
 ## Checks
 
-The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/loader#what-the-loader-adds) report:
+The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/content#checks) report:
 
 - two settings with the same id in one list
 - a `default` the setting can't take

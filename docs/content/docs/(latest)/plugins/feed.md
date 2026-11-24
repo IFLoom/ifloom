@@ -97,7 +97,7 @@ The game's feeds, merged from its content and packs, in order.
 
 ## Writing posts
 
-Other people's posts are content. List them in your content's [`data`](/docs/reference/loader#content) under `feed.posts`. They're merged by id as scenes are, so a mod can add a post or rewrite one.
+Other people's posts are content. List them in your content's [`data`](/docs/reference/content#content) under `feed.posts`. They're merged by id as scenes are, so a mod can add a post or rewrite one.
 
 ### PostDef
 

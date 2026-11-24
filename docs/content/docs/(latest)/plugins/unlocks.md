@@ -45,7 +45,7 @@ Builds the plugin, with the id `unlocks`. A new game has nothing unlocked.
 
 ## Writing unlocks
 
-Unlocks are content. They go in your content's [`data`](/docs/reference/loader#content) under `unlocks.unlocks` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of unlocks). This is the showcase's one:
+Unlocks are content. They go in your content's [`data`](/docs/reference/content#content) under `unlocks.unlocks` (the plugin's id, then [its list](/docs/reference/content#data) of unlocks). This is the showcase's one:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -101,7 +101,7 @@ Paste the `hash` it prints into the unlock. The hash is salted with the game's i
 
 ### Locked content
 
-Content that only an unlock opens goes in `src/unlocks/<id>.ts`, one file per unlock, exporting a [pack](/docs/reference/loader#pack) (or a list of packs) as `default`. It's a pack rather than content because it's laid over the game, like a mod: it has an `id`, which saves record, and the `schema` it was written for. It must be data, as a [mod](/docs/reference/mods) is: scenes, prose, plugin content, no functions. `ifloom build` encrypts it under the unlock's code and puts it in the page, and refuses any import of it from your code. [The CLI](/docs/cli#locked-content) has the details.
+Content that only an unlock opens goes in `src/unlocks/<id>.ts`, one file per unlock, exporting a [pack](/docs/reference/content#pack) (or a list of packs) as `default`. It's a pack rather than content because it's laid over the game, like a mod: it has an `id`, which saves record, and the `schema` it was written for. It must be data, as a [mod](/docs/reference/mods) is: scenes, prose, plugin content, no functions. `ifloom build` encrypts it under the unlock's code and puts it in the page, and refuses any import of it from your code. [The CLI](/docs/cli#locked-content) has the details.
 
 ```ts
 // src/unlocks/supporter.ts
@@ -284,7 +284,7 @@ function unlockedPacks(
 ): Promise<{ packs: Pack[]; problems: string[] }>
 ```
 
-The content of every unlock the profile remembers a code for, decrypted and checked that this engine can read its schema, ready to pass to `loadGame` as `packs`, over the game's content. `loadGame` upgrades it with [`upgradePack`](/docs/reference/loader#upgradepack), with the game's plugins. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
+The content of every unlock the profile remembers a code for, decrypted and checked that this engine can read its schema, ready to pass to `loadGame` as `packs`, over the game's content. `loadGame` upgrades it with [`upgradePack`](/docs/reference/content#upgradepack), with the game's plugins. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
 
 Call it before you build the game, with the game's id and its profile. [`profile`](/docs/reference/profile#profile) reads only the id, so `profile({ id: 'small-town' }, driver)` opens it before the game exists. Use the same driver the runner will use.
 

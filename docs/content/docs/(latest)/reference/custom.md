@@ -16,7 +16,7 @@ export const rules: GameRules = {
 
 | In `rules` | Content writes | Where |
 |---|---|---|
-| `conditions` | `{ 'game/marketDay': true }` | Any [condition](/docs/reference/conditions#calls) |
+| `conditions` | `{ 'game/marketDay': true }` | Any [condition](/docs/reference/conditions#conditioncall) |
 | `macros` | `{ 'game/tip': { by: 2 } }` | Any list of [effects](/docs/reference/effects#computed-effects): a choice's, an [action](/docs/reference/actions#actiondef)'s, a [trigger](/docs/reference/triggers)'s, an [`each`](/docs/reference/effects#each)'s, a thing's use in the [inventory](/docs/plugins/inventory), what another macro returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
 | `effects` | `{ 'game/keepDiary': {} }` | The same places as a macro |
 | `values` | `{{breadPrice}}`, or `{ value: 'game/breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
@@ -204,7 +204,7 @@ The value is always the arguments as an object, named as the [content naming rul
 - Anything else as the value, such as a list, a string, a number or `false`, is a problem the [content checker](/docs/reference/checks) reports as `"places/at" takes its arguments as an object, …`. The call is still made, with no arguments.
 - It's read as a call only when the object has exactly one key and that key has a `/`. If you add a second key, such as a typo or a stray `when`, it's no longer a call. As a condition it's false, and as an effect it does nothing.
 - A name with no `/` isn't a call. The checker reports one and says to write it with `game/` in front.
-- Packs written before schema 7 passed a bare value, as in `{ 'places/at': ['cafe'] }`. The [content migration](/docs/reference/loader#upgradepack) names it for the first-party plugins' calls when the pack loads.
+- Packs written before schema 7 passed a bare value, as in `{ 'places/at': ['cafe'] }`. The [content migration](/docs/reference/content#upgradepack) names it for the first-party plugins' calls when the pack loads.
 
 ## callOf
 

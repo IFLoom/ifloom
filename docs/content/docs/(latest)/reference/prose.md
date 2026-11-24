@@ -28,11 +28,11 @@ A prose key is a plain string:
 | `ava.smalltalk.rain` | A member of the variants `ava.smalltalk`. |
 | `ava.smalltalk.rain#chat` | A reply written for one drawn line: if that member was drawn, it labels the choice `chat` over its own label. |
 
-Keep `/` out of your keys. It names a plugin everywhere else, as in `quests/done`. See [Ids and separators](/docs/reference/game#ids-and-separators).
+Keep `/` out of your keys. It names a plugin everywhere else, as in `quests/done`. See [Ids and separators](/docs/reference/common#ids-and-separators).
 
 A label is never a prose key. Before schema 25, a `{ text }` block named a key, a choice with no `label` read the prose `<scene>#<choice>`, and a label or a notice's `text` could be a key. A pack of an older schema is rewritten when it loads, from its own prose or the game's. Your own content isn't, so the [checker](/docs/reference/checks#words-written-as-prose-keys) reports each one with the words to write.
 
-Variants are named lists of keys, and one of them is drawn each time. The [loader](/docs/reference/loader) takes them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
+Variants are named lists of keys, and one of them is drawn each time. The [loader](/docs/reference/content) takes them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
 
 ## ProseStore
 
@@ -49,7 +49,7 @@ type ProseStore = {
 
 The game's `prose` field, where `{ prose }` blocks, variants and markup read lines by key. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1. `keys` returns every key the store has words for, so the [content checker](/docs/reference/checks) can read the markup in all the prose. Leave it out and the checker reads only the keys content names.
 
-You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from the content's and packs' prose and variants.
+You rarely write one by hand. [`loadGame`](/docs/reference/content#loadgame) sets `game.prose` from the content's and packs' prose and variants.
 
 **Gotcha.** `line` is sometimes called without a state, when the scene renderer only wants to know whether a key is written. Return the raw text in that case.
 
@@ -61,7 +61,7 @@ import type { VariantMember } from '@ifloom/engine'
 type VariantMember = string | { text: string; weight?: number }
 ```
 
-One member of a variants list, in your [content](/docs/reference/loader#content)'s `variants`: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
+One member of a variants list, in your [content](/docs/reference/content#content)'s `variants`: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
 
 ```ts fragment
 variants: {
@@ -101,7 +101,7 @@ A line of prose can carry tokens, which are filled in for the save when the line
 
 The engine has no player name of its own. A game that wants one sets a kv key, with an [input](/docs/reference/inputs) or in the `kv` passed to [`startingState`](/docs/reference/commands#startingstate), and prose reads it like any other.
 
-Tokens used to name values as `{{v:game/coffeePrice}}` and `{{v:quests/updates}}`. Those still print, and [`upgradePack`](/docs/reference/loader#upgradepack) rewrites them to the short form in a pack written for schema 29 or older. In your game's own content the [content checker](/docs/reference/checks) asks you to write the short form.
+Tokens used to name values as `{{v:game/coffeePrice}}` and `{{v:quests/updates}}`. Those still print, and [`upgradePack`](/docs/reference/content#upgradepack) rewrites them to the short form in a pack written for schema 29 or older. In your game's own content the [content checker](/docs/reference/checks) asks you to write the short form.
 
 **Gotchas.**
 - A token is unset when its kv key is unset or is `true` or `false`, its phrase has no row that fits, or its value is missing or gives `''`. Then it shows its fallback, the words after a `|`, as written. The fallback can't hold a token of its own.
@@ -182,7 +182,7 @@ That's text, character, player, character.
 
 **Gotchas.**
 - A line under an id or a label must use straight quotes and end with one. `@ava: “…”` is plain text.
-- A pack written before schema 23 wrote speech under names, `Ava: "…"`. [`upgradePack`](/docs/reference/loader#upgradepack) rewrites a line whose name is exactly one entity's into `@ava:`, and `You:` (or the game's string `you`) into `@you:`. A name no entity has, or that two entities share, stays a labelled line.
+- A pack written before schema 23 wrote speech under names, `Ava: "…"`. [`upgradePack`](/docs/reference/content#upgradepack) rewrites a line whose name is exactly one entity's into `@ava:`, and `You:` (or the game's string `you`) into `@you:`. A name no entity has, or that two entities share, stays a labelled line.
 - A paragraph that starts and ends with a quote is all drawn as speech, even with narration in the middle. `"Morning," Ava says. "Beans are in."` is drawn as speech, `Ava says` included. Put the narration in a paragraph of its own:
 
 ```md
@@ -267,7 +267,7 @@ The open scene's sound and voice beats are in [`view.audio.cues`](/docs/referenc
 
 Prose has no markup for timing. To make a paragraph wait before it appears, put it in a [block](/docs/reference/scenes#block) of its own and give the block a [presentation hint](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/react/hints#reveal). The block's hints arrive on the first beat it makes.
 
-`[[reveal]]` used to be markup. The checker reports one left in prose (`[[reveal]] is no longer markup and would be shown as written`), and a pack written before schema 16 has it turned into blocks by [`upgradePack`](/docs/reference/loader#upgradepack).
+`[[reveal]]` used to be markup. The checker reports one left in prose (`[[reveal]] is no longer markup and would be shown as written`), and a pack written before schema 16 has it turned into blocks by [`upgradePack`](/docs/reference/content#upgradepack).
 
 ### Inline actions and tooltips
 
@@ -360,7 +360,7 @@ The engine's beats are text, speech, pictures, video and sound. How a letter, a 
 [[ui:mono|CLOSED FOR STOCKTAKING]]
 ```
 
-A UI piece's words can run over blank lines, so a letter's body can have paragraphs. A pack written before schema 22 used `[[mail]] … [[/mail]]`, `[[sticky]]`, `[[clip]]`, `[[diary]]` and `> ` lines, and [`upgradePack`](/docs/reference/loader#upgradepack) rewrites them into these pieces.
+A UI piece's words can run over blank lines, so a letter's body can have paragraphs. A pack written before schema 22 used `[[mail]] … [[/mail]]`, `[[sticky]]`, `[[clip]]`, `[[diary]]` and `> ` lines, and [`upgradePack`](/docs/reference/content#upgradepack) rewrites them into these pieces.
 
 ## SceneBeat
 

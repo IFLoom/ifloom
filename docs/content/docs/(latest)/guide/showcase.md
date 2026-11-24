@@ -27,7 +27,7 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 
 | File | What's in it |
 |---|---|
-| `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `things.ts` (the things you carry and wear, and notes, as entities), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `actions.ts` (waiting, offered everywhere), `phone.ts` (the phone: its device, its apps, the texts channel, the social feed and the `photo` kind), `strings.ts` (the engine's words it rewords), `achievements.ts` and `cheats.ts`. |
+| `src/world/` | What the whole town shares, one file of [content](/docs/reference/content#content) per kind: `stats.ts`, `things.ts` (the things you carry and wear, and notes, as entities), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `actions.ts` (waiting, offered everywhere), `phone.ts` (the phone: its device, its apps, the texts channel, the social feed and the `photo` kind), `strings.ts` (the engine's words it rewords), `achievements.ts` and `cheats.ts`. |
 | `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its actions, its locks and resets, its slice of the plugins' content (the place, its vendor, its jobs), and their words, written in place. The lines read by key (variants, tooltips, Ava's small talk by text) are in each file's `prose`, and Ava's are in `ava.prose.ts` beside her arc. All of it is data. |
 | `src/rules.ts` | The game's own code, its [`rules`](/docs/reference/rules): energy back overnight, an effect worked out from the state, and a value the prose prints. |
 | `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
@@ -343,4 +343,4 @@ The game module's `build` returns the release build, `smallTown({ unlocked })`, 
 
 - **Pictures of places.** Each place names its art, `place/<id>`, and the places plugin's [view](/docs/plugins/places#the-view) passes it on as `location.art`. But there's no `art/place/` yet, and the React UI doesn't draw a place's art. The café's [layered picture](#a-picture-with-a-hotspot) is the one picture of a place, drawn from a photo the town already has.
 - **Video and layers.** Small Town has no video and no picture with transparent parts, so its one layered picture has a single layer. [Media](/docs/reference/media) shows one with a clip layered over a picture.
-- **A patch.** The example mods add prose, variants and words, but no mod patches a choice into one of the town's scenes. See [Patches](/docs/reference/loader#patches).
+- **A patch.** The example mods add prose, variants and words, but no mod patches a choice into one of the town's scenes. See [Patches](/docs/reference/content#patch).

@@ -76,7 +76,7 @@ my-game/
     └── styles.css    imports the React UI's styles and a theme preset
 ```
 
-Your content goes in `src/world/` and `src/story/`. Each file there exports [`Content`](/docs/reference/loader#content), and `src/game.ts` only lists them for [`loadGame`](/docs/reference/loader#loadgame), in its [game module](/docs/cli#the-game-module), which the page and the CLI both build the game from. Things the whole game shares, such as stats and things, go in `world/`, a file for each kind. The story goes in `story/`, a file for each place, chapter or character's arc, with its scenes and words together. [Organising a game](/docs/guide/organising) explains the layout and when to split a file. `src/main.ts` hands the game to [`mountGame`](/docs/react#mountgame) with `layout: Layout` and `pages: true`, so it opens on a [title screen](/docs/recipes/title-screen) and draws the page from `src/layout.tsx`.
+Your content goes in `src/world/` and `src/story/`. Each file there exports [`Content`](/docs/reference/content#content), and `src/game.ts` only lists them for [`loadGame`](/docs/reference/content#loadgame), in its [game module](/docs/cli#the-game-module), which the page and the CLI both build the game from. Things the whole game shares, such as stats and things, go in `world/`, a file for each kind. The story goes in `story/`, a file for each place, chapter or character's arc, with its scenes and words together. [Organising a game](/docs/guide/organising) explains the layout and when to split a file. `src/main.ts` hands the game to [`mountGame`](/docs/react#mountgame) with `layout: Layout` and `pages: true`, so it opens on a [title screen](/docs/recipes/title-screen) and draws the page from `src/layout.tsx`.
 
 `package.json` depends on `@ifloom/engine`, `@ifloom/react`, React and react-dom. Its dev dependencies are `@ifloom/cli`, `@vitejs/plugin-react`, `@tailwindcss/vite`, `tailwindcss`, `typescript`, `@types/react` and `@types/react-dom`. Its scripts are `dev`, `build`, `check`, `playtest` and `typecheck`, which run the [CLI](/docs/cli) and TypeScript.
 
@@ -106,7 +106,7 @@ bun add --dev @ifloom/cli
 
 In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/react). A plugin you install brings its React UI in the same package, as `@ifloom/plugin-<name>/react`, so there's nothing more to install for it: list it in [`plugins`](/docs/react/kit#the-plugins-option). With any other framework, or none, the engine and [`@ifloom/browser`](/docs/browser) are all you need: `@ifloom/browser` has the runner that keeps saves in the browser, a minigame's clock and keyboard shortcuts. Add [`@ifloom/audio`](/docs/browser/audio-player) for sound.
 
-A game is one module, its [game module](/docs/cli#the-game-module). Its default export is made with `defineGame`, and its `build` returns what [`loadGame`](/docs/reference/loader#loadgame) returns. The page and the CLI both build the game from it:
+A game is one module, its [game module](/docs/cli#the-game-module). Its default export is made with `defineGame`, and its `build` returns what [`loadGame`](/docs/reference/content#loadgame) returns. The page and the CLI both build the game from it:
 
 ```ts
 // src/game.ts

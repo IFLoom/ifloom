@@ -146,7 +146,7 @@ import './styles.css'
 mountGame(module.build(), { layout: Layout })
 ```
 
-Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to change as you like (leave `layout` out to use the default as it is), and `src/game.ts` default-exports the [game module](/docs/cli#the-game-module). Its `build()` returns what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`, which is what `mountGame` takes. `mountGame` logs any problems as warnings.
+Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to change as you like (leave `layout` out to use the default as it is), and `src/game.ts` default-exports the [game module](/docs/cli#the-game-module). Its `build()` returns what [`loadGame`](/docs/reference/content#loadgame) returns, `{ game, problems }`, which is what `mountGame` takes. `mountGame` logs any problems as warnings.
 
 ```html
 <!-- index.html -->
@@ -382,7 +382,7 @@ A plugin UI can add a page of its own: with `achievementsUi` listed, the title s
 
 The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains Settings and Title screen buttons.
 
-Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/reference/state#new-game) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/recipes/title-screen) walks through it all, and [Pages](/docs/react/components#pages) lists every option and component.
+Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/how-to/offer-new-game-plus) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/recipes/title-screen) walks through it all, and [Pages](/docs/react/components#pages) lists every option and component.
 
 ## Sound
 

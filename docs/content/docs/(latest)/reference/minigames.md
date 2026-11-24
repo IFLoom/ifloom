@@ -141,7 +141,7 @@ type MinigameDef = {
 | `keys` | The keys a UI maps to each input, by input name, as `KeyboardEvent.key` names them. A UI uses its own if left out. |
 | `states` | Its states, by id. |
 
-Declare minigames in your [content](/docs/reference/loader#content)'s `minigames`. They merge by id, so a pack's minigame replaces one with the same id.
+Declare minigames in your [content](/docs/reference/content#content)'s `minigames`. They merge by id, so a pack's minigame replaces one with the same id.
 
 ## MinigameStateDef
 

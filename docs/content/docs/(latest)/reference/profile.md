@@ -60,7 +60,7 @@ Values must be plain JSON. A namespace's name says who owns it: the engine's sta
 | Namespace | What it holds | Written by |
 |---|---|---|
 | `core:settings` | The player's last value for every [setting](/docs/reference/settings), play and ui alike, by id: `{ hints: false, textSize: 'large' }`. | The runner, when a [`setting`](/docs/reference/commands#setting) command takes and on [`setSetting`](/docs/reference/runner#setsetting). |
-| `core:finished` | `{ at }`, when the game was first [finished](/docs/reference/state#new-game), in milliseconds. Unset until then. | The runner, the first time the content's `finished` holds. |
+| `core:finished` | `{ at }`, when the game was first [finished](/docs/how-to/offer-new-game-plus), in milliseconds. Unset until then. | The runner, the first time the content's `finished` holds. |
 | `ui:gate` | `{ confirmedAt }`, when the player confirmed the React UI's [gate](/docs/react/components#gatepage). | The React UI. |
 | `ui:sections` | `{ [id]: open }`, which of the React UI's folding [sections](/docs/react/components#section) the player left open or folded. | The React UI. |
 | a plugin's id | Whatever the plugin keeps, such as earned achievements. | The runner, from the plugin's [`profile`](/docs/reference/plugins#the-profile). |

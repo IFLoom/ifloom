@@ -41,7 +41,7 @@ export default defineGame({
 })
 ```
 
-`unlocked` is where the supporter content comes in, at runtime and in `ifloom check`. It's a list of [packs](/docs/reference/loader#content-and-packs), laid over the town's content.
+`unlocked` is where the supporter content comes in, at runtime and in `ifloom check`. It's a list of [packs](/docs/explanation/content-and-packs), laid over the town's content.
 
 ### 2. Make a code and declare the unlock
 
@@ -113,7 +113,7 @@ Add `hide: true` to the `blocked` entry to keep the cheat off the panel until th
 
 ### 4. Lock the content
 
-Put what supporters get in `src/unlocks/supporter.ts`, named after the unlock. It's a [pack](/docs/reference/loader#pack), as a [mod](/docs/reference/mods) is, with an `id` and a `schema`, and it's data: scenes, prose, plugin content.
+Put what supporters get in `src/unlocks/supporter.ts`, named after the unlock. It's a [pack](/docs/reference/content#pack), as a [mod](/docs/reference/mods) is, with an `id` and a `schema`, and it's data: scenes, prose, plugin content.
 
 ```ts
 // src/unlocks/supporter.ts

@@ -262,7 +262,7 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 type Result<T> = { ok: true; value: T } | { ok: false; reason: string; cause?: unknown }
 ```
 
-What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay) and [`upgradePack`](/docs/reference/loader#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
+What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay) and [`upgradePack`](/docs/reference/content#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
 
 When the failure came from an error that was thrown, such as a save driver's when storage is missing, `cause` holds that error, for a log. `reason` is still the words to show the player.
 
@@ -469,7 +469,7 @@ A choice can start a new game itself by sending the [`newGame`](/docs/reference/
 
 ### finished
 
-If the game declares [`finished`](/docs/reference/state#new-game), the runner tests it after every command that takes. The first time it holds, and only if the profile has no `core:finished` yet, the runner writes `{ at }` there, the time from its `now` clock. It never writes it again, in this game or a later one. A runner without a profile doesn't record it.
+If the game declares [`finished`](/docs/how-to/offer-new-game-plus), the runner tests it after every command that takes. The first time it holds, and only if the profile has no `core:finished` yet, the runner writes `{ at }` there, the time from its `now` clock. It never writes it again, in this game or a later one. A runner without a profile doesn't record it.
 
 After a command, the runner also gives each plugin with a [`profile`](/docs/reference/plugins#the-profile) the chance to update its namespace.
 
@@ -487,7 +487,7 @@ type CommandLog = {
 
 Everything you need to play a game back exactly: the game's id, the state it started from and every command that took since. Undo takes commands off the end, so the log always leads to the current state.
 
-`schema` and `plugins` say what the commands were written for: the engine's [`SCHEMA`](/docs/reference/loader#schema), and each plugin's [`commandVersion`](/docs/reference/plugins#content-and-command-migrations) by plugin id. A runner writes both. A log from before logs kept them has neither, and [`replay`](#replay) reads it as the oldest.
+`schema` and `plugins` say what the commands were written for: the engine's [`SCHEMA`](/docs/reference/content#schema), and each plugin's [`commandVersion`](/docs/reference/plugins#content-and-command-migrations) by plugin id. A runner writes both. A log from before logs kept them has neither, and [`replay`](#replay) reads it as the oldest.
 
 ## replay
 

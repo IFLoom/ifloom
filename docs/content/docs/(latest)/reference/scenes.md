@@ -115,7 +115,7 @@ type DataScene = {
 | `body` | `Block[]` | Its words, as [blocks](#block). |
 | `choices` | `Choice[]` | What the player can pick at the end, each a [`Choice`](#choice). |
 
-A scene written as data. You build its body from blocks, each its own piece of the words, rather than one text for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it in your [content](/docs/reference/loader#content)'s `scenes`, and the engine [draws](#running-data-scenes) it when it's shown.
+A scene written as data. You build its body from blocks, each its own piece of the words, rather than one text for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it in your [content](/docs/reference/content#content)'s `scenes`, and the engine [draws](#running-data-scenes) it when it's shown.
 
 This is Ava's hello from the showcase:
 
@@ -333,7 +333,7 @@ For a game over that the rest of the game should respect too, set the kv key [`p
 { id: 'over', when: { kv: 'phase', is: 'over' }, deny: ['*'], reason: 'The story is over.' }
 ```
 
-Give the game a [`finished`](/docs/reference/state#new-game) condition only for endings that count as finishing it, since that's what offers New Game+.
+Give the game a [`finished`](/docs/how-to/offer-new-game-plus) condition only for endings that count as finishing it, since that's what offers New Game+.
 
 ## StoryletFields
 
@@ -381,7 +381,7 @@ A game lists its scenes in `game.scenes` and the engine runs them. The first tim
 
 A data scene reads:
 
-- **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame)), with tokens filled in for the save
+- **words** from `game.prose` (set by [`loadGame`](/docs/reference/content#loadgame)), with tokens filled in for the save
 - **variants** drawn as described below
 - **`once`** from the choice's record in [`chosen`](/docs/reference/state#chosen): with `per: 'turn'`, spent while it was last picked this turn, and with `per: 'game'`, once it has been picked
 - **conditions and the game's own macros and effects** from the game

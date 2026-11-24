@@ -255,10 +255,10 @@ type Plugin<S = any, V = unknown> = {
 | `start` | Its state in a new game. A plugin with no state leaves this out. |
 | `migrations` | One step per version, keyed by the version it upgrades from. See [State and migrations](#state-and-migrations). |
 | `contentVersion` | The version of what content and packs write for it: its `data`, its calls' arguments, its strings and its traits. 1 if left out. Packs record it. See [Content and command migrations](#content-and-command-migrations). |
-| `contentMigrations` | One step per content version, keyed by the version it upgrades from, which [`upgradePack`](/docs/reference/loader#upgradepack) runs on every pack the game loads. |
+| `contentMigrations` | One step per content version, keyed by the version it upgrades from, which [`upgradePack`](/docs/reference/content#upgradepack) runs on every pack the game loads. |
 | `commandVersion` | The version of its commands' arguments. 1 if left out. [Command logs](/docs/reference/runner#commandlog) record it. |
 | `commandMigrations` | One step per command version, which [`replay`](/docs/reference/runner#replay) runs on an older log's commands. |
-| `conditions` | Tests that content can use anywhere a [condition](/docs/reference/conditions#calls) goes, by name without the prefix. |
+| `conditions` | Tests that content can use anywhere a [condition](/docs/reference/conditions#conditioncall) goes, by name without the prefix. |
 | `effects` | Changes that content can make in a choice's, an action's or a trigger's effects. Each takes the game state and returns the next one. See [Effects run in order](#effects-run-in-order). |
 | `macros` | Effects that stand for other effects: each returns the effects it stands for, worked out from the state, so prices and guards see them. A name is an effect's or a macro's, never both. See [Macros](/docs/reference/custom#macros). |
 | `commands` | Commands a button can send. See [`PluginCommand`](#plugincommand). |
@@ -278,7 +278,7 @@ type Plugin<S = any, V = unknown> = {
 | `scene` | What the screen shows while no scene is open: a title and prose blocks. See [Scene](#scene). |
 | `actions` | Actions offered as buttons while no scene is open, before the content's `actions`. See [Actions](#actions). |
 | `action` | One of its actions that isn't among its `actions` right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Actions](#actions). |
-| `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
+| `content` | [Content](/docs/reference/content#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
 | `calls` | Its conditions, effects and commands, each declared once with what it takes, made with [`defineCalls`](#definecalls). Its type, `AnyCalls` from `@ifloom/engine/plugin`, is what any plugin's `PluginCalls` fits. Every declared call has an implementation and every implementation a declaration. See [Declaring calls](#declaring-calls). |
 | `data` | The lists of its pack `data`, each declared once with its noun and words, made with [`defineData`](#definedata). See [Data lists](#data-lists). |
@@ -1209,7 +1209,7 @@ Write each step so it rewrites only the old shape and leaves anything else as it
 
 ### Which version a pack was written for
 
-A pack records the version of each plugin's content it was written for in [`plugins`](/docs/reference/loader#pack), beside its `schema`:
+A pack records the version of each plugin's content it was written for in [`plugins`](/docs/reference/content#pack), beside its `schema`:
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -1217,7 +1217,7 @@ import { SCHEMA, type Pack } from '@ifloom/engine'
 const pack: Pack = { id: 'mod:double-stamps', schema: SCHEMA, plugins: { loyalty: 2 }, /* ... */ }
 ```
 
-Write it in any pack that has content for your plugin, and ask the people making mods for your game to do the same. [`upgradePack`](/docs/reference/loader#upgradepack) runs the plugin's steps from that version up to the plugin's own, and records where it got to.
+Write it in any pack that has content for your plugin, and ask the people making mods for your game to do the same. [`upgradePack`](/docs/reference/content#upgradepack) runs the plugin's steps from that version up to the plugin's own, and records where it got to.
 
 A pack that doesn't record a version for a plugin is read as written for its `schema`, or for the plugin's own version if that's lower, and at least version 1. For a pack written today without a record, that's the plugin's current version, so nothing runs. The first-party plugins number their content versions by the engine's schema, because the engine used to carry their content forward itself: each one's content version is the schema at which its content last changed. So a pack from before packs recorded versions lines up with their steps.
 
@@ -1232,7 +1232,7 @@ A pack written for a newer version of a plugin than the game has is refused, as 
 
 Then each plugin's remaining steps run. A plugin's step keyed by a schema therefore meets the pack as the engine had it at that schema, which is what the first-party plugins' history needs. A plugin that numbers its versions from 1 has its steps run early in an old pack, and then on its way.
 
-[`loadGame`](/docs/reference/loader#loadgame) upgrades every pack it's given with the game's plugins, and that includes installed [mods](/docs/reference/mods), which the store keeps as their files wrote them. So when you release a new version of a plugin with a content step, every mod your players have installed is carried forward the next time the game loads.
+[`loadGame`](/docs/reference/content#loadgame) upgrades every pack it's given with the game's plugins, and that includes installed [mods](/docs/reference/mods), which the store keeps as their files wrote them. So when you release a new version of a plugin with a content step, every mod your players have installed is carried forward the next time the game loads.
 
 ### ContentStep
 
@@ -1345,7 +1345,7 @@ Within one command, the order is:
 5. A stat that went up a level raises its [notice](/docs/reference/stats#the-notice), so a level a hook's reward reached is noticed too.
 6. The engine records the [pool picks](/docs/reference/media#remembered-picks) and background audio the new screen shows.
 
-The full list, with the checks before a command runs, is in [What happens, in order](/docs/reference/commands#what-happens-in-order).
+The full list, with the checks before a command runs, is in [What happens, in order](/docs/reference/commands#apply).
 
 A plugin that keeps a diary of the player's days might use both:
 
@@ -1818,7 +1818,7 @@ content?: Content
 
 A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start, in its `content`. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
-- **`content`** is a [`Content`](/docs/reference/loader#content) the plugin brings, merged by the [loader](/docs/reference/loader#loadgame) first, plugin by plugin in the order `game.plugins` lists them, under the game's content and packs. It can hold anything content can: kinds, entities, scenes, prose, actions or `data`. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game's content declares with the same id replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one. A pack can replace anything in it by id. A plugin with options builds it in its factory, from those options.
+- **`content`** is a [`Content`](/docs/reference/content#content) the plugin brings, merged by the [loader](/docs/reference/content#loadgame) first, plugin by plugin in the order `game.plugins` lists them, under the game's content and packs. It can hold anything content can: kinds, entities, scenes, prose, actions or `data`. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game's content declares with the same id replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one. A pack can replace anything in it by id. A plugin with options builds it in its factory, from those options.
 - **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`places.location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait), or with a [trait kind](#trait-kinds). A mod then adds one as it adds any entity.
 
 Content that puts several plugins together, such as a phone with an app for each messages channel and feed, is the game's own. The game lists the plugins in `plugins` and writes the content beside the rest, as [A phone](/docs/recipes/phone) shows.
@@ -1855,8 +1855,8 @@ view(state, game).entities.find((kind) => kind.id === 'regular')!.entries.map((e
 The content's own Mo replaces the plugin's, in the plugin's place in the list.
 
 **Gotchas.**
-- **Only through `loadGame`.** A game built by hand, without the [loader](/docs/reference/loader#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
-- **A plugin's content isn't counted as declared by yours.** Your content can redeclare one of its kinds without a [`declared twice`](/docs/reference/loader#one-key-declared-twice) problem.
+- **Only through `loadGame`.** A game built by hand, without the [loader](/docs/reference/content#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
+- **A plugin's content isn't counted as declared by yours.** Your content can redeclare one of its kinds without a [`declared twice`](/docs/reference/content#checks) problem.
 - **A save carries them in.** A declared entity a save doesn't have, such as one a new entry in the plugin's content makes, joins the save when it loads, unless it was removed in play. See [Entities in old saves](/docs/reference/entities#entities-in-old-saves).
 
 ## Traits
@@ -2081,7 +2081,7 @@ const town: Content = {
 }
 ```
 
-The [loader](/docs/reference/loader#content) merges `data` as it merges scenes: each entry is declared once across the content, and a pack's entry replaces one with the same id, whole. The result is at `game.data.loyalty.cards`. The base game can carry `data` too, ahead of the content.
+The [loader](/docs/reference/content#content) merges `data` as it merges scenes: each entry is declared once across the content, and a pack's entry replaces one with the same id, whole. The result is at `game.data.loyalty.cards`. The base game can carry `data` too, ahead of the content.
 
 ### PluginEntry
 
@@ -2287,7 +2287,7 @@ What `definePlugin` takes. Without declared calls it's a [`Plugin`](#plugin). Wi
 
 ## Gotchas
 
-- **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in content or a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
+- **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/content#loadgame), not in content or a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, give the action a `blocked` entry, or have a [guard](#guards) refuse any command that would apply the effect.
 - **Every list of effects is written one way.** A plugin's `effectsOf`, `applyEffects` and every list content writes (a choice's, an action's, a trigger's) take the same [effects](/docs/reference/effects#effect), a plugin's in short: `{ 'loyalty/stamp': true }`. The [content checker](/docs/reference/checks) reports a name no plugin has.

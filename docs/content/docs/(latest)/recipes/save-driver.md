@@ -36,7 +36,7 @@ The engine trusts the driver to keep these rules. [`SaveDriver`](/docs/reference
 - **`keys(prefix)` returns whole keys**, every one that starts with `prefix`, in any order. The store sorts what it lists.
 - **Values come back exactly as stored.** Each is JSON holding the whole game state, so don't put a small size limit on it.
 - **Keys can hold any character.** A key is `<game id>.save.<slot>`, `<game id>.profile` or `<game id>.mod.<id>`, and a slot is whatever name your game gives it.
-- **A failure rejects.** If storage fails, let the promise reject, and don't swallow the error. The save store turns it into a failing [`Result`](/docs/reference/runner#result), such as `The game could not be saved.` from `write`, with your error as its `cause`, and the [runner](/docs/reference/runner#the-runners-members) passes it to `onSaveError`.
+- **A failure rejects.** If storage fails, let the promise reject, and don't swallow the error. The save store turns it into a failing [`Result`](/docs/reference/common#result), such as `The game could not be saved.` from `write`, with your error as its `cause`, and the [runner](/docs/reference/runner#the-runners-members) passes it to `onSaveError`.
 
 ## Saves that take less room
 

@@ -4,7 +4,7 @@ description: "Storylines: threads of the story with their own kv store, closed f
 ---
 A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps a kv store of its own and whether it's closed for a while.
 
-Declare your storylines in your [content](/docs/reference/loader#content)'s `storylines`. A new game starts each one open and with an empty kv store.
+Declare your storylines in your [content](/docs/reference/content#content)'s `storylines`. A new game starts each one open and with an empty kv store.
 
 ## StorylineDef
 

@@ -36,7 +36,17 @@ export const LATEST = join(ROOT, 'docs/content/docs/(latest)')
  * The pages rewritten to the voice rules, relative to `docs/content/docs/(latest)/`, such as `reference/stats.md`.
  * Each batch of the rewrite adds the pages it finished; the last batch lists every page.
  */
-export const DONE: string[] = []
+export const DONE: string[] = [
+  'reference/index.md',
+  'reference/common.md',
+  'reference/glossary.md',
+  'reference/content.md',
+  'reference/game.md',
+  'reference/state.md',
+  'reference/amounts.md',
+  'reference/conditions.md',
+  'reference/commands.md',
+]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */
 export type StyleProblem = { where: string; rule: string; text: string }

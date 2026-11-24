@@ -42,7 +42,7 @@ Builds the plugin, with the id `shop`. It brings the `vendor` [kind](/docs/refer
 
 ## Writing vendors
 
-A vendor is an entity, written with [`shop.vendor()`](#vendor) in your content's [`entities`](/docs/reference/loader#content). Entities merge by reference, so a mod can add a vendor or replace one, and a [`traits`](/docs/reference/entities#traits) row changes what one sells. The things they sell are entities of your own kinds. This is a shop on its own, with no other plugin, the showcase's café counter:
+A vendor is an entity, written with [`shop.vendor()`](#vendor) in your content's [`entities`](/docs/reference/content#content). Entities merge by reference, so a mod can add a vendor or replace one, and a [`traits`](/docs/reference/entities#traits) row changes what one sells. The things they sell are entities of your own kinds. This is a shop on its own, with no other plugin, the showcase's café counter:
 
 ```ts
 import { holding, type Content } from '@ifloom/engine'
@@ -574,7 +574,7 @@ A thing's `shop/sellable` trait, read through the thing it was made [`like`](/do
 
 When the game loads, the plugin checks the `shop/vendor` trait on each vendor, and reports these problems against the content or pack each one came from, with `where` as `trait shop/vendor on <ref>`:
 
-- A good that names no thing, such as one in your own content still written as `{ item: 'sandwich' }`. A pack written that way is [upgraded](/docs/reference/loader#upgradepack) as it loads.
+- A good that names no thing, such as one in your own content still written as `{ item: 'sandwich' }`. A pack written that way is [upgraded](/docs/reference/content#upgradepack) as it loads.
 - An unknown thing (`good food:pear: unknown entity "food:pear"`), or a price in an unknown stat.
 - A good with no price, whose thing has no `shop/sellable` trait.
 - A price in a stat that isn't `spendable`, or is derived.
@@ -586,7 +586,7 @@ When the game loads, the plugin checks the `shop/vendor` trait on each vendor, a
 
 A command that names a vendor or thing the game doesn't have gives `unknown entity "vendor:…"` or `unknown entity "…"` where it's written, and one that names an entity that isn't a vendor gives `"…" has no shop/vendor trait`. The `shop/sellable` trait's price is checked on each entity that has it.
 
-A pack that still lists vendors in `data.shop.vendors`, as older content did, is carried forward by [`upgradePack`](/docs/reference/loader#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
+A pack that still lists vendors in `data.shop.vendors`, as older content did, is carried forward by [`upgradePack`](/docs/reference/content#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
 
 ## Gotchas
 

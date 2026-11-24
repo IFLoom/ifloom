@@ -2,7 +2,7 @@
 title: "Strings"
 description: "The engine's and plugins' own lines by key, such as refusals and labels, and how a game or a translation rewords them."
 ---
-Everything the engine says to the player in its own words, such as a refusal, a button label or a save's name, comes from one table, by key. The table is in English. Your game can replace any line with its own, and so can a pack, which means a translation can ship as a [mod](/docs/reference/loader).
+Everything the engine says to the player in its own words, such as a refusal, a button label or a save's name, comes from one table, by key. The table is in English. Your game can replace any line with its own, and so can a pack, which means a translation can ship as a [mod](/docs/reference/content).
 
 ```ts
 import { STRINGS, stringOf, type StringKey, type Strings } from '@ifloom/engine'
@@ -162,7 +162,7 @@ Give only the lines you want to change. Every other key keeps its English.
 
 ### In your content
 
-Your [content](/docs/reference/loader#content) can carry `strings` too. [`loadGame`](/docs/reference/loader#loadgame) gathers them from each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities), then your content, then your packs. Each key is declared once across your content:
+Your [content](/docs/reference/content#content) can carry `strings` too. [`loadGame`](/docs/reference/content#loadgame) gathers them from each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities), then your content, then your packs. Each key is declared once across your content:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -173,7 +173,7 @@ const { game } = loadGame([town], { id: 'small-town', title: 'Small Town' })
 
 ### As a translation mod
 
-A translation is a [pack](/docs/reference/loader#pack). Its `strings` reword the engine's and plugins' lines, its [`words`](/docs/reference/words) table the words your content writes in place, and its [`prose`](/docs/reference/prose) the lines read by key (see [Translating a game](/docs/recipes/translating)). It goes over the game's content, so its lines win, and a later pack wins over an earlier one:
+A translation is a [pack](/docs/reference/content#pack). Its `strings` reword the engine's and plugins' lines, its [`words`](/docs/reference/words) table the words your content writes in place, and its [`prose`](/docs/reference/prose) the lines read by key (see [Translating a game](/docs/recipes/translating)). It goes over the game's content, so its lines win, and a later pack wins over an earlier one:
 
 ```ts
 import { loadGame, stringOf, SCHEMA, type Pack } from '@ifloom/engine'

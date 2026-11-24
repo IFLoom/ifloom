@@ -74,7 +74,7 @@ type InputDef = {
 | `min`, `max` | Number only. The range, inclusive. Either may be left out. |
 | `options` | Choice only. The values on offer, each with what the player reads. |
 
-Declare inputs in your [content](/docs/reference/loader#content)'s `inputs`, which [`loadGame`](/docs/reference/loader#loadgame) gathers into [`Game.inputs`](/docs/reference/game#game). They merge by id, so a pack's input replaces one with the same id.
+Declare inputs in your [content](/docs/reference/content#content)'s `inputs`, which [`loadGame`](/docs/reference/content#loadgame) gathers into [`Game.inputs`](/docs/reference/game#game). They merge by id, so a pack's input replaces one with the same id.
 
 ## Why a value is refused
 

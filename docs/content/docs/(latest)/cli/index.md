@@ -185,7 +185,7 @@ index.html  440.6 kB
 
 ### Locked content
 
-A game with supporter content keeps it in `src/unlocks/`, one file per unlock, named after it: `src/unlocks/supporter.ts` for the unlock `supporter`. Each file exports a [pack](/docs/reference/loader#pack), or a list of packs, as `default`. The packs must be data, as a [mod](/docs/reference/mods)'s are.
+A game with supporter content keeps it in `src/unlocks/`, one file per unlock, named after it: `src/unlocks/supporter.ts` for the unlock `supporter`. Each file exports a [pack](/docs/reference/content#pack), or a list of packs, as `default`. The packs must be data, as a [mod](/docs/reference/mods)'s are.
 
 ```ts
 // src/unlocks/supporter.ts
@@ -263,7 +263,7 @@ See https://ifloom.dev/docs/cli#the-game-module
 function defineGame(def: GameModuleDef): GameModule
 ```
 
-- **`build`** makes the game. It returns what [`loadGame`](/docs/reference/loader#loadgame) returns, or at least its `game` and its `problems`. The CLI prints each [`Problem`](/docs/reference/checks#problem-and-describeproblem) with `describeProblem` and doesn't check the game a second time. `unlocked` holds the packs to load over the content, for `loadGame`'s `{ packs: unlocked }`. `ifloom check` passes a game's [locked content](#locked-content-in-a-check) here. Otherwise it's empty. The module `defineGame` returns has a `build` you can call with no options, as a page does.
+- **`build`** makes the game. It returns what [`loadGame`](/docs/reference/content#loadgame) returns, or at least its `game` and its `problems`. The CLI prints each [`Problem`](/docs/reference/checks#problem-and-describeproblem) with `describeProblem` and doesn't check the game a second time. `unlocked` holds the packs to load over the content, for `loadGame`'s `{ packs: unlocked }`. `ifloom check` passes a game's [locked content](#locked-content-in-a-check) here. Otherwise it's empty. The module `defineGame` returns has a `build` you can call with no options, as a page does.
 - **`start`** is where `ifloom playtest` starts. `ifloom snapshot` reads it too when there are no `probes`. Without it, the start is [`startingState(game)`](/docs/reference/commands#startingstate).
 - **`probes`** are the states `ifloom snapshot` renders every scene and place in, each made with [`probe`](#probe).
 - **`policy`** picks each command `ifloom playtest` plays. Without it, the policy is [`explorer()`](#explorer). `@ifloom/cli/game` exports `explorer` and the `Policy` type too.

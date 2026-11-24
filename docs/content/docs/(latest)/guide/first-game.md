@@ -238,7 +238,7 @@ That's all a scene needs. You don't write a `render` function or wire the words 
 
 New in this step: plugins in the base, and their order.
 
-The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game. Here it's one object, so the whole game fits in a file you can run. Step 11 splits it into the files a template uses. The locations and Ruth are entities, so they all go in the content's `entities`.
+The game gathers everything. [`loadGame`](/docs/reference/content) merges your content into one game. Here it's one object, so the whole game fits in a file you can run. Step 11 splits it into the files a template uses. The locations and Ruth are entities, so they all go in the content's `entities`.
 
 The content's `introScene` is on screen from the first frame. A story that opens on its room leaves it out. The second argument, the base, holds what isn't content: the game's `id` and `title`, its plugins, and its own code in [`rules`](/docs/reference/rules) when it has any. Only `id` and `title` are required.
 

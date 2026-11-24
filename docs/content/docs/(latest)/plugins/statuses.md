@@ -35,7 +35,7 @@ Builds the plugin, with the id `statuses`. Nothing is active in a new game.
 
 ## Writing statuses
 
-Statuses are content. They go in your content's [`data`](/docs/reference/loader#content) under `statuses.statuses` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of statuses) and are merged by id, so a mod can add one or replace one.
+Statuses are content. They go in your content's [`data`](/docs/reference/content#content) under `statuses.statuses` (the plugin's id, then [its list](/docs/reference/content#data) of statuses) and are merged by id, so a mod can add one or replace one.
 
 This is the showcase's coffee. It adds 10 to energy until the end of the next turn:
 
@@ -138,7 +138,7 @@ The effects it runs are applied while the turn is ending, so a `turn` effect amo
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'statuses/active': { status, stacks? } }` | `statuses.active(id, stacks?)` | The status is active. With `stacks`, a [range](/docs/reference/conditions#range) such as `{ gte: 2 }`, only when it has that many stacks. |
+| `{ 'statuses/active': { status, stacks? } }` | `statuses.active(id, stacks?)` | The status is active. With `stacks`, a [range](/docs/reference/common#range) such as `{ gte: 2 }`, only when it has that many stacks. |
 
 ```ts
 import { type Block } from '@ifloom/engine'

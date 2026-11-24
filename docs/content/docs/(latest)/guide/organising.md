@@ -2,7 +2,7 @@
 title: "Organising a game"
 description: "Where a game's content goes as it grows: src/game.ts only assembles, src/world/ holds what the whole game shares by kind, src/story/ holds the story by area. Combining your files, words in their scenes, tests per area, an editor export and mods."
 ---
-A game's [content](/docs/reference/loader#content-and-packs) can be split across as many files as you like, and [`loadGame`](/docs/reference/loader#loadgame) merges them into one game. A small story fits in one file, but a game with places, people and a few weeks of story gets hard to find your way around in one. This page shows how the templates and the examples split a game into files, and why.
+A game's [content](/docs/explanation/content-and-packs) can be split across as many files as you like, and [`loadGame`](/docs/reference/content#loadgame) merges them into one game. A small story fits in one file, but a game with places, people and a few weeks of story gets hard to find your way around in one. This page shows how the templates and the examples split a game into files, and why.
 
 ## The layout
 
@@ -50,7 +50,7 @@ export const stats: Content = {
 
 The template's `game.ts` also has `probes`: the states, each made by playing from a new game, that [`ifloom snapshot`](/docs/cli#ifloom-snapshot) reads every scene in. Leave them out and it reads each scene from the start. See [Probes](/docs/reference/checks#probes).
 
-`game.ts` holds no content. Its job is the list of files and the base: the game's `id`, `title` and `version`, its `plugins` and its own code in `rules`. Everything a mod could change, actions, locks and the scene it opens on included, is [content](/docs/reference/loader#content) and goes in a file of its own.
+`game.ts` holds no content. Its job is the list of files and the base: the game's `id`, `title` and `version`, its `plugins` and its own code in `rules`. Everything a mod could change, actions, locks and the scene it opens on included, is [content](/docs/reference/content#content) and goes in a file of its own.
 
 ### World by kind, story by area
 
@@ -86,7 +86,7 @@ The layout is a convention. The engine only sees the list of content, so any lay
 content · scene "cafe.counter" · declared twice
 ```
 
-Search for the id and delete the copy you don't want. To have the problem name both files, give each file's content a `name`, such as `name: 'story.cafe'`. ([One key declared twice](/docs/reference/loader#one-key-declared-twice) has every key it looks at.)
+Search for the id and delete the copy you don't want. To have the problem name both files, give each file's content a `name`, such as `name: 'story.cafe'`. ([One key declared twice](/docs/reference/content#checks) has every key it looks at.)
 
 Lists keep the order you combine your files in. Triggers fire in that order, and the quest log, the job board and the places list show their entries in it. Small Town lists `world/` first, then its story from moving day onwards, so its quests and places come in the order the player meets them.
 

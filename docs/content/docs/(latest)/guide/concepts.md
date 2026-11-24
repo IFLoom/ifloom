@@ -73,7 +73,7 @@ The game is your content, merged. Your content is one or more `Content` objects,
 | `changes` | The stats whose [changes](/docs/reference/changes#changes) the view lists |
 | `settings` | What the player [can change](/docs/reference/settings#settingdef) |
 | `saveable` | When the player [may save](/docs/reference/game#saveable) |
-| `finished`, `carryOver` | When the game counts as finished, and what a [New Game+](/docs/reference/state#new-game) keeps |
+| `finished`, `carryOver` | When the game counts as finished, and what a [New Game+](/docs/how-to/offer-new-game-plus) keeps |
 | `strings` | The engine's and plugins' [own lines](/docs/reference/strings), reworded |
 | `prose` | Lines [read by key](/docs/reference/prose#words-in-place-and-prose-keys) |
 | `words` | Other words for the content's fields, for a [translation](/docs/reference/words) |
@@ -83,7 +83,7 @@ The game is your content, merged. Your content is one or more `Content` objects,
 | `media` | [Pools of pictures](/docs/reference/media#gamemedia) to draw from |
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the whole game |
 
-[Content](/docs/reference/loader#content) has each key's type and how two files' keys merge. `loadGame(content, base)` merges your content into one [`Game`](/docs/reference/game#game), and adds the base: the game's `id`, `title` and `version`, its `plugins` and its `rules`. So a `Game` is your content, merged, plus the base. The base holds what isn't content, which is what says which game this is and its code. Anything a mod could change is content.
+[Content](/docs/reference/content#content) has each key's type and how two files' keys merge. `loadGame(content, base)` merges your content into one [`Game`](/docs/reference/game#game), and adds the base: the game's `id`, `title` and `version`, its `plugins` and its `rules`. So a `Game` is your content, merged, plus the base. The base holds what isn't content, which is what says which game this is and its code. Anything a mod could change is content.
 
 A plugin can bring content of its own too, such as the cast's `character` kind. It goes in first, under yours, so your content and any pack can replace it. The engine doesn't know any of these by name. It reads them all from the game. You'll write content all the time, and give the game `rules` only when content alone can't say what you want.
 
@@ -261,8 +261,8 @@ See [Saves and settings](/docs/guide/saves-and-settings), and [Saves](/docs/refe
 
 ## Packs and mods
 
-Your content arrives as a list, split across your files however you like, and `loadGame` merges it into one game. A pack is content from outside your code. A mod is one, and so is content a player unlocks with a code. Packs are laid over your content, so a pack can replace a scene or add new ones. Any problems are reported with where they came from. You'll only need packs if your game takes mods or has unlockable content. See [Content and packs](/docs/reference/loader#content-and-packs).
+Your content arrives as a list, split across your files however you like, and `loadGame` merges it into one game. A pack is content from outside your code. A mod is one, and so is content a player unlocks with a code. Packs are laid over your content, so a pack can replace a scene or add new ones. Any problems are reported with where they came from. You'll only need packs if your game takes mods or has unlockable content. See [Content and packs](/docs/explanation/content-and-packs).
 
 A player can add a mod to a built game as a file. The game keeps it and loads it over its own content at start-up.
 
-See [Packs and loading](/docs/reference/loader) and [Mods](/docs/reference/mods).
+See [Packs and loading](/docs/reference/content) and [Mods](/docs/reference/mods).

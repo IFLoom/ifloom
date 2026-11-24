@@ -46,7 +46,7 @@ body: [
 ]
 ```
 
-Every [range](/docs/reference/conditions#range) takes `gte`, `gt`, `lte` and `lt` together, so the rungs don't overlap. The top rung has no `lt`, so the ladder stops there.
+Every [range](/docs/reference/common#range) takes `gte`, `gt`, `lte` and `lt` together, so the rungs don't overlap. The top rung has no `lt`, so the ladder stops there.
 
 ## Stages in order, with days between
 

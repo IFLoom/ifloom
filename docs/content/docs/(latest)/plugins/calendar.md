@@ -245,7 +245,7 @@ A UI reads the calendar at [`view.plugins.calendar`](#the-view) and the label at
 | `{ 'calendar/period': { period: ['evening', 'night'] } }` | `calendar.period('evening', 'night')` | It's one of these periods. |
 | `{ 'calendar/weekday': { day: [0, 1, 2, 3, 4] } }` | `calendar.weekday(0, 1, 2, 3, 4)` | It's one of these days of the week, from `0`. In a seven-day week, `0` is Monday. |
 | `{ 'calendar/weekend': true }` | `calendar.weekend()` | It's one of the [`weekend`](#calendaroptions) days. |
-| `{ 'calendar/day': { gte: 6 } }` | `calendar.day({ gte: 6 })` | The day, from `0`, is in this [range](/docs/reference/conditions#range). |
+| `{ 'calendar/day': { gte: 6 } }` | `calendar.day({ gte: 6 })` | The day, from `0`, is in this [range](/docs/reference/common#range). |
 | `{ 'calendar/curfew': true }` | none | The [curfew](#calendaroptions) binds right now. |
 
 Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single period or weekday works too, as in `{ 'calendar/period': { period: 'evening' } }`.

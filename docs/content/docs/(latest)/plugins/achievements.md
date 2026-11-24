@@ -37,7 +37,7 @@ Builds the plugin, with the id `achievements`. Nothing is earned in a new game.
 
 ## Writing achievements
 
-Achievements are content. They go in your content's [`data`](/docs/reference/loader#content) under `achievements.achievements` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of achievements) and are merged by id, so a mod can add one or replace one. These are the showcase's two:
+Achievements are content. They go in your content's [`data`](/docs/reference/content#content) under `achievements.achievements` (the plugin's id, then [its list](/docs/reference/content#data) of achievements) and are merged by id, so a mod can add one or replace one. These are the showcase's two:
 
 ```ts
 import type { Content } from '@ifloom/engine'

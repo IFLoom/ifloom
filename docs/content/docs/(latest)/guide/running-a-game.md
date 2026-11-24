@@ -88,7 +88,7 @@ const result = runner.apply(choice.command)
 if (!result.ok) console.warn(result.reason)
 ```
 
-`apply` answers with a [`Result`](/docs/reference/runner#result). On success, `result.value` is the next state. On a refusal, `result.reason` says why in words a player can read, and nothing changed. A greyed-out button already carries the same reason as `disabled`, so show it next to the button rather than hiding it.
+`apply` answers with a [`Result`](/docs/reference/common#result). On success, `result.value` is the next state. On a refusal, `result.reason` says why in words a player can read, and nothing changed. A greyed-out button already carries the same reason as `disabled`, so show it next to the button rather than hiding it.
 
 A few commands come from things that aren't buttons. You build those yourself:
 

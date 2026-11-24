@@ -64,7 +64,7 @@ It's longer, and it does a few things the passage doesn't:
 
 ### Where passages go
 
-A Twine story is one file of passages. An IFLoom game is a few files, each exporting [`Content`](/docs/reference/loader#content), in the layout every template starts with (see [Organising a game](/docs/guide/organising)):
+A Twine story is one file of passages. An IFLoom game is a few files, each exporting [`Content`](/docs/reference/content#content), in the layout every template starts with (see [Organising a game](/docs/guide/organising)):
 
 | In Twine | In an IFLoom game |
 |---|---|
@@ -742,7 +742,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 ## What's different
 
 - **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is the game's own code, in `rules`.
-- **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, with their words written in them. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/reference/loader#content-and-packs)).
+- **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, with their words written in them. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/explanation/content-and-packs)).
 - **State is typed and declared.** Stats, kinds, entities, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.
 

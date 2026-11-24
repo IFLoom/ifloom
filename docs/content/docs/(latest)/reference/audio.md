@@ -109,7 +109,7 @@ type GameAudio = {
 | `sound` | A `ui` toggle the other way round, that plays sound only while it's on: a box labelled "Sound" or "Music", ticked for sound. Name whichever reads right on your settings page; with both, either one silences. |
 | `default` | What each background channel plays when nothing else says, by channel. |
 
-Your [content](/docs/reference/loader#content) and packs can carry `audio` too. A pack's track or channel replaces one with the same id (a channel is merged field by field), and its `mute`, `sound` and `default` entries win.
+Your [content](/docs/reference/content#content) and packs can carry `audio` too. A pack's track or channel replaces one with the same id (a channel is merged field by field), and its `mute`, `sound` and `default` entries win.
 
 ## TrackDef
 

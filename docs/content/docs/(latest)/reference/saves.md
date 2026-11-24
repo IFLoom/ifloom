@@ -63,7 +63,7 @@ A driver stores strings by key. It knows nothing about saves: the save store dec
 - `keys(prefix)` returns the whole key of every entry that starts with `prefix`, in any order. The save store lists a game's saves with it, and sorts them itself.
 - Values are JSON text, kept exactly as given. A save holds the whole game state, so don't put a small size limit on it.
 - Keys can hold any character, because a slot is whatever name the game gives it. A driver that turns keys into file names or URLs must escape them, and undo that in `keys`.
-- A failure rejects the promise. The save store catches it and answers a failing [`Result`](/docs/reference/runner#result) with a reason the player can read, and the driver's error as its `cause`. The [runner](/docs/reference/runner#runneroptions) also reports that error to `onSaveError`.
+- A failure rejects the promise. The save store catches it and answers a failing [`Result`](/docs/reference/common#result) with a reason the player can read, and the driver's error as its `cause`. The [runner](/docs/reference/runner#runneroptions) also reports that error to `onSaveError`.
 
 ### memoryDriver
 
@@ -89,7 +89,7 @@ To keep saves somewhere the engine doesn't ship a driver for, write one that kee
 function saves(game: Game, driver: SaveDriver): Saves
 ```
 
-One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. Each one answers a [`Result`](/docs/reference/runner#result) and never rejects, so a UI can call it without a `catch`. A save that can't be read fails with why. A driver that fails, such as `localStorage` in a locked-down browser or a private window, fails with one of the reasons [below](#when-the-driver-fails), and the driver's error is the failure's `cause`, for a log.
+One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. Each one answers a [`Result`](/docs/reference/common#result) and never rejects, so a UI can call it without a `catch`. A save that can't be read fails with why. A driver that fails, such as `localStorage` in a locked-down browser or a private window, fails with one of the reasons [below](#when-the-driver-fails), and the driver's error is the failure's `cause`, for a log.
 
 Slots are names your game picks, such as `'auto'` for the runner's autosave, `'quick'` for a quicksave key, or `'1'`, `'2'` and `'3'` for a save screen. There's no fixed number of them.
 
@@ -247,7 +247,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
 | `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
 | `playerName` | What the first `saveName` that answers returns for the state, the game's [`rules.saveName`](/docs/reference/rules#savename) before any plugin's, or `null` when none does. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
-| `packs` | The ids of the [packs](/docs/reference/loader#content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
+| `packs` | The ids of the [packs](/docs/explanation/content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `gameVersion` | The game's own [version](#the-games-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
 
@@ -281,7 +281,7 @@ if (loaded.ok && loaded.value?.missingPacks.length) {
 function loadState(raw: unknown, game: Game): Result<GameState>
 ```
 
-Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns a [`Result`](/docs/reference/runner#result) with the state, or the reason it can't, as one of the [refusals](#saves) above.
+Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns a [`Result`](/docs/reference/common#result) with the state, or the reason it can't, as one of the [refusals](#saves) above.
 
 ```ts given
 import { readFileSync } from 'node:fs'

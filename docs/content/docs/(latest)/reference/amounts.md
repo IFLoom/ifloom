@@ -1,12 +1,10 @@
 ---
 title: "Amounts"
-description: "Amount, the one way content names a number worked out in play: in effects, range bounds, a stat's bounds, rolls and plugin fields, read with amountOf."
+description: "Reference for Amount, a number content names that the engine works out when it reads it, the fields that take one, and amountOf."
 ---
-Most places that take a number in your content also take an `Amount`: a number worked out when it's read, such as another stat, a kv key or a count of entities. So "coins at least the rent" needs no code:
+An amount is a number that content names and the engine works out when it reads it: a plain number, a stat, a kv key, a value, a count of entities, or a formula of them. Range bounds, a `stat` effect's `by` and `to`, a stat's `min` and `max` and a roll's target all take one, so "coins at least the rent" needs no code. [Effects and conditions are data](/docs/explanation/state-and-commands) explains why content stays data.
 
-```ts fragment
-{ stat: 'coins', gte: { stat: 'rent' } }
-```
+In the showcase: `examples/showcase/src/story/park.ts`, whose skimming roll has a target in `against`.
 
 ```ts
 import { amountOf, type Amount } from '@ifloom/engine'
@@ -14,91 +12,83 @@ import { amountOf, type Amount } from '@ifloom/engine'
 
 ## Amount
 
-```ts shape
-type Amount =
-  | number
-  | StatKey
-  | { stat: StatKey; of?: string }
-  | { kv: string; of?: string }
-  | ValueRef
-  | { count: string | Select; where?: Condition; units?: true }
-  | { sum: Amount[] }
-  | { product: Amount[] }
-  | { min: Amount[] }
-  | { max: Amount[] }
-  | { scale: Amount; by: number }
-  | { clamp: Amount; min?: number; max?: number }
-```
+A number content names that the engine works out when it reads it. Every form is in [`Amount`](/docs/api/engine#amount).
 
-| Written as | What it reads |
+| Key | Meaning |
 |---|---|
 | `12` | The number as written. |
-| `'rent'` | The player's stat with that id. |
-| `{ sum }`, `{ product }`, `{ min }`, `{ max }`, `{ scale, by }`, `{ clamp }` | Amounts combined, as a [`Formula`](/docs/reference/stats#formula) combines stats: `{ sum: ['rent', 2] }` or `{ scale: 'rent', by: -1 }`. Each part can be any amount. |
-| `{ stat, of? }` | A stat, the player's or with `of` an entity's, read the way [`statValue`](/docs/reference/stats#statvalue) reads it. |
-| `{ kv, of? }` | A key in the [kv store](/docs/reference/state#kv), the player's or with `of` someone else's, as the [`kv` condition](/docs/reference/conditions#kv) names them. A value that isn't a number counts as 0. |
+| `'coins'` | The player's stat with that id. |
+| `{ stat, of? }` | A stat, the player's or with `of` an entity's, read as [`statValue`](/docs/reference/stats#statvalue) reads it. |
+| `{ kv, of? }` | A key's number in a [kv store](/docs/reference/glossary#kv), the player's or with `of` another's. A value that isn't a number counts as 0. |
 | `{ value, with? }` | A [value](/docs/reference/custom#values) by name, the game's own (`game/…`) or a plugin's, asked with `with`. Text that reads as a number counts as that number. |
-| `{ count, where?, units? }` | How many entities there are, counted as the [`count` condition](/docs/reference/conditions#count) counts them: `{ count: 'staff' }`, or `{ count: { of: 'food', at: 'player' }, units: true }` for how many the player holds. |
+| `{ count, where?, units? }` | The number of entities, counted as the [`count`](/docs/reference/conditions#count) condition counts them. |
+| `{ sum }`, `{ product }`, `{ min }`, `{ max }` | The sum, product, least or greatest of a list of amounts. |
+| `{ scale, by }` | An amount multiplied by the number `by`, so `{ scale: 'coins', by: -1 }` is minus the player's coins. |
+| `{ clamp, min?, max? }` | An amount held between two numbers. |
 
-`of` names whose it is, as it does in conditions: an [entity reference](/docs/reference/entities#entityref), `'$'` inside an [`each`](/docs/reference/effects#each) or a `where`, `'storyline:<id>'` or `'minigame'` for a kv key. Anything that doesn't read as a finite number is 0, and so is an owner that isn't there.
+`of` names the owner as it does in conditions: an [`EntityRef`](/docs/reference/common#entityref), `'$'` inside an [`each`](/docs/reference/effects#each) or a `where`, and `'storyline:<id>'` or `'minigame'` for a kv key. An amount that doesn't read as a finite number is 0, and so is an owner that isn't there.
 
-## Where you can use one
+The engine works an amount out each time it reads it: as an effect applies, as a condition is asked, or as a stat is held to its range. A choice's [price](/docs/reference/view#price) reads its `stat` effect's amount in the state on screen.
 
-| Where | Fields |
-|---|---|
-| [Range bounds](/docs/reference/conditions#range) | `gte`, `gt`, `lte` and `lt`, in every condition that takes a range, a [call](/docs/reference/conditions#calls)'s own bounds included |
-| [`stat` effect](/docs/reference/effects#stat) | `by` and `to` |
-| [`kv` effect](/docs/reference/effects#kv) | `by`, and each end of `random` |
-| [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects | `by`, and `entity`'s `to` |
-| [`roll` effect](/docs/reference/rolls#the-effect) | `plus` and `against` |
-| [A stat](/docs/reference/stats#statdef) | `min` and `max` |
-| [Achievements](/docs/plugins/achievements#achievementdef) | a progress `value` |
-| [Devices](/docs/plugins/devices#appdef) | an app's `badge` |
+These fields take an amount:
 
-```ts fragment
-// Pay the rent, whatever it is this week.
-{ stat: 'coins', by: { scale: 'rent', by: -1 } }
+- The bounds of every [`Range`](/docs/reference/common#range), in every condition that takes one, a call's own bounds included.
+- The [`stat`](/docs/reference/effects#stat) effect's `by` and `to`.
+- The [`kv`](/docs/reference/effects#kv) effect's `by`, and each end of its `random`.
+- The [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects' `by`, and `entity`'s `to`.
+- A [roll](/docs/reference/rolls)'s `plus` and `against`.
+- A [stat](/docs/reference/stats#statdef)'s `min` and `max`.
+- A plugin field the plugin declares to the checker as `{ amount }`, such as an [achievement](/docs/reference/plugins/achievements)'s progress or a [device](/docs/reference/plugins/devices) app's badge.
 
-// Pay each of the staff their own wage.
-{ each: 'staff', effects: [{ stat: 'coins', by: { scale: { stat: 'wage', of: '$' }, by: -1 } }] }
+This content caps energy at the player's fitness, and pays each member of staff their own wage:
 
-// Energy can't go above fitness.
-{ id: 'energy', label: 'Energy', start: 30, max: { stat: 'fitness' } }
+```ts
+import type { Content } from '@ifloom/engine'
 
-// A climb, with strength added, against the height of the wall.
-{ roll: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: { kv: 'wall' } }
+export const week: Content = {
+  stats: [
+    { id: 'fitness', label: 'Fitness', start: 40 },
+    { id: 'energy', label: 'Energy', start: 30, max: { stat: 'fitness' } },
+  ],
+  actions: [
+    {
+      id: 'payday',
+      label: 'Pay the staff',
+      effects: [{ each: 'staff', effects: [{ stat: 'coins', by: { scale: { stat: 'wage', of: '$' }, by: -1 } }] }],
+    },
+  ],
+}
 ```
 
-An amount is worked out when it's read: as an effect applies, as a condition is asked, or as a stat is held to its range. A choice's [price](/docs/reference/view#price) reads its `stat` effect's amount in the state on screen.
+## Functions
 
-**Gotchas.**
-- In a `kv` effect, `to` stays a [kv value](/docs/reference/state#kv) as written, since a string there is text, not a stat's id. Change a key by an amount with `by`.
-- A stat's `max` or `min` that comes back to the stat itself, such as a derived stat whose ceiling reads it, reads its default (100, or 0) while it's being worked out, rather than going round for ever.
-- A `max` or `min` naming a value nobody declares, as from a plugin the game no longer has, reads its default too.
+### amountOf
 
-## amountOf
+Returns an amount worked out in a state, as the engine reads one. Its signature is in [`amountOf`](/docs/api/engine#amountof).
 
-```ts shape
-function amountOf(state: GameState, game: Game, amount: Amount): number
-```
-
-An amount worked out in this state, as the engine reads one. Use it in a plugin's code for a field of its own that takes an amount, and hand the field to the [content checker](/docs/reference/checks) as `{ amount }` in its [references](/docs/reference/plugins#references).
+A plugin calls it for a field of its own that takes an amount, and declares the field to the [content checker](/docs/reference/checks) as `{ amount }` in its [references](/docs/reference/plugin-checks).
 
 ```ts given
 import { amountOf } from '@ifloom/engine'
 
-amountOf(state, game, { stat: 'rent' })               // 10
-amountOf(state, game, { sum: ['rent', { kv: 'tips' }] }) // 15
-amountOf(state, game, { count: 'staff' })              // 2
+amountOf(state, game, { stat: 'coins' })                  // 12
+amountOf(state, game, { sum: ['coins', { kv: 'tips' }] }) // 15
+amountOf(state, game, { count: 'staff' })                 // 2
 ```
 
-## Checking amounts
+## Checks
 
-The [content checker](/docs/reference/checks) reads every amount content writes. It reports one that names a stat the game doesn't declare (or one on the wrong owner), a storyline or a kind it doesn't have, a value nobody declares, and one of the wrong shape:
+The [content checker](/docs/reference/checks) reads every amount content writes, and reports these problems:
 
-```
-action odd: unknown stat "gold"
-action odd: unknown storyline "nobody"
-action odd: no game value named "game/nothing"
-action odd: an amount is a number, a stat id, a formula, { stat }, { kv }, { value } or { count }; this one is [3]
-```
+| Problem | Cause |
+|---|---|
+| `unknown stat "gold"` | The amount names a stat the game doesn't declare, or one declared on another owner. |
+| `unknown storyline "nobody"` | A `{ kv, of: 'storyline:…' }` names a storyline the game doesn't declare. |
+| `no game value named "game/nothing"` | A `{ value }` names a value nobody declares. |
+| `an amount is a number, a stat id, a formula, { stat }, { kv }, { value } or { count }; this one is [3]` | The amount has none of the shapes above. |
+
+## Caveats
+
+- In a `kv` effect, `to` stays a [`KvValue`](/docs/reference/common#kvvalue) as written, since a string there is text and not a stat's id. A `kv` effect changes a key by an amount with `by`.
+- A stat's `max` or `min` that comes back to the stat itself, such as a derived stat whose ceiling reads it, reads its default (100, or 0) while the engine works it out.
+- A `max` or `min` naming a value nobody declares, such as one from a plugin the game no longer has, reads its default too.

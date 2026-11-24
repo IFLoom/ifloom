@@ -171,7 +171,7 @@ const started = ref(false)
 
 The runner gives you what a title screen needs:
 
-- [`runner.saves.list()`](/docs/reference/saves#saves) lists the saves newest first, the autosave among them, then any that can't be read, as `{ slot, broken }`. It answers a [`Result`](/docs/reference/runner#result), which fails where the browser refuses storage, so the title screen offers only New game then.
+- [`runner.saves.list()`](/docs/reference/saves#saves) lists the saves newest first, the autosave among them, then any that can't be read, as `{ slot, broken }`. It answers a [`Result`](/docs/reference/common#result), which fails where the browser refuses storage, so the title screen offers only New game then.
 - [`runner.newGame()`](/docs/reference/runner#newgame) starts afresh with the player's stored settings.
 - [`runner.load`](/docs/reference/runner#the-runners-members) loads a slot. Its `Result` fails with a `reason` when a save can't be read, so show that to the player.
 
@@ -330,7 +330,7 @@ Then the stylesheet uses the attribute. The React UI sizes everything in `rem`, 
 
 ## Offer New Game+
 
-New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in your [content](/docs/reference/loader#content):
+New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in your [content](/docs/reference/content#content):
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -341,7 +341,7 @@ export const endings: Content = {
 }
 ```
 
-The Letter puts them in `story/ch3.ts`, beside its endings. The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows a New Game+ button. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
+The Letter puts them in `story/ch3.ts`, beside its endings. The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows a New Game+ button. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/how-to/offer-new-game-plus) for exactly what's copied.
 
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 

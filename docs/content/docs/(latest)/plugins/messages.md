@@ -97,7 +97,7 @@ The game's channels, merged from its content and packs, in order.
 
 ## Writing messages
 
-Messages are content. List them in your content's [`data`](/docs/reference/loader#content) under `messages.messages`. They're merged by id as scenes are, so a mod can add a message or rewrite one.
+Messages are content. List them in your content's [`data`](/docs/reference/content#content) under `messages.messages`. They're merged by id as scenes are, so a mod can add a message or rewrite one.
 
 ### MessageDef
 
@@ -381,8 +381,8 @@ inbox(state).unread     // 0
 | Content writes | Helper | Holds when |
 |---|---|---|
 | `{ 'messages/arrived': { message } }` | `messages.arrived(message)` | The message has arrived, at least once. |
-| `{ 'messages/since': { message, gte… } }` | `messages.since(message, range)` | The whole days since the message last arrived are in the [range](/docs/reference/conditions#range). Days are the calendar's, or turns without it. False if it has never arrived. |
-| `{ 'messages/replied': { message, reply?, gte… } }` | `messages.replied(message, reply?, range?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. With a [range](/docs/reference/conditions#range), the whole days since the reply was sent are in it too, counted as `messages/since` counts, so `{ gte: 2 }` is "two days or more after you replied". |
+| `{ 'messages/since': { message, gte… } }` | `messages.since(message, range)` | The whole days since the message last arrived are in the [range](/docs/reference/common#range). Days are the calendar's, or turns without it. False if it has never arrived. |
+| `{ 'messages/replied': { message, reply?, gte… } }` | `messages.replied(message, reply?, range?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. With a [range](/docs/reference/common#range), the whole days since the reply was sent are in it too, counted as `messages/since` counts, so `{ gte: 2 }` is "two days or more after you replied". |
 | `{ 'messages/read': { message } }` | `messages.messageRead(message)` | The player has read the message's latest arrival. The helper isn't `messages.read`, which writes the [command](#commands) that marks a thread read. |
 
 You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each is a call with the full name as the only key, as in `{ 'messages/arrived': { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).

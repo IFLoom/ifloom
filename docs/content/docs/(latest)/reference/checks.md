@@ -2,7 +2,7 @@
 title: "Checking content"
 description: "What the content checker reports, where each problem is pinned, and how to run checkGame and describeProblem yourself."
 ---
-`checkGame` reads through a game's content once, reports everything it names that the game doesn't have, and lists the files it names. [`loadGame`](/docs/reference/loader#loadgame) runs it on the game it merges. A game you build by hand calls it itself, usually from a test.
+`checkGame` reads through a game's content once, reports everything it names that the game doesn't have, and lists the files it names. [`loadGame`](/docs/reference/content#loadgame) runs it on the game it merges. A game you build by hand calls it itself, usually from a test.
 
 ```ts
 import { checkGame, describeProblem, type Checked, type FileRef, type Probe, type Problem } from '@ifloom/engine'
@@ -38,11 +38,11 @@ Walks every part of the game that is data: scenes and data scenes, actions, trig
 
 It never throws on bad content. It returns the problems in the order it found them, and an empty list when there's nothing wrong.
 
-`warnings` lists what may go wrong in play but isn't a mistake in the content, in the same shape as a problem. So far that's a token that may print nothing (see [Tokens](#tokens)). [`ifloom check`](/docs/cli#ifloom-check) prints each as `warning: …` and doesn't fail on them. [`loadGame`](/docs/reference/loader#loadgame) returns only problems, so call `checkGame(game)` for the warnings.
+`warnings` lists what may go wrong in play but isn't a mistake in the content, in the same shape as a problem. So far that's a token that may print nothing (see [Tokens](#tokens)). [`ifloom check`](/docs/cli#ifloom-check) prints each as `warning: …` and doesn't fail on them. [`loadGame`](/docs/reference/content#loadgame) returns only problems, so call `checkGame(game)` for the warnings.
 
 **Gotchas.**
 - It doesn't run the game's own code. A [macro in `rules`](/docs/reference/custom#macros) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
-- A key content or a pack can't hold, such as `rules`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `content has no "rules", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
+- A key content or a pack can't hold, such as `rules`, is reported by [`loadGame`](/docs/reference/content#loadgame) as `content has no "rules", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
 - It checks only some [tokens](/docs/reference/prose#tokens) in prose (see [Tokens](#tokens)). A plain `{{breadPrice}}` that names nothing is left on screen as written, so you can see it.
 
 ### Checked
@@ -179,7 +179,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `dice "…" is not dice notation such as "2d6+1", "1d20" or "d100"` | A [`roll`](/docs/reference/effects#roll) effect's `dice` that isn't notation. The effect rolls nothing. |
 | `dice have … sides; a die needs at least 2`, `… dice; a roll throws 1 to 100` | A `roll` effect's dice, in notation or as `{ count, sides }`. |
 | `roll key "…" must be letters, digits and _, not starting with a digit, so {{key}} can show it` | The kv key a `roll` effect names. |
-| `roll plus: …`, `roll against: …` | A `roll` effect's `plus` and `against`, read as [amounts](/docs/reference/amounts#checking-amounts). |
+| `roll plus: …`, `roll against: …` | A `roll` effect's `plus` and `against`, read as [amounts](/docs/reference/amounts#checks). |
 | `an amount is a number, a stat id, a formula, { stat }, { kv }, { value } or { count }; …` | An [`Amount`](/docs/reference/amounts) of a shape the engine can't read. |
 | `unknown stat "…"` | A `roll` effect's `plus: { stat }`. |
 | `unknown timer "…"` | A [`timer`](/docs/reference/effects#timer) effect naming a timer the game doesn't declare. The effect does nothing. |
@@ -262,8 +262,8 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `kind <id>` | What its `listed` and `flags` conditions name, with `'$'` as any one of the kind, and its `ui`. |
 | `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but which that plugin doesn't declare. See [Traits](#traits). |
 | `trait <id> on <kind>:<id>` | `unknown entity "…"` for a row of the `traits` table that names an entity nobody declares, and whatever the plugin's trait finds in the data with its `check` and `references`. See [Traits](#traits). |
-| `finished` | The game's [`finished`](/docs/reference/state#new-game) condition. |
-| `carryOver` | `unknown stat "…"` in [`carryOver`](/docs/reference/state#new-game) and `stat "…" belongs to <kind>, not the player` for a kind's stat. For each thing in `held`: `unknown entity "…": name one as "kind:id"`, or `unknown kind "…"`. |
+| `finished` | The game's [`finished`](/docs/how-to/offer-new-game-plus) condition. |
+| `carryOver` | `unknown stat "…"` in [`carryOver`](/docs/how-to/offer-new-game-plus) and `stat "…" belongs to <kind>, not the player` for a kind's stat. For each thing in `held`: `unknown entity "…": name one as "kind:id"`, or `unknown kind "…"`. |
 | `lock <id>` | The `when` of each of the content's [`locks`](/docs/reference/locks), by its `id`, or by its place in the list from 0 for one with none. |
 | `introScene` | `unknown scene "…"`, when the game opens on a scene it doesn't have. |
 | `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. For its [traits](/docs/reference/plugins#traits): `trait "…" must be named "<id>/" and a name` and `two traits share the id "…"`. |
@@ -276,7 +276,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `migration <n>` | `a step is keyed by the version it upgrades from, 1 to …`, for a step keyed outside 1 to `version - 1`. A game with no `version` has no room for steps, so any step is reported. |
 | `<list> <id>` for `scene`, `storyline`, `action`, `stat`, `kind`, `entity`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since `loadGame` merges by id. |
 
-`loadGame` adds a few of its own, about the content and packs themselves, such as a key declared twice. See [What the loader adds](/docs/reference/loader#what-the-loader-adds).
+`loadGame` adds a few of its own, about the content and packs themselves, such as a key declared twice. See [What the loader adds](/docs/reference/content#checks).
 
 ## Traits
 
@@ -393,7 +393,7 @@ And one warning, in `warnings`:
 
 ## Words written as prose keys
 
-Older content named prose keys where content now writes words. A pack of an older schema is [rewritten](/docs/reference/loader#upgradepack) when it loads, but your own content isn't, so the checker reports each one, wherever it sits: a scene, a flow's decision, an action, a place's or an app's buttons, a notice, a minigame, a message's replies, the feed's posts.
+Older content named prose keys where content now writes words. A pack of an older schema is [rewritten](/docs/reference/content#upgradepack) when it loads, but your own content isn't, so the checker reports each one, wherever it sits: a scene, a flow's decision, an action, a place's or an app's buttons, a notice, a minigame, a message's replies, the feed's posts.
 
 | Problem | When |
 |---|---|

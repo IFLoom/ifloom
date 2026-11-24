@@ -236,7 +236,7 @@ const talk: TalkOption[] = [
 
 ### In your content
 
-Characters go in your [content](/docs/reference/loader#content)'s `entities`, written with `cast.person()`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/world/cast.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
+Characters go in your [content](/docs/reference/content#content)'s `entities`, written with `cast.person()`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/world/cast.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
 
 ```ts
 import type { DataScene, Content } from '@ifloom/engine'
@@ -309,7 +309,7 @@ const town: Content = {
 }
 ```
 
-The [loader](/docs/reference/loader#content) merges characters as it merges every entity, by kind and id. A pack's `character:sam` replaces the game's own whole, so a mod can add someone or rewrite them, or give the trait to someone through its `traits` table. Everyone with the trait is [`peopleOf(game)`](#helpers).
+The [loader](/docs/reference/content#content) merges characters as it merges every entity, by kind and id. A pack's `character:sam` replaces the game's own whole, so a mod can add someone or rewrite them, or give the trait to someone through its `traits` table. Everyone with the trait is [`peopleOf(game)`](#helpers).
 
 ### Each one is an entity
 
@@ -754,7 +754,7 @@ town · trait cast/person on character:mole · unknown storyline "tunnels"
 town · trait cast/person on character:vole · can be called, but a call opens no scene: give call a scene, or them a talk
 ```
 
-**Characters written the old way.** A pack written for an older schema, with a `data.cast.characters` list, has its characters moved for it (see [`upgradePack`](/docs/reference/loader#upgradepack)): `role` becomes `desc`, `portrait` becomes `image`, and the rest the trait.
+**Characters written the old way.** A pack written for an older schema, with a `data.cast.characters` list, has its characters moved for it (see [`upgradePack`](/docs/reference/content#upgradepack)): `role` becomes `desc`, `portrait` becomes `image`, and the rest the trait.
 
 The places in `cast/at` aren't checked. An `image` the game gives is listed in the checker's [`files`](/docs/reference/checks#fileref), so `ifloom check` looks for it. The default one, `art/character/<id>.jpg`, isn't.
 

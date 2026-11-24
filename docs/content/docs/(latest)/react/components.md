@@ -334,7 +334,7 @@ Use it on its own to build [your own layout](/docs/react/extending#your-own-layo
 function useGame(): GameContextValue
 ```
 
-Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what it returned, a [`Result`](/docs/reference/runner#result) with the next state or the reason it was refused, so you can show a refusal. It takes a plain command or a plugin's as its helpers write it, a [`CommandRef`](/docs/reference/custom#commandref), so `send(shop.buy('counter', 'item:sandwich'))` works. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
+Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what it returned, a [`Result`](/docs/reference/common#result) with the next state or the reason it was refused, so you can show a refusal. It takes a plain command or a plugin's as its helpers write it, a [`CommandRef`](/docs/reference/custom#commandref), so `send(shop.buy('counter', 'item:sandwich'))` works. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
 
 ```tsx
 import { useState } from 'react'
@@ -1800,7 +1800,7 @@ The game's title (`view.title`), the `subtitle` and `art` if given, and a column
 
 - **Continue** (`ui.continue`, `continue`) loads the newest save, by `savedAt`. It shows only when there is one.
 - **New game** (`ui.newGame`, `new`) calls [`runner.newGame()`](/docs/reference/runner#newgame), which takes the player's stored settings from the profile.
-- **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/docs/reference/state#new-game) and the profile's `core:finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
+- **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/docs/how-to/offer-new-game-plus) and the profile's `core:finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
 - **Load** (`ui.load`, `load`) when the runner has `saves`.
 - **Settings** (`ui.settings`, `settings`) when the game declares any setting, has a plugin UI with [`settings`](/docs/react/kit#pluginui) (the unlocks plugin's code box) or has [`mods`](#modsoption).
 - A button for each page a plugin UI adds, such as **Achievements**, and each of your own pages, by its id, unless its `showOnTitle` is `false`.

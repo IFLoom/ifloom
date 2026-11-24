@@ -1,57 +1,183 @@
 ---
 title: "Commands"
-description: "apply and startingState, every command the player can send, and what each one refuses with."
+description: "Reference for Command, every command the player can send and the refusals each gives, with apply, startingState, Applied and StartOptions."
 ---
-A command is one thing the player does, such as picking a choice, doing an action or a plugin's own, such as using a thing in the inventory. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
+A command is one thing the player does, such as choosing a choice, doing an action or sending a plugin's own command. A UI sends commands, and [`apply`](#apply) answers each with the next [state](/docs/reference/state), or refuses it with a reason. Running a command is a pure function, so the same state, game and command always give the same answer. [State, commands and the view](/docs/explanation/state-and-commands) explains the loop, and [Run a game in code](/docs/how-to/run-a-game-in-code) sends commands from Node.
+
+In the showcase: `examples/showcase/tests/showcase.test.ts`, which plays the town by sending commands.
 
 ```ts
-import { apply, startingState, type Command } from '@ifloom/engine'
+import { apply, startingState, type Applied, type Command, type StartOptions } from '@ifloom/engine'
 ```
 
-## apply
+## Command
 
-```ts shape
-function apply(state: GameState | null, game: Game, command: CommandRef): Applied
+A request to change the game, told apart by its `type`, such as `{ type: 'choose', id: 'chat' }`. Every form is in [`Command`](/docs/api/engine#command).
+
+A command that names one thing names it `id`, and one that sets a value takes it as `to`. The union is closed, so a game adds no command type of its own. A new thing for the player to do is an [action](/docs/reference/actions), sent with the `action` command. A plugin's command, or the game's own from [`rules.commands`](/docs/reference/rules#commands), goes under the one type [`custom`](#custom), by name.
+
+`apply` also takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's command in its short form works too, as a plugin's helpers write it:
+
+```ts
+import type { CommandRef } from '@ifloom/engine'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
+
+export const walkAndTalk: CommandRef[] = [places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'chat' }, { type: 'leave' }]
 ```
 
-Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `reason` says why. It's the shape of a [`Result`](/docs/reference/runner#result), with the state on both sides. The runner's `apply` gives a plain `Result` with the new state as its `value`.
+While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss`, `setting` and `closePanel` is refused with "Finish this first.", before any lock. So is a plugin command that doesn't ignore locks.
+
+## Applied
+
+The answer of [`apply`](#apply), with the state on both sides. Every form is in [`Applied`](/docs/api/engine#applied).
+
+On success, `ok` is `true` and `state` is the next state, with `newGame: true` when the command started a new game. On a refusal, `ok` is `false`, `state` is the state passed in, and `reason` says why. It has the shape of a [`Result`](/docs/reference/common#result), and the runner's own `apply` gives a plain `Result` with the next state as its `value`.
+
+## StartOptions
+
+Settings for [`startingState`](#startingstate) and the runner's `newGame`. Every field is in [`StartOptions`](/docs/api/engine#startoptions), each optional.
+
+| Field | Meaning |
+|---|---|
+| `seed` | The save's [seed](/docs/reference/state#seed). A hash of `game.id` if left out, so every new game draws the same. |
+| `kv` | Keys written to the [kv store](/docs/reference/state#kv) over the content's `kv`, such as a name typed on a title page. |
+| `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the profile's `core:settings`. An unknown id, a `ui` setting or a value a setting can't take is ignored. |
+| `carry` | The state a finished game ended on, for a New Game+. The engine copies what the content's [`carryOver`](/docs/reference/state#carryover) lists from it. |
+
+## Commands
+
+Each command the engine keeps, with the refusals of its built-in handler. A [lock](/docs/reference/locks) and a plugin's [guard](/docs/reference/plugin-api) refuse a command before its handler runs, and a guard's warning after it. The refusals quoted here are the engine's English [strings](/docs/reference/strings#refusals), which a game, a pack or a translation can reword, and a reason the game wrote prints as written.
+
+### start
+
+Starts a new game with the given `seed` and `kv`, as [`startingState`](#startingstate) does. It's never refused and no lock stops it.
+
+### newGame
+
+Starts over, a new game in place of the one in play. Content sends it from a choice, such as an ending's "Play again". It's never refused, and no lock or plugin guard stops it.
+
+```ts fragment
+{ id: 'again', label: 'Play again', command: { type: 'newGame' }, effects: [] }
+```
+
+A [runner](/docs/reference/runner#newgame)'s `apply` starts it as `runner.newGame()` does, with the player's play settings from the profile, a random seed and a fresh history, backlog and command log. `apply` on its own answers `{ ok: true, newGame: true, state }`, where `state` is a new game with the play settings of the run that ended and a seed drawn from its seed and turn. The same state and command always give the same new game, so a [replay](/docs/reference/runner#replay) is exact.
+
+The run ends where the command is sent. The choice that sends it isn't counted in [`chosen`](/docs/reference/state#chosen), its effects don't run, and no trigger or hook runs after it. Nothing carries over, so it isn't a New Game+. [`ifloom playtest`](/docs/reference/cli#ifloom-playtest) stops when it meets one.
+
+### action
+
+Does the [action](/docs/reference/actions) with this `id`: one of the content's `actions`, or a plugin's with the plugin's id in front, such as `places/coffee`. It sends the action's `command` first, if it has one, then pays its cost and applies its effects. An action with `once` is counted in [`chosen`](/docs/reference/state#chosen) under its id before anything runs.
+
+It's refused with "There is no such thing to do." for an unknown id. Otherwise it's refused for the first reason [`whyNot`](/docs/reference/actions#whynot) gives. Those reasons are an open scene, a `when` that doesn't hold, a lock, a `blocked` entry, `once` already spent, too little of a stat the cost spends, and its command's own refusal.
+
+```ts fragment
+{ type: 'action', id: 'wait' }
+```
+
+### scene
+
+Opens a scene by id. It's refused with "Finish this first." while a scene is open, and "There is no such scene." for an unknown id.
+
+### choose
+
+Takes a choice in the scene on screen, found by id in the scene rendered against the current state. Its record in [`chosen`](/docs/reference/state#chosen), under `scene#choice`, counts one more on the current turn, and then its effects run in order. If the open scene's id no longer exists in the game, `choose` closes it instead of refusing.
+
+It's refused with, in order:
+
+- "There is nothing to choose." when no scene is open.
+- "That is not on offer." when there's no such choice, or it's hidden.
+- The choice's own `blocked` reason.
+- A plugin guard's warning, such as the calendar's "That would run past dawn."
+
+### leave
+
+Closes the scene on screen. The engine never refuses it, even with no scene open, though a lock can stop it.
+
+### dismiss
+
+Marks one [notice](/docs/reference/notices) seen by `id`, or every notice without one. Only a lock stops it, so it works with a scene open and with nothing to dismiss. It doesn't end a turn.
+
+```ts fragment
+{ type: 'dismiss', id: 'rent' }
+```
+
+### input
+
+Writes the value `to` to an [input](/docs/reference/inputs)'s kv key, its `key` or else its id, with text trimmed. It takes no time and works with a scene open. A button can carry the command without `to` so the UI asks for one, and a command sent without a value is refused.
+
+After a lock, it's refused with the input's own reasons, such as "Enter something first.", "Keep it to <n> characters." or "That is not one of the options." See [`InputDef`](/docs/reference/inputs#inputdef).
+
+```ts fragment
+{ type: 'input', id: 'catName', to: 'Biscuit' }
+```
+
+### setting
+
+Changes a `play` [setting](/docs/reference/settings) in the state, as a settings page sends it mid-game. It goes in the runner's [log](/docs/reference/runner#commandlog), so a [replay](/docs/reference/runner#replay) gives the same game, and a runner with a [profile](/docs/reference/profile) also stores the value for the next new game. No lock or plugin guard stops it.
+
+It's refused with:
+
+- "There is no such setting." for an id the game doesn't declare.
+- "That setting does not change the game." for a `ui` setting, which [`runner.setSetting`](/docs/reference/runner#setsetting) changes instead.
+- "Choose on or off." for a toggle given anything but `true` or `false`.
+- "That is not one of the options." for a choice given a value it doesn't list.
+- "Enter a number.", "Between <min> and <max>." or "In steps of <step>." for a range.
+
+### tick
+
+Time passing, `ms` milliseconds of it. It takes `ms` off every running [timer](/docs/reference/timers) and adds it to the time the running [minigame](/docs/reference/minigames) has spent in its state. Whatever runs out does so in order, with its effects or its transition run at that moment, so one long tick can run out up to 1,000 things in a row. No lock or plugin guard stops it.
+
+A UI sends ticks about every 100 ms while [`view.timers`](/docs/reference/timers#timerview) isn't empty or a minigame's `timeLeft` isn't `null`, as [`startClock`](/docs/reference/browser#startclock) does. Ticks go in the runner's log, so a replay is exact. The runner's undo steps over them, and the backlog ignores them.
+
+It's refused with "Nothing is counting down." when nothing is running, and "A tick is a number of milliseconds above 0." for an `ms` that isn't.
+
+### minigame
+
+An `input` to the [minigame](/docs/reference/minigames) being played. It takes the running state's first `on` entry for that input whose `when` holds, runs its effects, then goes where the entry says. No lock or plugin guard stops it. It's refused with "Nothing is being played." when no minigame runs, and "That does nothing now." for an input that isn't live.
+
+### closePanel
+
+Closes the open [panel](/docs/reference/panels), as a UI sends it when the player dismisses the panel. No lock or plugin guard stops it, so a lock can't hold a panel open. It's refused with "Nothing is open." when no panel is open, and it ends no turn.
+
+### custom
+
+Runs a plugin's command by its full name, the plugin's id in front, or one of the game's own [`rules.commands`](/docs/reference/rules#commands) with `game/` in front. `with` holds its arguments, `{}` if left out. Content, `apply` and the runner also take the short form, `{ 'quests/track': { id: 'bread' } }`, and the view always gives the long one.
+
+It's refused with "There is no such thing to do." when neither the game nor a plugin has the name, and then with the plugin's own refusal. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
+
+```ts fragment
+{ type: 'custom', name: 'quests/track', with: { id: 'bread' } }
+```
+
+## Functions
+
+### apply
+
+Runs a command and returns the next state. A refused command returns the state unchanged, with the reason. Its signature is in [`apply`](/docs/api/engine#apply).
+
+A refused command and a command that changed nothing leave the same state behind, so code that needs to know checks `ok`. The `reason` is a sentence for the player, the same line [`whyNot`](/docs/reference/actions#whynot) gives and the view puts on the greyed-out button.
 
 ```ts given
 import { apply } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
 const out = apply(state, game, places.go('cafe'))
-if (!out.ok) console.log(out.reason) // the reason, such as a place's `blocked` line
-const next = out.state                // the new state, or the same one when refused
+if (!out.ok) console.warn(out.reason)
+const next = out.state
 ```
 
-Use `apply` wherever the answer matters, because a refused command and one that changed nothing leave the same state behind. It takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's command in short works too.
+`apply` runs a command in these steps:
 
-`refused` is always a sentence you can show the player. It's the same line [`whyNot`](/docs/reference/actions#whynot) gives, and the view greys the button out with it. The lines quoted on this page are the engine's English from the [strings table](/docs/reference/strings#refusals), and a game, a pack or a translation can reword them (`finishFirst`, `noSuchScene` and so on). Lines your game wrote, such as a lock's or a `blocked` entry's `reason`, are printed as written.
-
-### Applied
-
-What [`apply`](#apply) answers: whether the command took, with the state on both sides, and `newGame: true` when it asked for a new game.
-
-```ts shape
-type Applied =
-  | { ok: true; state: GameState; newGame?: true }
-  | { ok: false; state: GameState; reason: string }
-```
-
-### What happens, in order
-
-1. **A new game?** `{ type: 'start' }` returns a brand-new game and stops there. If `state` is `null`, any other command also returns a new game, as `startingState(game)` with no options, and the command isn't run. A [`newGame`](#newgame) command, on its own or sent by a choice, also stops at the point it runs, and `apply` returns a new game with `newGame: true`.
-2. **Can it be done?** [`whyNot`](/docs/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/docs/reference/locks) first, then a plugin's [guard](/docs/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks, and so does [`setting`](#setting). The view greys buttons out with the same function, so a button and its refusal always read the same.
-3. **A warning?** If a plugin's [guard](/docs/reference/plugins#guards) gives a soft refusal, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
-4. **Run it.** If [`rules.commands`](/docs/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
-5. **Triggers.** Each [trigger](/docs/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/docs/reference/triggers#when-triggers-fire).
-6. **Seen.** If the player is now looking at a different scene than before, that scene's record in [`seen`](/docs/reference/state#seen) counts one more, with the current [turn](/docs/reference/state#turn) as its `last` (and its `first`, if it's the first time). A scene a trigger opened counts.
-7. **A scene's minigame.** If that new scene has a [`minigame`](/docs/reference/minigames#minigamescenefields), it starts.
-8. **The scene's sounds.** If a new scene was entered, [`state.audio.shown`](/docs/reference/audio#audiostate) goes up by one, so that scene's sounds get keys of their own and play. See [Sounds and voices](/docs/reference/audio#sounds-and-voices).
-9. **After hooks.** Each plugin's [`onCommand` hook](/docs/reference/plugins#hooks-and-providers) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
-10. **Level-ups.** Each of the player's stats that went up a level, and has a [`notice`](/docs/reference/stats#the-notice), raises one. This comes after the hooks, so a level a hook's reward reached is noticed too.
-11. **What the screen shows.** The engine draws the new state's [`screen`](/docs/reference/view#screen) once and records what the save doesn't hold yet: the [pool picks](/docs/reference/media#remembered-picks) on it, in a game with pools, and what each background channel is now playing, in [`state.audio.started`](/docs/reference/audio#audiostate), in a game with audio.
+1. **A new game.** A `start` command, or a `null` state, returns a new game and stops there. A `newGame` command stops where it runs, with `newGame: true`.
+2. **Refusals.** [`whyNot`](/docs/reference/actions#whynot) checks a lock, then a plugin's guard, then the game's own handler, then the command's own needs. Its first reason refuses the command. A plugin command marked `ignoresLocks`, and `setting`, skip the lock and guard.
+3. **A warning.** A plugin guard's soft refusal, such as the calendar's "That would run past dawn.", refuses the command too. The view puts the same line on the button as its `warning`.
+4. **The handler.** A function in [`rules.commands`](/docs/reference/rules#commands) for the type runs in place of the built-in handler, which can still refuse.
+5. **Triggers.** Each [trigger](/docs/reference/triggers) that is due and whose condition now holds fires, in the game's order, each on the state the one before left.
+6. **A new scene.** A scene the command left on screen counts in [`seen`](/docs/reference/state#seen), starts its [minigame](/docs/reference/minigames#minigamescenefields), and gets new keys for its [sounds](/docs/reference/audio#audiostate).
+7. **Hooks.** Each plugin's `onCommand` [hook](/docs/reference/plugin-api) runs, in the order of `game.plugins`, with the states before and after.
+8. **Level-ups.** Each player stat that reached a new level and has a [`notice`](/docs/reference/stats#statlevels) raises one, after the hooks, so a level a hook's reward reached is noticed too.
+9. **The screen.** The engine renders the new state's [`screen`](/docs/reference/view#screen) once, and records the pool picks and the background audio on it.
 
 ```mermaid
 flowchart LR
@@ -69,227 +195,32 @@ flowchart LR
   before --> after
 ```
 
-Locks are checked before the game's own handler, so a lock can stop a command the game handles itself.
+### startingState
 
-## startingState
+Returns a new game at turn 0, with the content's `introScene` open and counted as seen. Its signature is in [`startingState`](/docs/api/engine#startingstate), and its options are [`StartOptions`](#startoptions).
 
-```ts shape
-function startingState(game: Game, options?: StartOptions): GameState
-```
+Every other state, such as a save, comes in through [`loadState`](/docs/reference/saves#loadstate), and `apply` expects a state from one of the two. A game without `introScene` starts on its room with nothing seen. In a new game:
 
-Returns a new game at turn 0, with the content's `introScene` open and counted as seen. Every other state, such as a save, comes in through [`loadState`](/docs/reference/saves#loadstate). `apply` expects a state from one of the two and doesn't check its shape itself. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/docs/reference/view#the-idle-screen).
+- Each plugin's state is its `start`, such as the places plugin's starting location.
+- The kv store holds the content's `kv`, with the `kv` option over it.
+- Each declared stat is at its `start`, and each storyline is open and empty.
+- Nothing is in [`held`](/docs/reference/state#held), so each entity's `at` says where it starts.
+- Each `play` setting is at the value in `settings`, or its default.
 
-- Each [plugin](/docs/reference/plugins)'s state is its `start`. For example, where the player stands is the [places plugin](/docs/plugins/places#placesoptions)'s `start` option.
-- The [kv store](/docs/reference/state#kv) holds the content's starting `kv`, such as its `phase`, with the `kv` option over it.
-- Every declared storyline is empty.
-- Nothing is held yet in [`held`](/docs/reference/state#held): each entity's `at` says where it starts, and is read until play changes it.
-- Each declared [stat](/docs/reference/stats) is at its `start`. The engine adds no stats of its own.
-- Each `play` [setting](/docs/reference/settings) is at the value given in `settings`, or its default.
-
-See [Game state](/docs/reference/state) for the other starting values. The options object is optional, and so is each field in it:
-
-| Option | What it does | Default |
-|---|---|---|
-| `seed` | The save's [seed](/docs/reference/state#seed), which fixes every random draw it makes. | A hash of `game.id`, so every new game deals the same way. |
-| `kv` | Keys written to the [kv store](/docs/reference/state#kv) before the first scene, such as a name asked for on a title screen, over the content's starting `kv`. | None. |
-| `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the [profile](/docs/reference/profile)'s `core:settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
-| `carry` | The state a finished game ended on, for a [New Game+](/docs/reference/state#new-game). What the content's `carryOver` lists is copied from it. | Nothing carried. |
+`apply(null, game, { type: 'start', seed, kv })` gives the same state.
 
 ```ts given
 import { startingState } from '@ifloom/engine'
 
-// A UI starting a new game: a fresh seed, and the name from the title screen.
-let state = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31), kv: { playerName: 'Sam' } })
+// A UI: a fresh seed, and the name typed on the title page.
+const fresh = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31), kv: { playerName: 'Sam' } })
 
 // A test: the same seed every run.
-let fixed = startingState(game)
+const fixed = startingState(game)
 ```
 
-`apply(null, game, { type: 'start', seed, kv })` does the same.
-
-**Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/rolls). That's what a test wants, but a UI should pass a fresh seed for each new game.
-
-The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.playerName`](/docs/reference/saves#savemeta) shows whatever the game's [`rules.saveName`](/docs/reference/rules#savename) makes of it.
-
-### StartOptions
-
-The options [`startingState`](#startingstate) and [`runner.newGame`](/docs/reference/runner#newgame) take, each described in the table above.
-
-```ts shape
-type StartOptions = {
-  seed?: number
-  kv?: Record<string, KvValue>
-  settings?: Record<string, unknown>
-  carry?: GameState
-}
-```
-
-## Command
-
-```ts shape
-type Command =
-  | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
-  | { type: 'newGame' }
-  | { type: 'action'; id: string }
-  | { type: 'scene'; id: string }
-  | { type: 'choose'; id: string }
-  | { type: 'leave' }
-  | { type: 'dismiss'; id?: string }
-  | { type: 'input'; id: string; to?: KvValue }
-  | { type: 'setting'; id: string; to: KvValue }
-  | { type: 'tick'; ms: number }
-  | { type: 'minigame'; input: string }
-  | { type: 'closePanel' }
-  | { type: 'custom'; name: string; with?: Record<string, unknown> }
-```
-
-A command that names one thing names it `id`, and one that sets a value takes it as `to`. Plugins' commands follow the same rule, as in `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`.
-
-The union is closed, so a game can't add a command type. Something new for the player to do is an [action](/docs/reference/actions), done with the `action` command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name, and so does the game's own code, as [`rules.commands`](/docs/reference/rules#commands) sent as `{ 'game/rest': true }`. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `places.go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `cast.talk('ava')`.
-
-Each built-in handler below runs only if no lock or [guard](/docs/reference/plugins#guards), the game's own or a plugin's, stopped the command. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/plugins#guards).
-
-While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss`, `setting` and `closePanel` is refused with `Finish this first.`, and so is a plugin command that doesn't ignore locks. This comes before the locks.
-
-### start
-
-Starts a new game, with this seed and these kv keys if given. It's never refused and isn't checked against locks. See [`startingState`](#startingstate).
-
-### newGame
-
-```ts
-{ type: 'newGame' }
-```
-
-Starts over: a new game in place of the one in play. Content sends it from a choice, such as an ending's "Play again":
-
-```ts fragment
-{ id: 'again', command: { type: 'newGame' }, effects: [] }
-```
-
-It's never refused, and no lock or plugin guard stops it. Where it's offered is up to you, by the choices and buttons that send it.
-
-Who makes the new game depends on who runs the command:
-
-- **In a [runner](/docs/reference/runner#starting-over-from-content)**, `runner.apply` starts it as [`runner.newGame()`](/docs/reference/runner#newgame) does: the player's play settings from the profile, a random seed, and a fresh history, backlog and command log. The profile is kept. This is what a game in a browser does.
-- **In `apply` on its own**, such as in a test or a playtest, the result is `{ ok: true, newGame: true, state }`, where `state` is [`startingState`](#startingstate) with the play [settings](/docs/reference/state#settings) of the run that ended and a seed drawn from its seed and turn. The same state and command always give the same new game, so a [replay](/docs/reference/runner#replay) is exact.
-
-The engine can't make the runner's new game itself, because the player's profile and a fresh seed come from outside the state. So `apply` makes the plain one and says so with `newGame: true`, and the runner, which has the profile, makes its own in its place.
-
-When a choice sends it, the run ends there: the choice isn't counted in [`chosen`](/docs/reference/state#chosen), its effects don't run, and no trigger or plugin hook runs after it. Nothing is carried over, so it isn't a New Game+. [`ifloom playtest`](/docs/cli#playtest) stops when it meets one.
-
-### action
-
-```ts fragment
-{ type: 'action', id: 'coffee' }
-{ type: 'action', id: 'places/coffee' }
-```
-
-Does the [action](/docs/reference/actions) with this id: one of the content's `actions`, or a plugin's with its id in front, found among its buttons or by its [`action`](/docs/reference/plugins#action) provider. It sends the action's `command` first, if it has one, then pays its cost and applies its effects. An action with `once` is counted in [`chosen`](/docs/reference/state#chosen) under its id before anything runs.
-
-It's refused with `There is no such thing to do.` if there's no such action. After that comes the first reason [an action is refused](/docs/reference/actions#why-an-action-is-refused) for: a scene is open, its `when` doesn't hold, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), it's been done this turn with `once`, too little of a stat the cost spends, or why its command can't be sent. Last comes a guard's [warning](/docs/reference/plugins#guards).
-
-A command log from before schema 20 sent `{ type: 'activity', id }`. [`replay`](/docs/reference/runner#replay) reads it as `action`.
-
-### scene
-
-Opens a scene by id. It's refused with `Finish this first.` if a scene is already open, or `There is no such scene.`
-
-### choose
-
-Takes a choice in the scene on screen. The scene is rendered against the current state and the choice is found by id. Its record in [`chosen`](/docs/reference/state#chosen), under `scene#choice`, counts one more on the current turn, and then its effects run in order.
-
-It's refused with, in order:
-
-- `There is nothing to choose.` when no scene is open
-- `That is not on offer.` when there's no such choice, or it's hidden
-- the choice's own `disabled` text
-- a plugin guard's [warning](/docs/reference/plugins#guards), such as the calendar's `That would run past dawn.` for a choice that passes time over the end of the day
-
-If the open scene's id no longer exists in the game, `choose` closes it instead of refusing. See [How choose checks a choice](/docs/reference/scenes#how-choose-checks-a-choice).
-
-### leave
-
-Closes the scene on screen. It's never refused by the engine, even with no scene open, though a lock can stop it.
-
-### dismiss
-
-```ts fragment
-{ type: 'dismiss', id: 'rent' }   // that notice
-{ type: 'dismiss' }               // all of them
-```
-
-Marks one [notice](/docs/reference/notices), or every notice, as seen. It has no refusal of its own, so it works with a scene open and with nothing to dismiss. Only a lock stops it. It doesn't end a turn.
-
-### input
-
-```ts fragment
-{ type: 'input', id: 'catName', to: 'Biscuit' }
-```
-
-Writes what the player typed or picked to the [input](/docs/reference/inputs)'s kv key (its `key`, or the input's id), with text trimmed. A button can carry the command without `to` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
-
-After a lock, it's refused with [why the value can't be entered](/docs/reference/inputs#why-a-value-is-refused): `There is no such thing to fill in.`, `Not now.`, `Enter something first.`, `Keep it to <n> characters.`, `Enter a number.`, `Between <min> and <max>.`, `At least <min>.`, `At most <max>.`, `That is not one of the options.`
-
-### setting
-
-```ts fragment
-{ type: 'setting', id: 'difficulty', to: 'hard' }
-```
-
-Changes a `play` [setting](/docs/reference/settings) in the state. A settings screen sends it when the player changes one mid-game. It's a command like any other, so it goes in the runner's [log](/docs/reference/runner#commandlog) and [`replay`](/docs/reference/runner#replay) gives the same game. A runner with a [profile](/docs/reference/profile) also stores the new value there, so the next new game starts with it.
-
-No lock or plugin guard stops it, because changing a setting is the menu's business, not the story's. It's refused with:
-
-- `There is no such setting.` for an id the game doesn't declare
-- `That setting does not change the game.` for a `ui` setting, which never enters the state (use [`runner.setSetting`](/docs/reference/runner#setsetting))
-- `Choose on or off.` for a toggle given anything but `true` or `false`
-- `That is not one of the options.` for a choice given a value it doesn't list
-- `Enter a number.`, `Between <min> and <max>.` or `In steps of <step>.` for a range
-
-### tick
-
-```ts fragment
-{ type: 'tick', ms: 100 }
-```
-
-Time passing. It takes `ms` off every running [timer](/docs/reference/timers), and adds it to how long the [minigame](/docs/reference/minigames) being played has been in its state. Whatever runs out does so in the order it would have, with its effects (a timer's) or its transition (a minigame state's `after`) run at that moment, and the rest of `ms` carries on. So one long tick can run out several things in a row, up to 1,000 in one tick. A timer started by those effects counts from the moment they ran. A UI sends ticks at a steady rate (about every 100 ms) while [`view.timers`](/docs/reference/view#timers) isn't empty or [`view.minigame.timeLeft`](/docs/reference/minigames#minigameview) isn't `null`, which is what [`startClock`](/docs/browser#startclock) does.
-
-No lock or plugin guard stops it. It's refused with `Nothing is counting down.` when no timer is running and no minigame has a timer running, and `A tick is a number of milliseconds above 0.` for an `ms` that isn't.
-
-Ticks go in the runner's [log](/docs/reference/runner#commandlog), so [`replay`](/docs/reference/runner#replay) is exact. The runner's undo steps over them, the backlog ignores them, and they don't autosave as commands. See [In the runner](/docs/reference/minigames#in-the-runner).
-
-### minigame
-
-```ts fragment
-{ type: 'minigame', input: 'left' }
-```
-
-An input to the [minigame](/docs/reference/minigames) being played. It takes the running state's first `on` entry for that input whose `when` holds: its effects, then where it goes. No lock or plugin guard stops it. It's refused with `Nothing is being played.` when no minigame runs, and `That does nothing now.` when the input isn't live. [`view.minigame.inputs`](/docs/reference/minigames#minigameview) lists the live ones.
-
-### closePanel
-
-```ts
-{ type: 'closePanel' }
-```
-
-Closes the open [panel](/docs/reference/panels). A UI sends it when the player dismisses the panel's dialog. No lock or plugin guard stops it, so a lock can't hold a panel open. It's refused with `Nothing is open.` when no panel is open. It ends no turn and changes nothing else.
-
-### custom
-
-```ts fragment
-{ type: 'custom', name: 'quests/track', with: { id: 'bread' } }
-```
-
-Runs a [plugin's command](/docs/reference/plugins#plugincommand) by its full name, with the plugin's id in front, or one of the game's own [`rules.commands`](/docs/reference/rules#commands) with `game/` in front. `with` is passed as its arguments, or `{}` when left out.
-
-Content, `apply` and the runner also take it in short, with the full name as the only key: `{ 'quests/track': { id: 'bread' } }` (see [`CommandRef`](/docs/reference/custom#commandref)). The view always gives it in this long form.
-
-It's refused with `There is no such thing to do.` if neither the game nor its plugins have a command by that name, and then with the plugin's own `whyNot` line. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
-
-The [content checker](/docs/reference/checks#in-a-command) reports a button whose command names no plugin command, unless the plugin is an [absent partner](/docs/reference/checks#absent-partners).
-
-## See it in an example
-
-- Each example exports a `start` built on `startingState`: Small Town's in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts), The Letter's in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) with a name already typed, and The Corner Café's in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) with the opening scene closed.
-- The tests send commands with `apply`: the `read` helper in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) and the `play` helper in [`examples/cafe/tests/cafe.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/tests/cafe.test.ts).
+## Caveats
+
+- A new game started without a seed draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/rolls) every time. A test wants that, and a UI passes a fresh seed.
+- The engine checks a lock before the game's own handler, so a lock can stop a command the game handles itself.
+- The engine keeps no player name. A name is a kv key like any other, passed in `kv` or asked for with an [input](/docs/reference/inputs), and prose prints it with `{{playerName}}`.

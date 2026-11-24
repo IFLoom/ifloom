@@ -55,7 +55,7 @@ You'll replace those three files as you go, and leave the other files as they ar
 
 ## 1. One scene
 
-A game is [content](/docs/reference/loader#content-and-packs) that [`loadGame`](/docs/reference/loader#loadgame) merges, split across the files in `src/story/` and `src/world/`. Each file exports a `Content` object. Start with one scene, and the words it shows. Replace everything in `src/story/opening.ts` with this:
+A game is [content](/docs/explanation/content-and-packs) that [`loadGame`](/docs/reference/content#loadgame) merges, split across the files in `src/story/` and `src/world/`. Each file exports a `Content` object. Start with one scene, and the words it shows. Replace everything in `src/story/opening.ts` with this:
 
 ```ts
 // src/story/opening.ts
@@ -184,7 +184,7 @@ choices: [
 ],
 ```
 
-The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/docs/reference/conditions#range) keys. Add it and the two endings to the end of the `scenes` list, after the second chapter:
+The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/docs/reference/common#range) keys. Add it and the two endings to the end of the `scenes` list, after the second chapter:
 
 ```ts fragment
 {

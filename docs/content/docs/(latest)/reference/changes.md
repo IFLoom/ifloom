@@ -34,7 +34,7 @@ runner.view().changes
 changes?: { stats: string[] }
 ```
 
-The `changes` key of [`Content`](/docs/reference/loader#content) and of a [`Pack`](/docs/reference/loader#pack), and of [`Game`](/docs/reference/game#game) once loaded. `stats` lists the ids of the stats whose changes are tracked.
+The `changes` key of [`Content`](/docs/reference/content#content) and of a [`Pack`](/docs/reference/content#pack), and of [`Game`](/docs/reference/game#game) once loaded. `stats` lists the ids of the stats whose changes are tracked.
 
 - An entity stat's id, one declared with [`of`](/docs/reference/stats#statdef), covers that stat on every entity, so `friendship` tracks Ava's and Sam's alike.
 - Every file's and every pack's lists are added together, so a mod can track a stat it adds without repeating yours.

@@ -1,132 +1,38 @@
 ---
 title: "The game"
-description: "The Game object: every key a game can have, storylines, the idle screen, saveName, and the helpers that look things up."
+description: "Reference for Game, the loaded game every engine function takes: its fields, the room shown with no scene open, saveable, and the sceneOf lookup."
 ---
-A game is one `Game` object. It holds every scene, storyline and thing, plus the game's own code the engine calls when it needs to know something about your game. Every engine function takes the game as an argument, and nothing is registered globally. Even the game's own [functions](/docs/reference/custom) live on the game, in its [`rules`](/docs/reference/rules).
+A `Game` is one loaded game: its scenes, stats, entities and the rest of its content, merged with the base that holds its id and code. [`loadGame`](/docs/reference/content#loadgame) makes it, and every engine function takes it as an argument, so nothing is registered globally. [Content, packs and the base](/docs/explanation/content-and-packs) explains where each part comes from.
+
+In the showcase: `examples/showcase/src/game.ts`.
 
 ```ts
-import type { Game } from '@ifloom/engine'
+import { sceneOf, type Game } from '@ifloom/engine'
 ```
-
-The types on this page come from the package root, `Game`, `StorylineDef` and the rest, except `Plugin`, `PluginEntry` and `Lock`, which come from [`@ifloom/engine/plugin`](/docs/reference/plugins). `KindDef`, `EntityDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
-
-You don't usually write a `Game` by hand. [`loadGame`](/docs/reference/loader#loadgame) builds one from your content and a base: the base says what the game is and holds its code (`id`, `title`, `version`, `plugins` and `rules`), and everything else comes from the content and packs, so a mod can reach it.
-
-The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are entities in your content's `entities`, written with its `places.location()`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are entities in your content's `entities`, written with its `cast.person()`.
 
 ## Game
 
-All fields: [`Game` in the API](/docs/api/engine#game).
+A loaded game, the base's fields and the merged content's. Every field is in [`Game`](/docs/api/engine#game).
 
-```ts shape
-type Game = {
-  // From the base
-  id: string
-  title: string
-  version?: number
-  plugins?: readonly Plugin[]
-  rules?: GameRules
-  // From the content and packs
-  scenes: DataScene[]
-  introScene?: string
-  storylines?: StorylineDef[]
-  prose?: ProseStore
-  strings?: Record<string, string>
-  stats?: StatDef[]
-  kv?: Record<string, KvValue>
-  resets?: Record<string, KvValue>
-  kinds?: KindDef[]
-  entities?: EntityDef[]
-  traits?: TraitTable
-  actions?: ActionDef[]
-  locks?: Lock[]
-  triggers?: TriggerDef[]
-  inputs?: InputDef[]
-  settings?: SettingDef[]
-  minigames?: MinigameDef[]
-  timers?: TimerDef[]
-  phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
-  changes?: { stats: string[] }
-  saveable?: Blocked[]
-  finished?: Condition
-  carryOver?: CarryOver
-  audio?: GameAudio
-  media?: GameMedia
-  ui?: Ui<GameUi>
-  data?: Record<string, Record<string, readonly PluginEntry[]>>
-  // Set by loadGame
-  packs?: string[]
-}
-```
+The base gives `id`, `title`, `version`, `plugins` and `rules`. The content and packs give the rest, so a mod can reach it, and `loadGame` sets `prose`, `traits`, `data` and `packs` as it merges. [Content](/docs/reference/content#content) lists how each content key merges. These fields need more than their API description:
 
-| Field | What it is |
+| Field | Meaning |
 |---|---|
-| `id` | The game's id. [Saves](/docs/reference/saves#keys) are kept under it and refuse another game's, so pick one unique to your game and never change it. |
-| `title` | The game's name. The view passes it through as `view().title`. |
-| `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with [`rules.migrations`](/docs/reference/rules#migrations). Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings into old saves by itself. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
-| `plugins` | The [plugins](/docs/reference/plugins) the game is built with, in the order their hooks run. You choose them on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). |
-| `rules` | The game's own code: its hooks, the functions content calls as `game/…`, its commands, `saveName` and `migrations`. See [Rules and hooks](/docs/reference/rules). |
-| `scenes` | Every scene, as [data scenes](/docs/reference/scenes#datascene). |
-| `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
-| `storylines` | The storylines. None if left out. See [`StorylineDef`](/docs/reference/storylines#storylinedef). |
-| `prose` | The words data scenes draw on. See [`ProseStore`](/docs/reference/prose#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, give it an object with these functions. |
-| `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the content's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
-| `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
-| `kv` | The [kv store](/docs/reference/state#kv) a new game starts with, such as `{ phase: 'arrival', lives: 3 }`. [`startingState`](/docs/reference/commands#startingstate)'s `kv` goes over it. |
-| `resets` | kv keys written back at the end of every turn. See [`resets`](/docs/reference/rules#resets). |
-| `kinds` | The kinds of thing the game keeps, such as staff, dishes or what the player carries, each with stats of its own. A plugin's kinds come from its [`content`](/docs/reference/plugins#kinds-and-entities). See [Entities](/docs/reference/entities). |
-| `entities` | The things of those kinds that exist at the start of a new game. More can be [created](/docs/reference/effects#create) in play. See [Entities](/docs/reference/entities). |
-| `traits` | [Traits](/docs/reference/entities#traits) by trait id and then entity. On a game from [`loadGame`](/docs/reference/loader#traits), every declared entity's traits, worked out from the table rows, the entities and their kinds. On a game built by hand, rows over what the entities declare; [`traitOf`](/docs/reference/entities#traitof) works them out the same way. |
-| `actions` | What the player can do, such as waiting, a jog or a drink, each an [`ActionDef`](/docs/reference/actions#actiondef). One with a `label` is a button, offered while no scene is open, after every [plugin's buttons](/docs/reference/plugins#actions) (the [places plugin](/docs/plugins/places#the-buttons)'s room actions among them), and hidden while a [lock](/docs/reference/locks) that denies `'*'` is on. One with no label is done only by `{ type: 'action', id }`. The engine adds no button of its own, so a game with no `actions` has none. |
-| `locks` | What the player can't do for now, and why. See [Locks](/docs/reference/locks). |
-| `triggers` | Effects that happen by themselves the first time a condition holds. See [Triggers](/docs/reference/triggers). |
-| `inputs` | What the player can type or pick, and the kv key each one writes. See [Inputs](/docs/reference/inputs). |
-| `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/docs/reference/settings). |
-| `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/docs/reference/minigames). |
-| `timers` | Named countdowns in real time, such as a phone that rings for ten seconds, with the effects that run when one runs out. See [Timers](/docs/reference/timers). |
-| `phrases` | Words for the middle of a sentence that change with the state, printed as `{{outfit.verdict}}`. Content writes them nested in groups; the game holds them by full name, each as its rows, or as `{ args, rows }` for one that takes arguments. See [Phrases](/docs/reference/phrases). |
-| `changes` | The stats whose changes [`view.changes`](/docs/reference/changes) lists, as `{ stats }`, from every file and pack together. Left out, nothing is tracked. See [changes](/docs/reference/changes#changes). |
-| `saveable` | When saving is refused, and why. Saving is always allowed if left out. See [`saveable`](#saveable). |
-| `finished` | A [condition](/docs/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/docs/reference/profile), so a title screen can offer New Game+. See [New Game+](/docs/reference/state#new-game). |
-| `carryOver` | What a New Game+ takes from the game before: a [`CarryOver`](/docs/reference/state#carryover): lists of stat ids, kv keys and the things the player holds, and `held` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
-| `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/docs/reference/audio#gameaudio). `loadGame` merges the content's and every pack's by id. Leave it out and the game is silent. See [Audio](/docs/reference/audio). |
-| `media` | The game's pools of pictures and videos, which content picks from by tags: `{ pools: { door: [{ src: 'door/red-night.jpg', tags: ['red', 'night'] }] } }`. A [`GameMedia`](/docs/reference/media#gamemedia). `loadGame` merges the content's and every pack's pools by id. Leave it out and there are no pools. See [Media](/docs/reference/media). |
-| `ui` | [Presentation hints](/docs/reference/ui-hints) for the whole game, such as the React UI's default [`transition`](/docs/react/hints#transition) for every screen. The engine carries them as written and gives them no meaning. A pack's hints replace the content's key by key. |
-| `data` | Content for the plugins, by plugin id and then list name, as in `data.quests.quests`. `loadGame` sets it, merging each plugin's own content, the game's content and every pack's `data` by entry id. |
-| `packs` | The ids of the packs (such as mods) the game was loaded with, in order, and nothing for its own content. [`loadGame`](/docs/reference/loader#loadgame) sets it. A save records them, and a save made with a mod this game lacks names it in [`missingPacks`](/docs/reference/saves#loadedsave). |
+| `id` | The game's id, which [saves](/docs/reference/saves#keys) are kept under. A save from another game's id is refused, so the id never changes once players have saves. |
+| `version` | The game's own version, a whole number from 1, which saves record. Declaring it, even as 1, stops the engine filling new stats, settings and entities into old saves itself. See [`migrations`](/docs/reference/rules#migrations). |
+| `plugins` | The [plugins](/docs/reference/plugins) the game is built with. Their hooks run in this order. |
+| `introScene` | The scene open on the first frame, counted as seen once at turn 0. A game without one opens on its room with nothing seen. |
+| `actions` | The [actions](/docs/reference/actions#actiondef) the room offers. One with a `label` is a button after every plugin's buttons, and one without is done only by `{ type: 'action', id }`. |
+| `traits` | Every declared entity's traits, worked out from the content's [`traits`](/docs/reference/content#traits) table, the entities and their kinds. |
+| `packs` | The ids of the packs the game was loaded with, in order. A save records them, and names a missing one in [`missingPacks`](/docs/reference/saves#loadedsave). |
 
-A new game starts at turn 0 with `introScene` open and the content's `kv` in its kv store. Each plugin also gets its own start, so the places plugin's `start` puts the player in a room. See [`startingState`](/docs/reference/commands#startingstate).
+A new game starts at turn 0 with `introScene` open and the content's `kv` in the [kv store](/docs/reference/glossary#kv). Each plugin's state starts at its own `start`, so the places plugin's `start` puts the player at a location. [`startingState`](/docs/reference/commands#startingstate) builds it.
 
-**The idle screen.** When no scene is open, the screen shows the room [`scene`](/docs/reference/plugins#scene) of the first plugin that has one at the moment, the game's own `rules.scene` first. With the places plugin, that's the room the player is in. With none, it shows a scene titled with `game.title` and an empty body. Under it come the game's and the plugins' buttons and then the content's `actions`, unless a lock denying `'*'` is on. See [The idle screen](/docs/reference/view#the-idle-screen).
+While no scene is open, the screen shows the room. The room is the [`scene`](/docs/reference/plugin-views) of the first provider that answers, the game's own `rules.scene` first, which with the places plugin is the location the player is at. With no provider, it's a scene titled with `game.title` and no body. Under it come the plugins' buttons and then the game's `actions`, unless a [lock](/docs/reference/locks) that denies `'*'` is on. The engine adds no button of its own.
 
-### saveName
+The core keeps no locations and no characters. The [places plugin](/docs/reference/plugins/places) adds locations and the [cast](/docs/reference/plugins/cast) adds characters, each an entity in the content's `entities`. A linear story without them gives an `introScene` and leaves the screen to whichever scene is open.
 
-The name a save is listed under is worked out by the game's code, so it's [`rules.saveName`](/docs/reference/rules#savename).
-
-### saveable
-
-```ts fragment
-saveable?: Blocked[]   // { when: Condition; reason: string; hide?: boolean }[]
-```
-
-When the player can't save, as [`Blocked`](/docs/reference/actions#blocked) entries: saving is refused while an entry's `when` holds, with its `reason`. The first entry that holds gives the reason. Leave it out and saving is always allowed. It's content, so a pack can add entries, which come after the content's.
-
-```ts
-import type { Content } from '@ifloom/engine'
-
-export const ch1: Content = {
-  // No saving on the first page until the reader has typed a name.
-  saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
-}
-```
-
-- **The runner refuses.** [`runner.save`](/docs/reference/runner#the-runners-members) fails with the reason, and an [autosave](/docs/reference/runner#autosaveoptions) that's due is skipped. Loading is never refused.
-- **The view says so first.** [`view.saving`](/docs/reference/view#saving) is `{ allowed, reason, visible }`, so a UI can grey out its Save button with the reason, or leave it off while an entry with `hide` holds. The React UI's [saves menu](/docs/react/components#savesmenu) does this.
-- The [content checker](/docs/reference/checks) checks each `when` as it checks any condition, and reports problems at `saveable`.
-
-**A game with no places.** Without the [places plugin](/docs/plugins/places) there's no room to stand in and no exits, and with the [cast](/docs/plugins/cast) nobody is ever in the room. A linear story gives only an `introScene` in its content, and the screen is whatever scene is open. [The Letter](/docs/guide/shapes) works this way.
-
-This is the showcase, trimmed. The base holds what the game is and its code. Where it starts, its starting kv and its buttons are content, from the game's files, through [`loadGame`](/docs/reference/loader#loadgame):
+The showcase's base holds what the game is and its code. Its first scene, starting kv and buttons are content:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -138,11 +44,10 @@ import { rules } from './rules.ts'
 const movingDay: Content = {
   introScene: 'intro',
   kv: { phase: 'arrival' },
-  actions: [{ id: 'wait', label: 'Wait a while', effects: [{ 'calendar/pass': { by: 1 } }] }],
-  // ...its scenes
+  actions: [{ id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] }],
 }
 
-const { game, problems } = loadGame([movingDay], {
+export const { game, problems } = loadGame([movingDay], {
   id: 'small-town',
   title: 'Small Town',
   plugins: [calendar(), places({ start: 'flat' }), cast()],
@@ -150,32 +55,30 @@ const { game, problems } = loadGame([movingDay], {
 })
 ```
 
-The town's locations and its people are entities, in `entities`, written with the places plugin's `places.location()` and the cast's `cast.person()`. `loadGame` fills in `game.entities` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
+[Organise your game's files](/docs/how-to/organise-your-files) shows how a game splits its content across files.
 
-## Ids and separators
+### saveable
 
-Content names things by id, and an id is letters, digits, `-` and `_`, in parts joined by `.`, such as `cafe.counter`. The other separators always mean the same thing, wherever they appear:
+The content's reasons to refuse saving, as [`Blocked`](/docs/reference/actions#blocked) entries. Saving is refused while an entry's `when` holds, and the first entry that holds gives the reason. A game without `saveable` always allows saving.
 
-| Separator | Means | Examples |
-|---|---|---|
-| `.` | A part of an id. | Scene `cafe.counter`, prose key `place.cafe.ava`, audio track `cafe.murmur` |
-| `/` | A plugin's name: its id, then the name. | `quests/done`, `statuses/apply`, `{{messages/unread}}`, the string `calendar/period.morning` |
-| `#` | A choice in a scene, or a reply to a message. | The label key `ch1.mat#open`, and `{ chose: 'ch1.mat#open' }` |
-| `:` | A reference with what it is in front. | The entity `character:ava`, a mod's pack `mod:naps`, the profile's `core:settings` |
+Each content file's entries come after the ones before, and a pack's come after the content's. A pack entry with the `id` of an earlier entry replaces it.
 
-So keep `/`, `#` and `:` out of your own ids and prose keys. A name with a `/` is looked up among the plugins first.
+```ts
+import type { Content } from '@ifloom/engine'
 
-## Looking things up
-
-```ts shape
-function sceneOf(game: Game, id: string): DataScene | undefined
+export const flat: Content = {
+  // No saving on moving day until the boxes are unpacked.
+  saveable: [{ when: { kv: 'phase', is: 'arrival' }, reason: 'Unpack first.' }],
+}
 ```
 
-Returns the scene with that id, as your content declares it, or `undefined`. To look up an entity, use [`entityOf`](/docs/reference/entities#entityof).
+The runner's `save` fails with the reason, and the runner skips an [autosave](/docs/reference/runner#autosaveoptions) that falls due. Loading is never refused. [`view.saving`](/docs/reference/view#savingview) gives `{ allowed, reason, visible }`, so a UI greys out its Save button with the reason, or hides it while an entry with `hide` holds. The [content checker](/docs/reference/checks) checks each `when` as it checks any condition.
 
-Every lookup is named the same way. One definition by id is `xOf(game, id)`: `sceneOf`, [`statOf`](/docs/reference/stats#statof), [`actionOf`](/docs/reference/actions#actionof), and in the plugins `questOf` or `jobOf`. A list is `xsOf(game)`, such as the quests plugin's `questsOf`. What an entity is in play takes the state too, `xOf(state, game, ref)`, such as the cast's `personOf`. Any function that reads the game in play takes the state first and the game second.
+## Functions
 
 ### sceneOf
+
+Returns the scene with this id as the content declares it, or `undefined` when there is none. Its signature is in [`sceneOf`](/docs/api/engine#sceneof).
 
 ```ts given
 import { sceneOf } from '@ifloom/engine'
@@ -183,13 +86,12 @@ import { sceneOf } from '@ifloom/engine'
 sceneOf(game, 'ava.hi')?.title // 'Ava'
 ```
 
-What a scene shows for a state is in the [view](/docs/reference/view#the-scene), so a tool that previews a scene opens it in a state and reads `view(state, game).scene`.
+Every lookup follows one naming rule. One definition by id is `xOf(game, id)`, as in `sceneOf`, [`statOf`](/docs/reference/stats#statof) and [`actionOf`](/docs/reference/actions#actionof). A list is `xsOf(game)`, as in the quests plugin's `questsOf`. What an entity is in play takes the state too, `xOf(state, game, ref)`, as in the cast's `personOf`. Every function that reads the game in play takes the state first and the game second.
 
-## Checking a game
+A scene as the player sees it in a state is in the [view](/docs/reference/view#view), so a tool that previews a scene opens it in a state and reads `view(state, game).scene`. [`entityOf`](/docs/reference/entities#entityof) looks up an entity.
 
-[`checkGame`](/docs/reference/checks#checkgame) checks that everything the game names resolves, and lists the files it names. Run it from a test so a broken id fails at commit time instead of mid-game. [`loadGame`](/docs/reference/loader#loadgame) runs it for you. [Checking content](/docs/reference/checks) has the whole list.
+## Caveats
 
-## See it in an example
-
-- Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes `id`, `title`, `plugins` and `rules` to `loadGame`, and everything else is content: the moving-day story in [`story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) gives the `introScene`, the starting `kv` and a lock, and [`world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/actions.ts) the buttons. The things in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts) are entities, and the sandwich and flapjack have the inventory's `usable` trait. The `storylines` in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts) are Ava's and Sam's.
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) sets `version`, with `migrations` and `saveName` in its rules.
+- `game.scenes` holds each scene as the content declares it. The engine works out what a scene shows each time it renders it.
+- Plugins go on the base and only there. Content and packs can carry a plugin's `data`, but can't add a plugin.
+- [`checkGame`](/docs/reference/checks#checkgame) checks that every id the game names resolves. `loadGame` runs it, and a test that runs it fails on a broken id at commit time.

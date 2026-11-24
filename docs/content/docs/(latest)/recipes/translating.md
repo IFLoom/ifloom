@@ -2,7 +2,7 @@
 title: "Translating a game"
 description: "Make a translation of your game as one pack: list every field a player reads with ifloom words, fill in a words table, translate the prose and strings, and load it."
 ---
-A translation is one [pack](/docs/reference/loader#pack). Its `words` table gives other words to every label, name and line your content writes in place, its `prose` translates the lines read by key, and its `strings` the engine's and plugins' own words. This recipe makes a French translation of a small café game and loads it.
+A translation is one [pack](/docs/reference/content#pack). Its `words` table gives other words to every label, name and line your content writes in place, its `prose` translates the lines read by key, and its `strings` the engine's and plugins' own words. This recipe makes a French translation of a small café game and loads it.
 
 The words in your content stay where you wrote them. The pack only lays other words over them as the game loads, so you keep writing the game in one language and translations follow.
 
@@ -92,7 +92,7 @@ export const french: Pack = {
 
 ## 4. Load it
 
-Pass the pack to [`loadGame`](/docs/reference/loader#loadgame) in `packs`, after any supporter content and before the player's mods:
+Pass the pack to [`loadGame`](/docs/reference/content#loadgame) in `packs`, after any supporter content and before the player's mods:
 
 ```ts
 // src/game.ts

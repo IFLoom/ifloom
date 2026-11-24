@@ -182,7 +182,7 @@ The [content checker](/docs/reference/checks) checks its `when` and its effects 
 
 ### In your content
 
-Places go in your [content](/docs/reference/loader#content)'s `entities`, written with [`places.location()`](#location). This is the [showcase](/docs/guide/showcase)'s map, cut down to what this page needs, in a file `town.ts`:
+Places go in your [content](/docs/reference/content#content)'s `entities`, written with [`places.location()`](#location). This is the [showcase](/docs/guide/showcase)'s map, cut down to what this page needs, in a file `town.ts`:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -219,7 +219,7 @@ export const town: Content = {
 }
 ```
 
-The [loader](/docs/reference/loader#content) merges entities by reference, so a pack's `location:cafe` replaces the game's café whole, and a mod can add a room as it adds any entity. To change only what the trait says, such as the café's exits, a pack gives a [`traits`](/docs/reference/entities#traits) row instead, which replaces the trait and keeps the entity's name and picture:
+The [loader](/docs/reference/content#content) merges entities by reference, so a pack's `location:cafe` replaces the game's café whole, and a mod can add a room as it adds any entity. To change only what the trait says, such as the café's exits, a pack gives a [`traits`](/docs/reference/entities#traits) row instead, which replaces the trait and keeps the entity's name and picture:
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -834,7 +834,7 @@ town · trait places/location on location:cafe · hotspot menu: names choice "or
 
 ## Older content
 
-A pack written before places were entities kept them in `data.places.locations`. [`upgradePack`](/docs/reference/loader#upgradepack) carries it forward: each place becomes an entity of the kind `location`, with its `name` and `tags`, its old `tag` as the `desc` and its old `art` as the `image` (an empty `art` is dropped), and the rest in the `places/location` trait. Prose and strings that print `{{v:places/tag}}` print `{{v:places/desc}}` instead. Saves need nothing, because a place's entity was `location:<id>` before too.
+A pack written before places were entities kept them in `data.places.locations`. [`upgradePack`](/docs/reference/content#upgradepack) carries it forward: each place becomes an entity of the kind `location`, with its `name` and `tags`, its old `tag` as the `desc` and its old `art` as the `image` (an empty `art` is dropped), and the rest in the `places/location` trait. Prose and strings that print `{{v:places/tag}}` print `{{v:places/desc}}` instead. Saves need nothing, because a place's entity was `location:<id>` before too.
 
 An older pack gave a place's layered picture as `stage`. `upgradePack` names it `picture`, on an entity, on a kind or in a `traits` row, and moves the `words` keys for its hotspots from `…traits.places/location.stage.hotspots…` to `…traits.places/location.picture.hotspots…`.
 

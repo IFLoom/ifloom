@@ -42,7 +42,7 @@ Builds the plugin, with the id `jobs`. The player holds no job in a new game.
 
 ## Writing jobs
 
-Jobs are content. They go in your content's [`data`](/docs/reference/loader#content) under `jobs.jobs` (the plugin's id, then [its list](/docs/reference/loader#plugin-data) of jobs) and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
+Jobs are content. They go in your content's [`data`](/docs/reference/content#content) under `jobs.jobs` (the plugin's id, then [its list](/docs/reference/content#data) of jobs) and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -219,7 +219,7 @@ A day is the calendar's day, or a turn in a game without the calendar. `jobs.shi
 |---|---|---|
 | `{ 'jobs/hired': { job, rank? } }` | `jobs.hired(job, rank?)` | The player holds the job, at that rank if given. |
 | `{ 'jobs/fired': { job } }` | `jobs.fired(job)` | The player was fired from it and hasn't been hired again. |
-| `{ 'jobs/shifts': { job, gte… } }` | `jobs.shifts(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
+| `{ 'jobs/shifts': { job, gte… } }` | `jobs.shifts(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/common#range). |
 | `{ 'jobs/worked': { job } }`, or `true` for any job | `jobs.worked(job?)` | A shift at the job was worked today: the calendar's day, or this turn without the calendar. See ["Worked today"](#worked-today). |
 
 ## Commands and effects

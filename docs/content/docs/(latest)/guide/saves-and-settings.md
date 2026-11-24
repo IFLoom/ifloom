@@ -49,7 +49,7 @@ const loaded = await runner.load('quick')
 if (!loaded.ok) showMessage(loaded.reason) // 'Nothing is saved there.'
 ```
 
-Both are async and answer with a [`Result`](/docs/reference/runner#result) rather than throwing. A load that works replaces the game in play and calls your listener, so the screen redraws by itself. A save made by an older version of your game still loads: the engine and your game's [migrations](/docs/reference/saves#the-games-own-migrations) carry it forward, or `reason` says why they can't.
+Both are async and answer with a [`Result`](/docs/reference/common#result) rather than throwing. A load that works replaces the game in play and calls your listener, so the screen redraws by itself. A save made by an older version of your game still loads: the engine and your game's [migrations](/docs/reference/saves#the-games-own-migrations) carry it forward, or `reason` says why they can't.
 
 ### When saving isn't allowed
 
@@ -82,7 +82,7 @@ await runner.save(nextSlot(listing))
 
 [`nextSlot`](/docs/browser#nextslot) comes from [`@ifloom/browser`](/docs/browser), the helpers for any UI. It skips named slots such as `auto` and `quick`.
 
-To delete a save, or export one as text for the player to keep, go through [`runner.saves`](/docs/reference/runner#the-runners-members), the store the runner was made with, so the snapshot's list follows. Each of its calls answers a [`Result`](/docs/reference/runner#result) and never rejects, so a browser that refuses storage gives you a reason to show rather than an error:
+To delete a save, or export one as text for the player to keep, go through [`runner.saves`](/docs/reference/runner#the-runners-members), the store the runner was made with, so the snapshot's list follows. Each of its calls answers a [`Result`](/docs/reference/common#result) and never rejects, so a browser that refuses storage gives you a reason to show rather than an error:
 
 ```ts given
 const removed = await runner.saves!.remove('2')

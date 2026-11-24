@@ -1,20 +1,31 @@
 ---
-title: "The engine's entries"
-description: "Where each export of @ifloom/engine lives: the main entry for writing and running a game, @ifloom/engine/plugin for writing a plugin, and @ifloom/engine/testing for tests."
+title: "Reference"
+description: "Where each export lives: the three entries of @ifloom/engine, the plugins, the React UI, the browser packages and the CLI, with the shared types and the glossary."
 ---
-`@ifloom/engine` has three entries. Which one you import from depends on what you're writing.
+The reference documents every export of every IFLoom package, one page per feature. Each entry gives a definition, its behaviour and one example, and links to the generated [API](/docs/api) for the full signature and every field. [The glossary](/docs/reference/glossary) defines the words the pages use, and [Common types](/docs/reference/common) covers the types every page relies on.
 
-| Import | For | What's in it |
-|---|---|---|
-| `@ifloom/engine` | Writing a game and running it | The content you declare ([`Content`](/docs/reference/loader#content), scenes and the builders such as [`text`](/docs/reference/flows) and [`decide`](/docs/reference/flows)), the state, [conditions](/docs/reference/conditions) and [effects](/docs/reference/effects), lookups such as [`entityName`](/docs/reference/entities) and [`statValue`](/docs/reference/stats), [`loadGame`](/docs/reference/loader#loadgame) and [`checkGame`](/docs/reference/checks), the [runner](/docs/reference/runner), saves, and the [view](/docs/reference/view) a UI draws. The registries a plugin or your game augments to type its calls are here too. |
-| `@ifloom/engine/plugin` | Writing a plugin | [`definePlugin`](/docs/reference/plugins) and a plugin's types, the contexts its hooks are given (your game's `rules` hooks get the same ones), [`defineCalls`](/docs/reference/plugins#declaring-calls) and the other declaration helpers, the helpers that build a plugin's view such as [`renderAction`](/docs/reference/view#renderaction), [locks](/docs/reference/locks), and the steps that carry a plugin's content forward. |
-| `@ifloom/engine/testing` | Tests | The [testing helpers](/docs/reference/testing): `loadChecked`, `freshState`, `play`, `partnerCases`, and the checks a plugin package's contract tests run. |
+## Entries of @ifloom/engine
 
-A plugin imports from both of the first two. The second only adds what you need to package a system as a plugin, so a game that has no plugins of its own never imports it.
+`@ifloom/engine` has three entries, and a page's import line says which one its exports come from:
+
+- **`@ifloom/engine`** holds what a game declares and runs: [`Content`](/docs/reference/content#content), the scene builders such as [`text`](/docs/reference/flows), [conditions](/docs/reference/conditions), [effects](/docs/reference/effects), lookups such as [`statValue`](/docs/reference/stats#statvalue), [`loadGame`](/docs/reference/content#loadgame), [`checkGame`](/docs/reference/checks#checkgame), the [runner](/docs/reference/runner), saves and the [view](/docs/reference/view). The registries a plugin or a game augments to type its calls are here too.
+- **`@ifloom/engine/plugin`** holds what a plugin adds: [`definePlugin`](/docs/reference/plugin-api#defineplugin) and the contexts a hook gets, [`defineCalls`](/docs/reference/plugin-calls) and the other declarations, [`renderAction`](/docs/reference/view#renderaction), [locks](/docs/reference/locks), and the steps that carry a plugin's content forward.
+- **`@ifloom/engine/testing`** holds the [testing helpers](/docs/reference/testing), such as `loadChecked`, `freshState`, `play` and `partnerCases`.
+
+A plugin imports from the first two. A game with no plugin of its own never imports `@ifloom/engine/plugin`.
 
 ```ts
 import { holds, type GameState } from '@ifloom/engine'
 import { definePlugin, renderAction } from '@ifloom/engine/plugin'
 ```
 
-Each page in this section says which entry its exports come from in its import line. The [React UI](/docs/react) has entries of its own.
+## Other packages
+
+Each package has its own section of the reference:
+
+- [First-party plugins](/docs/reference/plugins), one page per plugin, from the calendar to debug.
+- [The React UI](/docs/reference/react), `@ifloom/react` and its kit.
+- [Browser](/docs/reference/browser), `@ifloom/browser` and the audio player `@ifloom/audio`.
+- [The CLI](/docs/reference/cli), `@ifloom/cli` and its game module.
+
+[Examples](/docs/reference/examples) maps each feature to the example file that uses it.

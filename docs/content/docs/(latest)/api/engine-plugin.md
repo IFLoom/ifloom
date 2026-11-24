@@ -864,7 +864,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`PluginContext`](#plugincontex
 
 ## PackContext
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#packcontext).
+Type. Explained in [Content and packs](/docs/reference/content#packcontext).
 
 The parts of the game under a pack that an upgrade step may read beside the pack. `loadGame` passes it, and a step
 without it reads only the pack.

@@ -96,7 +96,7 @@ type KindDef = {
 | `traits` | `{}` | [Traits](#traits) every entity of the kind has, by trait id. They're defaults: an entity's own trait of the same id is laid over them. |
 | `ui` | none | [Presentation hints](/docs/reference/ui-hints) for each of its entities, under each one's own, such as the React UI's [`hue`](/docs/react/hints#hue). The engine carries them to the view as written. |
 
-Kinds go in [`Game.kinds`](/docs/reference/game#game). You declare them in your [content](/docs/reference/loader#content)'s `kinds`, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own in its `content`. They merge by id, the plugins' first, then your content's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
+Kinds go in [`Game.kinds`](/docs/reference/game#game). You declare them in your [content](/docs/reference/content#content)'s `kinds`, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own in its `content`. They merge by id, the plugins' first, then your content's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
 
 ## EntityDef
 
@@ -136,7 +136,7 @@ One entity that exists from the start of the game, and stays until a [`remove`](
 
 Entities go in [`Game.entities`](/docs/reference/game#game), from your content. They merge by kind and id (`'staff:ana'`), in the order you list your content. A pack's entity replaces one with the same kind and id, whole.
 
-A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the content and packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/loader#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
+A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the content and packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/content#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
 
 ## EntityState
 
@@ -230,7 +230,7 @@ withTrait(state, game, 'laundry/washable')                   // ['clothing:scarf
 
 **Which one wins.** A row in the `traits` table wins over the entity's own, and either is laid over the kind's default. When both the default and the entity's value are objects, they're merged field by field, so the scarf keeps the kind's `temp`. Anything else, such as `true` or a list, is replaced whole. A row replaces the entity's own value whole too, though it still gets the kind's default under it.
 
-**What the table is for.** It gives an entity a trait without writing the entity out again, so a [mod](/docs/reference/mods) can change how the hat is washed with one row. In your own content, each row is declared once, like everything else (see [One key declared twice](/docs/reference/loader#one-key-declared-twice)). A pack's row replaces an earlier one. See [the `traits` key](/docs/reference/loader#traits).
+**What the table is for.** It gives an entity a trait without writing the entity out again, so a [mod](/docs/reference/mods) can change how the hat is washed with one row. In your own content, each row is declared once, like everything else (see [One key declared twice](/docs/reference/content#checks)). A pack's row replaces an earlier one. See [the `traits` key](/docs/reference/content#traits).
 
 **Typed by the plugin.** A plugin that declares a trait adds its data's type to the engine's `TraitRegistry` interface, so `traitOf` returns that type and a typo in a field is a type error. See [Declaring traits](/docs/reference/plugins#traits).
 
@@ -261,7 +261,7 @@ declare module '@ifloom/engine' {
 type TraitTable = Record<string, Record<EntityRef, unknown>>   // typed by TraitRegistry for the ids it knows
 ```
 
-Traits by trait id and then entity reference. It's the type of the `traits` key in [content and packs](/docs/reference/loader#traits), and of [`game.traits`](/docs/reference/game#game). On a game [`loadGame`](/docs/reference/loader#loadgame) returns, `game.traits` holds every declared entity's traits already worked out, so a tool can read them as plain data.
+Traits by trait id and then entity reference. It's the type of the `traits` key in [content and packs](/docs/reference/content#traits), and of [`game.traits`](/docs/reference/game#game). On a game [`loadGame`](/docs/reference/content#loadgame) returns, `game.traits` holds every declared entity's traits already worked out, so a tool can read them as plain data.
 
 ## Ids
 
@@ -658,7 +658,7 @@ import type { TraitSource } from '@ifloom/engine'
 type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
 ```
 
-What `declaredTrait` and `declaredWithTrait` read: a game's kinds, entities and `traits` table. A loaded [`Game`](/docs/reference/game#game) is one, and so is a [`Content`](/docs/reference/loader#content) before it's loaded.
+What `declaredTrait` and `declaredWithTrait` read: a game's kinds, entities and `traits` table. A loaded [`Game`](/docs/reference/game#game) is one, and so is a [`Content`](/docs/reference/content#content) before it's loaded.
 
 ### traitState
 

@@ -103,7 +103,7 @@ The game's devices and apps, merged from its content and packs, in order.
 
 ## Writing apps
 
-Apps are content, in your content's [`data`](/docs/reference/loader#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps in content that comes earlier in the list, such as a [phone](/docs/recipes/phone)'s own content, come first, and later content or a pack with an app of the same id replaces it.
+Apps are content, in your content's [`data`](/docs/reference/content#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps in content that comes earlier in the list, such as a [phone](/docs/recipes/phone)'s own content, come first, and later content or a pack with an app of the same id replaces it.
 
 ### AppDef
 

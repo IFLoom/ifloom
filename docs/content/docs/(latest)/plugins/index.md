@@ -67,7 +67,7 @@ yarn add @ifloom/plugin-quests
 bun add @ifloom/plugin-quests
 ```
 
-Then add it to the game's `plugins`, on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). This is a cut-down version of the showcase's own setup:
+Then add it to the game's `plugins`, on the base you pass to [`loadGame`](/docs/reference/content#loadgame). This is a cut-down version of the showcase's own setup:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -84,7 +84,7 @@ const { game, problems } = loadGame([town], {
 })
 ```
 
-You choose plugins when you build the game. They're never loaded while it runs. A mod can bring content for a plugin the game already has, in its pack's [`data`](/docs/reference/loader#pack), but it can't add a plugin.
+You choose plugins when you build the game. They're never loaded while it runs. A mod can bring content for a plugin the game already has, in its pack's [`data`](/docs/reference/content#pack), but it can't add a plugin.
 
 Content calls a plugin's conditions, effects and commands by their full name, `<plugin>/<name>`, as the only key, with the arguments as its value. Every plugin's helpers write it for you:
 

@@ -990,7 +990,7 @@ Uses: [`KvValue`](#kvvalue), [`Range`](#range), [`Select`](#select), [`Condition
 
 ## ConditionCall
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditioncall-effectcall-and-commandcall).
+Type. Explained in [Conditions](/docs/reference/conditions#conditioncall).
 
 A plugin's or the game's condition in the short form, type-checked against `ConditionRegistry`.
 
@@ -1029,7 +1029,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## Content
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#content-and-packs).
+Type. Explained in [Content and packs](/docs/reference/content#content).
 
 One file of the game's own content, such as `story/cafe.ts`. Each scene, stat or prose key may be declared only once
 across the game's content.
@@ -1597,7 +1597,7 @@ Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityState`](#entitystate).
 
 ## EntityRef
 
-Type. Explained in [Entities](/docs/reference/entities#entityref).
+Type. Explained in [Common types](/docs/reference/common#entityref).
 
 A reference to an entity, its kind and its id joined by `:`, such as `'staff:ana'`. A bare id or a typo with no `:`
 fails to compile where a reference is wanted.
@@ -2044,7 +2044,7 @@ type GameAudio = {
 
 ## GameBase
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#gamebase).
+Type. Explained in [Content and packs](/docs/reference/content#gamebase).
 
 The base `loadGame` takes beside the content, the game's `id`, `title`, `version`, `plugins` and `rules`. Anything a
 mod could change goes in the content or a pack instead.
@@ -2794,7 +2794,7 @@ type KindDef = {
 
 ## KvValue
 
-Type. Explained in [Game state](/docs/reference/state#kvvalue).
+Type. Explained in [Common types](/docs/reference/common#kvvalue).
 
 A value in the kv store, which is true or false, a number or text.
 
@@ -2818,7 +2818,7 @@ Uses: [`Game`](#game).
 
 ## Loaded
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#loaded).
+Type. Explained in [Content and packs](/docs/reference/content#loaded).
 
 The result of `loadGame`, the merged game with its prose, its variants and the problems found.
 
@@ -2864,7 +2864,7 @@ type LoadedSave = {
 
 ## loadGame
 
-Function. Explained in [Content, packs and loading](/docs/reference/loader#loadgame).
+Function. Explained in [Content and packs](/docs/reference/content#loadgame).
 
 Returns the game merged from the base, the content and then the packs in order, with every problem found. Each
 problem names the content or pack that brought it.
@@ -2882,7 +2882,7 @@ Uses: [`Content`](#content), [`GameBase`](#gamebase), [`LoadOptions`](#loadoptio
 
 ## LoadOptions
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#loadoptions).
+Type. Explained in [Content and packs](/docs/reference/content#loadoptions).
 
 Settings for `loadGame`. A game loaded without them has no packs.
 
@@ -3404,7 +3404,7 @@ type OpenPanel = {
 
 ## Pack
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#pack).
+Type. Explained in [Content and packs](/docs/reference/content#pack).
 
 Content from outside the game's code, such as a mod, unlocked supporter content or a JSON export. It goes over the
 game's content and the packs before it, replacing what they declare by id.
@@ -3510,7 +3510,7 @@ function parseRef(ref: string): { kind: string; id: string } | undefined
 
 ## Patch
 
-Type. Explained in [Content, packs and loading](/docs/reference/loader#patch).
+Type. Explained in [Content and packs](/docs/reference/content#patch).
 
 A patch a pack declares in `patches`, a change to one choice of a scene an earlier pack or the content declared.
 It adds, drops or replaces the choice.
@@ -4025,7 +4025,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## Range
 
-Type. Explained in [Conditions](/docs/reference/conditions#range).
+Type. Explained in [Common types](/docs/reference/common#range).
 
 The bounds a condition compares a number with, so `{ gte: 3 }` holds for 3 or more. Each bound is an `Amount`, such
 as `{ gte: { stat: 'rent' } }`.
@@ -4161,7 +4161,7 @@ Uses: [`GameState`](#gamestate).
 
 ## Result
 
-Type. Explained in [The runner](/docs/reference/runner#result).
+Type. Explained in [Common types](/docs/reference/common#result).
 
 The answer of a call that can fail in a way its caller should expect, such as a save that won't read. A function
 that returns a `Result` never throws for those failures.
@@ -4698,7 +4698,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## SCHEMA
 
-Const. Explained in [Content, packs and loading](/docs/reference/loader#schema).
+Const. Explained in [Content and packs](/docs/reference/content#schema).
 
 The content schema this engine reads. `PACK_STEPS` upgrade a pack of an older schema, and a newer one is refused.
 
@@ -5017,7 +5017,7 @@ type StatDef = {
 
 ## StatKey
 
-Type. Explained in [Game state](/docs/reference/state#statkey).
+Type. Explained in [Common types](/docs/reference/common#statkey).
 
 A stat's id. The game declares each stat with a `StatDef`.
 
@@ -5840,7 +5840,7 @@ type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
 
 ## upgradePack
 
-Function. Explained in [Content, packs and loading](/docs/reference/loader#upgradepack).
+Function. Explained in [Content and packs](/docs/reference/content#upgradepack).
 
 Returns the pack upgraded to `SCHEMA` and to each plugin's content version. Returns a failed `Result` when the pack
 was written for a newer engine or plugin, or for a schema older than any step.

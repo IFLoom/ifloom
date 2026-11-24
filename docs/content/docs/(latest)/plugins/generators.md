@@ -35,7 +35,7 @@ Builds the plugin, with the id `generators`.
 
 ## Writing pools and templates
 
-Pools and templates are content. They go in your content's [`data`](/docs/reference/loader#content) under `generators.pools` and `generators.templates`, and are merged by id, so a mod can add names to a pool by replacing it, or add a template.
+Pools and templates are content. They go in your content's [`data`](/docs/reference/content#content) under `generators.pools` and `generators.templates`, and are merged by id, so a mod can add names to a pool by replacing it, or add a template.
 
 These are the showcase's park visitors. Each day the player first comes to the park, yesterday's go home and two new ones arrive:
 

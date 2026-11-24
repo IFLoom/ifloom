@@ -133,6 +133,9 @@ const LISTING = new Set(['Builder', 'Helper', 'Hook', 'Function', 'Component', '
 /** A heading the hand-written pages have, for the "Explained in" link. */
 type Heading = { page: string; url: string; title: string; slug: string; depth: number }
 
+/** The pages whose headings are words, not exports, so no export is explained there: the glossary's are terms. */
+const NOT_HOMES = new Set(['reference/glossary.md'])
+
 /** Each hand-written heading, by its text (an "A and B" heading under each of A and B). */
 function handWritten(): Map<string, Heading[]> {
   const headings = new Map<string, Heading[]>()
@@ -142,7 +145,7 @@ function handWritten(): Map<string, Heading[]> {
       const path = join(dir, entry.name)
       if (entry.isDirectory()) {
         if (path !== API) walk(path)
-      } else if (entry.name.endsWith('.md') && entry.name !== 'changelog.md') pages.push(path)
+      } else if (entry.name.endsWith('.md') && entry.name !== 'changelog.md' && !NOT_HOMES.has(relative(LATEST, path))) pages.push(path)
     }
   }
   walk(LATEST)

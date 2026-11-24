@@ -44,7 +44,7 @@ describe('the loyalty card', () => {
 function loadChecked(content: readonly Content[], base: GameBase, options?: LoadOptions): Game
 ```
 
-[`loadGame`](/docs/reference/loader#loadgame), for a test. It returns the game, or throws an `Error` listing every problem the [content checker](/docs/reference/checks) found, one per line as [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes it:
+[`loadGame`](/docs/reference/content#loadgame), for a test. It returns the game, or throws an `Error` listing every problem the [content checker](/docs/reference/checks) found, one per line as [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes it:
 
 ```text
 The game has 1 content problem(s):

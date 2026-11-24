@@ -45,7 +45,7 @@ startClock(runner)
 startKeys(runner)
 ```
 
-`module.build()` is what [`loadGame`](/docs/reference/loader#loadgame) returns in `src/game.ts`'s [game module](/docs/cli#the-game-module): the game, and anything wrong with its content. `npm run check` prints the same problems, so the warning is only a reminder.
+`module.build()` is what [`loadGame`](/docs/reference/content#loadgame) returns in `src/game.ts`'s [game module](/docs/cli#the-game-module): the game, and anything wrong with its content. `npm run check` prints the same problems, so the warning is only a reminder.
 
 The three `start…` calls each follow the runner by themselves, so you call them once and forget them:
 

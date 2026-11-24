@@ -67,11 +67,11 @@ type TriggerDef = {
 | `effects` | What happens: [effects](/docs/reference/effects), calls to a plugin's or the game's own (`{ 'game/payRent': {} }`, see [Calls by name](/docs/reference/custom#plugincall)), as in a data scene choice. |
 | `once` | `{ per: 'game' }` (the default) fires once in the whole game. `{ per: 'turn' }` fires at most once a [turn](/docs/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. It's the `per` of a button's [`Once`](/docs/reference/actions#once). |
 
-Declare triggers in your [content](/docs/reference/loader#content)'s `triggers`. They merge by id, so a pack's trigger replaces one with the same id.
+Declare triggers in your [content](/docs/reference/content#content)'s `triggers`. They merge by id, so a pack's trigger replaces one with the same id.
 
 ## When triggers fire
 
-After every command that took, inside [`apply`](/docs/reference/commands#what-happens-in-order):
+After every command that took, inside [`apply`](/docs/reference/commands#apply):
 
 1. The command runs.
 2. The triggers are tested in the order the game lists them, each against the state the one before it left. A trigger that holds and is due records the current turn in `state.fired`, then its effects apply.

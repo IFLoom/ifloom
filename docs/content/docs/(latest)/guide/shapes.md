@@ -48,7 +48,7 @@ It declares no plugins, places, characters or clock. Its tests, `examples/novel/
 
 ### No world to declare
 
-The base handed to [`loadGame`](/docs/reference/loader) needs only an `id` and a `title`. The Letter's first scene is content, `introScene: 'ch1.mat'` in `story/ch1.ts`, and its base adds only its `version` and the game's own code in `rules`, a migration and a save name:
+The base handed to [`loadGame`](/docs/reference/content) needs only an `id` and a `title`. The Letter's first scene is content, `introScene: 'ch1.mat'` in `story/ch1.ts`, and its base adds only its `version` and the game's own code in `rules`, a migration and a save name:
 
 ```ts fragment
 // src/game.ts, with the rules written out there

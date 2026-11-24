@@ -2,7 +2,7 @@
 title: "Rules and hooks"
 description: "rules: the game's own code, run as the first plugin. The end of a turn and a day's rollover (onTurn, onTurnDone), onStat, the game's commands and providers, migrations and saveName."
 ---
-`rules` is the game's own code: what the end of a turn does, how a stat may change, the commands and functions content calls by name, and the save's name and migrations. You pass it on the base you give [`loadGame`](/docs/reference/loader#loadgame), beside the plugins. The engine calls these functions instead of knowing about your game. Every member is optional. Leave one out and the engine does the plain thing listed under it.
+`rules` is the game's own code: what the end of a turn does, how a stat may change, the commands and functions content calls by name, and the save's name and migrations. You pass it on the base you give [`loadGame`](/docs/reference/content#loadgame), beside the plugins. The engine calls these functions instead of knowing about your game. Every member is optional. Leave one out and the engine does the plain thing listed under it.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'

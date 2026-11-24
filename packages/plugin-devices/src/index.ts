@@ -12,38 +12,44 @@
  * messages channel, a feed), or a panel the UI draws by name.
  */
 import {
-  reasonOf,
   actionReferences,
-  artSrc,
   amountOf,
+  arg,
+  artSrc,
   commandOf,
+  defineCalls,
+  defineData,
   definePlugin,
   entityDescription,
   entityImage,
   entityName,
   heldBy,
   holds,
+  list,
   parseRef,
   pluginQuery,
+  reasonOf,
   renderAction,
   stringOf,
   whyNot,
   YOU,
+  type ActionDef,
+  type Amount,
   type Block,
   type Blocked,
   type Command,
   type CommandRef,
-  type DefinedPlugin,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
+  type DefinedPlugin,
   type Game,
   type GameState,
-  type ActionDef,
   type PluginContext,
   type PluginProblem,
   type Reference,
-  type SceneBeat,
   type RenderedChoice,
-  type Amount,
+  type SceneBeat,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -153,18 +159,13 @@ export type DeviceView = {
 export type DevicesView = { devices: DeviceView[] }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'devices/open': { app: string } | { device: string }
-  }
-  interface CommandRegistry {
-    'devices/open': { id: string }
-    'devices/home': { id: string }
-    'devices/close': { id: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     devices: DevicesView
   }
@@ -172,14 +173,36 @@ declare module '@ifloom/engine' {
 
 const ID = 'devices'
 
+/** The plugin's content: `data.devices.devices` and `data.devices.apps`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  devices: list<DeviceDef>({ noun: 'device', words: { name: true } }),
+  apps: list<AppDef>({ noun: 'app', words: { name: true, blocked: [{ reason: true }], sections: [{ blocks: 'blocks', actions: ['button'] }] } }),
+})
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** The `app` is open on a device that's shown; with `device` instead, that device is shown, on any screen. One or the other. */
+    open: { app: arg.entry(DATA.apps).optional(), device: arg.entry(DATA.devices).optional() },
+  },
+  commands: {
+    /** Open the app `id`, showing its device on it. Free: no time passes. */
+    open: { id: arg.entry(DATA.apps) },
+    /** Show the device `id` on its home screen, from put away or from an app. */
+    home: { id: arg.entry(DATA.devices) },
+    /** Put the device `id` away. */
+    close: { id: arg.entry(DATA.devices) },
+  },
+})
+
 /** The game's devices: `data.devices.devices`, from its packs. */
 export function devicesOf(game: Game): DeviceDef[] {
-  return (game.data?.[ID]?.devices ?? []) as DeviceDef[]
+  return DATA.devices.all(game)
 }
 
 /** The game's apps, on every device: `data.devices.apps`, from its packs. */
 export function appsOf(game: Game): AppDef[] {
-  return (game.data?.[ID]?.apps ?? []) as AppDef[]
+  return DATA.apps.all(game)
 }
 
 /**
@@ -189,11 +212,7 @@ export function appsOf(game: Game): AppDef[] {
  */
 function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
   const apps = appsOf
-  const known = (game: Game, id: string) => devicesOf(game).some((device) => device.id === id)
-
-  function appById(game: Game, id: string): AppDef | undefined {
-    return apps(game).find((app) => app.id === id)
-  }
+  const known = (game: Game, id: string) => DATA.devices.get(game, id) !== undefined
 
   function refusal(state: GameState, game: Game, app: AppDef | undefined): string | undefined {
     if (!app) return stringOf(game, 'devices/noSuchApp')
@@ -277,13 +296,13 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
     }
   }
 
-  return definePlugin<DevicesState, DevicesView>({
+  return definePlugin<DevicesState, DevicesView, typeof CALLS>({
     id: ID,
     version: 2,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { devices: { name: true }, apps: { name: true, blocked: [{ reason: true }], sections: [{ blocks: 'blocks', actions: ['button'] }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // The contacts section lists the cast's characters when the game has the cast.
@@ -303,31 +322,31 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
     migrations: { 1: () => ({ shown: {} }) },
     conditions: {
       /** `{ 'devices/open': { app } }`: that app is open on a device that's shown; with `device` instead, that device is shown, on any screen. */
-      open: (_state, args, { slice }) => (args.app !== undefined ? Object.values(slice.shown).includes(String(args.app)) : String(args.device) in slice.shown),
+      open: (_state, { app, device }, { slice }) =>
+        app !== undefined ? Object.values(slice.shown).includes(app) : device !== undefined && device in slice.shown,
     },
     commands: {
       /** `{ 'devices/open': { id } }`: open the app `id`, showing its device on it. Free: no time passes. */
       open: {
-        whyNot: (state, args, { game }) => refusal(state, game, appById(game, String(args.id ?? ''))),
-        run: (_state, args, { slice, set, game }) => {
-          const app = appById(game, String(args.id))!
+        whyNot: (state, { id }, { game }) => refusal(state, game, DATA.apps.get(game, id)),
+        run: (_state, { id }, { slice, set, game }) => {
+          const app = DATA.apps.get(game, id)!
           return set({ shown: { ...slice.shown, [app.on]: app.id } })
         },
       },
       /** `{ 'devices/home': { id } }`: show the device `id` on its home screen, from put away or from an app. */
       home: {
-        whyNot: (_state, args, { game }) => (known(game, String(args.id ?? '')) ? undefined : stringOf(game, 'devices/noSuchDevice')),
-        run: (_state, args, { slice, set }) => set({ shown: { ...slice.shown, [String(args.id)]: null } }),
+        whyNot: (_state, { id }, { game }) => (known(game, id) ? undefined : stringOf(game, 'devices/noSuchDevice')),
+        run: (_state, { id }, { slice, set }) => set({ shown: { ...slice.shown, [id]: null } }),
       },
       /** `{ 'devices/close': { id } }`: put the device `id` away. */
       close: {
-        whyNot: (_state, args, { game, slice }) => {
-          const id = String(args.id ?? '')
+        whyNot: (_state, { id }, { game, slice }) => {
           if (!known(game, id)) return stringOf(game, 'devices/noSuchDevice')
           return id in slice.shown ? undefined : stringOf(game, 'devices/notShown')
         },
-        run: (_state, args, { slice, set }) => {
-          const { [String(args.id)]: _away, ...rest } = slice.shown
+        run: (_state, { id }, { slice, set }) => {
+          const { [id]: _away, ...rest } = slice.shown
           return set({ shown: rest })
         },
       },
@@ -371,31 +390,32 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
       }),
     }),
     references: {
+      // The condition asks after an app or a device: one of them.
+      calls: (table, name, args) =>
+        table === 'conditions' && name === 'open' && (args.app === undefined) === (args.device === undefined)
+          ? [{ problem: '"devices/open" takes an app or a device, one of them' }]
+          : [],
       content: (game) =>
-        apps(game).map((app) => ({
-          list: 'apps',
-          id: app.id,
-          refs: [
-            { entry: app.on, plugin: ID, list: 'devices', noun: 'device' },
-            { when: app.when },
-            ...(app.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
-            ...(app.badge !== undefined && !(typeof app.badge === 'object' && 'when' in app.badge) ? [{ amount: app.badge }] : []),
-            ...(typeof app.badge === 'object' && 'when' in app.badge ? [{ when: app.badge.when }] : []),
-            ...app.sections.flatMap((section): Reference[] => {
-              if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
-              if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]
-              if ('blocks' in section) return [{ blocks: section.blocks }]
-              if ('actions' in section) return section.actions.map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) }))
-              return []
-            }),
-          ],
-        })),
+        DATA.apps.content(game, (app) => [
+          DATA.devices.ref(app.on),
+          { when: app.when },
+          ...(app.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
+          ...(app.badge !== undefined && !(typeof app.badge === 'object' && 'when' in app.badge) ? [{ amount: app.badge }] : []),
+          ...(typeof app.badge === 'object' && 'when' in app.badge ? [{ when: app.badge.when }] : []),
+          ...app.sections.flatMap((section): Reference[] => {
+            if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
+            if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]
+            if ('blocks' in section) return [{ blocks: section.blocks }]
+            if ('actions' in section) return section.actions.map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) }))
+            return []
+          }),
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       const pluginIds = new Set((game.plugins ?? []).map((plugin) => plugin.id))
       for (const app of apps(game)) {
-        const say = (what: string) => problems.push({ list: 'apps', id: app.id, what })
+        const say = (what: string) => problems.push(DATA.apps.problem(app.id, what))
         for (const section of app.sections) {
           if ('plugin' in section && !pluginIds.has(section.plugin)) say(`the game has no plugin named "${section.plugin}"`)
         }
@@ -406,13 +426,13 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
 }
 
 /** A command: open this app. */
-const openApp = (app: string): CommandRef => ({ [`${ID}/open`]: { id: app } })
+const openApp = (app: string): CommandRef => CALLS.commands.open({ id: app })
 /** A command: show this device on its home screen, from put away or from an app. */
-const homeScreen = (device: string): CommandRef => ({ [`${ID}/home`]: { id: device } })
+const homeScreen = (device: string): CommandRef => CALLS.commands.home({ id: device })
 /** A command: put this device away. */
-const closeApp = (device: string): CommandRef => ({ [`${ID}/close`]: { id: device } })
+const closeApp = (device: string): CommandRef => CALLS.commands.close({ id: device })
 /** A condition: this app is open. */
-const appOpen = (app: string): Condition => ({ [`${ID}/open`]: { app } })
+const appOpen = (app: string): Condition => CALLS.conditions.open({ app })
 
 /**
  * The plugin, with its helpers on it: `devices()` makes the plugin for the

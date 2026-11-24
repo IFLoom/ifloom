@@ -12,27 +12,33 @@
  * map. Without them, a shift can be worked anywhere, once a turn.
  */
 import {
-  reasonOf,
+  arg,
+  defineCalls,
+  defineData,
   definePlugin,
-  priceView,
   holds,
   inRange,
   lackingLine,
+  list,
   notify,
-  pluginQuery,
   panelOf,
+  pluginQuery,
+  priceView,
+  reasonOf,
   renderAction,
-  stringOf,
   statValue,
+  stringOf,
   type Blocked,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type Effect,
   type EffectRef,
+  type EffectsOf,
   type Game,
   type GameState,
-  type PluginArgs,
   type PluginContext,
   type PluginProblem,
   type Price,
@@ -155,25 +161,14 @@ export type JobsView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'jobs/hired': { job: string; rank?: string }
-    'jobs/fired': { job: string }
-    'jobs/worked': { job: string } | true
-    'jobs/shifts': { job: string } & Range
-  }
-  interface EffectRegistry {
-    'jobs/hire': { job: string }
-    'jobs/fire': { job: string }
-  }
-  interface CommandRegistry {
-    'jobs/apply': { id: string }
-    'jobs/work': { id: string }
-    'jobs/quit': { id: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     jobs: JobsView
   }
@@ -183,23 +178,54 @@ const ID = 'jobs'
 /** The panel a UI draws the job board in. */
 const PANEL = 'jobs'
 
+/** The plugin's content: `data.jobs.jobs`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  jobs: list<JobDef>({
+    noun: 'job',
+    words: { name: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects' }, ranks: [{ name: true }] },
+  }),
+})
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** Holds the job, at that rank if asked. */
+    hired: { job: arg.entry(DATA.jobs), rank: arg.string().optional() },
+    /** Was fired from it. */
+    fired: { job: arg.entry(DATA.jobs) },
+    /** A shift at the job was worked today; at any job held, with none. */
+    worked: { job: arg.entry(DATA.jobs).optional() },
+    /** Shifts worked at a job held, in a range: `{ job, gte: 3 }`. */
+    shifts: { job: arg.entry(DATA.jobs), ...arg.bounds },
+  },
+  effects: {
+    /** Hired now, with no requirements asked. */
+    hire: { job: arg.entry(DATA.jobs) },
+    /** Fired now, with the notice. */
+    fire: { job: arg.entry(DATA.jobs) },
+  },
+  commands: {
+    /** Apply for the job `id`. */
+    apply: { id: arg.entry(DATA.jobs) },
+    /** Work a shift at the job `id`. */
+    work: { id: arg.entry(DATA.jobs) },
+    /** Leave the job `id`. */
+    quit: { id: arg.entry(DATA.jobs) },
+  },
+})
+
 function emptyState(): JobsState {
   return { held: {}, fired: {} }
 }
 
 /** The game's jobs: `data.jobs.jobs`, from its packs. */
 export function jobsOf(game: Game): JobDef[] {
-  return (game.data?.[ID]?.jobs ?? []) as JobDef[]
+  return DATA.jobs.all(game)
 }
 
 /** One of the game's jobs, by id. */
 export function jobOf(game: Game, id: string): JobDef | undefined {
-  return jobIn(game, id)
-}
-
-/** `jobOf` for an id a call names, which may be anything. */
-function jobIn(game: Game, id: unknown): JobDef | undefined {
-  return jobsOf(game).find((job) => job.id === String(id ?? ''))
+  return DATA.jobs.get(game, id)
 }
 
 /** The day: the calendar's, asked by name, or the turn without one. */
@@ -234,9 +260,9 @@ function payOf(job: JobDef, held: HeldJob | undefined): Record<string, number> {
 }
 
 /** Why the player can't apply, or undefined. */
-function cantApply(state: GameState, args: PluginArgs, context: PluginContext<JobsState>): string | undefined {
+function cantApply(state: GameState, { id }: { id: string }, context: PluginContext<JobsState>): string | undefined {
   const { game, slice } = context
-  const job = jobIn(game, args.id)
+  const job = jobOf(game, id)
   if (!job) return stringOf(game, 'jobs/unknown')
   if (slice.held[job.id]) return stringOf(game, 'jobs/alreadyHired')
   if (slice.fired[job.id] !== undefined) return stringOf(game, 'jobs/wasFired')
@@ -245,9 +271,9 @@ function cantApply(state: GameState, args: PluginArgs, context: PluginContext<Jo
 }
 
 /** Why the player can't work a shift now, or undefined. */
-function cantWork(state: GameState, args: PluginArgs, context: PluginContext<JobsState>): string | undefined {
+function cantWork(state: GameState, { id }: { id: string }, context: PluginContext<JobsState>): string | undefined {
   const { game, slice } = context
-  const job = jobIn(game, args.id)
+  const job = jobOf(game, id)
   if (!job) return stringOf(game, 'jobs/unknown')
   const held = slice.held[job.id]
   if (!held) return stringOf(game, 'jobs/notHired')
@@ -387,22 +413,18 @@ function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView
   return { jobs, panel: board }
 }
 
-function jobRef(job: unknown): Reference[] {
-  return job === undefined ? [] : [{ entry: String(job), plugin: ID, list: 'jobs', noun: 'job' }]
-}
-
 /**
  * The plugin. Add it to the game's `plugins`, and put jobs in a pack's
  * `data.jobs.jobs`.
  */
 function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
-  return definePlugin<JobsState, JobsView>({
+  return definePlugin<JobsState, JobsView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { jobs: { name: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects' }, ranks: [{ name: true }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,
@@ -423,39 +445,38 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
     },
     conditions: {
       /** `{ 'jobs/hired': { job, rank? } }`: holds the job, at that rank if asked. */
-      hired: (_state, args, { slice, game }) => {
-        const job = jobIn(game, args.job)
+      hired: (_state, { job: id, rank }, { slice, game }) => {
+        const job = jobOf(game, id)
         const held = job && slice.held[job.id]
         if (!job || !held) return false
-        return args.rank === undefined || rankOf(job, held)?.id === String(args.rank)
+        return rank === undefined || rankOf(job, held)?.id === rank
       },
       /** `{ 'jobs/fired': { job } }`: was fired from it. */
-      fired: (_state, args, { slice }) => slice.fired[String(args.job ?? '')] !== undefined,
+      fired: (_state, { job }, { slice }) => slice.fired[job] !== undefined,
       /**
        * `{ 'jobs/worked': { job } }`: a shift at the job was worked today, the
        * day the calendar says (or this turn, without one), as the refusal
        * "You've done today's shift." reads it. `true` for any job held.
        */
-      worked: (state, args, { slice, game }) => {
+      worked: (state, { job }, { slice, game }) => {
         const today = dayOf(state, game)
-        const job = args.job === undefined ? undefined : String(args.job)
         return Object.entries(slice.held).some(([id, held]) => (job === undefined || id === job) && held.lastWorked === today)
       },
       /** `{ 'jobs/shifts': { job, gte… } }`: shifts worked at a job held, in a range. */
-      shifts: (state, args, { slice, game }) => {
-        const held = slice.held[String(args.job ?? '')]
-        return held !== undefined && inRange(state, game, held.shifts, args as Range)
+      shifts: (state, range, { slice, game }) => {
+        const held = slice.held[range.job]
+        return held !== undefined && inRange(state, game, held.shifts, range)
       },
     },
     effects: {
       /** `{ 'jobs/hire': { job } }`: hired now, with no requirements asked. */
       hire: (state, args, context) => {
-        const job = jobIn(context.game, args.job)
+        const job = jobOf(context.game, args.job)
         return job ? hired(state, job, context) : state
       },
       /** `{ 'jobs/fire': { job } }`: fired now, with the notice. */
       fire: (state, args, context) => {
-        const job = jobIn(context.game, args.job)
+        const job = jobOf(context.game, args.job)
         return job ? firedFrom(state, job, context) : state
       },
     },
@@ -463,18 +484,18 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
       /** `{ 'jobs/apply': { id } }`: apply for the job `id`. */
       apply: {
         whyNot: (state, args, context) => cantApply(state, args, context),
-        run: (state, args, context) => hired(state, jobIn(context.game, args.id)!, context),
+        run: (state, { id }, context) => hired(state, jobOf(context.game, id)!, context),
       },
       /** `{ 'jobs/work': { id } }`: work a shift at the job `id`. */
       work: {
         whyNot: (state, args, context) => cantWork(state, args, context),
-        spends: (_state, args, { game }) => jobIn(game, args.id)?.shift.cost,
-        effectsOf: (_state, args, { game, slice }) => {
-          const job = jobIn(game, args.id)
+        spends: (_state, { id }, { game }) => jobOf(game, id)?.shift.cost,
+        effectsOf: (_state, { id }, { game, slice }) => {
+          const job = jobOf(game, id)
           return job ? shiftEffects(job, slice.held[job.id]) : []
         },
-        run: (state, args, context) => {
-          const job = jobIn(context.game, args.id)!
+        run: (state, { id }, context) => {
+          const job = jobOf(context.game, id)!
           const held = context.slice.held[job.id]
           const today = dayOf(state, context.game)
           // The shift's own effects come after the cost and the time, before the pay.
@@ -490,10 +511,10 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
       },
       /** `{ 'jobs/quit': { id } }`: leave the job `id`. The player can apply again. */
       quit: {
-        whyNot: (_state, args, { slice, game }) => (slice.held[String(args.id ?? '')] ? undefined : stringOf(game, 'jobs/notHired')),
-        run: (state, args, context) => {
+        whyNot: (_state, { id }, { slice, game }) => (slice.held[id] ? undefined : stringOf(game, 'jobs/notHired')),
+        run: (state, { id }, context) => {
           const held = { ...context.slice.held }
-          delete held[String(args.id)]
+          delete held[id]
           return context.set({ ...context.slice, held }, state)
         },
       },
@@ -506,46 +527,41 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
        * <code v-pre>{{jobs/rank job=barista|out of work}}</code>.
        */
       rank: (_state, args, { slice, game }) => {
-        const job = jobIn(game, args.job)
+        const job = DATA.jobs.get(game, args.job)
         return (job && rankOf(job, slice.held[job.id])?.name) ?? ''
       },
     },
     view: (state, context) => jobsView(state, context),
     references: {
-      calls: (table, _name, args) => jobRef(table === 'commands' ? args.id : args.job),
       // The `jobs` panel shows the job board, or only the jobs `with.job` lists.
       panels: (panel, args): Reference[] => {
         if (panel !== PANEL || args.job === undefined) return []
         if (!Array.isArray(args.job) || !args.job.every((job) => typeof job === 'string')) return [{ problem: "the jobs panel's job is a list of job ids" }]
-        return args.job.map((job: string): Reference => ({ entry: job, plugin: ID, list: 'jobs', noun: 'job' }))
+        return args.job.map((job: string) => DATA.jobs.ref(job))
       },
       content: (game) =>
-        jobsOf(game).map((job) => ({
-          list: 'jobs',
-          id: job.id,
-          refs: [
-            // Where a job is worked is the places plugin's to know, by name; without it there is no map to check against.
-            ...(game.plugins?.some((plugin) => plugin.id === 'places') ? (job.at ?? []) : []).map((location): Reference => ({
-              entity: location.includes(':') ? location : `location:${location}`,
-              carrying: 'places/location',
-            })),
-            ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
-            {
-              within: 'shift',
-              refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }],
-            },
-            ...(job.ranks ?? []).map((rank): Reference => ({
-              within: `rank ${rank.id}`,
-              refs: [...Object.keys(rank.pay ?? {}).map((stat): Reference => ({ stat, writes: true })), { when: rank.requires?.when }],
-            })),
-            { within: 'fire', refs: [{ when: job.fire?.when }] },
-          ],
-        })),
+        DATA.jobs.content(game, (job) => [
+          // Where a job is worked is the places plugin's to know, by name; without it there is no map to check against.
+          ...(game.plugins?.some((plugin) => plugin.id === 'places') ? (job.at ?? []) : []).map((location): Reference => ({
+            entity: location.includes(':') ? location : `location:${location}`,
+            carrying: 'places/location',
+          })),
+          ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
+          {
+            within: 'shift',
+            refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }],
+          },
+          ...(job.ranks ?? []).map((rank): Reference => ({
+            within: `rank ${rank.id}`,
+            refs: [...Object.keys(rank.pay ?? {}).map((stat): Reference => ({ stat, writes: true })), { when: rank.requires?.when }],
+          })),
+          { within: 'fire', refs: [{ when: job.fire?.when }] },
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const job of jobsOf(game)) {
-        const problem = (what: string) => problems.push({ list: 'jobs', id: job.id, what })
+        const problem = (what: string) => problems.push(DATA.jobs.problem(job.id, what))
         if (!job.ranks?.length) problem('has no ranks')
         const ids = new Set<string>()
         for (const rank of job.ranks ?? []) {
@@ -569,23 +585,23 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
  */
 const openJobs = (jobs?: string[]): Effect => (jobs === undefined ? { panel: PANEL } : { panel: PANEL, with: { job: jobs } })
 /** A command: apply for the job. */
-const applyFor = (job: string): CommandRef => ({ 'jobs/apply': { id: job } })
+const applyFor = (job: string): CommandRef => CALLS.commands.apply({ id: job })
 /** A command: work a shift at the job. */
-const work = (job: string): CommandRef => ({ 'jobs/work': { id: job } })
+const work = (job: string): CommandRef => CALLS.commands.work({ id: job })
 /** A command: leave the job. */
-const quit = (job: string): CommandRef => ({ 'jobs/quit': { id: job } })
+const quit = (job: string): CommandRef => CALLS.commands.quit({ id: job })
 /** An effect: hire the player now, asking no requirements. */
-const hire = (job: string): EffectRef => ({ 'jobs/hire': { job } })
+const hire = (job: string): EffectRef => CALLS.effects.hire({ job })
 /** An effect: fire the player from the job now. */
-const fire = (job: string): EffectRef => ({ 'jobs/fire': { job } })
+const fire = (job: string): EffectRef => CALLS.effects.fire({ job })
 /** A condition: the player holds the job, at this rank if given. */
-const hasJob = (job: string, rank?: string): Condition => ({ 'jobs/hired': rank === undefined ? { job } : { job, rank } })
+const hasJob = (job: string, rank?: string): Condition => CALLS.conditions.hired(rank === undefined ? { job } : { job, rank })
 /** A condition: the player was fired from the job. */
-const wasFired = (job: string): Condition => ({ 'jobs/fired': { job } })
+const wasFired = (job: string): Condition => CALLS.conditions.fired({ job })
 /** A condition: shifts worked at a job the player holds, in this range. */
-const shiftsWorked = (job: string, range: Range): Condition => ({ 'jobs/shifts': { job, ...range } })
+const shiftsWorked = (job: string, range: Range): Condition => CALLS.conditions.shifts({ job, ...range })
 /** A shift at `job` was worked today; any job held, without one. */
-const workedToday = (job?: string): Condition => ({ 'jobs/worked': job === undefined ? true : { job } })
+const workedToday = (job?: string): Condition => CALLS.conditions.worked(job === undefined ? undefined : { job })
 
 /**
  * The plugin, with its helpers on it: `jobs()` makes the plugin for the

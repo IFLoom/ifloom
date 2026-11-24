@@ -185,7 +185,7 @@ export type StorylineDef = {
  * `slice`, `get` and `set` read and write the game's own state when it has a
  * `start`. Every member is optional and means what a plugin's does (see
  * `Plugin`), but `migrations`, which carry the whole save from one version of
- * the game to the next. A plugin's identity, versions, content and words are
+ * the game to the next. A plugin's identity, versions, content, words and declared calls and data are
  * the game's own content, so they aren't here. What is locked and what resets
  * each turn are content: `locks` and `resets`.
  */
@@ -201,8 +201,8 @@ export type GameRules<S = any> = Omit<
   | 'commandMigrations'
   | 'content'
   | 'strings'
-  | 'words'
-  | 'callWords'
+  | 'calls'
+  | 'data'
 > & {
   /**
    * Steps that carry a save from one version of the game to the next, keyed by

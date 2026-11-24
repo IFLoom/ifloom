@@ -16,44 +16,62 @@
  * release build, this is part of the game the player gets.
  */
 import {
+  arg,
+  defineCalls,
+  defineData,
   definePlugin,
   holds,
+  list,
   reasonOf,
   renderAction,
   stringOf,
   type Blocked,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type EffectRef,
   type Game,
   type GameState,
   type Once,
-  type PluginArgs,
   type PluginContext,
   type PluginProblem,
-  type Reference,
   type RenderedChoice,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'cheats/used': { cheat?: string } | true
-  }
-  interface CommandRegistry {
-    'cheats/use': { id: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     cheats: CheatsView
   }
 }
 
 const ID = 'cheats'
+
+/** The plugin's content: `data.cheats.cheats`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  cheats: list<CheatDef>({ noun: 'cheat', words: { name: true, description: true, blocked: [{ reason: true }], effects: 'effects' } }),
+})
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** This save has used the cheat, or any cheat when `cheat` is left out. */
+    used: { cheat: arg.entry(DATA.cheats).optional() },
+  },
+  commands: {
+    /** Use the cheat `id`. */
+    use: { id: arg.entry(DATA.cheats) },
+  },
+})
 
 /** A cheat, as content declares it in a pack's `data.cheats.cheats`. */
 export type CheatDef = {
@@ -114,18 +132,12 @@ export type CheatsView = {
 
 /** The game's cheats: `data.cheats.cheats`, from its packs. */
 export function cheatsOf(game: Game): CheatDef[] {
-  return (game.data?.[ID]?.cheats ?? []) as CheatDef[]
+  return DATA.cheats.all(game)
 }
 
 /** One of the game's cheats, by id. */
 export function cheatOf(game: Game, id: string): CheatDef | undefined {
-  return cheatIn(game, id)
-}
-
-/** `cheatOf` for an id a call names, which may be anything. */
-function cheatIn(game: Game, id: unknown): CheatDef | undefined {
-  const wanted = String(id ?? '')
-  return cheatsOf(game).find((cheat) => cheat.id === wanted)
+  return DATA.cheats.get(game, id)
 }
 
 function timesUsed(slice: CheatsState, cheat?: string): number {
@@ -143,9 +155,9 @@ function blockedBy(cheat: CheatDef, state: GameState, game: Game): Blocked | und
 }
 
 /** Why the player can't use the cheat now, or undefined. */
-function cantUse(state: GameState, args: PluginArgs, context: PluginContext<CheatsState>): string | undefined {
+function cantUse(state: GameState, { id }: { id: string }, context: PluginContext<CheatsState>): string | undefined {
   const { game, slice } = context
-  const cheat = cheatIn(game, args.id)
+  const cheat = cheatOf(game, id)
   if (!cheat) return stringOf(game, 'cheats/unknown')
   const blocked = blockedBy(cheat, state, game)
   if (blocked) return reasonOf(game, blocked.reason)
@@ -171,22 +183,18 @@ function cheatsView(state: GameState, context: PluginContext<CheatsState>): Chea
   }
 }
 
-function cheatRef(cheat: unknown): Reference[] {
-  return cheat === undefined ? [] : [{ entry: String(cheat), plugin: ID, list: 'cheats', noun: 'cheat' }]
-}
-
 /**
  * The plugin. Add it to the game's `plugins`, and put cheats in a pack's
  * `data.cheats.cheats`.
  */
 function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
-  return definePlugin<CheatsState, CheatsView>({
+  return definePlugin<CheatsState, CheatsView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { cheats: { name: true, description: true, blocked: [{ reason: true }], effects: 'effects' } },
     start: () => ({ used: [] }),
     // Unlocks is what a supporter-only cheat names in its `blocked`, when the game has it.
     cooperates: ['unlocks'],
@@ -196,11 +204,11 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
     },
     conditions: {
       /** `{ 'cheats/used': { cheat? } }`: this save has used the cheat, or any cheat when `cheat` is left out. */
-      used: (_state, args, { slice }) => timesUsed(slice, args.cheat === undefined ? undefined : String(args.cheat)) > 0,
+      used: (_state, { cheat }, { slice }) => timesUsed(slice, cheat) > 0,
     },
     values: {
       /** <code v-pre>{{cheats/used}}</code>: how many times this save has used a cheat; with `cheat`, that one. */
-      used: (_state, args, { slice }) => timesUsed(slice, args.cheat === undefined ? undefined : String(args.cheat)),
+      used: (_state, args, { slice }) => timesUsed(slice, typeof args.cheat === 'string' ? args.cheat : undefined),
     },
     commands: {
       /**
@@ -211,7 +219,7 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
         ignoresLocks: true,
         whyNot: cantUse,
         run: (state, args, context) => {
-          const cheat = cheatIn(context.game, args.id)!
+          const cheat = cheatOf(context.game, args.id)!
           const next = context.apply(cheat.effects ?? [], state)
           const slice = context.get(next)
           return context.set({ used: [...slice.used, { cheat: cheat.id, turn: state.turn }] }, next)
@@ -220,23 +228,18 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
     },
     view: (state, context) => cheatsView(state, context),
     references: {
-      calls: (table, _name, args) => cheatRef(table === 'commands' ? args.id : args.cheat),
       content: (game) =>
-        cheatsOf(game).map((cheat) => ({
-          list: 'cheats',
-          id: cheat.id,
-          refs: [
-            { effects: cheat.effects },
-            { reason: cheat.once?.reason },
-            ...(cheat.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
-          ],
-        })),
+        DATA.cheats.content(game, (cheat) => [
+          { effects: cheat.effects },
+          { reason: cheat.once?.reason },
+          ...(cheat.blocked ?? []).map((entry) => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       const seen = new Set<string>()
       for (const cheat of cheatsOf(game)) {
-        const problem = (what: string) => problems.push({ list: 'cheats', id: cheat.id, what })
+        const problem = (what: string) => problems.push(DATA.cheats.problem(cheat.id, what))
         if (seen.has(cheat.id)) problem('two cheats share this id')
         seen.add(cheat.id)
         if (typeof cheat.name !== 'string' || !cheat.name.trim()) problem('has no name')
@@ -250,9 +253,9 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
 }
 
 /** A command: use the cheat. */
-const runCheat = (cheat: string): CommandRef => ({ [`${ID}/use`]: { id: cheat } })
+const runCheat = (cheat: string): CommandRef => CALLS.commands.use({ id: cheat })
 /** A condition: this save has used the cheat, or any cheat when none is named. */
-const cheatUsed = (cheat?: string): Condition => ({ [`${ID}/used`]: cheat === undefined ? {} : { cheat } })
+const cheatUsed = (cheat?: string): Condition => CALLS.conditions.used(cheat === undefined ? undefined : { cheat })
 
 /**
  * The plugin, with its helpers on it: `cheats()` makes the plugin for the

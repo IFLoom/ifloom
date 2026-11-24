@@ -12,23 +12,30 @@
  */
 import {
   applyEffects,
+  arg,
   buildEffects,
   commandOf,
+  defineCalls,
+  defineData,
   definePlugin,
-  type SenderView,
-  speakerOf,
-  pluginQuery,
   fillTokens,
   holds,
   inRange,
+  list,
   notify,
+  pluginQuery,
   renderAction,
+  speakerOf,
   stringOf,
+  weighted,
   type Block,
   type CommandRef,
-  type DefinedPlugin,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
+  type DefinedPlugin,
   type EffectRef,
+  type EffectsOf,
   type Game,
   type GameState,
   type PluginContext,
@@ -37,7 +44,7 @@ import {
   type Reference,
   type RenderedChoice,
   type SceneBeat,
-  weighted,
+  type SenderView,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -192,24 +199,14 @@ export type MessagesView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'messages/arrived': { message: string }
-    'messages/since': { message: string } & Range
-    'messages/replied': { message: string; reply?: string } & Range
-    'messages/read': { message: string }
-  }
-  interface EffectRegistry {
-    'messages/draw': { pool: string }
-    'messages/due': Record<string, never>
-  }
-  interface CommandRegistry {
-    'messages/reply': { message: string; reply: string }
-    'messages/read': { id?: string; channel?: string } | true
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     messages: MessagesView
   }
@@ -221,9 +218,50 @@ const DUE = 'messages.due'
 /** How long a notice's line can be, in characters, before it is cut. */
 const NOTICE_LENGTH = 80
 
+/** The plugin's content: `data.messages.channels` and `data.messages.messages`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  channels: list<Channel>({ noun: 'channel', words: { name: true } }),
+  messages: list<MessageDef>({ noun: 'message', words: { body: 'blocks', effects: 'effects', replies: [{ label: true, effects: 'effects' }] } }),
+})
+
+/** A message by id, or one of its arrivals by key (`'hello~2'`): the message is named to the checker. */
+const message = () => arg.string().naming((key): Reference[] => [DATA.messages.ref(messageOfKey(key))])
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** The message has arrived. */
+    arrived: { message: message() },
+    /** Days since it last arrived, in a range. */
+    since: { message: message(), ...arg.bounds },
+    /** The player has replied to it, with `reply` if given; with a range, that many days ago. */
+    replied: { message: message(), reply: arg.string().optional(), ...arg.bounds },
+    /** The player has read it. */
+    read: { message: message() },
+  },
+  effects: {
+    /** Deliver one message drawn from `pool`. */
+    draw: {
+      pool: arg
+        .string()
+        .naming((pool, game): Reference[] =>
+          messagesOf(game).some((entry) => entry.drawnFrom?.includes(pool)) ? [] : [{ problem: `draws from "${pool}", but no message is drawn from it` }],
+        ),
+    },
+    /** The waiting message arrives: what the plugin's timer runs. */
+    due: {},
+  },
+  commands: {
+    /** Send the reply `reply` to the arrival `message`. */
+    reply: { message: message(), reply: arg.string() },
+    /** Mark messages read: a thread's (`id`), a channel's, or all of them. */
+    read: { id: arg.string().optional(), channel: arg.entry(DATA.channels).optional() },
+  },
+})
+
 /** The game's messages: `data.messages.messages`, from its packs. */
 export function messagesOf(game: Game): MessageDef[] {
-  return (game.data?.[ID]?.messages ?? []) as MessageDef[]
+  return DATA.messages.all(game)
 }
 
 function threadOf(message: MessageDef): string {
@@ -306,7 +344,7 @@ const ranged = (args: Range) => args.gte !== undefined || args.gt !== undefined 
 
 /** The game's channels, in order: `data.messages.channels`, from its packs. */
 export function channelsOf(game: Game): Channel[] {
-  return (game.data?.[ID]?.channels ?? []) as Channel[]
+  return DATA.channels.all(game)
 }
 
 /**
@@ -322,13 +360,13 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
     ).length
   }
 
-  const plugin = definePlugin<MessagesState, MessagesView>({
+  const plugin = definePlugin<MessagesState, MessagesView, typeof CALLS>({
     id: ID,
     version: 4,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { channels: { name: true }, messages: { body: 'blocks', effects: 'effects', replies: [{ label: true, effects: 'effects' }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // Senders are the cast's characters when the game has the cast: a name and a face.
@@ -357,7 +395,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       },
     },
     // The timer a waiting message runs down. Its length is set each time it starts, from the message's `after`.
-    content: { timers: [{ id: DUE, ms: 1000, effects: [{ [`${ID}/due`]: {} }] }] },
+    content: { timers: [{ id: DUE, ms: 1000, effects: [CALLS.effects.due()] }] },
     strings: {
       noSuchMessage: 'There is no such message.',
       alreadyReplied: 'You have already replied.',
@@ -369,15 +407,15 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
     start: empty,
     conditions: {
       /** `{ 'messages/arrived': { message } }`: it has arrived at least once. */
-      arrived: (_state, args, { slice }) => latest(slice, String(args.message)) !== undefined,
+      arrived: (_state, { message }, { slice }) => latest(slice, message) !== undefined,
       /**
        * `{ 'messages/since': { message, gte… } }`: whole days since it last
        * arrived, in a range. Days are the calendar's, or turns without it.
        * False if it never has, so `{ not: … lt: 3 }` is "not in the last 3 days".
        */
-      since: (state, args, { slice, game }) => {
-        const last = latest(slice, String(args.message))
-        return last !== undefined && inRange(state, game, dayOf(state, game) - last.day, args as Range)
+      since: (state, range, { slice, game }) => {
+        const last = latest(slice, range.message)
+        return last !== undefined && inRange(state, game, dayOf(state, game) - last.day, range)
       },
       /**
        * `{ 'messages/replied': { message, reply?, gte… } }`: its latest arrival
@@ -385,16 +423,16 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
        * reply was sent are in it too, counted as `messages/since` counts.
        */
       replied: (state, args, { slice, game }) => {
-        const last = latest(slice, String(args.message))
+        const last = latest(slice, args.message)
         const sent = last && slice.replied[last.key]
         if (sent === undefined || (args.reply !== undefined && sent !== args.reply)) return false
-        if (!ranged(args as Range)) return true
+        if (!ranged(args)) return true
         const on = slice.repliedOn[last!.key] ?? last!.day
-        return inRange(state, game, dayOf(state, game) - on, args as Range)
+        return inRange(state, game, dayOf(state, game) - on, args)
       },
       /** `{ 'messages/read': { message } }`: its latest arrival has been read. */
-      read: (_state, args, { slice }) => {
-        const last = latest(slice, String(args.message))
+      read: (_state, { message }, { slice }) => {
+        const last = latest(slice, message)
         return Boolean(last && slice.read[last.key])
       },
     },
@@ -405,8 +443,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
        * Seeded by the save, the turn and how many arrivals there have been,
        * so a replay draws the same. Nothing when none can be drawn.
        */
-      draw: (state, args, context) => {
-        const pool = String(args.pool ?? '')
+      draw: (state, { pool }, context) => {
         const slice = context.slice
         const eligible = messagesOf(context.game).filter((message) => message.drawnFrom?.includes(pool) && holds(state, context.game, message.when))
         const drawn = weighted(eligible, (message) => message.weight, 'messages/draw', pool, state.seed, state.turn, slice.arrived.length)
@@ -419,7 +456,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
        */
       due: (state, _args, context) => {
         const slice = context.slice
-        const message = slice.due && messagesOf(context.game).find((entry) => entry.id === slice.due!.key)
+        const message = slice.due && DATA.messages.get(context.game, slice.due.key)
         if (!message) return slice.due ? context.set({ ...slice, due: null }, state) : state
         return deliver(state, message, context, { ...slice, due: null })
       },
@@ -432,14 +469,14 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       reply: {
         whyNot: (state, args, { slice, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)
-          const message = arrival && messagesOf(game).find((entry) => entry.id === arrival.message)
+          const message = arrival && DATA.messages.get(game, arrival.message)
           if (!arrival || !message) return stringOf(game, 'messages/noSuchMessage')
           if (slice.replied[arrival.key] !== undefined) return stringOf(game, 'messages/alreadyReplied')
           return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply) ? undefined : stringOf(game, 'messages/notOnOffer')
         },
         run: (state, args, { slice, set, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)!
-          const message = messagesOf(game).find((entry) => entry.id === arrival.message)!
+          const message = DATA.messages.get(game, arrival.message)!
           const reply = message.replies!.find((entry) => entry.id === args.reply)!
           const next = set({
             ...slice,
@@ -452,14 +489,14 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       },
       /** `{ 'messages/read': { id?, channel? } }`: mark the thread `id` read; leave both out for everything. */
       read: {
-        run: (_state, args, { slice, set, game }) => {
+        run: (_state, { id, channel }, { slice, set, game }) => {
           const read = { ...slice.read }
           const defs = new Map(messagesOf(game).map((message) => [message.id, message]))
           for (const arrival of slice.arrived) {
             const message = defs.get(arrival.message)
             if (!message) continue
-            if (args.id !== undefined && threadOf(message) !== args.id) continue
-            if (args.channel !== undefined && message.channel !== args.channel) continue
+            if (id !== undefined && threadOf(message) !== id) continue
+            if (channel !== undefined && message.channel !== channel) continue
             read[arrival.key] = true
           }
           return set({ ...slice, read })
@@ -571,7 +608,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
           ? renderAction(state, game, {
               id: `read.${channel.id}`,
               label: stringOf(game, `${ID}/allRead`),
-              command: { [`${ID}/read`]: { channel: channel.id } },
+              command: CALLS.commands.read({ channel: channel.id }),
             })
           : null
         return { id: channel.id, name: channel.name, threads: list, unread, read }
@@ -579,34 +616,22 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       return { channels, unread: unreadIn(slice, game), waiting: slice.due !== null }
     },
     references: {
-      // The message a condition or a reply names; a reply may name a later arrival's key.
-      calls: (table, name, args, game): Reference[] => [
-        ...(args.message === undefined ? [] : [{ entry: messageOfKey(String(args.message)), plugin: 'messages', list: 'messages', noun: 'message' }]),
-        // A draw names a pool some message is drawn from.
-        ...(table === 'effects' && name === 'draw' && !messagesOf(game).some((message) => message.drawnFrom?.includes(String(args.pool ?? '')))
-          ? [{ problem: `draws from "${String(args.pool ?? '')}", but no message is drawn from it` }]
-          : []),
-      ],
       content: (game) =>
-        messagesOf(game).map((message) => ({
-          list: 'messages',
-          id: message.id,
-          refs: [
-            { entry: message.channel, plugin: ID, list: 'channels', noun: 'channel' },
-            { when: message.when },
-            { blocks: message.body },
-            { within: 'arrival', refs: [{ effects: message.effects }] },
-            ...(message.replies ?? []).flatMap((reply) => [
-              { words: reply.label, field: 'label', ...(reply.label === undefined ? { oldKey: `${message.id}#${reply.id}` } : {}) },
-              { within: `reply ${reply.id}`, refs: [{ when: reply.when }, { effects: reply.effects }] },
-            ]),
-          ],
-        })),
+        DATA.messages.content(game, (message) => [
+          DATA.channels.ref(message.channel),
+          { when: message.when },
+          { blocks: message.body },
+          { within: 'arrival', refs: [{ effects: message.effects }] },
+          ...(message.replies ?? []).flatMap((reply): Reference[] => [
+            { words: reply.label, field: 'label', ...(reply.label === undefined ? { oldKey: `${message.id}#${reply.id}` } : {}) },
+            { within: `reply ${reply.id}`, refs: [{ when: reply.when }, { effects: reply.effects }] },
+          ]),
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const message of messagesOf(game)) {
-        const say = (what: string) => problems.push({ list: 'messages', id: message.id, what })
+        const say = (what: string) => problems.push(DATA.messages.problem(message.id, what))
         if (message.weight !== undefined && !(message.weight >= 0)) say('weight must be 0 or more')
         if (message.after !== undefined && !(typeof message.after.ms === 'number' && message.after.ms > 0)) say('after needs ms above 0')
         if (message.after !== undefined && message.drawnFrom?.length) say('a message drawn from a pool arrives when drawn, so it can’t wait with after')
@@ -628,24 +653,23 @@ function applyRefs(state: GameState, game: Game, refs: readonly EffectRef[]): Ga
 }
 
 /** A command: send this reply to this message: its id for its first arrival, or an arrival's key. */
-const replyTo = (message: string, reply: string): CommandRef => ({ [`${ID}/reply`]: { message, reply } })
+const replyTo = (message: string, reply: string): CommandRef => CALLS.commands.reply({ message, reply })
 /** An effect: deliver one message drawn from the pool, as a new arrival. */
-const drawMessage = (pool: string): EffectRef => ({ [`${ID}/draw`]: { pool } })
+const drawMessage = (pool: string): EffectRef => CALLS.effects.draw({ pool })
 /** A condition: whole days since the message last arrived, in this range; false if it never has. */
-const messageSince = (message: string, range: Range): Condition => ({ [`${ID}/since`]: { message, ...range } })
+const messageSince = (message: string, range: Range): Condition => CALLS.conditions.since({ message, ...range })
 /** A command: mark a thread read, or every message with no thread given. */
-const readThread = (thread?: string): CommandRef => ({ [`${ID}/read`]: thread === undefined ? {} : { id: thread } })
+const readThread = (thread?: string): CommandRef => CALLS.commands.read(thread === undefined ? undefined : { id: thread })
 /** A condition: the message has arrived. */
-const messageArrived = (message: string): Condition => ({ [`${ID}/arrived`]: { message } })
+const messageArrived = (message: string): Condition => CALLS.conditions.arrived({ message })
 /**
  * A condition: the player replied to the message, or with that reply; with a
  * range, as many whole days ago: `messages.replied('ava.hi', undefined, { gte: 2 })`.
  */
-const messageReplied = (message: string, reply?: string, range?: Range): Condition => ({
-  [`${ID}/replied`]: { message, ...(reply === undefined ? {} : { reply }), ...range },
-})
+const messageReplied = (message: string, reply?: string, range?: Range): Condition =>
+  CALLS.conditions.replied({ message, ...(reply === undefined ? {} : { reply }), ...range })
 /** A condition: the player has read the message's latest arrival. (`messages.read` is the command that marks a thread read.) */
-const messageRead = (message: string): Condition => ({ [`${ID}/read`]: { message } })
+const messageRead = (message: string): Condition => CALLS.conditions.read({ message })
 
 /**
  * The plugin, with its helpers on it: `messages()` makes the plugin for the

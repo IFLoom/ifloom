@@ -19,9 +19,11 @@
  */
 import {
   actionReferences,
+  arg,
   artSrc,
   bindCurrent,
   commandOf,
+  defineCalls,
   definePlugin,
   entityDescription,
   entityImage,
@@ -45,6 +47,9 @@ import {
   withTrait,
   type ActionDef,
   type Blocked,
+  type CommandsOf,
+  type ConditionsOf,
+  type EffectsOf,
   type Reason,
   type Block,
   type CommandRef,
@@ -197,32 +202,6 @@ export type PlacesView = {
   things: LyingView[]
 }
 
-/**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
- */
-declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'places/at': { location: string | readonly string[] }
-    'places/within': { location: string | readonly string[] }
-  }
-  interface EffectRegistry {
-    'places/move': { location: string }
-  }
-  interface CommandRegistry {
-    'places/go': { id: string }
-    'places/pickUp': { id: EntityRef }
-  }
-  // `places/here`, `places/holder` and `places/known`, which other plugins ask, are the engine's `PartnerQueries`.
-  interface QueryRegistry {
-    'places/all': () => (Place & { id: string; ref: EntityRef })[]
-    'places/exits': () => string[]
-  }
-  interface ViewRegistry {
-    places: PlacesView
-  }
-}
-
 const ID = 'places'
 const TRAIT = 'places/location'
 
@@ -235,6 +214,53 @@ export const LOCATION = 'location'
  * a reference is as written.
  */
 const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`) as EntityRef
+
+/** A reference to one of the game's places, which must carry the trait. */
+const placeEntry = (id: string): Reference => ({ entity: locationRef(id), carrying: TRAIT })
+
+/** A place by id or reference, `'park'` or `'location:park'`, named to the checker. */
+const place = () => arg.string().naming((id) => (id ? [placeEntry(id)] : []))
+/** One place or several, `'park'` or `['cafe', 'park']`. */
+const placeList = () => arg.strings().naming((ids) => ids.map(placeEntry))
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** The player is in one of these. */
+    at: { location: placeList() },
+    /** The player is in one of these, or somewhere inside one. */
+    within: { location: placeList() },
+  },
+  effects: {
+    /** Be somewhere else at once. */
+    move: { location: place() },
+  },
+  commands: {
+    /** Walk through an exit to the place `id`. */
+    go: { id: place() },
+    /** Pick up one of the thing `id` lying where the player is. */
+    pickUp: { id: arg.entity() },
+  },
+})
+
+/**
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
+  // `places/here`, `places/holder` and `places/known`, which other plugins ask, are the engine's `PartnerQueries`.
+  interface QueryRegistry {
+    'places/all': () => (Place & { id: string; ref: EntityRef })[]
+    'places/exits': () => string[]
+  }
+  interface ViewRegistry {
+    places: PlacesView
+  }
+}
 
 /** How the plugin names a place back: its id for one of its kind, else the whole reference. */
 const short = (ref: EntityRef): string => (parseRef(ref)?.kind === LOCATION ? parseRef(ref)!.id : ref)
@@ -280,16 +306,8 @@ export function locationOf(state: GameState, game: Game, ref: string | null | un
 /** A place content declares, by id or reference, for a check, which has no state. */
 const declaredLocation = (game: Game, id: string): Place | undefined => declared(game).get(locationRef(id))
 
-/** A reference to one of the game's places, which must carry the trait. */
-const placeEntry = (id: string): Reference => ({ entity: locationRef(id), carrying: TRAIT })
-
-/** One location or several, as a list: `location: 'cafe'` or `location: ['cafe', 'park']`. */
-function ids(value: unknown): string[] {
-  return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
-}
-
-/** Places as the plugin keeps them: `'park'` and `'location:park'` are both `'park'`. */
-const placeIds = (value: unknown): string[] => ids(value).map((id) => short(locationRef(id)))
+/** A place as the plugin keeps it: `'park'` and `'location:park'` are both `'park'`. */
+const placeId = (id: string): string => short(locationRef(id))
 
 /** What lies in a place that the player can see: what its entity holds, but things whose `visible` doesn't hold. */
 function lyingIn(state: GameState, game: Game, at: string): { ref: EntityRef; count: number }[] {
@@ -321,7 +339,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     if (to === at) return stringOf(game, `${ID}/alreadyHere`)
     const blocked = place.blocked?.find((entry) => holds(state, game, entry.when))
     if (blocked) return reasonOf(game, blocked.reason)
-    if (at === null || !placeIds(locationOf(state, game, at)?.exits).includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
+    if (at === null || !(locationOf(state, game, at)?.exits ?? []).map(placeId).includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
     return undefined
   }
 
@@ -363,8 +381,9 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     ],
   }
 
-  return definePlugin<PlacesState, PlacesView>({
+  return definePlugin<PlacesState, PlacesView, typeof CALLS>({
     id: ID,
+    calls: CALLS,
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
@@ -384,18 +403,18 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     start: () => ({ at: options.start ?? null }),
     conditions: {
       /** `{ 'places/at': { location: ['cafe', 'park'] } }`: the player is in one of these. */
-      at: (_state, args, { slice }) => slice.at !== null && placeIds(args.location).includes(slice.at),
+      at: (_state, { location }, { slice }) => slice.at !== null && location.map(placeId).includes(slice.at),
       /** `{ 'places/within': { location: 'office' } }`: the player is there, or somewhere inside it; with a list, any of them. */
-      within: (state, args, { slice, game }) => {
+      within: (state, { location }, { slice, game }) => {
         if (slice.at === null) return false
         const around = [slice.at, ...ancestors((id) => locationOf(state, game, id), slice.at)]
-        return placeIds(args.location).some((id) => around.includes(id))
+        return location.map(placeId).some((id) => around.includes(id))
       },
     },
     effects: {
       /** `{ 'places/move': { location: 'park' } }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
-      move: (state, args, { set, game }) => {
-        const to = placeIds(args.location)[0]
+      move: (state, { location }, { set, game }) => {
+        const to = placeId(location)
         if (!locationOf(state, game, to)) return state
         return set({ at: to }, { ...state, sceneId: null })
       },
@@ -403,9 +422,9 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     commands: {
       /** `{ 'places/go': { id } }`: walk through an exit to the place `id`, then its `arrive`. */
       go: {
-        whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, placeIds(args.id)[0]),
-        run: (state, args, { set, apply, game }) => {
-          const to = placeIds(args.id)[0]
+        whyNot: (state, { id }, { slice, game }) => goBlocked(state, game, slice.at, placeId(id)),
+        run: (state, { id }, { set, apply, game }) => {
+          const to = placeId(id)
           const arrived = set({ at: to })
           const arrive = locationOf(state, game, to)?.arrive
           return arrive && holds(arrived, game, arrive.when) ? apply(arrive.effects, arrived) : arrived
@@ -413,9 +432,9 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       },
       /** `{ 'places/pickUp': { id } }`: pick up one of the thing `id` lying where the player is, for whoever they are playing. */
       pickUp: {
-        whyNot: (state, args, { slice, game }) => pickUpBlocked(state, game, slice.at, String(args.id ?? '')),
-        effectsOf: (_state, args, { slice }) => pickUpEffects(slice.at, String(args.id ?? '') as EntityRef),
-        run: (state, args, { slice, apply }) => apply(pickUpEffects(slice.at, String(args.id ?? '') as EntityRef), state),
+        whyNot: (state, { id }, { slice, game }) => pickUpBlocked(state, game, slice.at, id),
+        effectsOf: (_state, { id }, { slice }) => pickUpEffects(slice.at, id),
+        run: (state, { id }, { slice, apply }) => apply(pickUpEffects(slice.at, id), state),
       },
     },
     queries: {
@@ -428,7 +447,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
           const place = locationOf(state, game, ref)
           return place ? [{ ...place, id: short(ref), ref }] : []
         }),
-      known: (state, args, { game }) => Boolean(locationOf(state, game, ids(args.location)[0])),
+      known: (state, args, { game }) => typeof args.location === 'string' && Boolean(locationOf(state, game, args.location)),
       exits: (state, _args, { slice, game }) => (locationOf(state, game, slice.at)?.exits ?? []).filter((id) => locationOf(state, game, id)),
     },
     values: {
@@ -490,23 +509,6 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       }
     },
     references: {
-      // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`; the thing `places/pickUp` names.
-      calls: (table, name, args) => {
-        if (table === 'commands' && name === 'pickUp') return args.id === undefined ? [] : [{ entity: String(args.id) }]
-        const named =
-          table === 'conditions'
-            ? name === 'at' || name === 'within'
-              ? ids(args.location)
-              : []
-            : table === 'effects'
-              ? name === 'move'
-                ? ids(args.location)
-                : []
-              : name === 'go'
-                ? ids(args.id)
-                : []
-        return named.map(placeEntry)
-      },
       content: () => (options.start !== undefined ? [{ list: 'options', id: 'start', refs: [placeEntry(options.start)] }] : []),
     },
     check: (game) => {
@@ -548,15 +550,15 @@ function location(def: PlaceDef): EntityDef {
 }
 
 /** The command that picks up one of a thing lying where the player is. */
-const pickUp = (ref: EntityRef): CommandRef => ({ [`${ID}/pickUp`]: { id: ref } })
+const pickUp = (ref: EntityRef): CommandRef => CALLS.commands.pickUp({ id: ref })
 /** The command that walks to a place by an exit. */
-const go = (id: string): CommandRef => ({ [`${ID}/go`]: { id } })
+const go = (id: string): CommandRef => CALLS.commands.go({ id })
 /** True in any of these places. */
-const at = (...places: string[]): Condition => ({ [`${ID}/at`]: { location: places } })
+const at = (...places: string[]): Condition => CALLS.conditions.at({ location: places })
 /** True in any of these places, or anywhere inside one. */
-const within = (...places: string[]): Condition => ({ [`${ID}/within`]: { location: places } })
+const within = (...places: string[]): Condition => CALLS.conditions.within({ location: places })
 /** The effect that puts the player somewhere at once. */
-const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: { location: place } })
+const moveTo = (place: string): EffectRef => CALLS.effects.move({ location: place })
 /** A `blocked` entry: refused anywhere but these places, with `reason` (the plugin's `places/notHere` string, "Not here.", if left out). */
 /** Where the player is, by the place's id: the `places/here` query, asked of the game's places plugin. Null when nowhere. */
 const where = (state: GameState, game: Game): string | null => pluginQuery(game, 'places/here')?.(state) ?? null

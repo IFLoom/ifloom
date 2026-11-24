@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { SCHEMA, loadGame, type Content, type Pack } from '../../src/loader.ts'
 import { definePlugin } from '../../src/plugin.ts'
+import { defineData, list, type PluginEntry } from '../../src/index.ts'
 import { describeProblem } from '../../src/check.ts'
 import { startingState } from '../../src/intake.ts'
 import { apply } from '../../src/reduce.ts'
@@ -13,7 +14,7 @@ import { contentKeys } from '../../src/features/registry.ts'
 const signs = definePlugin({
   id: 'signs',
   version: 1,
-  words: { boards: { title: true, lines: [{ text: true }] } },
+  data: defineData('signs', { boards: list<PluginEntry>({ noun: 'board', words: { title: true, lines: [{ text: true }] } }) }),
   traits: [{ id: 'signs/door', words: { sign: true, body: 'blocks' } }],
 })
 

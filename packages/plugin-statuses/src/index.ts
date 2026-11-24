@@ -9,15 +9,21 @@
  * the status says.
  */
 import {
+  arg,
+  defineCalls,
+  defineData,
   definePlugin,
   inRange,
+  list,
   stringOf,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type EffectRef,
+  type EffectsOf,
   type Game,
   type GameState,
-  type PluginArgs,
   type PluginContext,
   type PluginProblem,
   type Range,
@@ -81,21 +87,14 @@ export type StatusesView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'statuses/active': { status: string; stacks?: Range }
-  }
-  interface EffectRegistry {
-    'statuses/apply': { status: string }
-    'statuses/remove': { status: string; runEnd?: boolean }
-  }
-  interface CommandRegistry {
-    'statuses/apply': { id: string }
-    'statuses/remove': { id: string; runEnd?: boolean }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     statuses: StatusesView
   }
@@ -103,18 +102,41 @@ declare module '@ifloom/engine' {
 
 const ID = 'statuses'
 
+/** The plugin's content: `data.statuses.statuses`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  statuses: list<StatusDef>({ noun: 'status', words: { name: true, description: true, effects: { start: 'effects', turn: 'effects', end: 'effects' } } }),
+})
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** Active, with that many stacks if asked. */
+    active: { status: arg.entry(DATA.statuses), stacks: arg.range().optional() },
+  },
+  effects: {
+    /** Start it, refresh it or add a stack. */
+    apply: { status: arg.entry(DATA.statuses) },
+    /** Take every stack off, running its `end` effects only if asked. */
+    remove: { status: arg.entry(DATA.statuses), runEnd: arg.boolean().optional(false) },
+  },
+  commands: {
+    apply: { id: arg.entry(DATA.statuses) },
+    remove: { id: arg.entry(DATA.statuses), runEnd: arg.boolean().optional(false) },
+  },
+})
+
 function emptyState(): StatusesState {
   return { active: [] }
 }
 
 /** The game's timed statuses: `data.statuses.statuses`, from its packs. */
 export function statusesOf(game: Game): StatusDef[] {
-  return (game.data?.[ID]?.statuses ?? []) as StatusDef[]
+  return DATA.statuses.all(game)
 }
 
 /** One of the game's statuses, by id. */
 export function statusOf(game: Game, id: string): StatusDef | undefined {
-  return statusesOf(game).find((def) => def.id === id)
+  return DATA.statuses.get(game, id)
 }
 
 /** The modifiers of every stack of these statuses, summed per stat: adds added, multipliers multiplied. */
@@ -216,87 +238,66 @@ function endTurn(state: GameState, context: PluginContext<StatusesState>): GameS
   return next
 }
 
-/** The status a call names: `status` in a condition or an effect, `id` in a command. */
-function idOf(args: PluginArgs): string {
-  return String(args.status ?? args.id ?? '')
-}
-
-function stacksOf(args: PluginArgs): Range | undefined {
-  return args.stacks && typeof args.stacks === 'object' ? (args.stacks as Range) : undefined
-}
-
 /**
  * The plugin. Add it to the game's `plugins`, and put statuses in a pack's
  * `data.statuses.statuses`.
  */
 function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
-  return definePlugin<StatusesState, StatusesView>({
+  return definePlugin<StatusesState, StatusesView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { statuses: { name: true, description: true, effects: { start: 'effects', turn: 'effects', end: 'effects' } } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,
     strings: { unknown: 'Nothing like that can happen.', notActive: 'That isn’t affecting you.' },
     conditions: {
       /** `{ 'statuses/active': { status, stacks? } }`: active, with that many stacks if asked. */
-      active: (state, args, { slice, game }) => {
-        const record = slice.active.find((entry) => entry.id === idOf(args))
+      active: (state, { status, stacks }, { slice, game }) => {
+        const record = slice.active.find((entry) => entry.id === status)
         if (!record) return false
-        const stacks = stacksOf(args)
         return stacks ? inRange(state, game, record.left.length, stacks) : true
       },
     },
     effects: {
       /** `{ 'statuses/apply': { status } }`: start it, refresh it or add a stack. */
-      apply: (state, args, context) => applyTo(state, idOf(args), context),
+      apply: (state, { status }, context) => applyTo(state, status, context),
       /** `{ 'statuses/remove': { status, runEnd? } }`: take every stack off, running its `end` effects only if asked. */
-      remove: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
+      remove: (state, { status, runEnd }, context) => removeFrom(state, status, runEnd, context),
     },
     commands: {
       /** `{ 'statuses/apply': { id } }`. */
       apply: {
-        whyNot: (_state, args, { game }) => (statusOf(game, idOf(args)) ? undefined : stringOf(game, 'statuses/unknown')),
-        run: (state, args, context) => applyTo(state, idOf(args), context),
-        effectsOf: (_state, args) => [{ 'statuses/apply': { status: idOf(args) } }],
+        whyNot: (_state, { id }, { game }) => (statusOf(game, id) ? undefined : stringOf(game, 'statuses/unknown')),
+        run: (state, { id }, context) => applyTo(state, id, context),
+        effectsOf: (_state, { id }) => [CALLS.effects.apply({ status: id })],
       },
       /** `{ 'statuses/remove': { id, runEnd? } }`. */
       remove: {
-        whyNot: (_state, args, { slice, game }) => (slice.active.some((entry) => entry.id === idOf(args)) ? undefined : stringOf(game, 'statuses/notActive')),
-        run: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
-        effectsOf: (_state, args) => [{ 'statuses/remove': { status: idOf(args), runEnd: args.runEnd === true } }],
+        whyNot: (_state, { id }, { slice, game }) => (slice.active.some((entry) => entry.id === id) ? undefined : stringOf(game, 'statuses/notActive')),
+        run: (state, { id, runEnd }, context) => removeFrom(state, id, runEnd, context),
+        effectsOf: (_state, { id, runEnd }) => [CALLS.effects.remove({ status: id, runEnd })],
       },
     },
     statModifiers: (_state, { slice, game }) => (slice.active.length ? combined(game, slice.active) : undefined),
     onTurn: (state, context) => (context.slice.active.length ? endTurn(state, context) : state),
     view: (_state, { slice, game }) => statusesView(slice, game),
     references: {
-      calls: (_kind, _name, args) => [
-        ...(idOf(args) === '' ? [] : [{ entry: idOf(args), plugin: ID, list: 'statuses', noun: 'status' }]),
-        // A stacks bound can be an amount: `{ gte: { stat: 'resolve' } }`.
-        ...Object.values(stacksOf(args) ?? {})
-          .filter((bound) => typeof bound !== 'number')
-          .map((amount) => ({ amount })),
-      ],
       content: (game) =>
-        statusesOf(game).map((def) => ({
-          list: 'statuses',
-          id: def.id,
-          refs: [
-            ...(def.modifiers ?? []).map((modifier) => ({ stat: modifier.stat })),
-            { within: 'effects.start', refs: [{ effects: def.effects?.start }] },
-            { within: 'effects.turn', refs: [{ effects: def.effects?.turn }] },
-            { within: 'effects.end', refs: [{ effects: def.effects?.end }] },
-          ],
-        })),
+        DATA.statuses.content(game, (def) => [
+          ...(def.modifiers ?? []).map((modifier) => ({ stat: modifier.stat })),
+          { within: 'effects.start', refs: [{ effects: def.effects?.start }] },
+          { within: 'effects.turn', refs: [{ effects: def.effects?.turn }] },
+          { within: 'effects.end', refs: [{ effects: def.effects?.end }] },
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const def of statusesOf(game)) {
-        const problem = (what: string) => problems.push({ list: 'statuses', id: def.id, what })
+        const problem = (what: string) => problems.push(DATA.statuses.problem(def.id, what))
         if (!(def.turns >= 1)) problem('turns must be 1 or more')
         if (def.max !== undefined && (def.reapply ?? 'refresh') !== 'stack') problem('max only applies with reapply: "stack"')
         if (def.max !== undefined && !(def.max >= 1)) problem('max must be 1 or more')
@@ -312,11 +313,11 @@ function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
 }
 
 /** A condition: the status is active, with a number of stacks in this range if given. */
-const statusActive = (id: string, stacks?: Range): Condition => ({ 'statuses/active': stacks ? { status: id, stacks } : { status: id } })
+const statusActive = (id: string, stacks?: Range): Condition => CALLS.conditions.active(stacks ? { status: id, stacks } : { status: id })
 /** An effect: apply the status, refreshing or stacking it if it's already active. */
-const applyStatus = (id: string): EffectRef => ({ 'statuses/apply': { status: id } })
+const applyStatus = (id: string): EffectRef => CALLS.effects.apply({ status: id })
 /** An effect: take every stack of the status off. `runEnd` runs its `end` effects once per stack. */
-const removeStatus = (id: string, runEnd = false): EffectRef => ({ 'statuses/remove': runEnd ? { status: id, runEnd } : { status: id } })
+const removeStatus = (id: string, runEnd = false): EffectRef => CALLS.effects.remove(runEnd ? { status: id, runEnd } : { status: id })
 
 /**
  * The plugin, with its helpers on it: `statuses()` makes the plugin for the

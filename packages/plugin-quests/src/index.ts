@@ -10,14 +10,21 @@
  * diary, a to-do list — is the game's choice.
  */
 import {
+  arg,
+  defineCalls,
+  defineData,
   definePlugin,
+  list,
   holds,
   renderAction,
   stringOf,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type EffectRef,
+  type EffectsOf,
   type Game,
   type GameState,
   type PluginProblem,
@@ -104,29 +111,47 @@ export type QuestsView = {
   seen: RenderedChoice | null
 }
 
+const ID = 'quests'
+
+/** The plugin's content: `data.quests.quests`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  quests: list<QuestDef>({ noun: 'quest', words: { name: true, description: true, stages: [{ hint: true }] } }),
+})
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** Started and not finished. */
+    active: { quest: arg.entry(DATA.quests) },
+    /** Finished. */
+    done: { quest: arg.entry(DATA.quests) },
+    /** That stage is done. */
+    reached: { quest: arg.entry(DATA.quests), stage: arg.string() },
+  },
+  effects: {
+    /** Start it now, if it has not started. */
+    start: { quest: arg.entry(DATA.quests) },
+  },
+  commands: {
+    /** Track the quest `id`; with none, stop tracking. */
+    track: { id: arg.entry(DATA.quests).optional() },
+    /** Mark the quest `id` seen; with none, all of them. */
+    seen: { id: arg.entry(DATA.quests).optional() },
+  },
+})
+
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`) and its
+ * view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'quests/active': { quest: string }
-    'quests/done': { quest: string }
-    'quests/reached': { quest: string; stage: string }
-  }
-  interface EffectRegistry {
-    'quests/start': { quest: string }
-  }
-  interface CommandRegistry {
-    'quests/track': { id?: string } | true
-    'quests/seen': { id?: string } | true
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     quests: QuestsView
   }
 }
-
-const ID = 'quests'
 
 function emptyState(): QuestsState {
   return { started: {}, reached: {}, done: {}, tracked: null, seen: {} }
@@ -134,12 +159,12 @@ function emptyState(): QuestsState {
 
 /** The game's quests: `data.quests.quests`, from its packs. */
 export function questsOf(game: Game): QuestDef[] {
-  return (game.data?.[ID]?.quests ?? []) as QuestDef[]
+  return DATA.quests.all(game)
 }
 
 /** One of the game's quests, by id. */
 export function questOf(game: Game, id: string): QuestDef | undefined {
-  return questsOf(game).find((quest) => quest.id === id)
+  return DATA.quests.get(game, id)
 }
 
 /**
@@ -224,7 +249,7 @@ function entry(quest: QuestDef, record: QuestsState, state: GameState, game: Gam
         ? renderAction(state, game, {
             id: `track.${quest.id}`,
             label: stringOf(game, record.tracked === quest.id ? `${ID}/untrack` : `${ID}/track`),
-            command: record.tracked === quest.id ? { [`${ID}/track`]: {} } : trackQuest(quest.id),
+            command: record.tracked === quest.id ? trackQuest() : trackQuest(quest.id),
           })
         : null,
   }
@@ -257,23 +282,18 @@ function questsView(record: QuestsState, game: Game, state: GameState): QuestsVi
   }
 }
 
-/** The quest a call names: `quest` in a condition or an effect, `id` in a command. */
-function questId(args: Record<string, unknown>): string {
-  return String(args.quest ?? args.id ?? '')
-}
-
 /**
  * The plugin. Add it to the game's `plugins`, and put quests in a pack's
  * `data.quests.quests`.
  */
 function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
-  return definePlugin<QuestsState, QuestsView>({
+  return definePlugin<QuestsState, QuestsView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { quests: { name: true, description: true, stages: [{ hint: true }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,
@@ -286,45 +306,42 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
     },
     conditions: {
       /** `{ 'quests/active': { quest } }`: started and not finished. */
-      active: (state, args, { slice, game }) => {
+      active: (state, { quest }, { slice, game }) => {
         const record = advance(slice, state, game)
-        const id = questId(args)
-        return record.started[id] !== undefined && record.done[id] === undefined
+        return record.started[quest] !== undefined && record.done[quest] === undefined
       },
       /** `{ 'quests/done': { quest } }`: finished. */
-      done: (state, args, { slice, game }) => advance(slice, state, game).done[questId(args)] !== undefined,
+      done: (state, { quest }, { slice, game }) => advance(slice, state, game).done[quest] !== undefined,
       /** `{ 'quests/reached': { quest, stage } }`: that stage is done. */
       reached: (state, args, { slice, game }) => {
-        const quest = questsOf(game).find((entry) => entry.id === questId(args))
+        const quest = questOf(game, args.quest)
         const at = quest?.stages.findIndex((stage) => stage.id === args.stage) ?? -1
         return at >= 0 && (advance(slice, state, game).reached[quest!.id] ?? 0) > at
       },
     },
     effects: {
       /** `{ 'quests/start': { quest } }`: start it now, if it has not started. */
-      start: (state, args, { slice, set, game }) => {
-        const id = questId(args)
-        if (slice.started[id] !== undefined || !questsOf(game).some((quest) => quest.id === id)) return state
+      start: (state, { quest: id }, { slice, set, game }) => {
+        if (slice.started[id] !== undefined || !questOf(game, id)) return state
         return set(advance({ ...slice, started: { ...slice.started, [id]: state.turn } }, state, game))
       },
     },
     commands: {
       /** `{ 'quests/track': { id } }`: track the quest `id`; leave `id` out to stop tracking. */
       track: {
-        whyNot: (state, args, { slice, game }) => {
-          const id = questId(args)
+        whyNot: (state, { id }, { slice, game }) => {
           if (!id) return undefined
           const record = advance(slice, state, game)
           if (record.started[id] === undefined || record.done[id] !== undefined) return stringOf(game, 'quests/notDoing')
           return undefined
         },
-        run: (_state, args, { slice, set }) => set({ ...slice, tracked: questId(args) || null }),
+        run: (_state, { id }, { slice, set }) => set({ ...slice, tracked: id || null }),
       },
       /** `{ 'quests/seen': { id } }`: mark the quest `id` seen; leave `id` out to mark them all. */
       seen: {
-        run: (state, args, { slice, set, game }) => {
+        run: (state, { id: one }, { slice, set, game }) => {
           const record = advance(slice, state, game)
-          const ids = args.id ? [questId(args)] : Object.keys(record.started)
+          const ids = one ? [one] : Object.keys(record.started)
           const seen = { ...record.seen }
           for (const id of ids) seen[id] = mark(record, id)
           return set({ ...record, seen })
@@ -341,23 +358,17 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
     },
     view: (state, { slice, game }) => questsView(advance(slice, state, game), game, state),
     references: {
-      // The quest a condition, effect or command names. Tracking or looking with none is fine.
-      calls: (_kind, _name, args) => (questId(args) === '' ? [] : [{ entry: questId(args), plugin: 'quests', list: 'quests', noun: 'quest' }]),
       content: (game) =>
-        questsOf(game).map((quest) => ({
-          list: 'quests',
-          id: quest.id,
-          refs: [
-            ...(quest.storyline ? [{ storyline: quest.storyline }] : []),
-            ...(quest.stages ?? []).map((stage) => ({ within: `stage ${stage.id}`, refs: [{ when: stage.done }] })),
-            { within: 'starts', refs: [{ when: quest.starts }] },
-          ],
-        })),
+        DATA.quests.content(game, (quest) => [
+          ...(quest.storyline ? [{ storyline: quest.storyline }] : []),
+          ...(quest.stages ?? []).map((stage) => ({ within: `stage ${stage.id}`, refs: [{ when: stage.done }] })),
+          { within: 'starts', refs: [{ when: quest.starts }] },
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const quest of questsOf(game)) {
-        const say = (what: string) => problems.push({ list: 'quests', id: quest.id, what })
+        const say = (what: string) => problems.push(DATA.quests.problem(quest.id, what))
         if (!quest.stages?.length) say('has no stages')
         const ids = new Set<string>()
         for (const stage of quest.stages ?? []) {
@@ -371,17 +382,17 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
 }
 
 /** A condition: the quest is started and not finished. */
-const questActive = (quest: string): Condition => ({ 'quests/active': { quest } })
+const questActive = (quest: string): Condition => CALLS.conditions.active({ quest })
 /** A condition: the quest is finished. */
-const questDone = (quest: string): Condition => ({ 'quests/done': { quest } })
+const questDone = (quest: string): Condition => CALLS.conditions.done({ quest })
 /** A condition: this stage of the quest is done. */
-const questReached = (quest: string, stage: string): Condition => ({ 'quests/reached': { quest, stage } })
+const questReached = (quest: string, stage: string): Condition => CALLS.conditions.reached({ quest, stage })
 /** An effect: start the quest now. */
-const startQuest = (quest: string): EffectRef => ({ 'quests/start': { quest } })
+const startQuest = (quest: string): EffectRef => CALLS.effects.start({ quest })
 /** A command: pin this quest, or unpin with no argument. */
-const trackQuest = (quest?: string): CommandRef => ({ 'quests/track': { id: quest } })
+const trackQuest = (quest?: string): CommandRef => CALLS.commands.track(quest === undefined ? undefined : { id: quest })
 /** A command: the player has looked at this quest, or at all of them. */
-const seeQuests = (quest?: string): CommandRef => ({ 'quests/seen': { id: quest } })
+const seeQuests = (quest?: string): CommandRef => CALLS.commands.seen(quest === undefined ? undefined : { id: quest })
 
 /**
  * The plugin, with its helpers on it: `quests()` makes the plugin for the

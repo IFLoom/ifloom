@@ -11,15 +11,21 @@
  */
 import {
   amountOf,
+  arg,
   artSrc,
+  defineCalls,
+  defineData,
   definePlugin,
   holds,
+  list,
   notify,
   stringOf,
   type Amount,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type EffectRef,
+  type EffectsOf,
   type Game,
   type GameState,
   type PluginProblem,
@@ -88,23 +94,35 @@ export type AchievementsView = {
   total: number
 }
 
+const ID = 'achievements'
+
+/** The plugin's content: `data.achievements.achievements`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, { achievements: list<AchievementDef>({ noun: 'achievement', words: { name: true, description: true } }) })
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** Earned in this save. */
+    earned: { achievement: arg.entry(DATA.achievements) },
+  },
+  effects: {
+    /** Earn it now, if it isn't earned. */
+    grant: { achievement: arg.entry(DATA.achievements) },
+  },
+})
+
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'achievements/earned': { achievement: string }
-  }
-  interface EffectRegistry {
-    'achievements/grant': { achievement: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
   interface ViewRegistry {
     achievements: AchievementsView
   }
 }
-
-const ID = 'achievements'
 
 function emptyState(): AchievementsState {
   return { earned: {} }
@@ -112,7 +130,7 @@ function emptyState(): AchievementsState {
 
 /** The game's achievements: `data.achievements.achievements`, from its packs. */
 export function achievementsOf(game: Game): AchievementDef[] {
-  return (game.data?.[ID]?.achievements ?? []) as AchievementDef[]
+  return DATA.achievements.all(game)
 }
 
 /** Has this achievement's condition, or its progress, been met in this state? */
@@ -135,7 +153,7 @@ function earn(
   let next = state
   for (const id of ids) {
     earned[id] = state.turn
-    const title = achievementsOf(game).find((def) => def.id === id)?.name ?? id
+    const title = DATA.achievements.get(game, id)?.name ?? id
     next = notify(next, { id: `achievement.${id}`, title: stringOf(game, 'achievements/earned', { title }), tag: 'achievements' })
   }
   return set({ earned }, next)
@@ -184,24 +202,23 @@ function profileIds(stored: unknown): string[] {
  * pack's `data.achievements.achievements`.
  */
 function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView> {
-  return definePlugin<AchievementsState, AchievementsView>({
+  return definePlugin<AchievementsState, AchievementsView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { achievements: { name: true, description: true } },
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {
       /** `{ 'achievements/earned': { achievement } }`: earned in this save. */
-      earned: (_state, args, { slice }) => slice.earned[String(args.achievement ?? '')] !== undefined,
+      earned: (_state, { achievement }, { slice }) => slice.earned[achievement] !== undefined,
     },
     effects: {
       /** `{ 'achievements/grant': { achievement } }`: earn it now, if it isn't earned. */
-      grant: (state, args, { slice, set, game }) => {
-        const id = String(args.achievement ?? '')
-        if (slice.earned[id] !== undefined || !achievementsOf(game).some((def) => def.id === id)) return state
+      grant: (state, { achievement: id }, { slice, set, game }) => {
+        if (slice.earned[id] !== undefined || !DATA.achievements.get(game, id)) return state
         return earn(state, [id], game, set, slice)
       },
     },
@@ -224,23 +241,17 @@ function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView
     },
     view: (state, { slice, game, profile }) => achievementsView(slice, state, game, profile),
     references: {
-      calls: (_kind, _name, args) =>
-        args.achievement === undefined ? [] : [{ entry: String(args.achievement), plugin: ID, list: 'achievements', noun: 'achievement' }],
       content: (game) =>
-        achievementsOf(game).map((def) => ({
-          list: 'achievements',
-          id: def.id,
-          refs: [
-            { within: 'when', refs: [{ when: def.when }] },
-            ...(def.progress ? [{ within: 'progress', refs: [{ amount: def.progress.value }] }] : []),
-            ...(def.image ? [{ picture: def.image }] : []),
-          ],
-        })),
+        DATA.achievements.content(game, (def) => [
+          { within: 'when', refs: [{ when: def.when }] },
+          ...(def.progress ? [{ within: 'progress', refs: [{ amount: def.progress.value }] }] : []),
+          ...(def.image ? [{ picture: def.image }] : []),
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const def of achievementsOf(game)) {
-        if (def.progress && !(def.progress.target > 0)) problems.push({ list: 'achievements', id: def.id, what: 'progress target must be more than 0' })
+        if (def.progress && !(def.progress.target > 0)) problems.push(DATA.achievements.problem(def.id, 'progress target must be more than 0'))
       }
       return problems
     },
@@ -248,9 +259,9 @@ function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView
 }
 
 /** A condition: the achievement is earned in this save. */
-const achievementEarned = (id: string): Condition => ({ [`${ID}/earned`]: { achievement: id } })
+const achievementEarned = (id: string): Condition => CALLS.conditions.earned({ achievement: id })
 /** An effect: earn the achievement now. */
-const grantAchievement = (id: string): EffectRef => ({ [`${ID}/grant`]: { achievement: id } })
+const grantAchievement = (id: string): EffectRef => CALLS.effects.grant({ achievement: id })
 
 /**
  * The plugin, with its helpers on it: `achievements()` makes the plugin for the

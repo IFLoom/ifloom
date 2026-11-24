@@ -13,11 +13,17 @@
  * Imports only @ifloom/engine and requires no other plugin (ADR 0003).
  */
 import {
+  arg,
+  defineCalls,
+  defineData,
   definePlugin,
+  list,
   stringOf,
   upgradePack,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type Game,
   type Pack,
@@ -32,16 +38,13 @@ import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 export { ITERATIONS, normaliseCode } from './crypto.ts'
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'unlocks/has': { unlock: string }
-  }
-  interface CommandRegistry {
-    'unlocks/record': { id: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     unlocks: UnlocksView
   }
@@ -51,6 +54,21 @@ declare module '@ifloom/engine' {
 }
 
 const ID = 'unlocks'
+
+/** The plugin's content: `data.unlocks.unlocks`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, { unlocks: list<UnlockDef>({ noun: 'unlock', words: { name: true, description: true } }) })
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** The unlock is recorded in this save. */
+    has: { unlock: arg.entry(DATA.unlocks) },
+  },
+  commands: {
+    /** Record the unlock in this save. */
+    record: { id: arg.entry(DATA.unlocks) },
+  },
+})
 
 /** Where the page keeps the encrypted content `ifloom build` puts in it. */
 const GLOBAL = '__ifloomUnlocks'
@@ -138,7 +156,7 @@ export type UnlockStatus = {
 
 /** The game's unlocks: `data.unlocks.unlocks`, from its packs. */
 export function unlocksOf(game: Game): UnlockDef[] {
-  return (game.data?.[ID]?.unlocks ?? []) as UnlockDef[]
+  return DATA.unlocks.all(game)
 }
 
 /** The environment variable `ifloom build` reads an unlock's code from: `IFLOOM_UNLOCK_SUPPORTER` for `supporter`. */
@@ -388,10 +406,10 @@ export function enterCode(runner: Runner, code: string): Promise<Result<Entered>
  * `data.unlocks.unlocks`, and start entering codes with `startUnlocks`.
  */
 function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
-  return definePlugin<UnlocksState, UnlocksView>({
+  return definePlugin<UnlocksState, UnlocksView, typeof CALLS>({
     id: ID,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { unlocks: { name: true, description: true } },
+    calls: CALLS,
+    data: DATA,
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
@@ -407,7 +425,7 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
     },
     conditions: {
       /** `{ 'unlocks/has': { unlock } }`: the unlock is recorded in this save. */
-      has: (_state, args, { slice }) => slice.unlocked.includes(String(args.unlock ?? '')),
+      has: (_state, { unlock }, { slice }) => slice.unlocked.includes(unlock),
     },
     commands: {
       /**
@@ -417,12 +435,11 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
        */
       record: {
         ignoresLocks: true,
-        whyNot: (_state, args, { game, slice }) => {
-          const id = String(args.id ?? '')
-          if (!unlocksOf(game).some((def) => def.id === id)) return stringOf(game, 'unlocks/unknown')
+        whyNot: (_state, { id }, { game, slice }) => {
+          if (!DATA.unlocks.get(game, id)) return stringOf(game, 'unlocks/unknown')
           return slice.unlocked.includes(id) ? stringOf(game, 'unlocks/already') : undefined
         },
-        run: (_state, args, { slice, set }) => set({ unlocked: [...slice.unlocked, String(args.id)] }),
+        run: (_state, { id }, { slice, set }) => set({ unlocked: [...slice.unlocked, id] }),
       },
     },
     view: (_state, { slice, game }): UnlocksView => {
@@ -434,17 +451,11 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
       }))
       return { unlocks: list, unlocked: list.filter((entry) => entry.unlocked).length, total: list.length }
     },
-    references: {
-      calls: (table, _name, args) => {
-        const id = table === 'commands' ? args.id : args.unlock
-        return id === undefined ? [] : [{ entry: String(id), plugin: ID, list: 'unlocks', noun: 'unlock' }]
-      },
-    },
     check: (game) => {
       const problems: PluginProblem[] = []
       const seen = new Set<string>()
       for (const def of unlocksOf(game)) {
-        const problem = (what: string) => problems.push({ list: 'unlocks', id: def.id, what })
+        const problem = (what: string) => problems.push(DATA.unlocks.problem(def.id, what))
         if (seen.has(def.id)) problem('two unlocks share this id')
         seen.add(def.id)
         if (typeof def.name !== 'string' || !def.name.trim()) problem('has no name')
@@ -457,9 +468,9 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
 }
 
 /** A condition: the unlock is recorded in this save. */
-const hasUnlock = (unlock: string): Condition => ({ [`${ID}/has`]: { unlock } })
+const hasUnlock = (unlock: string): Condition => CALLS.conditions.has({ unlock })
 /** A command: record the unlock in this save. `startUnlocks` sends it; a game rarely needs to. */
-const recordUnlock = (unlock: string): CommandRef => ({ [`${ID}/record`]: { id: unlock } })
+const recordUnlock = (unlock: string): CommandRef => CALLS.commands.record({ id: unlock })
 
 /**
  * The plugin, with its helpers on it: `unlocks()` makes the plugin for the

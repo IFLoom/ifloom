@@ -10,15 +10,20 @@
  * makes the same entities.
  */
 import {
+  arg,
+  defineCalls,
+  defineData,
   definePlugin,
-  parseRef,
   draw,
+  list,
+  parseRef,
   statOf,
   statValue,
   weighted,
   type DefinedPlugin,
   type Effect,
   type EffectRef,
+  type EffectsOf,
   type EntityRef,
   type Game,
   type GameState,
@@ -74,25 +79,44 @@ export type TemplateDef = {
 export type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface EffectRegistry {
-    'generators/generate': { template: string; count?: number }
-  }
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
 }
 
 const ID = 'generators'
 
+/** The plugin's content: `data.generators.pools` and `data.generators.templates`. */
+const DATA = defineData(ID, {
+  pools: list<PoolDef>({ noun: 'pool' }),
+  templates: list<TemplateDef>({ noun: 'template' }),
+})
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  effects: {
+    /** Make `count` (1 if left out) entities from the template. */
+    generate: {
+      template: arg.entry(DATA.templates),
+      count: arg
+        .number()
+        .optional(1)
+        .rule((count) => (Number.isInteger(count) && count >= 1 ? undefined : 'count must be a whole number, 1 or more')),
+    },
+  },
+})
+
 /** The game's pools: `data.generators.pools`, from its packs. */
 export function poolsOf(game: Game): PoolDef[] {
-  return (game.data?.[ID]?.pools ?? []) as PoolDef[]
+  return DATA.pools.all(game)
 }
 
 /** The game's templates: `data.generators.templates`, from its packs. */
 export function templatesOf(game: Game): TemplateDef[] {
-  return (game.data?.[ID]?.templates ?? []) as TemplateDef[]
+  return DATA.templates.all(game)
 }
 
 function entryValue(entry: PoolEntry): KvValue {
@@ -107,7 +131,7 @@ function entryWeight(entry: PoolEntry): number | undefined {
 function drawField(field: FieldDef, game: Game, parts: (string | number)[]): KvValue {
   if (typeof field !== 'object' || field === null) return field
   if ('pool' in field) {
-    const pool = poolsOf(game).find((entry) => entry.id === field.pool)
+    const pool = DATA.pools.get(game, field.pool)
     const picked = pool && weighted(pool.values, entryWeight, ...parts)
     return picked === undefined ? '' : entryValue(picked)
   }
@@ -201,18 +225,20 @@ function rangeProblems(field: FieldDef | undefined): string[] {
  * a pack's `data.generators.pools` and `data.generators.templates`.
  */
 function generatorsPlugin(): DefinedPlugin<null> {
-  return definePlugin({
+  return definePlugin<null, unknown, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     effects: {
       /** `{ 'generators/generate': { template, count? } }`: make `count` (1 if left out) entities from the template. */
       generate: (state, args, { game, apply }) => {
-        const template = templatesOf(game).find((entry) => entry.id === String(args.template ?? ''))
+        const template = DATA.templates.get(game, args.template)
         const kind = template && templateKind(template)
         if (!template || kind === undefined) return state
-        const count = Math.max(0, Math.floor(Number(args.count ?? 1)) || 0)
+        const count = Math.max(0, Math.floor(args.count))
         let next = state
         for (let made = 0; made < count; made += 1) {
           // The number the engine's `create` gives the next one: every draw for it is seeded by it.
@@ -223,31 +249,20 @@ function generatorsPlugin(): DefinedPlugin<null> {
       },
     },
     references: {
-      calls: (table, name, args): Reference[] => [
-        ...(args.template === undefined ? [] : [{ entry: String(args.template), plugin: ID, list: 'templates', noun: 'template' }]),
-        ...(table === 'effects' && name === 'generate' && args.count !== undefined && !(Number.isInteger(Number(args.count)) && Number(args.count) >= 1)
-          ? [{ problem: 'count must be a whole number, 1 or more' }]
-          : []),
-      ],
-      content: (game) => [
-        ...templatesOf(game).map((template) => ({
-          list: 'templates',
-          id: template.id,
-          refs: [
-            ...(templateKind(template) !== undefined ? [{ kind: templateKind(template)! }] : []),
-            ...(template.like !== undefined ? [{ like: template.like, of: template.of }] : []),
-            ...Object.keys(template.stats ?? {}).flatMap((stat): Reference[] =>
-              templateKind(template) !== undefined ? [{ stat, starts: templateKind(template)! }] : [],
-            ),
-            ...Object.keys(typeof template.at === 'string' ? { [template.at]: 1 } : (template.at ?? {})).map((holder): Reference => ({ holder })),
-            ...Object.keys(template.traits ?? {}).map((trait): Reference => ({ trait })),
-            ...(typeof template.image === 'string' ? [{ picture: template.image }] : []),
-            ...fields(template)
-              .flatMap(({ field }) => poolsIn(field))
-              .map((pool): Reference => ({ entry: pool, plugin: ID, list: 'pools', noun: 'pool' })),
-          ],
-        })),
-      ],
+      content: (game) =>
+        DATA.templates.content(game, (template) => [
+          ...(templateKind(template) !== undefined ? [{ kind: templateKind(template)! }] : []),
+          ...(template.like !== undefined ? [{ like: template.like, of: template.of }] : []),
+          ...Object.keys(template.stats ?? {}).flatMap((stat): Reference[] =>
+            templateKind(template) !== undefined ? [{ stat, starts: templateKind(template)! }] : [],
+          ),
+          ...Object.keys(typeof template.at === 'string' ? { [template.at]: 1 } : (template.at ?? {})).map((holder): Reference => ({ holder })),
+          ...Object.keys(template.traits ?? {}).map((trait): Reference => ({ trait })),
+          ...(typeof template.image === 'string' ? [{ picture: template.image }] : []),
+          ...fields(template)
+            .flatMap(({ field }) => poolsIn(field))
+            .map((pool) => DATA.pools.ref(pool)),
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
@@ -256,14 +271,14 @@ function generatorsPlugin(): DefinedPlugin<null> {
           const weight = entryWeight(entry) ?? 1
           return Number.isFinite(weight) && weight > 0
         })
-        if (!live.length) problems.push({ list: 'pools', id: pool.id, what: 'has nothing to pick: no values, or every weight is 0' })
+        if (!live.length) problems.push(DATA.pools.problem(pool.id, 'has nothing to pick: no values, or every weight is 0'))
       }
       for (const template of templatesOf(game)) {
-        if (templateKind(template) === undefined) problems.push({ list: 'templates', id: template.id, what: 'makes nothing: give it an of or a like' })
-        else if (template.name === undefined && template.like === undefined)
-          problems.push({ list: 'templates', id: template.id, what: 'needs a name, or a like to read it from' })
+        const problem = (what: string) => problems.push(DATA.templates.problem(template.id, what))
+        if (templateKind(template) === undefined) problem('makes nothing: give it an of or a like')
+        else if (template.name === undefined && template.like === undefined) problem('needs a name, or a like to read it from')
         for (const { where, field } of fields(template)) {
-          for (const what of rangeProblems(field)) problems.push({ list: 'templates', id: template.id, what: `${where}: ${what}` })
+          for (const what of rangeProblems(field)) problem(`${where}: ${what}`)
         }
       }
       return problems
@@ -272,7 +287,7 @@ function generatorsPlugin(): DefinedPlugin<null> {
 }
 
 /** An effect: make `count` (1 if left out) new entities from the template. */
-const generate = (template: string, count?: number): EffectRef => ({ 'generators/generate': count === undefined ? { template } : { template, count } })
+const generate = (template: string, count?: number): EffectRef => CALLS.effects.generate(count === undefined ? { template } : { template, count })
 
 /**
  * The plugin, with its helpers on it: `generators()` makes the plugin for the

@@ -16,33 +16,37 @@
  * where the player is. Without it, nobody is ever here, but calls still work.
  */
 import {
+  arg,
   artSrc,
   bindCurrent,
+  defineCalls,
   definePlugin,
   entityDescription,
   entityImage,
   entityName,
   entityOf,
-  traitOf,
   entityUi,
   fillTokens,
   holds,
   lockedOut,
   parseRef,
   pluginQuery,
-  speakerOf,
   renderAction,
-  stringOf,
+  speakerOf,
   startingState,
   storylineOpen,
+  stringOf,
+  traitOf,
   whyNot,
   withTrait,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type EntityDef,
-  type EntityUi,
   type EntityRef,
+  type EntityUi,
   type Game,
   type GameState,
   type PluginContext,
@@ -136,19 +140,13 @@ export type CastView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'cast/here': { character: string | readonly string[] }
-    'cast/at': { character: string; at: string | readonly string[] }
-    'cast/met': { character: string | readonly string[] }
-  }
-  interface CommandRegistry {
-    'cast/talk': { id: string }
-    'cast/call': { id: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   // `cast/portrait` and `cast/contacts`, which other plugins ask, are the engine's `PartnerQueries`.
   interface QueryRegistry {
     'cast/present': () => string[]
@@ -162,6 +160,24 @@ declare module '@ifloom/engine' {
 const ID = 'cast'
 const PERSON = 'cast/person'
 const KIND = 'character'
+
+/** The plugin's calls, and what each takes. Each names someone by id (one of the cast's kind) or by reference. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** In the room with the player; with a list, any of them. */
+    here: { character: arg.strings() },
+    /** Where someone is, whoever else is there: in one of these places. */
+    at: { character: arg.string(), at: arg.strings() },
+    /** The player has met them; with a list, any of them. */
+    met: { character: arg.strings() },
+  },
+  commands: {
+    /** Start a conversation with someone here. */
+    talk: { id: arg.string() },
+    /** Reach someone from anywhere. */
+    call: { id: arg.string() },
+  },
+})
 
 /** Where someone is when nowhere on the map: away. */
 export const AWAY = 'away'
@@ -185,11 +201,6 @@ function uiOf(state: GameState, game: Game, ref: EntityRef): { ui?: Ui<EntityUi>
   return ui ? { ui } : {}
 }
 
-/** One or several, as a list: `character: 'ava'` or `character: ['ava', 'sam']`. */
-function ids(value: unknown): string[] {
-  return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
-}
-
 const PERSON_FIELDS = ['fullName', 'pronouns', 'home', 'schedule', 'talk', 'call', 'storyline', 'met', 'portrait'] as const
 
 const talkOptions = (person: Person): TalkOption[] => (typeof person.talk === 'string' ? [{ scene: person.talk }] : (person.talk ?? []))
@@ -199,7 +210,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const kind = options.kind ?? KIND
   /** Who a call names: a bare id is one of the cast's kind, a reference (what `'$'` becomes) is as written. */
   const refOf = (id: string): EntityRef => (id.includes(':') || id === '$' ? id : `${kind}:${id}`) as EntityRef
-  const who = (value: unknown) => ids(value).map(refOf)
+  const who = (ids: readonly string[]) => ids.map(refOf)
   /** How the plugin names someone back: their id for one of its kind, else the whole reference. */
   const short = (ref: EntityRef) => (parseRef(ref)?.kind === kind ? parseRef(ref)!.id : ref)
 
@@ -316,9 +327,10 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     },
   }
 
-  return definePlugin<null, CastView>({
+  return definePlugin<null, CastView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     commandVersion: COMMAND_VERSION,
@@ -342,20 +354,20 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     },
     conditions: {
       /** `{ 'cast/here': { character: 'ava' } }`: in the room with the player; with a list, any of them. */
-      here: (state, args, context) =>
-        who(args.character).some((ref) => {
+      here: (state, { character }, context) =>
+        who(character).some((ref) => {
           const them = one(state, context.game, ref)
           return them ? isHere(state, context, them) : false
         }),
       /** `{ 'cast/at': { character: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
-      at: (state, args, { game }) => {
-        const them = one(state, game, who(args.character)[0])
+      at: (state, { character, at }, { game }) => {
+        const them = one(state, game, refOf(character))
         // A place by its id, or by its reference (`location:park`), as a phrase's argument passes it.
-        return them ? ids(args.at).some((place) => (parseRef(place)?.id ?? place) === placeOf(state, game, them)) : false
+        return them ? at.some((place) => (parseRef(place)?.id ?? place) === placeOf(state, game, them)) : false
       },
       /** `{ 'cast/met': { character: 'ava' } }`: the player has met them; with a list, any of them. */
-      met: (state, args, { game }) =>
-        who(args.character).some((ref) => {
+      met: (state, { character }, { game }) =>
+        who(character).some((ref) => {
           const them = one(state, game, ref)
           return them ? met(state, game, them) : false
         }),
@@ -363,24 +375,24 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     values: {
       /** <code v-pre>{{cast/name character=ava}}</code>: someone's name as the player reads it; `''` for anyone not in the cast. */
       name: (state, args, { game }) => {
-        const them = one(state, game, who(args.character)[0])
+        const them = typeof args.character === 'string' ? one(state, game, refOf(args.character)) : undefined
         return them ? nameOf(state, game, them) : ''
       },
     },
     commands: {
       /** `{ 'cast/talk': { id } }`: start a conversation with someone here. */
       talk: {
-        whyNot: (state, args, context) => talkBlocked(state, context, who(args.id)[0]),
-        run: (state, args, { game }) => {
-          const them = one(state, game, who(args.id)[0])!
+        whyNot: (state, { id }, context) => talkBlocked(state, context, refOf(id)),
+        run: (state, { id }, { game }) => {
+          const them = one(state, game, refOf(id))!
           return { ...state, sceneId: talkOption(state, game, them)!.scene }
         },
       },
       /** `{ 'cast/call': { id } }`: reach someone from anywhere. */
       call: {
-        whyNot: (state, args, { game }) => callBlocked(state, game, who(args.id)[0]),
-        run: (state, args, { game }) => {
-          const them = one(state, game, who(args.id)[0])!
+        whyNot: (state, { id }, { game }) => callBlocked(state, game, refOf(id)),
+        run: (state, { id }, { game }) => {
+          const them = one(state, game, refOf(id))!
           return { ...state, sceneId: them.person.call?.scene ?? talkOption(state, game, them)?.scene ?? talkOptions(them.person)[0]?.scene ?? null }
         },
       },
@@ -393,12 +405,12 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
           .map((them) => short(them.ref)),
       /** Where someone is (`{ character }`). */
       where: (state, args, { game }) => {
-        const them = one(state, game, who(args.character)[0])
+        const them = one(state, game, refOf(String(args.character ?? '')))
         return them ? placeOf(state, game, them) : undefined
       },
       /** Someone's face for avatars (`{ character }`): the trait's `portrait`, else their picture, through `artSrc`; undefined for anyone not in the cast. */
       portrait: (state, args, { game }) => {
-        const them = one(state, game, who(args.character)[0])
+        const them = one(state, game, refOf(String(args.character ?? '')))
         return them ? portraitOf(state, game, them) : undefined
       },
       /**
@@ -437,8 +449,10 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       }
     },
     references: {
-      // The people a call names: a condition's `character`, a command's `id`. `'$'` and `'character:*'` (what it is checked as) name nobody in particular.
-      calls: (table, _name, args) => (table === 'conditions' ? who(args.character) : who(args.id)).map((entity): Reference => ({ entity })),
+      // The people a call names, as entities of the kind this cast's options give, which its declaration can't know.
+      // A condition's `character`, a command's `id`. `'$'` and `'character:*'` (what it is checked as) name nobody in particular.
+      calls: (table, _name, args) =>
+        who(CALLS.conditions.met.read({ character: table === 'conditions' ? args.character : args.id }).character).map((entity): Reference => ({ entity })),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
@@ -477,15 +491,15 @@ function person(def: PersonDef): EntityDef {
 }
 
 /** The command that starts a conversation. */
-const talk = (who: string): CommandRef => ({ [`${ID}/talk`]: { id: who } })
+const talk = (who: string): CommandRef => CALLS.commands.talk({ id: who })
 /** The command that calls someone. */
-const call = (who: string): CommandRef => ({ [`${ID}/call`]: { id: who } })
+const call = (who: string): CommandRef => CALLS.commands.call({ id: who })
 /** True while any of these is in the room. */
-const here = (...who: string[]): Condition => ({ [`${ID}/here`]: { character: who } })
+const here = (...who: string[]): Condition => CALLS.conditions.here({ character: who })
 /** True while this one is in one of these places. */
-const isAt = (who: string, ...places: string[]): Condition => ({ [`${ID}/at`]: { character: who, at: places } })
+const isAt = (who: string, ...places: string[]): Condition => CALLS.conditions.at({ character: who, at: places })
 /** True once the player has met any of these. */
-const hasMet = (...who: string[]): Condition => ({ [`${ID}/met`]: { character: who } })
+const hasMet = (...who: string[]): Condition => CALLS.conditions.met({ character: who })
 /** How content names a character's entity, for `of`, `at` and `entity`: `cast.character('ava')` is `'character:ava'`. */
 const character = (who: string, kind = KIND): EntityRef => `${kind}:${who}`
 

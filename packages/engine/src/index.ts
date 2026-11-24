@@ -51,6 +51,7 @@ export type {
   PluginArgs,
   PluginCommand,
   PluginContext,
+  PluginDef,
   PluginEntry,
   PluginProblem,
   PluginReferences,
@@ -61,6 +62,27 @@ export type {
   TurnContext,
 } from './plugin.ts'
 export { definePlugin, pluginQuery } from './plugin.ts'
+// A plugin's calls and data lists, declared once
+export type {
+  Arg,
+  ArgIn,
+  ArgOut,
+  ArgShape,
+  ArgsIn,
+  ArgsOut,
+  CallArgs,
+  CallShapes,
+  CallWriter,
+  CommandsOf,
+  ConditionsOf,
+  DataList,
+  EffectsOf,
+  ListSpec,
+  PluginCalls,
+  PluginData,
+  WrittenAs,
+} from './pluginCalls.ts'
+export { arg, defineCalls, defineData, list } from './pluginCalls.ts'
 export type { SpeakerView } from './speakers.ts'
 export { speakerOf } from './speakers.ts'
 export type { CastContact, PartnerQueries, SenderView } from './partners.ts'

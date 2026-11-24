@@ -9,27 +9,34 @@
  * Nothing here knows about phones; a device shows a feed as an app.
  */
 import {
+  arg,
   artSrc,
+  defineCalls,
+  defineData,
   definePlugin,
-  type SenderView,
-  type GameState,
-  speakerOf,
-  pluginQuery,
   fillTokens,
   holds,
+  list,
   parseBeats,
+  pluginQuery,
   renderAction,
-  styledBeats,
+  speakerOf,
   stringOf,
+  styledBeats,
   type Block,
   type CommandRef,
-  type DefinedPlugin,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
+  type DefinedPlugin,
   type EffectRef,
+  type EffectsOf,
   type Game,
+  type GameState,
   type Reference,
   type RenderedChoice,
   type SceneBeat,
+  type SenderView,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -117,22 +124,14 @@ export type FeedView = {
 export type FeedsView = { feeds: FeedView[]; unread: number }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'feed/appeared': { post: string }
-    'feed/posted': { feed?: string; gte?: number } | true
-    'feed/likes': { post: string; gte?: number }
-  }
-  interface EffectRegistry {
-    'feed/post': { feed: string; post: string; text?: string; image?: string; video?: string; likes?: number }
-    'feed/react': { post: string; likes?: number; from?: string; text?: string }
-  }
-  interface CommandRegistry {
-    'feed/seen': { id?: string } | true
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     feed: FeedsView
   }
@@ -140,9 +139,52 @@ declare module '@ifloom/engine' {
 
 const ID = 'feed'
 
+/** The plugin's content: `data.feed.feeds` and `data.feed.posts`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, {
+  feeds: list<FeedDef>({ noun: 'feed', words: { name: true } }),
+  posts: list<PostDef>({ noun: 'post', words: { body: 'blocks' } }),
+})
+
+/** Words content wrote in place, which must not be a prose key. */
+const wordsAs =
+  (field: string) =>
+  (words: string): Reference[] => [{ words, field }]
+/** A picture or a video, as a path from the page. */
+const picture = (path: string): Reference[] => [{ picture: path }]
+const video = (path: string): Reference[] => [{ video: path }]
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** The post has appeared. */
+    appeared: { post: arg.entry(DATA.posts) },
+    /** The player has made at least `gte` posts (1 if left out), to `feed` or to any. */
+    posted: { feed: arg.entry(DATA.feeds).optional(), gte: arg.number().optional(1) },
+    /** A post has at least `gte` likes (1 if left out). */
+    likes: { post: arg.string(), gte: arg.number().optional(1) },
+  },
+  effects: {
+    /** The player posts to `feed`, as the post with id `post`: its words, picture or video, and likes. */
+    post: {
+      feed: arg.entry(DATA.feeds),
+      post: arg.string(),
+      text: arg.words().optional().naming(wordsAs('post')),
+      image: arg.string().optional().naming(picture),
+      video: arg.string().optional().naming(video),
+      likes: arg.number().optional(0),
+    },
+    /** Likes, a comment `text` from `from`, or both, on a post. */
+    react: { post: arg.string(), likes: arg.number().optional(0), from: arg.string().optional(''), text: arg.words().optional().naming(wordsAs('comment')) },
+  },
+  commands: {
+    /** The player has looked at the feed `id`; leave `id` out for all. */
+    seen: { id: arg.entry(DATA.feeds).optional() },
+  },
+})
+
 /** The game's posts: `data.feed.posts`, from its packs. */
 export function postsOf(game: Game): PostDef[] {
-  return (game.data?.[ID]?.posts ?? []) as PostDef[]
+  return DATA.posts.all(game)
 }
 
 /** Who a post is from: the cast's answer when the game has the cast, else their entity's name and picture, or the name as written. */
@@ -161,7 +203,7 @@ const wordsOf = (beats: readonly SceneBeat[]) => beats.flatMap((beat) => ('text'
 
 /** The game's feeds, in order: `data.feed.feeds`, from its packs. */
 export function feedsOf(game: Game): FeedDef[] {
-  return (game.data?.[ID]?.feeds ?? []) as FeedDef[]
+  return DATA.feeds.all(game)
 }
 
 /**
@@ -182,15 +224,13 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     return postsOf(game).filter((post) => post.feed === id && record.appeared[post.id] !== undefined).length
   }
 
-  return definePlugin<FeedState, FeedsView>({
+  return definePlugin<FeedState, FeedsView, typeof CALLS>({
     id: ID,
     version: 3,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { feeds: { name: true }, posts: { body: 'blocks' } },
-    // A post's words and a comment's, written in the effect that makes them.
-    callWords: { post: { text: true }, react: { text: true } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // Posters are the cast's characters when the game has the cast: a name and a face.
@@ -224,15 +264,14 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     start: () => ({ appeared: {}, own: [], reactions: {}, seen: {} }),
     conditions: {
       /** `{ 'feed/appeared': { post } }`. */
-      appeared: (_state, args, { slice }) => slice.appeared[String(args.post)] !== undefined,
+      appeared: (_state, { post }, { slice }) => slice.appeared[post] !== undefined,
       /** `{ 'feed/posted': { feed?, gte? } }`: how many posts the player has made, there or anywhere. */
-      posted: (_state, args, { slice }) => slice.own.filter((post) => args.feed === undefined || post.feed === args.feed).length >= Number(args.gte ?? 1),
+      posted: (_state, { feed, gte }, { slice }) => slice.own.filter((post) => feed === undefined || post.feed === feed).length >= gte,
       /** `{ 'feed/likes': { post, gte } }`: a post has at least this many likes. */
-      likes: (_state, args, { slice, game }) => {
-        const id = String(args.post)
+      likes: (_state, { post: id, gte }, { slice, game }) => {
         const own = slice.own.find((post) => post.id === id)
-        const base = own ? own.likes : (postsOf(game).find((post) => post.id === id)?.likes ?? 0)
-        return base + (slice.reactions[id]?.likes ?? 0) >= Number(args.gte ?? 1)
+        const base = own ? own.likes : (DATA.posts.get(game, id)?.likes ?? 0)
+        return base + (slice.reactions[id]?.likes ?? 0) >= gte
       },
     },
     effects: {
@@ -240,27 +279,15 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
        * `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }`: the
        * player posts to `feed`, as the post with id `post`. An id already posted is left as it is.
        */
-      post: (state, args, { slice, set, game }) => {
-        const id = String(args.post)
+      post: (state, { post: id, feed, text, image, video, likes }, { slice, set, game }) => {
         // A feed the game doesn't have would hold a post nobody can see.
-        if (slice.own.some((post) => post.id === id) || !feedIds(game).has(String(args.feed))) return state
-        const post: OwnPost = {
-          id,
-          feed: String(args.feed),
-          turn: state.turn,
-          text: args.text === undefined ? undefined : String(args.text),
-          image: args.image === undefined ? undefined : String(args.image),
-          video: args.video === undefined ? undefined : String(args.video),
-          likes: Number(args.likes ?? 0),
-          comments: [],
-        }
+        if (slice.own.some((post) => post.id === id) || !feedIds(game).has(feed)) return state
+        const post: OwnPost = { id, feed, turn: state.turn, text, image, video, likes, comments: [] }
         return set({ ...slice, own: [...slice.own, post] })
       },
       /** `{ 'feed/react': { post, likes?, from?, text? } }`: likes, a comment, or both. */
-      react: (state, args, { slice, set }) => {
-        const id = String(args.post)
-        const comment = args.text === undefined ? [] : [{ from: String(args.from ?? ''), text: String(args.text) }]
-        const likes = Number(args.likes ?? 0)
+      react: (state, { post: id, likes, from, text }, { slice, set }) => {
+        const comment = text === undefined ? [] : [{ from, text }]
         const own = slice.own.findIndex((post) => post.id === id)
         if (own >= 0) {
           const list = [...slice.own]
@@ -278,8 +305,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     commands: {
       /** `{ 'feed/seen': { id } }`: the player has looked at the feed `id`; leave `id` out for all. */
       seen: {
-        run: (_state, args, { slice, set, game }) => {
-          const ids = args.id === undefined ? [...feedIds(game)] : [String(args.id)]
+        run: (_state, { id }, { slice, set, game }) => {
+          const ids = id === undefined ? [...feedIds(game)] : [id]
           const seen = { ...slice.seen }
           for (const id of ids) seen[id] = count(slice, game, id)
           return set({ ...slice, seen })
@@ -350,42 +377,27 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
       return { feeds, unread: feeds.reduce((sum, entry) => sum + entry.unread, 0) }
     },
     references: {
-      calls: (table, name, args) => {
-        if (table === 'conditions' && name === 'appeared') return [{ entry: String(args.post), plugin: 'feed', list: 'posts', noun: 'post' }]
-        if (table !== 'effects') return []
-        // What the player posts or comments: its words, and its picture or video as a path from the page.
-        const refs: Reference[] = []
-        if (args.text !== undefined) refs.push({ words: String(args.text), field: name === 'post' ? 'post' : 'comment' })
-        if (name === 'post' && args.image !== undefined) refs.push({ picture: String(args.image) })
-        if (name === 'post' && args.video !== undefined) refs.push({ video: String(args.video) })
-        return refs
-      },
       content: (game) =>
-        postsOf(game).map((post) => ({
-          list: 'posts',
-          id: post.id,
-          refs: [
-            { entry: post.feed, plugin: ID, list: 'feeds', noun: 'feed' },
-            { when: post.when },
-            { blocks: post.body },
-            ...(post.image !== undefined ? [{ picture: post.image }] : []),
-            ...(post.video !== undefined ? [{ video: post.video }] : []),
-          ],
-        })),
+        DATA.posts.content(game, (post) => [
+          DATA.feeds.ref(post.feed),
+          { when: post.when },
+          { blocks: post.body },
+          ...(post.image !== undefined ? picture(post.image) : []),
+          ...(post.video !== undefined ? video(post.video) : []),
+        ]),
     },
   })
 }
 
 /** An effect: the player posts to a feed. `text` is a prose key. */
-const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef => ({
-  [`${ID}/post`]: { feed: feedId, post: id, ...post },
-})
+const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef =>
+  CALLS.effects.post({ feed: feedId, post: id, ...post })
 /** An effect: likes, a comment, or both, on a post. */
-const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => ({ [`${ID}/react`]: { post, ...reaction } })
+const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => CALLS.effects.react({ post, ...reaction })
 /** A command: the player has looked at a feed, or at every feed. */
-const seeFeed = (feedId?: string): CommandRef => ({ [`${ID}/seen`]: feedId === undefined ? {} : { id: feedId } })
+const seeFeed = (feedId?: string): CommandRef => CALLS.commands.seen(feedId === undefined ? undefined : { id: feedId })
 /** A condition: the player has posted at least `gte` times, to one feed or any. */
-const hasPosted = (gte = 1, feedId?: string): Condition => ({ [`${ID}/posted`]: feedId === undefined ? { gte } : { gte, feed: feedId } })
+const hasPosted = (gte = 1, feedId?: string): Condition => CALLS.conditions.posted(feedId === undefined ? { gte } : { gte, feed: feedId })
 
 /**
  * The plugin, with its helpers on it: `feed()` makes the plugin for the

@@ -14,7 +14,8 @@ import { styledBeats, type SceneBeat } from './sceneBody.ts'
 import { blockBeats } from './beats.ts'
 import type { MigrationTools } from './intake.ts'
 import type { CommandStep, ContentStep } from './upgrade.ts'
-import type { WordShape } from './words.ts'
+import { callShape, readArgs, unfitArg, type AnyCalls, type CallArgs, type PluginData } from './pluginCalls.ts'
+import { stringOf } from './strings.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -104,7 +105,7 @@ export type TurnContext<S = any> = PluginContext<S> & {
  * effects, a button's price, the locks and the guards see what it would do
  * before it runs.
  */
-export type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
+export type Macro<S = any, A = PluginArgs> = (state: GameState, args: A, context: PluginContext<S>) => EffectRef[]
 
 /**
  * Why a plugin will not let a command through. A string is a refusal, as a
@@ -182,6 +183,22 @@ export type Plugin<S = any, V = unknown> = {
    * what `replay` plays an older log's commands through. See `CommandStep`.
    */
   commandMigrations?: Record<number, CommandStep>
+  /**
+   * Its conditions, effects and commands, each declared once with what it
+   * takes (`defineCalls`): the implementations below are handed their
+   * arguments read by it, the content checker reports what a call leaves out,
+   * gets wrong or names that the game lacks, and a translation reaches the
+   * words in a call's arguments. Every declared call has an implementation,
+   * and every implementation a declaration.
+   */
+  calls?: AnyCalls
+  /**
+   * The lists of its pack `data`, each declared once with its entry's noun
+   * and which of its fields are words a player reads (`defineData`), so a
+   * translation's `words` table reaches them, keyed
+   * `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.name`.
+   */
+  data?: PluginData
   /** Conditions content can test, by name, without the prefix. */
   conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
   /**
@@ -310,21 +327,6 @@ export type Plugin<S = any, V = unknown> = {
    */
   traits?: readonly TraitDef<any, any>[]
   /**
-   * Which fields of each list of this plugin's `data` are words a player
-   * reads, by list, for a translation's `words` table:
-   * `{ quests: { title: true, stages: [{ hint: true }] } }`. Each is keyed
-   * `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.title`. See `WordShape`.
-   */
-  words?: Readonly<Record<string, WordShape>>
-  /**
-   * Which arguments of its effects are words a player reads, by the effect's
-   * name without the prefix, for a translation's `words` table: `{ post: {
-   * text: true } }`. Each is keyed under where the effect is written, the
-   * call's full name and a hash of its words:
-   * `action.snap.feed/post.ab12cd.text`. See `WordShape`.
-   */
-  callWords?: Readonly<Record<string, WordShape>>
-  /**
    * What plays on background channels, by channel: a place's ambience. Below
    * an open scene's choice and an `audio` effect's, above the game's default.
    * Null silences a channel; a channel left out is the next plugin's, then
@@ -428,23 +430,23 @@ export type PluginEntry = { id: string; [field: string]: unknown }
 /** Something wrong in a plugin's content: which list, which entry, what. */
 export type PluginProblem = { list: string; id: string; what: string }
 
-export type PluginCommand<S = any> = {
+export type PluginCommand<S = any, A = PluginArgs> = {
   /**
    * Run even while a lock would stop it. For tools that stand outside the
    * story — a debugger — never for something the player does in it.
    */
   ignoresLocks?: boolean
   /** Why it cannot be done now, as the player reads it; undefined if it can. */
-  whyNot?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | undefined
-  run: (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState
+  whyNot?: (state: GameState, args: A, context: PluginContext<S>) => string | undefined
+  run: (state: GameState, args: A, context: PluginContext<S>) => GameState
   /** The effects running it would apply, for guards, prices and locks to see. None if left out. */
-  effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
+  effectsOf?: (state: GameState, args: A, context: PluginContext<S>) => Effect[]
   /**
    * The stats it spends, by id, for its button's price, as an action's
    * `cost.stats` gives them: `{ coins: 4 }`. Only the price shows it; `run`
    * does the spending, and `whyNot` says when there isn't enough. None if left out.
    */
-  spends?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Record<string, number> | undefined
+  spends?: (state: GameState, args: A, context: PluginContext<S>) => Record<string, number> | undefined
 }
 
 /** A plugin's state as a save keeps it: the shape's version, and the state. */
@@ -520,19 +522,73 @@ export function absentPartner(game: Game | undefined, name: string): boolean {
   return (game?.plugins ?? []).some((plugin) => plugin.cooperates?.includes(parts.plugin))
 }
 
+type CallTables = 'conditions' | 'effects' | 'macros' | 'commands'
+
+/** Each declared call in a table, implemented, handed its arguments as the declaration reads them. */
+type Implemented<S, C, T extends 'conditions' | 'effects', R> = {
+  [K in keyof CallArgs<C, T>]: (state: GameState, args: CallArgs<C, T>[K], context: PluginContext<S>) => R
+}
+
+/**
+ * What `definePlugin` takes: a plugin, whose conditions, effects, macros and
+ * commands, when it declares its `calls`, are exactly the declared ones, each
+ * handed its arguments typed. An effect is in `effects` or `macros`.
+ */
+export type PluginDef<S, V, C extends AnyCalls> = Omit<Plugin<S, V>, CallTables | 'calls'> &
+  ([C] extends [never]
+    ? Pick<Plugin<S, V>, CallTables>
+    : {
+        calls: C
+        conditions?: Implemented<S, C, 'conditions', boolean>
+        effects?: Partial<Implemented<S, C, 'effects', GameState>>
+        macros?: { [K in keyof CallArgs<C, 'effects'>]?: Macro<S, CallArgs<C, 'effects'>[K]> }
+        commands?: { [K in keyof CallArgs<C, 'commands'>]: PluginCommand<S, CallArgs<C, 'commands'>[K]> }
+      })
+
 /**
  * Declare a plugin. Returns it with `read` and `write` for its own state, and
  * `viewIn` for its slice of a view, for code outside the plugin (tests, a UI)
- * that needs them typed. Name both types, `definePlugin<State, View>`, so the
- * view's type is kept.
+ * that needs them typed. Name the types, `definePlugin<State, View, typeof
+ * CALLS>`, so the view's type is kept and each call's implementation is
+ * handed its arguments as `CALLS` (`defineCalls`) declares them.
+ *
+ * Throws when a declared call has no implementation, or an implemented one no
+ * declaration: a mistake in the plugin's code, never in content.
  */
-export function definePlugin<S, V = unknown>(plugin: Plugin<S, V>): DefinedPlugin<S, V> {
+export function definePlugin<S, V = unknown, C extends AnyCalls = never>(def: PluginDef<S, V, C>): DefinedPlugin<S, V> {
+  const plugin = def as unknown as Plugin<S, V>
+  if (plugin.calls) matchCalls(plugin)
   return {
     ...plugin,
     read: (state, game) => readSlice(plugin, state, game),
     write: (state, next) => writeSlice(plugin, state, next),
     viewIn: (view) => view.plugins[plugin.id] as V | undefined,
   }
+}
+
+/** Every declared call implemented, and every implemented one declared; the calls' id the plugin's. */
+function matchCalls(plugin: Plugin) {
+  const calls = plugin.calls!
+  const wrong: string[] = []
+  if (calls.id !== plugin.id) wrong.push(`its calls are declared for "${calls.id}"`)
+  const pairs: [CallTable, string[]][] = [
+    ['conditions', Object.keys(plugin.conditions ?? {})],
+    ['effects', [...Object.keys(plugin.effects ?? {}), ...Object.keys(plugin.macros ?? {})]],
+    ['commands', Object.keys(plugin.commands ?? {})],
+  ]
+  for (const [table, implemented] of pairs) {
+    const have = new Set(implemented)
+    const declared = new Set(Object.keys(calls[table] ?? {}))
+    for (const name of declared) if (!have.has(name)) wrong.push(`"${plugin.id}/${name}" is declared in its calls' ${table} but not implemented`)
+    for (const name of have) if (!declared.has(name)) wrong.push(`"${plugin.id}/${name}" is implemented but not declared in its calls' ${table}`)
+  }
+  if (wrong.length) throw new Error(`The plugin "${plugin.id}": ${wrong.join('; ')}.`)
+}
+
+/** Content's arguments for one of a plugin's calls, as its implementation is handed them: read by its declaration, or as written for a call it doesn't declare. */
+function argsFor(plugin: Plugin, table: CallTable, name: string, args: PluginArgs | undefined): PluginArgs {
+  const shape = callShape(plugin.calls, table, name)
+  return shape ? readArgs(shape, args) : (args ?? {})
 }
 
 /** The plugin id the game's own code answers to: content calls `rules` as `'game/name'`. No plugin can have it. */
@@ -618,21 +674,25 @@ function member<K extends CallTable | 'macros' | 'values' | 'queries'>(
 export function pluginCondition(game: Game | undefined, name: string) {
   const found = member(game, name, 'conditions')
   if (!found || !game) return undefined
-  return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
+  const own = pluginName(name)!.name
+  return (state: GameState, args: PluginArgs = {}) => found.fn(state, argsFor(found.plugin, 'conditions', own, args), pluginContext(found.plugin, state, game))
 }
 
 /** A plugin's effect by full name, ready to apply. `ending` while a turn is ending. */
 export function pluginEffect(game: Game | undefined, name: string, ending = false) {
   const found = member(game, name, 'effects')
   if (!found || !game) return undefined
-  return (state: GameState, args: PluginArgs) => found.fn(state, args, pluginContext(found.plugin, state, game, { ending }))
+  const own = pluginName(name)!.name
+  return (state: GameState, args: PluginArgs) =>
+    found.fn(state, argsFor(found.plugin, 'effects', own, args), pluginContext(found.plugin, state, game, { ending }))
 }
 
 /** A macro by full name, the game's (`game/payRent`) or a plugin's, ready to work out the effects it stands for. */
 export function pluginMacro(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => EffectRef[]) | undefined {
   const found = member(game, name, 'macros')
   if (!found || !game) return undefined
-  return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
+  const own = pluginName(name)!.name
+  return (state: GameState, args: PluginArgs = {}) => found.fn(state, argsFor(found.plugin, 'effects', own, args), pluginContext(found.plugin, state, game))
 }
 
 /** A plugin's command by full name: why not, and run. */
@@ -640,12 +700,20 @@ export function pluginCommand(game: Game | undefined, name: string) {
   const found = member(game, name, 'commands')
   if (!found || !game) return undefined
   const { plugin, fn } = found
+  const own = pluginName(name)!.name
+  const read = (args: PluginArgs | undefined) => argsFor(plugin, 'commands', own, args)
+  const shape = callShape(plugin.calls, 'commands', own)
+  /** A command sent with an argument its declaration doesn't take that way is refused: a UI or a log built it wrong. */
+  const unfit = (args: PluginArgs | undefined) => {
+    const wrong = shape && unfitArg(shape, args)
+    return wrong ? stringOf(game, 'badArgument', wrong) : undefined
+  }
   return {
     ignoresLocks: Boolean(fn.ignoresLocks),
-    whyNot: (state: GameState, args: PluginArgs) => fn.whyNot?.(state, args, pluginContext(plugin, state, game)),
-    effectsOf: (state: GameState, args: PluginArgs) => fn.effectsOf?.(state, args, pluginContext(plugin, state, game)) ?? [],
-    spends: (state: GameState, args: PluginArgs) => fn.spends?.(state, args, pluginContext(plugin, state, game)),
-    run: (state: GameState, args: PluginArgs) => fn.run(state, args, pluginContext(plugin, state, game)),
+    whyNot: (state: GameState, args: PluginArgs) => fn.whyNot?.(state, read(args), pluginContext(plugin, state, game)) ?? unfit(args),
+    effectsOf: (state: GameState, args: PluginArgs) => fn.effectsOf?.(state, read(args), pluginContext(plugin, state, game)) ?? [],
+    spends: (state: GameState, args: PluginArgs) => fn.spends?.(state, read(args), pluginContext(plugin, state, game)),
+    run: (state: GameState, args: PluginArgs) => fn.run(state, read(args), pluginContext(plugin, state, game)),
   }
 }
 

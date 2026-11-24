@@ -112,27 +112,34 @@ const { game } = loadGame([cafe], {
 
 After five coffees, `loyalty.read(state, game)` is `{ stamps: 5 }`, the counter says `Your card has 5 stamps.`, and Claim a free coffee is on offer.
 
-That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `content · action coffee · no plugin effect named "loyalty/stomp"`. To have a typo caught as you type rather than when the game loads, declare what each call takes, as [Typed calls, queries and views](#typed-calls-queries-and-views) shows. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
+That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `content · action coffee · no plugin effect named "loyalty/stomp"`. To have each call's arguments typed, read and checked too, declare what each call takes, as [Declaring calls](#declaring-calls) shows. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
 
 ## A worked example
 
-The full card also counts free coffees, and lets the player redeem one at the café. Its state gained a field, so its version goes up to 2 with a migration for saves made with version 1.
+The full card also counts free coffees, and lets the player redeem one at the café. Its state gained a field, so its version goes up to 2 with a migration for saves made with version 1. Its calls are declared once in `CALLS`, so each function is handed its arguments typed and read from whatever content wrote (see [Declaring calls](#declaring-calls)).
 
 ```ts
-import { applyEffects, definePlugin, stringOf } from '@ifloom/engine'
+import { applyEffects, arg, defineCalls, definePlugin, stringOf } from '@ifloom/engine'
 
 type Card = { stamps: number; free: number }
 
-export const loyalty = definePlugin<Card>({
+const CALLS = defineCalls('loyalty', {
+  conditions: { stamps: { atLeast: arg.number().optional(1) }, hasFree: {} },
+  effects: { stamp: {} },
+  commands: { redeem: {} },
+})
+
+export const loyalty = definePlugin<Card, unknown, typeof CALLS>({
   id: 'loyalty',
   version: 2,
+  calls: CALLS,
   start: () => ({ stamps: 0, free: 0 }),
   migrations: {
     // Version 1 only counted stamps.
     1: (old) => ({ stamps: (old as { stamps: number }).stamps, free: 0 }),
   },
   conditions: {
-    stamps: (_state, args, { slice }) => slice.stamps >= Number(args.atLeast ?? 1),
+    stamps: (_state, { atLeast }, { slice }) => slice.stamps >= atLeast,
     hasFree: (_state, _args, { slice }) => slice.free > 0,
   },
   effects: {
@@ -196,7 +203,7 @@ import {
   type TraitDef, type TraitTools, type ContentStep, type ContentTools, type WordShape,
   type CommandStep, type RawPack, type RawCommand,
   type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry,
-  type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn,
+  type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn, type PluginDef,
   type PartnerQueries, type CastContact, type SenderView,
 } from '@ifloom/engine'
 
@@ -231,8 +238,8 @@ type Plugin<S = any, V = unknown> = {
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
   content?: Content
   traits?: readonly TraitDef[]
-  words?: Readonly<Record<string, WordShape>>
-  callWords?: Readonly<Record<string, WordShape>>
+  calls?: AnyCalls
+  data?: PluginData
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   view?: (state: GameState, context: PluginContext<S>) => V
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
@@ -275,8 +282,8 @@ type Plugin<S = any, V = unknown> = {
 | `action` | One of its actions that isn't among its `actions` right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Actions](#actions). |
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
-| `words` | Which fields of each list of its `data` are words a player reads, for a translation's words table. See [Words](#words). |
-| `callWords` | Which arguments of its effects are words a player reads. See [Words](#words). |
+| `calls` | Its conditions, effects and commands, each declared once with what it takes, made with [`defineCalls`](#definecalls). Every declared call has an implementation and every implementation a declaration. See [Declaring calls](#declaring-calls). |
+| `data` | The lists of its pack `data`, each declared once with its noun and words, made with [`defineData`](#definedata). See [Data lists](#data-lists). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
 | `profile` | What the plugin keeps in the player's [profile](/docs/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
@@ -338,21 +345,21 @@ Don't read `state.plugins[id]` yourself: `get` knows the plugin's starting state
 type PluginArgs = Record<string, unknown>
 ```
 
-What content passes in `with`, unchecked. It's `{}` when `with` is left out. Read it defensively, for example `Number(args.atLeast ?? 1)` or `String(args.quest ?? '')`, because content is data and a mod can pass anything. To have the names it passes checked when the game loads, give the plugin [`references`](#references), with a `{ problem }` among them for a rule of its own.
+What content passes in `with`, unchecked. It's `{}` when `with` is left out. A call the plugin declares in [`calls`](#declaring-calls) never sees it: its function is handed its arguments read by the declaration instead, typed. A call nobody declares, a value and a query get `PluginArgs` as written, so read them defensively, for example `typeof args.card === 'string' ? args.card : undefined`, because content is data and a mod can pass anything.
 
 ## PluginCommand
 
 ```ts
-type PluginCommand<S = any> = {
+type PluginCommand<S = any, A = PluginArgs> = {
   ignoresLocks?: boolean
-  whyNot?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | undefined
-  run: (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState
-  effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
-  spends?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Record<string, number> | undefined
+  whyNot?: (state: GameState, args: A, context: PluginContext<S>) => string | undefined
+  run: (state: GameState, args: A, context: PluginContext<S>) => GameState
+  effectsOf?: (state: GameState, args: A, context: PluginContext<S>) => Effect[]
+  spends?: (state: GameState, args: A, context: PluginContext<S>) => Record<string, number> | undefined
 }
 ```
 
-A command a button can send as `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`.
+A command a button can send as `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`. `A` is what each function is handed: a declared command's arguments, read (see [Declaring calls](#declaring-calls)), or `PluginArgs`.
 
 | Field | What it is |
 |---|---|
@@ -368,6 +375,7 @@ The engine's [`whyNot`](/docs/reference/actions#whynot) asks these in order, and
 2. The game's own [`rules.guard`](/docs/reference/rules#gamerules), then every plugin's [guard](#guards), unless the command sets `ignoresLocks`.
 3. `There is no such thing to do.` (the [`noSuchAction`](/docs/reference/strings#refusals) string) if no plugin, nor the game's [`rules.commands`](/docs/reference/rules#commands), has a command by that name.
 4. The command's own `whyNot`.
+5. For a declared command, an argument it was sent that doesn't fit its declaration, such as text where it takes a number: `That can’t be done: "count" must be a number.` (the [`badArgument`](/docs/reference/strings#refusals) string). A UI or a log built the command wrong.
 
 The reducer refuses with that reason, and the view greys out the button with it. Put the line in the plugin's [`strings`](/docs/reference/strings#plugins-strings) and return `stringOf(game, 'loyalty/notFull')`, so a game can reword it.
 
@@ -415,25 +423,197 @@ A plugin usually gives small typed helpers that write these objects for authors 
 - Don't put an id in a value's name, such as `loyalty/stamps-gold`. Take it as an argument, so one value serves every card and a mod's new card needs no code.
 - A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/docs/reference/checks) reports most of them when the game loads.
 
-## Typed calls, queries and views
+## Declaring calls
 
-A plugin can say what each of its calls takes, what its queries answer and what its view holds, so content written in code is checked as it's typed. Declare them in the plugin's main entry by adding to the engine's registries, the way a plugin types its [traits](#traits):
+Declare each of the plugin's conditions, effects and commands once, with what it takes. The engine works out the rest from that one declaration: the arguments each function is handed, the type content is checked against, a writer for each call to build helpers from, and what the [content checker](/docs/reference/checks) reports.
 
 ```ts
-import { definePlugin, type DefinedPlugin } from '@ifloom/engine'
+import { arg, defineCalls, defineData, definePlugin, list, type CommandsOf, type Condition, type ConditionsOf, type EffectsOf } from '@ifloom/engine'
+
+type CardDef = { id: string; name: string; stamps: number }
+
+const DATA = defineData('loyalty', { cards: list<CardDef>({ noun: 'card', words: { name: true } }) })
+
+const CALLS = defineCalls('loyalty', {
+  conditions: {
+    // Has at least `gte` stamps on the card (1 if left out).
+    stamps: { card: arg.entry(DATA.cards), gte: arg.number().optional(1) },
+  },
+  effects: {
+    // A stamp, with a note the player reads.
+    stamp: { card: arg.entry(DATA.cards), note: arg.words().optional() },
+  },
+  commands: {
+    redeem: { id: arg.entry(DATA.cards) },
+  },
+})
+
+declare module '@ifloom/engine' {
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
+}
+
+export const loyalty = definePlugin<{ stamps: Record<string, number> }, unknown, typeof CALLS>({
+  id: 'loyalty',
+  version: 1,
+  calls: CALLS,
+  data: DATA,
+  start: () => ({ stamps: {} }),
+  conditions: {
+    // `card` is a string and `gte` a number, whatever content wrote.
+    stamps: (_state, { card, gte }, { slice }) => (slice.stamps[card] ?? 0) >= gte,
+  },
+  effects: {
+    stamp: (_state, { card }, { slice, set }) => set({ stamps: { ...slice.stamps, [card]: (slice.stamps[card] ?? 0) + 1 } }),
+  },
+  commands: {
+    redeem: { run: (state) => state },
+  },
+})
+
+// Helpers write calls with the declaration's writers.
+const stamped = (card: string, gte = 1): Condition => CALLS.conditions.stamps({ card, gte })
+```
+
+What each part gives you:
+
+- **Typed arguments.** Name the declaration as `definePlugin`'s third type, and each function is handed its arguments as the declaration reads them. A list of one is a list, missing text is `''`, an optional argument left out is `undefined` or its fallback, and an argument the call doesn't declare isn't handed on. A plugin with `calls` must implement exactly the calls it declares (an effect in `effects` or `macros`); `definePlugin` throws otherwise.
+- **The registries.** `ConditionsOf`, `EffectsOf` and `CommandsOf` turn the declaration into what content writes for each call, so the registries are never written by hand. See [Typed calls, queries and views](#typed-calls-queries-and-views).
+- **Writers.** `CALLS.conditions.stamps({ card, gte })` writes `{ 'loyalty/stamps': { card, gte } }`, its key the call's full name and typed, and its arguments checked. A call that takes none writes `true`.
+- **Checks.** The content checker reports an argument a call needs and content left out (`"loyalty/stamps" needs "card"`), one of the wrong shape (`"loyalty/stamps"'s "gte" must be a number`), one the call doesn't take (`"loyalty/stamps" takes no "gtee"`), and what an argument names that the game lacks (`unknown card "gold"`). A command sent with an argument of the wrong shape is refused before it runs.
+- **Words.** An argument made with `arg.words()` is words a player reads, so a translation's [words table](/docs/reference/words) reaches it.
+
+**Gotchas.**
+- Declare the calls at the top of the module, outside the factory, since the registries are built from their type. Read a factory's options inside the functions, or in [`references.calls`](#references) for what an argument names that depends on them, as the cast's does with the kind its people are.
+- A function you pass to `.naming()` inside `defineCalls` needs its return type, `(id): Reference[] => [...]`, or the registries built from the declaration refer to themselves and TypeScript gives up. A function declared outside with its return type, or `.rule()`, which returns words, doesn't.
+- Values and queries aren't declared here: a value is handed `PluginArgs`, and a query's answer is typed in [`QueryRegistry`](#typed-calls-queries-and-views).
+
+### defineCalls
+
+```ts
+function defineCalls<Id extends string, const D extends CallShapes>(id: Id, shapes: D): PluginCalls<Id, D>
+
+type CallShapes = {
+  conditions?: Readonly<Record<string, ArgShape>>
+  effects?: Readonly<Record<string, ArgShape>>
+  commands?: Readonly<Record<string, ArgShape>>
+}
+type ArgShape = Readonly<Record<string, Arg>>
+```
+
+Declares a plugin's calls: by table, each call's name without the prefix and what it takes, each argument made with [`arg`](#arg). `{}` declares a call that takes none. `id` is the plugin's, and `definePlugin` throws when it isn't.
+
+It returns a `PluginCalls`, with a `CallWriter` for each call by table: `CALLS.effects.stamp`. A writer is a function from the arguments, as content writes them (`ArgsIn<S>`), to the call in short. It also has `call`, the full name (`'loyalty/stamp'`), `args`, its shape, and `read(args)`, which reads arguments content wrote the way the call's function is handed them (`ArgsOut<S>`), for a [guard](#guards) or a [price](#prices) that looks at a list of effects:
+
+```ts
+const call = callOf(effect)
+if (call?.name === CALLS.effects.stamp.call) total += CALLS.effects.stamp.read(call.with).gte
+```
+
+`WrittenAs<S>` is what content writes as a call's value: its arguments, `true` for a call that takes none, and either when its arguments may all be left out. `CallArgs<typeof CALLS, 'conditions'>` is what each condition's function is handed, by name. `ArgIn` and `ArgOut` are one argument's two sides.
+
+### arg
+
+```ts
+const arg: {
+  string(): Arg<string, string>
+  words(): Arg<string, string>
+  number(): Arg<number, number>
+  boolean(): Arg<boolean, boolean>
+  strings(): Arg<string | readonly string[], string[]>
+  numbers(): Arg<number | readonly number[], number[]>
+  entity(trait?: string): Arg<EntityRef, EntityRef>
+  holder(): Arg<Holder, Holder>
+  kv(): Arg<KvValue, KvValue>
+  amount(): Arg<Amount, Amount>
+  range(): Arg<Range, Range>
+  entry(list: DataList): Arg<string, string>
+  entries(list: DataList): Arg<string | readonly string[], string[]>
+  bounds: { gte, gt, lte, lt }
+}
+```
+
+The arguments a call can take. Each [`Arg<In, Out>`](#arg) reads what content wrote (`In`) into what the function is handed (`Out`), whatever it was, and the checker reports a value of the wrong shape.
+
+| Argument | Content writes | Handed | Named to the checker |
+|---|---|---|---|
+| `string()` | text | text, `''` when missing | nothing |
+| `words()` | words a player reads | text | nothing; a translation reaches it |
+| `number()` | a number | a number, `0` when it isn't one | nothing |
+| `boolean()` | `true` or `false` | `true` only for `true` | nothing |
+| `strings()`, `numbers()` | one, or a list | a list | nothing |
+| `entity(trait?)` | an entity reference | the reference | the entity, carrying `trait` if given |
+| `holder()` | `'player'`, `'you'` or a unique entity | the holder | the holder |
+| `kv()` | true or false, a number or text | the value | nothing |
+| `amount()` | an [`Amount`](/docs/reference/amounts) | the amount, for `amountOf` | the amount |
+| `range()` | `{ gte: 2 }` | the range | its bounds that are amounts |
+| `entry(list)`, `entries(list)` | an entry's id, or a list | the id, or a list | the entry, `unknown card "gold"` |
+| `...bounds` | `gte`, `gt`, `lte`, `lt` beside the call's own arguments | each bound, `undefined` when missing | nothing: the core checks a call's bounds, and works them out before asking |
+
+Each has three methods that return a new argument:
+
+- `.optional()` lets content leave it out: the function is handed `undefined` then. `.optional(1)` hands `1` instead.
+- `.naming(fn)` adds what a value names, as [references](#references): `arg.string().naming((id): Reference[] => [{ scene: id }])`.
+- `.rule(fn)` adds a rule of the plugin's own about a value, in the checker's words, or `undefined` when nothing is wrong: `.rule((count) => (count >= 1 ? undefined : 'count must be 1 or more'))`.
+
+## Data lists
+
+Declare each list of the plugin's pack `data` once, beside its calls, with the type of an entry, what one is called in a problem and which of its fields are words:
+
+```ts
+const DATA = defineData('loyalty', {
+  cards: list<CardDef>({ noun: 'card', words: { name: true, perks: [{ label: true }] } }),
+})
+
+export const cardsOf = (game: Game): CardDef[] => DATA.cards.all(game)
+export const cardOf = (game: Game, id: string): CardDef | undefined => DATA.cards.get(game, id)
+```
+
+Give it to `definePlugin` as `data`, so a translation reaches each list's words, keyed `loyalty/cards.<id>.<field>` (see [Words](#words)). An argument names an entry with [`arg.entry(DATA.cards)`](#arg), and `references.content` and `check` name one with the list's own helpers.
+
+### defineData
+
+```ts
+function defineData<const L extends Record<string, ListSpec>>(plugin: string, lists: L): PluginData<L>
+function list<T extends { id: string }>(spec: { noun: string; words?: WordShape }): ListSpec<T>
+
+type DataList<T> = {
+  readonly plugin: string
+  readonly list: string
+  readonly noun: string
+  readonly words?: WordShape
+  all(game: Game): T[]
+  get(game: Game, id: unknown): T | undefined
+  ref(id: string): Reference
+  content(game: Game, refs: (entry: T) => readonly Reference[]): ContentReferences[]
+  problem(id: string, what: string): PluginProblem
+}
+```
+
+`defineData` declares the plugin's lists by name, each made with `list<T>`, whose type argument is an entry's type. It returns a `PluginData`, a `DataList` for each:
+
+| Member | What it is |
+|---|---|
+| `all(game)` | Every entry of `data.<plugin>.<list>`, in order, typed. Anything in the list that isn't an object with an id is left out. |
+| `get(game, id)` | One entry by id, which may be anything content wrote: `undefined` for an id that isn't text or that the game hasn't. |
+| `ref(id)` | The [reference](#references) to one entry, so the checker reports `unknown card "gold"`. |
+| `content(game, fn)` | What each entry names, for [`references.content`](#references), at `cards <id>`. |
+| `problem(id, what)` | A [`PluginProblem`](#pluginproblem) about one entry, for [`check`](#check). |
+
+## Typed calls, queries and views
+
+A plugin says what each of its calls takes, what its queries answer and what its view holds, so content written in code is checked as it's typed. Declare them in the plugin's main entry by adding to the engine's registries, the way a plugin types its [traits](#traits). The calls' entries come from their [declaration](#declaring-calls):
+
+```ts
+import { type CommandsOf, type ConditionsOf, type EffectsOf } from '@ifloom/engine'
 
 export type LoyaltyView = { stamps: number; free: number }
 
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'loyalty/stamps': { gte?: number }
-  }
-  interface EffectRegistry {
-    'loyalty/stamp': { by?: number } | true
-  }
-  interface CommandRegistry {
-    'loyalty/redeem': { card: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface QueryRegistry {
     'loyalty/stampsLeft': () => number
   }
@@ -443,13 +623,13 @@ declare module '@ifloom/engine' {
 }
 ```
 
-Each registry is keyed by the call's full name, and each entry is what content writes as the call's value: its arguments, or `true` for none, or both as a union when the arguments are all optional. A query's entry is a function from its arguments to its answer. `ViewRegistry` is keyed by the plugin's id.
+Each registry is keyed by the call's full name, and each entry is what content writes as the call's value: its arguments, or `true` for none, or both as a union when the arguments are all optional. `ConditionsOf<typeof CALLS>` is exactly that for every condition `CALLS` declares, so `'loyalty/stamps'` is `{ card: string; gte?: number }`. A query's entry is a function from its arguments to its answer. `ViewRegistry` is keyed by the plugin's id.
 
 Once a game imports the plugin's package, those calls are checked wherever a [`Condition`](/docs/reference/conditions#condition), an [`Effect`](/docs/reference/effects#effect) or a [`CommandRef`](/docs/reference/custom#commandref) goes:
 
 ```ts
-const full: Condition = { 'loyalty/stamps': { gte: 5 } }
-const typo: Condition = { 'loyalty/stamps': { gtee: 5 } }   // fails to compile
+const full: Condition = { 'loyalty/stamps': { card: 'cafe', gte: 5 } }
+const typo: Condition = { 'loyalty/stamps': { card: 'cafe', gtee: 5 } }   // fails to compile
 const left = context.query('loyalty/stampsLeft')           // number | undefined
 const card = view.plugins.loyalty                          // LoyaltyView | undefined
 ```
@@ -481,10 +661,9 @@ export const rules: GameRules = {
 Small Town declares its `game/postLatest` this way, and the café its `game/takings` and `game/wages`.
 
 **Gotchas.**
-- The registries type content written in TypeScript. A pack loaded from JSON, or a mod, isn't compiled, so the [content checker](/docs/reference/checks) is still what reports a bad call there, through the plugin's [`references`](#references).
-- A plugin's own functions still get their arguments as [`PluginArgs`](#pluginargs), since a mod can pass them anything. Read each one as you would unchecked data.
+- The registries type content written in TypeScript. A pack loaded from JSON, or a mod, isn't compiled, so the [content checker](/docs/reference/checks) is still what reports a bad call there, from the plugin's [declared calls](#declaring-calls).
 - A plugin sees only the declarations of the packages it imports. It can't rely on a partner's, since it never imports the partner, so its calls to a partner are loose in its own code and checked in a game that has both. The queries first-party plugins ask each other are the exception: the engine declares their answers in [`PartnerQueries`](#partnerqueries), so they're typed everywhere.
-- Keep each entry true to what the plugin reads. A game that imports the plugin is checked against it, so a field you forget to declare fails to compile there.
+- The game's own calls are declared by hand, as above, since `rules` has no `calls`. A plugin's come from `CALLS`, so they can't drift from what its functions are handed.
 
 ### ConditionCall, EffectCall and CommandCall
 
@@ -1382,23 +1561,27 @@ What a trait's `check` and `references` get beside the data: the game, and the e
 
 ## Words
 
-A plugin says which fields of its content are words a player reads, so a translation can give them other words in a pack's [`words` table](/docs/reference/words). `words` gives a [`WordShape`](/docs/reference/words#wordshape) for each list of its `data`, and a trait's `words` one for its data:
+A plugin says which fields of its content are words a player reads, so a translation can give them other words in a pack's [`words` table](/docs/reference/words). Each [data list](#data-lists) gives a [`WordShape`](/docs/reference/words#wordshape) for its entries, and a trait's `words` one for its data:
 
 ```ts
+const DATA = defineData('loyalty', {
+  cards: list<CardDef>({ noun: 'card', words: { name: true, perks: [{ label: true }], effects: { full: 'effects' } } }),
+})
+
 definePlugin({
   id: 'loyalty',
   version: 1,
-  words: { cards: { name: true, perks: [{ label: true }], effects: { full: 'effects' } } },
+  data: DATA,
   traits: [{ id: 'loyalty/till', words: { greeting: true } }],
 })
 ```
 
 Each field is keyed `<plugin>/<list>.<id>.<field>`, so a card's name is `loyalty/cards.cafe.name` and a perk's label `loyalty/cards.cafe.perks.coffee.label`. [`translatableFields`](/docs/reference/words#translatablefields) lists them with the rest of the game's. A field the plugin doesn't name isn't in the table. The plugin's own lines, such as refusals, stay in its [`strings`](/docs/reference/strings#plugins-strings).
 
-An effect of the plugin's can carry words too, such as the text of a post the player makes. `callWords` gives a `WordShape` for each such effect's arguments, by its name without the prefix:
+A call of the plugin's can carry words too, such as the text of a post the player makes. Declare that argument with [`arg.words()`](#arg):
 
 ```ts
-definePlugin({ id: 'loyalty', version: 1, callWords: { stamp: { note: true } } })
+const CALLS = defineCalls('loyalty', { effects: { stamp: { card: arg.entry(DATA.cards), note: arg.words().optional() } } })
 
 // In content: { id: 'buy', label: 'Buy a coffee', effects: [{ 'loyalty/stamp': { card: 'cafe', note: 'One more for a free one!' } }] }
 // Keyed under where the effect is: action.buy.loyalty/stamp.<hash>.note
@@ -1426,7 +1609,7 @@ The [loader](/docs/reference/loader#content) merges `data` as it merges scenes: 
 type PluginEntry = { id: string; [field: string]: unknown }
 ```
 
-One entry in a plugin's content: an `id`, and whatever fields the plugin reads. `game.data` and content's `data` are `Record<string, Record<string, readonly PluginEntry[]>>`, so content writes entries without a cast. The engine reads only `id`. The plugin gives the other fields their types where it reads them, says what they name in [`references`](#references), and checks its own rules in [`check`](#check).
+One entry in a plugin's content: an `id`, and whatever fields the plugin reads. `game.data` and content's `data` are `Record<string, Record<string, readonly PluginEntry[]>>`, so content writes entries without a cast. The engine reads only `id`. The plugin gives the other fields their types in its [data lists](#data-lists), says what they name in [`references`](#references), and checks its own rules in [`check`](#check).
 
 ### References
 
@@ -1446,39 +1629,34 @@ type ContentReferences = { list: string; id: string; refs: readonly Reference[] 
 
 What the plugin's calls, panels and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Each is optional.
 
-- **`calls`** says what one call to the plugin's conditions, effects or commands names. `table` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is.
+- **`calls`** says what one call to the plugin's conditions, effects or commands names, beyond what its [declaration](#declaring-calls) already says, so most plugins leave it out. `table` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`, as written. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is, after the declaration's own checks. Keep it for a rule that depends on more than one argument, or on the factory's options.
 - **`panels`** says what opening one of the [panels](/docs/reference/panels) the plugin's UI draws names, from what it's opened with: a [`panel` effect](/docs/reference/effects#panel)'s `with`, or a scene's `panel`. The checker asks every plugin about every panel it finds, so answer `[]` for a name that isn't yours. A name no plugin answers for is allowed, because the UI decides what it draws.
 - **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the content or pack that entry came from.
 
 Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ entity }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ layered }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
 
-The loyalty plugin's cards each have a condition, and its `stamp` effect names a card:
+The loyalty plugin's cards each have a condition. Its `stamp` effect names a card too, but that comes from its declaration, `arg.entry(DATA.cards)`:
 
 ```ts
 references: {
-  calls: (table, name, args) =>
-    table === 'effects' && name === 'stamp' ? [{ entry: String(args.card), plugin: 'loyalty', list: 'cards', noun: 'card' }] : [],
-  content: (game) =>
-    (game.data?.loyalty?.cards ?? []).map((card) => ({ list: 'cards', id: card.id, refs: [{ when: (card as { when?: Condition }).when }] })),
+  content: (game) => DATA.cards.content(game, (card) => [{ when: card.when }]),
 },
 // mod:sunday-market · cards market · unknown storyline "sam"
 // town · action buy · unknown card "bakery"
 ```
 
-A rule of the plugin's own about what a call or a panel is given, which no id can say, is a `{ problem }` reference: the checker reports its words where the call is. The stall says it sells only bread, eggs and cheese, and the shop needs a vendor for its panel:
+A rule of the plugin's own about what a call or a panel is given, which no id can say, is a `{ problem }` reference: the checker reports its words where the call is. A rule about one argument goes on the argument with [`.rule()`](#arg). One about two, or about a panel, goes here. The stall won't swap a thing for itself, and the shop needs a vendor for its panel:
 
 ```ts
 references: {
   calls: (table, name, args) =>
-    table === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item))
-      ? [{ problem: `nobody sells "${String(args.item)}"` }]
-      : [],
+    table === 'commands' && name === 'swap' && args.give !== undefined && args.give === args.take ? [{ problem: 'swaps a thing for itself' }] : [],
   panels: (panel, args) => {
     if (panel !== 'shop') return []
     return typeof args.vendor === 'string' ? [{ entity: `vendor:${args.vendor}`, carrying: 'shop/vendor' }] : [{ problem: 'the shop panel needs a vendor: { vendor: "<id>" }' }]
   },
 },
-// town · action ask · nobody sells "fish"
+// town · action ask · swaps a thing for itself
 // town · action counter · unknown entity "vendor:kiosk"
 ```
 
@@ -1499,10 +1677,7 @@ check?: (game: Game, tools: CheckTools) => PluginProblem[]
 Rules of the plugin's own that a reference can't say, such as two stages of one quest with the same id, or an exit to a place that isn't there. It runs after the references, once the game is loaded. It returns a [`PluginProblem`](#pluginproblem) for each fault.
 
 ```ts
-check: (game) =>
-  (game.data?.loyalty?.cards ?? []).flatMap((card) =>
-    Number((card as { stampsToFill?: number }).stampsToFill) > 0 ? [] : [{ list: 'cards', id: card.id, what: 'stampsToFill must be above 0' }],
-  ),
+check: (game) => DATA.cards.all(game).flatMap((card) => (card.stampsToFill > 0 ? [] : [DATA.cards.problem(card.id, 'stampsToFill must be above 0')])),
 ```
 
 ### CheckTools
@@ -1562,7 +1737,7 @@ A save records each plugin's version in [`meta.plugins`](/docs/reference/saves#s
 ```ts
 import { definePlugin } from '@ifloom/engine'
 
-function definePlugin<S, V = unknown>(plugin: Plugin<S, V>): DefinedPlugin<S, V>
+function definePlugin<S, V = unknown, C extends AnyCalls = never>(plugin: PluginDef<S, V, C>): DefinedPlugin<S, V>
 
 type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
   read(state: GameState, game: Game): S
@@ -1571,7 +1746,9 @@ type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
 }
 ```
 
-Declares a plugin, and returns it with typed `read` and `write` for its own state and `viewIn` for its slice of the view. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice`, `get` and `set`, which need no game. `S` is the plugin's state and `V` what its `view` returns. Name both, `definePlugin<LoyaltyState, LoyaltyView>(...)`, since TypeScript can't work out one when you give the other.
+Declares a plugin, and returns it with typed `read` and `write` for its own state and `viewIn` for its slice of the view. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice`, `get` and `set`, which need no game. `S` is the plugin's state and `V` what its `view` returns. `C` is its [declared calls](#declaring-calls), `typeof CALLS`: `PluginDef<S, V, C>` is a `Plugin` whose conditions, effects, macros and commands are then exactly the declared ones, each handed its arguments typed. Name all three, `definePlugin<LoyaltyState, LoyaltyView, typeof CALLS>(...)`, since TypeScript can't work out one when you give the others.
+
+It throws when a declared call has no function, a function has no declaration, or the declaration's id isn't the plugin's: a mistake in the plugin's code, never in content.
 
 `read` returns the plugin's state, or its starting state if the save has none yet. `write` returns the game state with the plugin's state replaced, labelled with the plugin's current version.
 

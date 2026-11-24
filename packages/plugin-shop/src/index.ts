@@ -20,42 +20,45 @@
  * vendor is everywhere.
  */
 import {
+  arg,
+  artSrc,
+  declaredTrait,
+  declaredWithTrait,
+  defineCalls,
   definePlugin,
-  pluginQuery,
   entityDescription,
   entityImage,
   entityName,
   entityOf,
-  traitOf,
-  priceView,
   hash,
   heldCount,
   holderOf,
   holds,
   isUnique,
   lackingLine,
-  parseRef,
-  reasonOf,
   panelOf,
+  parseRef,
+  pluginQuery,
+  priceView,
+  reasonOf,
   renderAction,
-  stringOf,
   statOf,
   statValue,
-  declaredTrait,
-  declaredWithTrait,
+  stringOf,
+  traitOf,
   withTrait,
-  artSrc,
   YOU,
   type Blocked,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type Effect,
   type EntityDef,
   type EntityRef,
   type Game,
   type GameState,
-  type PluginArgs,
   type PluginContext,
   type PluginProblem,
   type Price,
@@ -208,19 +211,13 @@ export type ShopView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'shop/open': { vendor: string }
-    'shop/outside': { period: string | readonly string[] }
-    'shop/inStock': { vendor: string; entity: EntityRef }
-  }
-  interface CommandRegistry {
-    'shop/buy': { vendor: string; entity: EntityRef; count?: number }
-    'shop/sell': { vendor: string; entity: EntityRef; count?: number }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     shop: ShopView
   }
@@ -233,6 +230,39 @@ const VENDOR = 'shop/vendor'
 const SELLABLE = 'shop/sellable'
 /** The panel a UI draws a vendor's counter in. */
 const PANEL = 'shop'
+
+/** A reference to one of the game's vendors, which must carry the trait. */
+const vendorEntry = (id: string): Reference => ({ entity: vendorRef(id), carrying: VENDOR })
+
+/** A vendor by id or reference, named to the checker. */
+const vendorArg = () => arg.string().naming((id): Reference[] => (id ? [vendorEntry(id)] : []))
+/** How many: a whole number, 1 or more; 1 if left out. */
+const countArg = () =>
+  arg
+    .number()
+    .optional(1)
+    .rule((count) => (Number.isInteger(count) && count > 0 ? undefined : 'count must be a whole number, 1 or more'))
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** Open now. Where the player is doesn't matter. */
+    open: { vendor: vendorArg() },
+    /** The calendar's period of the day is none of these. Never, without the calendar. */
+    outside: { period: arg.strings() },
+    /** Offered now, and not sold out. */
+    inStock: { vendor: vendorArg(), entity: arg.entity() },
+  },
+  commands: {
+    /** Buy `count` of the thing `entity` from `vendor`. */
+    buy: { vendor: vendorArg(), entity: arg.entity(), count: countArg() },
+    /** Sell `count` of the thing `entity` back to `vendor`. */
+    sell: { vendor: vendorArg(), entity: arg.entity(), count: countArg() },
+  },
+})
+
+/** What buying or selling is handed: the vendor, the thing and how many. */
+type Trade = { vendor: string; entity: EntityRef; count: number }
 
 function emptyState(): ShopState {
   return { stocked: {} }
@@ -313,8 +343,8 @@ function everyVendor(state: GameState | undefined, game: Game): One[] {
 }
 
 /** The good, if the vendor offers it right now. */
-function goodOf(state: GameState, game: Game, one: One, entity: unknown): GoodDef | undefined {
-  const good = one.vendor.goods.find((entry) => entry.entity === String(entity ?? ''))
+function goodOf(state: GameState, game: Game, one: One, entity: string): GoodDef | undefined {
+  const good = one.vendor.goods.find((entry) => entry.entity === entity)
   return good && (!good.when || holds(state, game, good.when)) ? good : undefined
 }
 
@@ -403,13 +433,13 @@ function closedReason(state: GameState, one: One, cx: Ctx): string | undefined {
   return entry ? reasonOf(cx.game, entry.reason) : undefined
 }
 
-function countOf(args: PluginArgs): number {
-  const count = Number(args.count ?? 1)
+/** How many a trade is for: its count, or 1 for one that isn't a whole number above 0. */
+function countOf({ count }: Trade): number {
   return Number.isInteger(count) && count > 0 ? count : 1
 }
 
 /** Why the player can't buy these now, or undefined. */
-function cantBuy(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx): string | undefined {
+function cantBuy(state: GameState, args: Trade, slice: ShopState, cx: Ctx): string | undefined {
   const { game } = cx
   const one = oneOf(state, game, args.vendor)
   const good = one && goodOf(state, game, one, args.entity)
@@ -427,7 +457,7 @@ function cantBuy(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx):
 }
 
 /** Why the player can't sell these back now, or undefined. */
-function cantSell(state: GameState, args: PluginArgs, cx: Ctx): string | undefined {
+function cantSell(state: GameState, args: Trade, cx: Ctx): string | undefined {
   const { game } = cx
   const one = oneOf(state, game, args.vendor)
   const good = one && goodOf(state, game, one, args.entity)
@@ -446,7 +476,7 @@ function topUp(state: GameState, slice: ShopState, one: One, good: GoodDef, cx: 
   return left === null ? [] : [{ entity: good.entity, at: one.ref, to: left }]
 }
 
-function buyEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx): Effect[] {
+function buyEffects(state: GameState, args: Trade, slice: ShopState, cx: Ctx): Effect[] {
   const one = oneOf(state, cx.game, args.vendor)
   const good = one && goodOf(state, cx.game, one, args.entity)
   if (!one || !good) return []
@@ -460,7 +490,7 @@ function buyEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: Ct
   return [...paid, ...handed]
 }
 
-function sellEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx): Effect[] {
+function sellEffects(state: GameState, args: Trade, slice: ShopState, cx: Ctx): Effect[] {
   const one = oneOf(state, cx.game, args.vendor)
   const good = one && goodOf(state, cx.game, one, args.entity)
   if (!one || !good) return []
@@ -611,17 +641,15 @@ const vendorTrait: TraitDef<'shop/vendor'> = {
   },
 }
 
-/** A reference to one of the game's vendors, which must carry the trait. */
-const vendorEntry = (id: string): Reference => ({ entity: vendorRef(id), carrying: VENDOR })
-
 /**
  * The plugin. Add it to the game's `plugins`, and write vendors in the
  * content's `entities` with `shop.vendor({ ... })`.
  */
 function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
-  return definePlugin<ShopState, ShopView>({
+  return definePlugin<ShopState, ShopView, typeof CALLS>({
     id: ID,
     version: 2,
+    calls: CALLS,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     commandVersion: COMMAND_VERSION,
@@ -645,9 +673,8 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
        * calendar's period of the day is none of these. Never, without the
        * calendar. What `shop.hours()` closes a vendor by.
        */
-      outside: (_state, args, { query }) => {
+      outside: (_state, { period: periods }, { query }) => {
         const period = query('calendar/now')?.period
-        const periods = Array.isArray(args.period) ? args.period.map(String) : [String(args.period)]
         return period !== undefined && !periods.includes(period)
       },
       /** `{ 'shop/open': { vendor } }`: open now. Where the player is doesn't matter. */
@@ -695,10 +722,6 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
     onCommand: (_before, after, context) => settleStock(after, context),
     view: (state, context) => shopView(state, context.slice, context),
     references: {
-      calls: (_kind, _name, args) => [
-        ...(args.vendor === undefined ? [] : [vendorEntry(String(args.vendor))]),
-        ...(args.entity === undefined ? [] : [{ entity: String(args.entity) }]),
-      ],
       // The `shop` panel draws one vendor's counter, so it needs a vendor the game has.
       panels: (panel, args): Reference[] => {
         if (panel !== PANEL) return []
@@ -751,13 +774,11 @@ function vendor(def: VendorDef): EntityDef {
 const sellable = (price: Record<string, number>): { 'shop/sellable': Sellable } => ({ [SELLABLE]: { price } })
 
 /** A command: buy `count` (1 if left out) of a thing from a vendor. */
-const buy = (vendor: string, entity: EntityRef, count?: number): CommandRef => ({
-  'shop/buy': count === undefined ? { vendor, entity } : { vendor, entity, count },
-})
+const buy = (vendor: string, entity: EntityRef, count?: number): CommandRef =>
+  CALLS.commands.buy(count === undefined ? { vendor, entity } : { vendor, entity, count })
 /** A command: sell `count` (1 if left out) of a thing back to a vendor. */
-const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef => ({
-  'shop/sell': count === undefined ? { vendor, entity } : { vendor, entity, count },
-})
+const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef =>
+  CALLS.commands.sell(count === undefined ? { vendor, entity } : { vendor, entity, count })
 /**
  * An effect: open the vendor's counter in the `shop` panel, from a place's
  * action, a person's, a thing's use, an app or a choice. The UI draws it;
@@ -765,7 +786,7 @@ const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef => 
  */
 const openShop = (vendor: string): Effect => ({ panel: PANEL, with: { vendor } })
 /** A condition, with the calendar: its period of the day is none of these. Never without the calendar. */
-const outside = (...periods: string[]): Condition => ({ [`${ID}/outside`]: { period: periods } })
+const outside = (...periods: string[]): Condition => CALLS.conditions.outside({ period: periods })
 /**
  * A `blocked` entry for a vendor's opening hours, with the calendar: closed
  * outside these periods of the day, with `reason` (the plugin's `shop/closed`
@@ -780,9 +801,9 @@ const hours = (periods: readonly string[], reason?: Reason): Blocked => ({
   reason: reason ?? { string: `${ID}/closed` },
 })
 /** A condition: the vendor is open now. */
-const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
+const vendorOpen = (vendor: string): Condition => CALLS.conditions.open({ vendor })
 /** A condition: the vendor offers the thing now and has one left. */
-const inStock = (vendor: string, entity: EntityRef): Condition => ({ 'shop/inStock': { vendor, entity } })
+const inStock = (vendor: string, entity: EntityRef): Condition => CALLS.conditions.inStock({ vendor, entity })
 
 /**
  * The plugin, with its helpers on it: `shop()` makes the plugin for the

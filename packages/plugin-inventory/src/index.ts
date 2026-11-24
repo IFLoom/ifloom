@@ -13,25 +13,31 @@
  * query); until then a dropped thing is gone.
  */
 import {
+  arg,
+  artSrc,
+  bindCurrent,
   buildEffects,
   canHold,
+  defineCalls,
+  defineData,
   definePlugin,
   entityDescription,
   entityImage,
   entityName,
-  traitOf,
+  entityOf,
   heldBy,
   heldCount,
   holds,
-  bindCurrent,
-  entityOf,
+  list,
   parseRef,
   PLAYER,
   protagonist,
   renderAction,
   stringOf,
+  traitOf,
   YOU,
   type CommandRef,
+  type CommandsOf,
   type DefinedPlugin,
   type Effect,
   type EffectRef,
@@ -39,11 +45,9 @@ import {
   type Game,
   type GameState,
   type Holder,
-  type PluginArgs,
   type PluginContext,
   type RenderedChoice,
   type TraitDef,
-  artSrc,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -98,26 +102,38 @@ export type InventoryView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface CommandRegistry {
-    'inventory/use': { id: EntityRef }
-    'inventory/drop': { id: EntityRef }
-    'inventory/give': { id: EntityRef; to: Holder }
-  }
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     inventory: InventoryView
   }
 }
 
 const ID = 'inventory'
+
+/** The plugin's content: `data.inventory.kinds`, the kinds it shows. */
+const DATA = defineData(ID, { kinds: list<{ id: string }>({ noun: 'kind' }) })
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  commands: {
+    /** Use one of the thing `id`, by its `inventory/usable` trait. */
+    use: { id: arg.entity() },
+    /** Put one of the thing `id` down where you are, or let it go. */
+    drop: { id: arg.entity() },
+    /** Hand one of the thing `id` to `to`, someone who can hold things. */
+    give: { id: arg.entity(), to: arg.holder() },
+  },
+})
 const USABLE = 'inventory/usable'
 
 /** The kinds the inventory shows, from `data.inventory.kinds` in the game's content and packs; undefined for every kind. */
 export function inventoryKindsOf(game: Game): { id: string }[] | undefined {
-  return ((game.data?.[ID] ?? {}) as InventoryData).kinds
+  return game.data?.[ID]?.kinds === undefined ? undefined : DATA.kinds.all(game)
 }
 
 /** What makes a thing usable, when it is: its `inventory/usable` trait, read through what it was made `like`. */
@@ -142,10 +158,6 @@ function shows(game: Game, ref: EntityRef): boolean {
   const kinds = inventoryKindsOf(game)
   const kind = parseRef(ref)?.kind
   return !kinds || kinds.some((entry) => entry.id === kind)
-}
-
-function idOf(args: PluginArgs): EntityRef {
-  return String(args.id ?? '') as EntityRef
 }
 
 /** Whether the thing is in the game now. */
@@ -195,10 +207,9 @@ function dropEffects(state: GameState, ref: EntityRef, cx: Ctx): Effect[] {
   return to === undefined ? [{ entity: ref, at: from, by: -1 }] : [{ move: ref, from, to, by: 1 }]
 }
 
-function giveEffects(state: GameState, game: Game, args: PluginArgs): Effect[] {
-  const ref = idOf(args)
-  const from = takenFrom(state, game, ref)
-  return from === undefined ? [] : [{ move: ref, from, to: String(args.to ?? ''), by: 1 }]
+function giveEffects(state: GameState, game: Game, { id, to }: { id: EntityRef; to: Holder }): Effect[] {
+  const from = takenFrom(state, game, id)
+  return from === undefined ? [] : [{ move: id, from, to, by: 1 }]
 }
 
 /** One holder's things as the inventory shows them. */
@@ -237,9 +248,11 @@ function inventoryView(state: GameState, game: Game): InventoryView {
  * keeps nothing in the save.
  */
 function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
-  return definePlugin<null, InventoryView>({
+  return definePlugin<null, InventoryView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     commandVersion: COMMAND_VERSION,
@@ -255,29 +268,26 @@ function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
     commands: {
       /** `{ 'inventory/use': { id } }`: use one of the thing `id`, by its `inventory/usable` trait. */
       use: {
-        whyNot: (state, args, { game }) => {
-          const ref = idOf(args)
+        whyNot: (state, { id: ref }, { game }) => {
           const held = notHeld(state, game, ref)
           if (held) return held
           return usableOf(state, game, ref) ? undefined : stringOf(game, 'inventory/doesNothing', { thing: nameOf(state, game, ref) })
         },
         // Its effects read the state as it was before one was spent, as an action's do before its cost.
-        effectsOf: (state, args, { game }) => useEffects(state, game, idOf(args)),
-        run: (state, args, { game, apply }) => apply(useEffects(state, game, idOf(args)), state),
+        effectsOf: (state, { id }, { game }) => useEffects(state, game, id),
+        run: (state, { id }, { game, apply }) => apply(useEffects(state, game, id), state),
       },
       /** `{ 'inventory/drop': { id } }`: put one of the thing `id` down where you are, or let it go. */
       drop: {
-        whyNot: (state, args, { game }) => notHeld(state, game, idOf(args)),
-        effectsOf: (state, args, context) => dropEffects(state, idOf(args), context),
-        run: (state, args, context) => context.apply(dropEffects(state, idOf(args), context), state),
+        whyNot: (state, { id }, { game }) => notHeld(state, game, id),
+        effectsOf: (state, { id }, context) => dropEffects(state, id, context),
+        run: (state, { id }, context) => context.apply(dropEffects(state, id, context), state),
       },
       /** `{ 'inventory/give': { id, to } }`: hand one of the thing `id` to `to`, someone who can hold things. */
       give: {
-        whyNot: (state, args, { game }) => {
-          const ref = idOf(args)
+        whyNot: (state, { id: ref, to }, { game }) => {
           const held = notHeld(state, game, ref)
           if (held) return held
-          const to = String(args.to ?? '')
           if (to === YOU || to === protagonist(state) || to === PLAYER) return stringOf(game, 'inventory/giveToSelf')
           return canHold(state, game, to) ? undefined : stringOf(game, 'inventory/cantGiveTo', { to: nameOf(state, game, to) })
         },
@@ -287,14 +297,12 @@ function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
     },
     view: (state, { game }) => inventoryView(state, game),
     references: {
-      // The thing a command names, and who `give` hands it to.
-      calls: (_kind, name, args) => [
-        ...(args.id === undefined ? [] : [{ entity: String(args.id) }]),
-        ...(name === 'give' && args.to !== undefined ? [{ holder: String(args.to), holds: String(args.id ?? '') }] : []),
-      ],
+      // Nothing gives a thing to itself.
+      calls: (_table, name, args) =>
+        name === 'give' && args.to !== undefined && args.to === args.id ? [{ problem: `"${String(args.to)}" can't hold itself` }] : [],
     },
     check: (game, tools) =>
-      (inventoryKindsOf(game) ?? []).flatMap((kind) => tools.problems([{ kind: kind.id }]).map((what) => ({ list: 'kinds', id: kind.id, what }))),
+      (inventoryKindsOf(game) ?? []).flatMap((kind) => tools.problems([{ kind: kind.id }]).map((what) => DATA.kinds.problem(kind.id, what))),
   })
 }
 
@@ -308,11 +316,11 @@ const usable = (label: string, effects: EffectRef[], options: { keep?: boolean }
 })
 
 /** A command: use one of a thing you hold. */
-const useThing = (ref: EntityRef): CommandRef => ({ [`${ID}/use`]: { id: ref } })
+const useThing = (ref: EntityRef): CommandRef => CALLS.commands.use({ id: ref })
 /** A command: drop one of a thing you hold. */
-const dropThing = (ref: EntityRef): CommandRef => ({ [`${ID}/drop`]: { id: ref } })
+const dropThing = (ref: EntityRef): CommandRef => CALLS.commands.drop({ id: ref })
 /** A command: give one of a thing you hold to someone who can hold things, such as `'character:ava'`. */
-const giveThing = (ref: EntityRef, to: Holder): CommandRef => ({ [`${ID}/give`]: { id: ref, to } })
+const giveThing = (ref: EntityRef, to: Holder): CommandRef => CALLS.commands.give({ id: ref, to })
 
 /**
  * The plugin, with its helpers on it: `inventory()` makes the plugin for the

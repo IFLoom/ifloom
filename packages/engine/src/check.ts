@@ -7,6 +7,7 @@
 import { amountProblems, amountReferences } from './amount.ts'
 import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
+import { argReferences, callShape } from './pluginCalls.ts'
 import { absentPartner, missingCall, pluginOf, pluginCommand, pluginName, pluginsOf, type CallTable, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { wordClashes } from './words.ts'
@@ -181,7 +182,9 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     const parts = pluginName(name)
     const plugin = parts && pluginOf(game, parts.plugin)
     if (!plugin || !parts) return []
-    return resolve(plugin.references?.calls?.(table, parts.name, args, game) ?? [], where)
+    // What its declaration says of the arguments and what they name, then any rule of the plugin's own.
+    const shape = callShape(plugin.calls, table, parts.name)
+    return resolve([...(shape ? argReferences(shape, args, game, name) : []), ...(plugin.references?.calls?.(table, parts.name, args, game) ?? [])], where)
   }
 
   /**

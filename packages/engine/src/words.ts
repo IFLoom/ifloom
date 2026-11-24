@@ -18,6 +18,7 @@ import type { Game } from './game.ts'
 import type { Block, Choice } from './scene.ts'
 import { hash } from './random.ts'
 import { callOf } from './calls.ts'
+import { argWords, callNames, callShape } from './pluginCalls.ts'
 import { contentKeys } from './features/registry.ts'
 
 /** One field of a game's content a translation can give other words for. */
@@ -96,7 +97,7 @@ export type WordWalk = {
 /** Collects the fields it is shown, in order. */
 class Walk implements WordWalk {
   readonly spots: WordSpot[] = []
-  /** The words in each plugin call's arguments, by the call's full name, as its plugin's `callWords` declare them. */
+  /** The words in each plugin call's arguments, by the call's full name, as its plugin's `calls` declare them (`arg.words()`). */
   readonly calls: ReadonlyMap<string, WordShape>
 
   readonly game: Game
@@ -231,13 +232,21 @@ function entryName(item: unknown, part: WordPart, index: number): string {
  */
 export function wordSpots(game: Game): WordSpot[] {
   const calls = new Map<string, WordShape>()
-  for (const plugin of game.plugins ?? []) for (const [name, shape] of Object.entries(plugin.callWords ?? {})) calls.set(`${plugin.id}/${name}`, shape)
+  for (const plugin of game.plugins ?? []) {
+    for (const table of ['conditions', 'effects', 'commands'] as const) {
+      for (const name of callNames(plugin.calls, table)) {
+        const words = argWords(callShape(plugin.calls, table, name)!)
+        if (words) calls.set(`${plugin.id}/${name}`, words)
+      }
+    }
+  }
   const walk = new Walk(game, calls)
   // Each feature's pack keys, in the features' order, as each says where its words are.
   for (const key of Object.values(contentKeys)) key.words?.(game, walk)
   // Each plugin's content, by the shape it gives each list of its data.
   for (const plugin of game.plugins ?? []) {
-    for (const [list, shape] of Object.entries(plugin.words ?? {})) {
+    for (const { list, words: shape } of Object.values(plugin.data ?? {})) {
+      if (shape === undefined) continue
       const entries = game.data?.[plugin.id]?.[list] ?? []
       entries.forEach((item, index) => {
         const entry = `${plugin.id}/${list}.${item.id}`

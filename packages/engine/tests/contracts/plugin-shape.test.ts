@@ -44,8 +44,8 @@ const MEMBERS = {
   // Providers: answers, never a change to the state.
   providers: ['guard', 'price', 'label', 'saveName', 'scene', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; the content it brings, under the game's;
-  // and which fields of its content are words a translation can replace.
-  declares: ['traits', 'content', 'words', 'callWords'],
+  // its calls and what each takes, and its data lists with which of their fields are words a translation can replace.
+  declares: ['traits', 'content', 'calls', 'data'],
   // What the content checker asks.
   checks: ['references', 'check'],
   // What `definePlugin` adds for code outside the plugin.
@@ -202,5 +202,32 @@ describe('the plugin shape (ADR 0009)', () => {
       .filter(([path]) => path.endsWith('/src/index.ts'))
       .flatMap(([path, source]) => (/^export const (\w+) = Object\.assign\(\1Plugin, \{/m.test(source) ? [] : [path.split('/').at(-3)]))
     expect(assigned).toEqual([])
+  })
+
+  it('declares each call once, with what it takes, and writes its helpers from that declaration', () => {
+    // A plugin with conditions, effects or commands declares them in `calls` (`defineCalls`); `definePlugin` holds the two to each other.
+    const undeclared = firstParty
+      .filter((plugin) => (plugin.conditions || plugin.effects || plugin.macros || plugin.commands) && !plugin.calls)
+      .map((plugin) => plugin.id)
+    expect(undeclared).toEqual([])
+    // A helper writes its call with the declaration's writer, `CALLS.conditions.at({ ... })`, whose key is typed: never a key built
+    // from the plugin's id, which widens to a string the registries can't check, nor a call's name spelled out by hand.
+    const handWritten = Object.entries(SOURCES).flatMap(([path, source]) =>
+      [...source.matchAll(/\(\{ ?(\[`\$\{ID\}\/\w+`\]|'[a-z]+\/\w+'): /g)].map((match) => `${path.split('/').at(-3)}: ${match[1]}`),
+    )
+    expect(handWritten.filter((line) => !line.includes('/upgrade.ts'))).toEqual([])
+  })
+
+  it('declares each list of its data once, and reads it through that declaration', () => {
+    // A list of the plugin's `data` is declared in `data` (`defineData`), with its noun and words, and read with its `all` and `get`.
+    const cast = Object.entries(SOURCES).flatMap(([path, source]) =>
+      [...source.matchAll(/game\.data\?\.\[ID\]\?\.(\w+) \?\? \[\]\) as/g)].map((match) => `${path.split('/').at(-3)}: ${match[1]}`),
+    )
+    expect(cast).toEqual([])
+    for (const plugin of firstParty) {
+      for (const [name, list] of Object.entries(plugin.data ?? {})) {
+        expect([plugin.id, list.plugin, list.list]).toEqual([plugin.id, plugin.id, name])
+      }
+    }
   })
 })

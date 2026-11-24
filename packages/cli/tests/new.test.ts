@@ -221,7 +221,7 @@ describe('ifloom new', () => {
       "const ID = 'rainy-day'",
       'function rainyDayPlugin(): DefinedPlugin<RainyDayState, RainyDayView>',
       'export const rainyDay = Object.assign(rainyDayPlugin, { marked, mark, markCommand })',
-      'definePlugin<RainyDayState, RainyDayView>',
+      'definePlugin<RainyDayState, RainyDayView, typeof CALLS>',
       'conditions: {',
       'effects: {',
       'commands: {',

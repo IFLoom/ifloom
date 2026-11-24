@@ -7,16 +7,21 @@
  * content passes time with `{ 'calendar/pass': n }`.
  */
 import {
+  arg,
   callOf,
+  defineCalls,
   definePlugin,
   holds,
   inRange,
   stringOf,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type Effect,
   type EffectRef,
+  type EffectsOf,
   type GameState,
   type PluginContext,
   type PluginProblem,
@@ -76,31 +81,46 @@ export type CalendarView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, and its view, so a call
- * with a misspelled argument fails to compile. Its queries' answers are the
- * engine's `PartnerQueries`, since other plugins ask them.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'calendar/period': { period: string | readonly string[] }
-    'calendar/weekday': { day: number | readonly number[] }
-    'calendar/weekend': true
-    'calendar/day': Range | true
-    'calendar/curfew': true
-  }
-  interface EffectRegistry {
-    'calendar/pass': { by?: number } | true
-    'calendar/set': { day?: number; period?: string }
-  }
-  interface CommandRegistry {
-    'calendar/sleep': true
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     calendar: CalendarView
   }
 }
 
 const ID = 'calendar'
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** In one of these periods: `{ period: ['morning', 'afternoon'] }`. */
+    period: { period: arg.strings() },
+    /** On one of these days of the week, from 0: `{ day: [0, 1, 2, 3, 4] }`. */
+    weekday: { day: arg.numbers() },
+    /** At the weekend. */
+    weekend: {},
+    /** The day, from 0, in a range: `{ gte: 6 }`. */
+    day: { ...arg.bounds },
+    /** The curfew binds right now. */
+    curfew: {},
+  },
+  effects: {
+    /** Time goes by that many periods, or one with no `by`. */
+    pass: { by: arg.number().optional(1) },
+    /** Put the clock somewhere. Ends no turn. */
+    set: { day: arg.number().optional(), period: arg.string().optional() },
+  },
+  commands: {
+    /** Go to bed. */
+    sleep: {},
+  },
+})
 const DEFAULT_PERIODS: PeriodDef[] = [{ id: 'morning' }, { id: 'afternoon' }, { id: 'evening' }, { id: 'night' }, { id: 'late' }]
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -108,15 +128,14 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 function passed(effects: readonly Effect[]): number {
   return effects.reduce((sum, effect) => {
     const call = callOf(effect)
-    if (call?.name !== `${ID}/pass`) return sum
-    return sum + periodsIn(call.with)
+    if (call?.name !== CALLS.effects.pass.call) return sum
+    return sum + periodsIn(CALLS.effects.pass.read(call.with).by)
   }, 0)
 }
 
-/** `{ by: n }`, or one period with none. */
-function periodsIn(args: Record<string, unknown>): number {
-  const n = Number(args.by ?? 1)
-  return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0
+/** How many whole periods `by` passes: none for less than one. */
+function periodsIn(by: number): number {
+  return Math.max(0, Math.floor(by))
 }
 
 /** Build a calendar. List it before other plugins, so theirs see the new day when a turn ends. */
@@ -171,49 +190,49 @@ function calendarPlugin(options: CalendarOptions = {}): DefinedPlugin<CalendarSt
     period: stringOf(context.game, `${ID}/period.${clock.period}`),
   })
 
-  return definePlugin<CalendarState, CalendarView>({
+  return definePlugin<CalendarState, CalendarView, typeof CALLS>({
     id: ID,
     version: 1,
+    calls: CALLS,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     strings,
     start: () => ({ day: startDay, period: options.start?.period ?? ids[0] }),
     conditions: {
       /** `{ 'calendar/period': { period: ['morning', 'afternoon'] } }`. */
-      period: (_state, args, { slice }) => list(args.period).includes(slice.period),
+      period: (_state, { period }, { slice }) => period.includes(slice.period),
       /** `{ 'calendar/weekday': { day: [0, 1, 2, 3, 4] } }`: Monday to Friday, in a seven-day week. */
-      weekday: (_state, args, { slice }) => list(args.day).map(Number).includes(weekdayIndex(slice.day)),
+      weekday: (_state, { day }, { slice }) => day.includes(weekdayIndex(slice.day)),
       /** `{ 'calendar/weekend': true }`. */
       weekend: (_state, _args, { slice }) => weekend.includes(weekdayIndex(slice.day)),
       /** `{ 'calendar/day': { gte: 6 } }`: the day, from 0, in a range. */
-      day: (state, args, { slice, game }) => inRange(state, game, slice.day, args as Range),
+      day: (state, range, { slice, game }) => inRange(state, game, slice.day, range),
       /** `{ 'calendar/curfew': true }`: the curfew binds right now. */
       curfew: (state, _args, context) => curfewBinds(state, context),
     },
     effects: {
       /** `{ 'calendar/pass': { by: 2 } }`: time goes by that many periods, or one with no `by`. */
-      pass: (state, args, context) => pass(state, periodsIn(args), context),
+      pass: (state, { by }, context) => pass(state, periodsIn(by), context),
       /** `{ 'calendar/set': { day, period } }`: put the clock somewhere. Ends no turn. */
       // A period the calendar does not have leaves the period as it was.
-      set: (_state, args, { slice, set }) =>
+      set: (_state, { day, period }, { slice, set }) =>
         set({
-          day: args.day === undefined ? slice.day : Math.max(0, Math.floor(Number(args.day))),
-          period: args.period !== undefined && ids.includes(String(args.period)) ? String(args.period) : slice.period,
+          day: day === undefined ? slice.day : Math.max(0, Math.floor(day)),
+          period: period !== undefined && ids.includes(period) ? period : slice.period,
         }),
     },
-    // A calendar with `sleep: false` has no sleep command at all.
-    commands: sleep
-      ? {
-          sleep: {
-            whyNot: (state, _args, { slice, game }) => {
-              if (state.sceneId) return stringOf(game, 'finishFirst')
-              return sleep.from.includes(slice.period) ? undefined : stringOf(game, `${ID}/tooEarly`)
-            },
-            run: (state, _args, context) => pass(state, untilMorning(context.slice), context),
-            effectsOf: (_state, _args, { slice }) => [{ [`${ID}/pass`]: { by: untilMorning(slice) } }],
-          },
-        }
-      : {},
+    commands: {
+      sleep: {
+        whyNot: (state, _args, { slice, game }) => {
+          // A calendar with `sleep: false` has no bed: there is no such thing to do.
+          if (!sleep) return stringOf(game, 'noSuchAction')
+          if (state.sceneId) return stringOf(game, 'finishFirst')
+          return sleep.from.includes(slice.period) ? undefined : stringOf(game, `${ID}/tooEarly`)
+        },
+        run: (state, _args, context) => (sleep ? pass(state, untilMorning(context.slice), context) : state),
+        effectsOf: (_state, _args, { slice }) => (sleep ? [CALLS.effects.pass({ by: untilMorning(slice) })] : []),
+      },
+    },
     queries: {
       now: (_state, _args, { slice }) => ({ ...slice }),
       periods: () => [...ids],
@@ -236,7 +255,7 @@ function calendarPlugin(options: CalendarOptions = {}): DefinedPlugin<CalendarSt
     },
     guard: (state, { command, effects }, context) => {
       // Sleep is the way past dawn, not something to be warned off.
-      if (command.type === 'custom' && command.name === `${ID}/sleep`) return undefined
+      if (command.type === 'custom' && command.name === CALLS.commands.sleep.call) return undefined
       const n = passed(effects)
       if (n <= 0 || index(context.slice.period) + n < P) return undefined
       return curfewBinds(state, context) ? { reason: stringOf(context.game, `${ID}/pastDawn`), soft: true } : undefined
@@ -264,6 +283,9 @@ function calendarPlugin(options: CalendarOptions = {}): DefinedPlugin<CalendarSt
       }
     },
     references: {
+      // A calendar with `sleep: false` has no sleep command, so content that names one is wrong.
+      calls: (table, name) =>
+        !sleep && table === 'commands' && name === 'sleep' ? [{ problem: 'this calendar has no sleep (sleep: false), so no calendar/sleep' }] : [],
       content: () => (curfew ? [{ list: 'options', id: 'curfew', refs: [{ when: curfew }] }] : []),
     },
     check: () => {
@@ -285,23 +307,18 @@ function calendarPlugin(options: CalendarOptions = {}): DefinedPlugin<CalendarSt
   })
 }
 
-/** One or several, as a list: `period: 'morning'` or `period: ['morning', 'noon']`. */
-function list(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : value === undefined ? [] : [value]
-}
-
 /** The command that goes to bed. */
-const sleep = (): CommandRef => ({ [`${ID}/sleep`]: true })
+const sleep = (): CommandRef => CALLS.commands.sleep()
 /** Time going by: `n` periods. */
-const pass = (n = 1): EffectRef => ({ [`${ID}/pass`]: { by: n } })
+const pass = (n = 1): EffectRef => CALLS.effects.pass({ by: n })
 /** True in any of these periods. */
-const period = (...ids: string[]): Condition => ({ [`${ID}/period`]: { period: ids } })
+const period = (...ids: string[]): Condition => CALLS.conditions.period({ period: ids })
 /** True on any of these days of the week, from 0. */
-const weekday = (...days: number[]): Condition => ({ [`${ID}/weekday`]: { day: days } })
+const weekday = (...days: number[]): Condition => CALLS.conditions.weekday({ day: days })
 /** True at the weekend. */
-const weekend = (): Condition => ({ [`${ID}/weekend`]: true })
+const weekend = (): Condition => CALLS.conditions.weekend()
 /** The day, from 0, in a range: `calendar.day({ gte: 6 })`. */
-const day = (range: Range): Condition => ({ [`${ID}/day`]: range })
+const day = (range: Range): Condition => CALLS.conditions.day(range)
 
 /**
  * The plugin, with its helpers on it: `calendar()` makes the plugin for the

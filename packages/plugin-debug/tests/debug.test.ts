@@ -72,8 +72,12 @@ describe('the debugger', () => {
     expect(whyNot(state, g, debug.time({ day: -1 }))).toContain('A day is a whole number')
     expect(whyNot(state, g, debug.time({ period: 'teatime' }))).toContain('one of morning, afternoon, evening, night, late')
     expect(whyNot(state, g, debug.turn(-2))).toBe('A turn is a whole number from 0.')
-    expect(whyNot(state, g, { type: 'custom', name: 'debug/turn', with: { to: '3' } })).toBe('A turn is a whole number from 0.')
-    expect(whyNot(state, g, { type: 'custom', name: 'debug/time', with: { day: '' } })).toContain('A day is a whole number')
+    // An argument of the wrong type is refused by the command's declaration.
+    expect(whyNot(state, g, { type: 'custom', name: 'debug/turn', with: { to: '3' } })).toBe('That can’t be done: "to" must be a number.')
+    expect(whyNot(state, g, { type: 'custom', name: 'debug/time', with: { day: '' } })).toBe('That can’t be done: "day" must be a number.')
+    expect(whyNot(state, g, { type: 'custom', name: 'debug/kv', with: { key: 'mood', to: { odd: true } } })).toBe(
+      'That can’t be done: "to" must be true or false, a number or text.',
+    )
     const bare = { ...g, plugins: [debug()] }
     expect(whyNot(startingState(bare), bare, debug.time({ day: 1 }))).toBe('This game has no calendar.')
     expect(whyNot(startingState(bare), bare, debug.go('island'))).toBe('This game has no places.')

@@ -21,6 +21,7 @@ export const STRINGS = {
   nothingToChoose: 'There is nothing to choose.',
   notOnOffer: 'That is not on offer.',
   noSuchThing: 'There is no such thing.',
+  badArgument: 'That can’t be done: "{arg}" must be {kind}.',
   // Input.
   noSuchInput: 'There is no such thing to fill in.',
   notNow: 'Not now.',

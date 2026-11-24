@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  checkGame,
   apply,
   applyEffects as applyBuilt,
   buildEffects,
@@ -199,6 +200,11 @@ describe('the calendar', () => {
   it('has no bed when it has no sleep, and sets only a period it has', () => {
     const { game, clock } = house({ sleep: false, curfew: false })
     expect(whyNot(startingState(game), game, calendar.sleep())).toBe('There is no such thing to do.')
+    // Content that names the bed is reported: this calendar has none.
+    const named = { ...game, actions: [...(game.actions ?? []), { id: 'nap', label: 'Nap', command: calendar.sleep() }] }
+    expect(checkGame(named).problems.map((problem) => `${problem.where}: ${problem.what}`)).toContain(
+      'action nap: this calendar has no sleep (sleep: false), so no calendar/sleep',
+    )
     const set = applyEffects(startingState(game), game, [{ 'calendar/set': { day: 3, period: 'teatime' } }])
     expect(clock.read(set, game)).toEqual({ day: 3, period: 'morning' })
     const short = house({ week: 1 })

@@ -14,24 +14,30 @@
  * clothes and switching back the first's.
  */
 import {
+  arg,
+  declaredTrait,
+  declaredWithTrait,
+  defineCalls,
+  defineData,
   definePlugin,
   entityName,
   entityOf,
-  traitOf,
   heldBy,
-  pluginQuery,
   heldCount,
+  list,
   parseRef,
   PLAYER,
+  pluginQuery,
   protagonist,
   renderAction,
   resolveHolder,
   stringOf,
-  declaredTrait,
-  declaredWithTrait,
+  traitOf,
   YOU,
   type CommandRef,
+  type CommandsOf,
   type Condition,
+  type ConditionsOf,
   type DefinedPlugin,
   type EntityRef,
   type Game,
@@ -94,17 +100,13 @@ export type WardrobeView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`), its
+ * queries' answers and its view, so a call with a misspelled argument fails
+ * to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionRegistry {
-    'wardrobe/wearing': { entity?: EntityRef; slot?: string; at?: string }
-  }
-  interface CommandRegistry {
-    'wardrobe/wear': { id: EntityRef }
-    'wardrobe/takeOff': { id: string }
-  }
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     wardrobe: WardrobeView
   }
@@ -114,9 +116,26 @@ const ID = 'wardrobe'
 const WEARABLE = 'wardrobe/wearable'
 const CLOSET = 'wardrobe/closet'
 
+/** The plugin's content: `data.wardrobe.slots`, with the words a player reads in each, for a translation's `words` table. */
+const DATA = defineData(ID, { slots: list<WardrobeSlot>({ noun: 'slot', words: { label: true } }) })
+
+/** The plugin's calls, and what each takes. */
+const CALLS = defineCalls(ID, {
+  conditions: {
+    /** Wearing the thing `entity`, or anything in `slot`, or that thing in that slot; on whoever is played, or `at`. */
+    wearing: { entity: arg.entity().optional(), slot: arg.entry(DATA.slots).optional(), at: arg.holder().optional(YOU) },
+  },
+  commands: {
+    /** Put on the thing `id`, which you hold. */
+    wear: { id: arg.entity() },
+    /** Take off what is in the slot `id`. */
+    takeOff: { id: arg.entry(DATA.slots) },
+  },
+})
+
 /** The game's slots, in the order the UI lists them: `data.wardrobe.slots`, from its content and packs. */
 export function slotsOf(game: Game): WardrobeSlot[] {
-  return (game.data?.[ID]?.slots ?? []) as WardrobeSlot[]
+  return DATA.slots.all(game)
 }
 
 /** The slot a thing is worn in, if it can be worn: its `wardrobe/wearable` trait, read through what it was made `like`. */
@@ -131,7 +150,7 @@ function nameOf(state: GameState, game: Game, ref: string): string {
 const wearableTrait: TraitDef<'wardrobe/wearable'> = {
   id: WEARABLE,
   check: (data) => (typeof data?.slot === 'string' && data.slot !== '' ? [] : ['a wearable thing needs a slot: { slot: "coat" }']),
-  references: (data) => (typeof data?.slot === 'string' ? [{ entry: data.slot, plugin: ID, list: 'slots', noun: 'slot' }] : []),
+  references: (data) => (typeof data?.slot === 'string' ? [DATA.slots.ref(data.slot)] : []),
 }
 
 const closetTrait: TraitDef<'wardrobe/closet'> = {
@@ -177,13 +196,13 @@ function dressed(slice: WardrobeState, holder: string, slots: Record<string, Ent
  * `wardrobe/wearable` trait (`wardrobe.wearable('coat')`), so a mod can add either.
  */
 function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
-  return definePlugin<WardrobeState, WardrobeView>({
+  return definePlugin<WardrobeState, WardrobeView, typeof CALLS>({
     id: ID,
     version: 3,
+    calls: CALLS,
+    data: DATA,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { slots: { label: true } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     migrations: {
@@ -215,10 +234,8 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
        * With `slot` and no `entity`: something is in that slot. With both: that thing, in that slot.
        * With `at`: on that body instead, `'player'` or a protagonist.
        */
-      wearing: (state, args, { slice, game }) => {
-        const entity = args.entity === undefined ? undefined : String(args.entity)
-        const slot = args.slot === undefined ? undefined : String(args.slot)
-        const worn = wornBy(slice, resolveHolder(state, args.at === undefined ? YOU : String(args.at)))
+      wearing: (state, { entity, slot, at }, { slice, game }) => {
+        const worn = wornBy(slice, resolveHolder(state, at))
         if (slot !== undefined) {
           const on = worn[slot] ?? null
           return entity === undefined ? on !== null : on === entity
@@ -230,8 +247,7 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
     commands: {
       /** `{ 'wardrobe/wear': { id } }`: put on the thing `id`, which you hold. */
       wear: {
-        whyNot: (state, args, { slice, game }) => {
-          const ref = String(args.id ?? '')
+        whyNot: (state, { id: ref }, { slice, game }) => {
           if (!entityOf(state, game, ref)) return stringOf(game, 'noSuchThing')
           const wearable = wearableOf(state, game, ref)
           if (!wearable) return stringOf(game, 'wardrobe/notClothing', { thing: nameOf(state, game, ref) })
@@ -239,17 +255,15 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
           if (heldCount(state, game, ref, YOU) <= 0) return stringOf(game, 'wardrobe/haveNone', { thing: nameOf(state, game, ref) })
           return undefined
         },
-        run: (state, args, { slice, set, game }) => {
-          const ref = String(args.id) as EntityRef
+        run: (state, { id: ref }, { slice, set, game }) => {
           const { slot } = wearableOf(state, game, ref)!
           return set(dressed(slice, protagonist(state), { [slot]: ref }))
         },
       },
       /** `{ 'wardrobe/takeOff': { id } }`: take off what is in the slot `id`. */
       takeOff: {
-        whyNot: (state, args, { slice, game }) =>
-          wornBy(slice, protagonist(state))[String(args.id ?? '')] ? undefined : stringOf(game, 'wardrobe/nothingToTakeOff'),
-        run: (state, args, { slice, set }) => set(dressed(slice, protagonist(state), { [String(args.id)]: null })),
+        whyNot: (state, { id }, { slice, game }) => (wornBy(slice, protagonist(state))[id] ? undefined : stringOf(game, 'wardrobe/nothingToTakeOff')),
+        run: (state, { id }, { slice, set }) => set(dressed(slice, protagonist(state), { [id]: null })),
       },
     },
     // A place with the closet trait offers a button that opens the wardrobe panel.
@@ -292,20 +306,7 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
       }
     },
     references: {
-      // The thing a condition or `wear` names, and the slot a condition or `takeOff` names.
-      calls: (table, name, args) => {
-        const entity = table === 'commands' ? (name === 'wear' ? args.id : undefined) : args.entity
-        const slot = table === 'commands' ? (name === 'takeOff' ? args.id : undefined) : args.slot
-        return [
-          ...(entity === undefined ? [] : [{ entity: String(entity) }]),
-          ...(slot === undefined ? [] : [{ entry: String(slot), plugin: ID, list: 'slots', noun: 'slot' }]),
-          ...(table === 'conditions' && args.at !== undefined ? [{ holder: String(args.at) }] : []),
-        ]
-      },
-      content: (game) =>
-        slotsOf(game)
-          .filter((slot) => slot.start !== undefined)
-          .map((slot) => ({ list: 'slots', id: slot.id, refs: [{ entity: slot.start! }] })),
+      content: (game) => DATA.slots.content(game, (slot) => (slot.start !== undefined ? [{ entity: slot.start }] : [])),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
@@ -323,9 +324,9 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
         const def = game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)
         if (!def) continue
         if (declaredTrait(game, ref, WEARABLE)?.slot !== slot.id) {
-          problems.push({ list: 'slots', id: slot.id, what: `starts with "${ref}", which is not worn in this slot` })
+          problems.push(DATA.slots.problem(slot.id, `starts with "${ref}", which is not worn in this slot`))
         } else if (!(def.at === 'player' || (typeof def.at === 'object' && (def.at.player ?? 0) > 0))) {
-          problems.push({ list: 'slots', id: slot.id, what: `starts with "${ref}", which the player does not start holding` })
+          problems.push(DATA.slots.problem(slot.id, `starts with "${ref}", which the player does not start holding`))
         }
       }
       return problems
@@ -346,13 +347,13 @@ const wearable = (slot: string): { 'wardrobe/wearable': Wearable } => ({ [WEARAB
 const closet = (options: Closet = {}): { 'wardrobe/closet': Closet } => ({ [CLOSET]: options })
 
 /** A condition: the thing is on whoever the player is playing, or, with a slot, on in that slot. */
-const wearing = (entity: EntityRef, slot?: string): Condition => ({ [`${ID}/wearing`]: slot === undefined ? { entity } : { entity, slot } })
+const wearing = (entity: EntityRef, slot?: string): Condition => CALLS.conditions.wearing(slot === undefined ? { entity } : { entity, slot })
 /** A condition: something is in this slot. */
-const slotFilled = (slot: string): Condition => ({ [`${ID}/wearing`]: { slot } })
+const slotFilled = (slot: string): Condition => CALLS.conditions.wearing({ slot })
 /** A command: put this on. */
-const wear = (entity: EntityRef): CommandRef => ({ [`${ID}/wear`]: { id: entity } })
+const wear = (entity: EntityRef): CommandRef => CALLS.commands.wear({ id: entity })
 /** A command: take off whatever is in this slot. */
-const takeOff = (slot: string): CommandRef => ({ [`${ID}/takeOff`]: { id: slot } })
+const takeOff = (slot: string): CommandRef => CALLS.commands.takeOff({ id: slot })
 
 /**
  * The plugin, with its helpers on it: `wardrobe()` makes the plugin for the

@@ -31,10 +31,10 @@ const cafe: JobDef = {
   name: 'Weekend help',
   description: 'Saturdays at the Corner Café.',
   blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Ava needs to know you first.' }],
-  at: ['cafe'],
   days: [5],
   hours: ['morning'],
-  shift: { cost: { energy: 20 }, passes: 1, effects: [{ stat: 'manner', by: 1 }] },
+  // Worked at the café, with places; anywhere without.
+  shift: { cost: { energy: 20 }, passes: 1, effects: [{ stat: 'manner', by: 1 }], blocked: [places.onlyAt(['cafe'], { string: 'jobs/notHere' })] },
   ranks: [
     { id: 'help', name: 'Weekend help', pay: { coins: 12 } },
     { id: 'barista', name: 'Barista', pay: { coins: 18 }, requires: { shifts: 3 } },

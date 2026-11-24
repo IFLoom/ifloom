@@ -28,9 +28,9 @@ Then add `shop()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one
 The plugin works on its own, and needs neither the [inventory](/docs/plugins/inventory) nor the [wardrobe](/docs/plugins/wardrobe): what it sells is held by the engine. It cooperates with the [calendar](/docs/plugins/calendar) and [places](/docs/plugins/places) when the game has them:
 
 - **Calendar.** A vendor's opening hours, written with [`shop.hours()`](#opening-hours), are the calendar's periods, and "a day" for restocking and discounts is the calendar's day.
-- **Places.** A vendor's `at` lists the locations it stands at, and the player can only buy there.
+- **Places.** A vendor that stands somewhere lists [`places.onlyAt()`](/docs/plugins/places#helpers) in its `blocked`, and the player can only buy there. See [Where it stands](#where-it-stands).
 
-Without the calendar, a vendor with opening hours is always open and a day is a turn. Without places, a vendor with `at` is everywhere.
+Without the calendar, a vendor with opening hours is always open and a day is a turn. Without places, a vendor's `places.onlyAt()` entry never holds, so the vendor is everywhere.
 
 ## shop
 
@@ -46,13 +46,13 @@ A vendor is an entity, written with [`shop.vendor()`](#vendor) in your content's
 
 ```ts
 import { holding, type Content } from '@ifloom/engine'
+import { places } from '@ifloom/plugin-places'
 import { shop } from '@ifloom/plugin-shop'
 
 const counter = shop.vendor({
   id: 'counter',
   name: 'The counter',
-  at: ['cafe'],
-  blocked: [shop.hours(['morning', 'afternoon'])],
+  blocked: [places.onlyAt(['cafe'], { string: 'shop/notHere' }, { hide: true }), shop.hours(['morning', 'afternoon'])],
   buysBack: 0.5,
   discounts: { off: 0.5 },
   goods: [
@@ -88,7 +88,7 @@ const shop: {
   vendor(def: VendorDef): EntityDef
 }
 
-type VendorDef = Omit<EntityDef, 'of' | 'at'> & Vendor & { of?: string }
+type VendorDef = Omit<EntityDef, 'of'> & Vendor & { of?: string }
 ```
 
 Writes a vendor for your content's `entities`. You give it the entity's fields and the `shop/vendor` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `vendor` with the trait's fields in `traits['shop/vendor']`.
@@ -104,13 +104,12 @@ shop.vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', pr
 | `name` | What the player reads, such as "The counter". It's the entity's name, so prose tokens in it are filled in. |
 | `of` | Another kind for the vendor, such as `'character'` for a person who sells. Commands then name it by its whole reference, `shop.buy('character:ava', 'food:bun')`. `'vendor'` if left out. |
 
-The entity's other fields work as on any entity. `at` is left out because a vendor's `at` is the trait's, where on the map it stands.
+The entity's other fields work as on any entity.
 
 ### The vendor trait
 
 ```ts
 type Vendor = {
-  at?: string[]
   blocked?: Blocked[]
   goods: GoodDef[]
   buysBack?: number
@@ -122,8 +121,7 @@ What the `shop/vendor` trait holds. The plugin declares the trait and types it, 
 
 | Field | What it is |
 |---|---|
-| `at` | The [places](/docs/plugins/places) locations it stands at. Checked when the game has places. Everywhere if left out. |
-| `blocked` | When it's closed, as a list of [`Blocked`](/docs/reference/actions#blocked) entries: the first whose `when` holds closes it, and its `reason` is what the player reads, on the counter and as the refusal. [`shop.hours()`](#opening-hours) writes one for opening hours. Always open if left out. |
+| `blocked` | When it's refused, as a list of [`Blocked`](/docs/reference/actions#blocked) entries. Buying and selling are refused with the `reason` of the first whose `when` holds. An entry with `hide` says where the vendor is, and while it holds the vendor isn't [`here`](#vendorview). Any other entry closes the vendor, and its reason is what the counter shows. [`shop.hours()`](#opening-hours) writes one for opening hours, and [`places.onlyAt()`](#where-it-stands) one for where it stands. Open everywhere if left out. |
 | `goods` | What it sells, in the order it lists them. |
 | `buysBack` | The fraction of a thing's price it pays to take one back, from 0 to 1. It takes nothing back if left out. |
 | `discounts` | Goods marked down each day. See [Discounts](#discounts). |
@@ -148,6 +146,23 @@ shop.vendor({
 ```
 
 Without the calendar there is no period of the day, so the vendor is never closed by its hours.
+
+### Where it stands
+
+With the [places](/docs/plugins/places) plugin, a vendor that stands somewhere lists [`places.onlyAt()`](/docs/plugins/places#helpers) in its `blocked`, with `hide`:
+
+```ts
+shop.vendor({
+  id: 'counter',
+  name: 'The counter',
+  blocked: [places.onlyAt(['cafe'], { string: 'shop/notHere' }, { hide: true })],
+  goods: [{ entity: 'food:sandwich' }],
+})
+```
+
+Anywhere else, buying and selling are refused with the entry's reason. Here that's the shop's own [`shop/notHere`](#strings) string, `You aren’t at that shop.`, and with no reason it's places' `Not here.`. Because of `hide`, the vendor's `here` is `false` away from the café, so a UI that lists the vendors where the player is leaves it out, and it isn't shown as closed. Without `hide` the entry closes the vendor instead, and the counter shows its reason.
+
+The entry's `when` is `places.away('cafe')`, which never holds in a game without places, so there the vendor sells everywhere. The places plugin checks the locations it names.
 
 ### GoodDef
 
@@ -227,10 +242,9 @@ Each day, `count` of the vendor's goods (1 if left out) are marked down by `off`
 `shop/buy` is refused with the first of these that applies:
 
 1. `That isn’t for sale here.` for a vendor or thing that doesn't exist, or a good whose `when` doesn't hold.
-2. `You aren’t at that shop.` when the game has places and the player isn't at one of the vendor's `at`.
-3. The `reason` of the vendor's first `blocked` entry that holds, such as `Closed.` outside the hours [`shop.hours()`](#opening-hours) wrote.
-4. `Sold out.` when the vendor has fewer left than `count`.
-5. The stat's own [`lacking`](/docs/reference/stats#statdef) line when the player has too little of it, such as `You need 4 coins.`
+2. The `reason` of the vendor's first `blocked` entry that holds, such as `You aren’t at that shop.` away from where it [stands](#where-it-stands), or `Closed.` outside the hours [`shop.hours()`](#opening-hours) wrote.
+3. `Sold out.` when the vendor has fewer left than `count`.
+4. The stat's own [`lacking`](/docs/reference/stats#statdef) line when the player has too little of it, such as `You need 4 coins.`
 
 `shop/sell` is refused the same way, except it says `They don’t buy things back.` for a vendor with no `buysBack`, and `You don’t have that.` when you hold fewer than `count`.
 
@@ -263,10 +277,10 @@ actions: [{ id: 'counter', label: 'Go to the counter', effects: [shop.open('coun
 
 The counter stays open while the player buys and sells, and closes when a turn ends or the scene changes. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
 
-Opening a counter doesn't move the player. A vendor with `at` still sells only there, so a counter opened from somewhere else greys its buttons out with `You aren’t at that shop.` For a shop on a phone or a laptop, leave `at` out:
+Opening a counter doesn't move the player. A vendor with a [`places.onlyAt()`](#where-it-stands) entry still sells only there, so a counter opened from somewhere else greys its buttons out with that entry's reason. For a shop on a phone or a laptop, leave the entry out:
 
 ```ts
-// An online shop: no `at`, so it sells wherever the player is.
+// An online shop: nothing in its `blocked`, so it sells wherever the player is.
 const webshop = shop.vendor({ id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] })
 // A laptop app's actions section has a button that opens it.
 const app: AppDef = {
@@ -281,7 +295,7 @@ The checker reports an `shop.open` for a vendor the game doesn't have (`unknown 
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'shop/open': { vendor } }` | `shop.vendorOpen(vendor)` | The vendor is open now: none of its `blocked` entries holds. Where the player is doesn't matter. |
+| `{ 'shop/open': { vendor } }` | `shop.vendorOpen(vendor)` | The vendor is open now: none of its `blocked` entries without `hide` holds. So where the player is doesn't matter. |
 | `{ 'shop/outside': { period } }` | `shop.outside(...periods)` | The [calendar](/docs/plugins/calendar)'s period of the day is none of these. Never, in a game without the calendar. [`shop.hours()`](#opening-hours) closes a vendor with it. |
 | `{ 'shop/inStock': { vendor, entity } }` | `shop.inStock(vendor, entity)` | The vendor offers the thing now and has at least one left. Always, for a good that never runs out. |
 
@@ -292,7 +306,7 @@ An unknown vendor or thing is false.
 | Key | English |
 |---|---|
 | `shop/unknown` | `That isn’t for sale here.` |
-| `shop/notHere` | `You aren’t at that shop.` |
+| `shop/notHere` | `You aren’t at that shop.`, for a vendor's [`places.onlyAt()`](#where-it-stands) entry: `{ string: 'shop/notHere' }`. The plugin doesn't use it itself. |
 | `shop/closed` | `Closed.` |
 | `shop/soldOut` | `Sold out.` |
 | `shop/noBuyBack` | `They don’t buy things back.` |
@@ -331,8 +345,8 @@ type VendorView = {
 | `id` | How commands name it: its id for one of the `vendor` kind, else its whole reference. |
 | `ref` | Its entity, such as `'vendor:counter'`, which holds its stock. |
 | `name` | Its entity's name, tokens filled. |
-| `here` | The player is at one of its `at`, or it has none, or the game has no places plugin. |
-| `closed` | Why it's closed, in the words `shop/buy` would be refused with, or `null` while it's open. |
+| `here` | The player is where it is: none of its `blocked` entries with `hide` holds. True when it has none, such as a vendor with no [`places.onlyAt()`](#where-it-stands) entry or a game without places. |
+| `closed` | Why it's closed, the reason of its first `blocked` entry without `hide` that holds, or `null` while it's open. |
 | `buysBack` | It takes things back. |
 | `goods` | The goods on offer now. A good whose `when` doesn't hold isn't listed, and nor is one whose thing was removed. |
 
@@ -517,7 +531,7 @@ When the game loads, the plugin checks the `shop/vendor` trait on each vendor, a
 - The same thing twice (`sells "…" twice`).
 - `buysBack` outside 0 to 1, or a `discounts.off` that isn't more than 0 and at most 1.
 - Anything `open` or a good's `when` names that the game doesn't have.
-- An unknown location in `at`, when the game has places (`unknown entity "location:moon"`).
+- An unknown location in a `places.onlyAt()` entry, when the game has places (`blocked: unknown entity "location:moon"`). The places plugin reports it.
 
 A command that names a vendor or thing the game doesn't have gives `unknown entity "vendor:…"` or `unknown entity "…"` where it's written, and one that names an entity that isn't a vendor gives `"…" has no shop/vendor trait`. The `shop/sellable` trait's price is checked on each entity that has it.
 
@@ -525,7 +539,7 @@ Vendors still written as a list in `data.shop.vendors`, as content did before sc
 
 ## Gotchas
 
-- **A traits row replaces the whole trait.** A mod that changes a vendor's goods with a `traits` row gives every field the vendor needs, its `at` and `blocked` included.
+- **A traits row replaces the whole trait.** A mod that changes a vendor's goods with a `traits` row gives every field the vendor needs, its `blocked` included.
 - **A place's opening hours and a vendor's are separate.** A location's [`blocked`](/docs/plugins/places#the-location-trait) stops the player getting in, and a vendor's `blocked` stops it selling. The showcase sets both, so the café and its counter close together.
 - **For days of the week, add an entry.** `shop.hours()` reads the period of the day. A counter shut at weekends adds `{ when: calendar.weekend(), reason: 'Closed at weekends.' }` beside it.
 - **The price on a button is today's.** A discount drawn for today changes the price on the button, and tomorrow it may be back to full.

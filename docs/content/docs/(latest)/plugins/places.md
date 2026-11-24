@@ -425,10 +425,13 @@ No exit is needed and nothing is refused, so the player can be moved from nowher
 |---|---|---|
 | `{ 'places/at': { location: ['cafe', 'park'] } }` | `places.at('cafe', 'park')` | The player is in one of these places. |
 | `{ 'places/within': { location: ['cafe'] } }` | `places.within('cafe')` | The player is in one of these places, or anywhere inside one, following each place's `parent`. |
+| `{ 'places/away': { location: ['cafe'] } }` | `places.away('cafe')` | The player is in none of these places, or nowhere. [`places.onlyAt()`](#helpers) refuses by it. |
 
 Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single place works too, as in `{ 'places/at': { location: 'cafe' } }`.
 
 In the café's [back room](#rooms-inside-rooms), `places.at('cafe.back')` and `places.within('cafe')` hold, and `places.at('cafe')` doesn't. Neither holds while the player is nowhere. `places.within('cafe', 'office')` holds inside either building.
+
+`places.away('cafe')` isn't the same as `{ not: places.at('cafe') }` in a game without places. There every places condition is false, so `places.away()` never holds and `not` always does. A `blocked` entry written with `places.away()` therefore refuses nothing in a game without places, which is what a plugin that cooperates with places, such as the [shop](/docs/plugins/shop#where-it-stands) or [jobs](/docs/plugins/jobs#shiftdef), wants.
 
 ## Queries
 
@@ -752,8 +755,9 @@ const places: {
   locationRef(id: string): EntityRef
   at(...places: string[]): Condition
   within(...places: string[]): Condition
+  away(...places: string[]): Condition
   move(place: string): EffectRef
-  onlyAt(places: string[], reason?: Reason): Blocked
+  onlyAt(places: string[], reason?: Reason, options?: { hide?: boolean }): Blocked
 }
 
 function locationsOf(state: GameState, game: Game): EntityRef[]
@@ -771,15 +775,15 @@ const LOCATION = 'location'
 | `places.pickUp` | The [`places/pickUp`](#commands) command. |
 | `places.locationRef` | A place's [entity](#each-place-is-an-entity): `places.locationRef('park')` is `'location:park'`. A reference is returned as written. |
 | `LOCATION` | The kind every place's entity is, `'location'`. |
-| `places.at`, `places.within` | The [conditions](#conditions). |
+| `places.at`, `places.within`, `places.away` | The [conditions](#conditions). |
 | `places.move` | The [`places/move`](#effects) effect. |
-| `places.onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an action: `{ when: { not: places.at(...places) }, reason }`, which refuses it anywhere else. The reason is the [`places/notHere`](#strings) string, `Not here.`, if left out. |
+| `places.onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry: `{ when: places.away(...places), reason }`, which refuses an action, a vendor or a shift anywhere else. The reason is the [`places/notHere`](#strings) string, `Not here.`, if left out. With `{ hide: true }` the entry has `hide`, so a button it refuses is left off the screen and a vendor isn't `here`. In a game without places it refuses nothing. |
 
 ## Checks
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up (and the thing `places/pickUp` names, as an entity), wherever content writes it: an action's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
+**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/away`, `places/move` or `places/go` is looked up (and the thing `places/pickUp` names, as an entity), wherever content writes it: an action's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
 
 ```text
 town · action swim · unknown entity "location:lido"

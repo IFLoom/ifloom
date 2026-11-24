@@ -118,7 +118,11 @@ describe('places', () => {
     expect(apply(state, g, { type: 'action', id: 'coffee' }).state.kv.coffee).toBe(true)
     expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'action', id: 'coffee' })).toBe('There is no coffee here.')
     // With no reason of its own, the plugin's `places/notHere` string, which a game can reword.
-    expect(places.onlyAt(['park'])).toEqual({ when: { not: places.at('park') }, reason: { string: 'places/notHere' } })
+    expect(places.onlyAt(['park'])).toEqual({ when: places.away('park'), reason: { string: 'places/notHere' } })
+    expect(places.onlyAt(['park'], 'Only there.', { hide: true })).toEqual({ when: places.away('park'), reason: 'Only there.', hide: true })
+    // Away holds anywhere else; nowhere at all is away from everywhere.
+    expect(holds(state, g, places.away('park'))).toBe(true)
+    expect(holds(state, g, places.away('park', 'cafe'))).toBe(false)
     expect(whyNot(state, g, { type: 'action', id: 'feed' })).toBe('Not here.')
     expect(whyNot(state, { ...g, strings: { ...g.strings, 'places/notHere': 'Only in the park.' } }, { type: 'action', id: 'feed' })).toBe('Only in the park.')
   })

@@ -7,6 +7,7 @@ import { statuses } from '@ifloom/plugin-statuses'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
+import { places } from '@ifloom/plugin-places'
 import { shop } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
 
@@ -110,8 +111,8 @@ export const cafe: Content = {
     shop.vendor({
       id: 'counter',
       name: 'The counter',
-      at: ['cafe'],
-      blocked: [shop.hours(['morning', 'afternoon'])],
+      // At the café only (and not shown elsewhere), and open in the morning and afternoon.
+      blocked: [places.onlyAt(['cafe'], { string: 'shop/notHere' }, { hide: true }), shop.hours(['morning', 'afternoon'])],
       // Ava will take an unopened sandwich back for half.
       buysBack: 0.5,
       // One thing on the board is half price each day.
@@ -133,11 +134,11 @@ export const cafe: Content = {
           name: 'Weekend help',
           description: 'Saturday mornings behind the counter at the Corner Café.',
           blocked: [{ when: { not: { stat: 'friendship', of: cast.character('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
-          at: ['cafe'],
           // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
           days: [5],
           hours: ['morning'],
-          shift: { cost: { energy: 25 }, passes: 1 },
+          // Worked at the café.
+          shift: { cost: { energy: 25 }, passes: 1, blocked: [places.onlyAt(['cafe'], { string: 'jobs/notHere' })] },
           ranks: [
             { id: 'help', name: 'Weekend help', pay: { coins: 12 } },
             { id: 'barista', name: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },

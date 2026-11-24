@@ -57,7 +57,7 @@ const market: Content = {
   entities: [
     places.location({ id: 'park', name: 'Riverside Park', description: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
     cast.person({ id: 'ava', name: 'Ava', description: 'Runs the café', home: 'park' }),
-    shop.vendor({ id: 'stall', name: 'The market stall', at: ['park'], buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }] }),
+    shop.vendor({ id: 'stall', name: 'The market stall', blocked: [places.onlyAt(['park'], undefined, { hide: true })], buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }] }),
   ],
 }
 ```

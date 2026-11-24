@@ -7,9 +7,10 @@
  * more, reached by shifts worked and conditions. Missing shifts, or a
  * condition such as a low performance stat, gets the player fired.
  *
- * It works with the calendar and places when the game has them: shifts fall
- * on the calendar's weekdays and periods, and are worked at a place on the
- * map. Without them, a shift can be worked anywhere, once a turn.
+ * It works with the calendar when the game has it: shifts fall on the
+ * calendar's weekdays and periods. Without it, a shift can be worked once a
+ * turn. A shift is refused while one of its `blocked` entries holds, such as
+ * `places.onlyAt(['cafe'])` for a workplace on the map.
  */
 import {
   arg,
@@ -50,6 +51,13 @@ import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations 
 
 /** What working one shift takes. */
 export type ShiftDef = {
+  /**
+   * Why a shift is refused: the first entry whose `when` holds gives its
+   * reason. A workplace is one, with the places plugin:
+   * `places.onlyAt(['cafe'], { string: 'jobs/notHere' })`, which never holds
+   * without it.
+   */
+  blocked?: Blocked[]
   /** Stats it spends, by id: `{ energy: 30 }`. Checked before the shift, like an action's cost. */
   cost?: Record<string, number>
   /** How many of the calendar's periods it takes. None if left out, or without the calendar. */
@@ -86,8 +94,6 @@ export type JobDef = {
   description?: string
   /** Why an application is refused: the first entry whose `when` holds gives its reason. */
   blocked?: Blocked[]
-  /** Where shifts are worked, with the places plugin. Anywhere if left out. */
-  at?: string[]
   /** The weekdays it has shifts on, with the calendar plugin, from 0. Every day if left out. */
   days?: number[]
   /** The periods a shift can start in, with the calendar plugin. Any if left out. */
@@ -182,7 +188,7 @@ const PANEL = 'jobs'
 const DATA = defineData(ID, {
   jobs: list<JobDef>({
     noun: 'job',
-    words: { name: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects' }, ranks: [{ name: true }] },
+    words: { name: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects', blocked: [{ reason: true }] }, ranks: [{ name: true }] },
   }),
 })
 
@@ -244,13 +250,6 @@ function shiftDay(job: JobDef, day: number, state: GameState, context: PluginCon
   return holds(then, context.game, { 'calendar/weekday': { day: job.days } })
 }
 
-/** Is the player at the job's workplace? Always, without the places plugin or a job with no `at`. */
-function atWork(job: JobDef, context: PluginContext<JobsState>): boolean {
-  if (!job.at) return true
-  const here = context.query('places/here')
-  return here === undefined || (here !== null && job.at.includes(here))
-}
-
 function rankOf(job: JobDef, held: HeldJob | undefined): RankDef | undefined {
   return held ? job.ranks[Math.min(held.rank, job.ranks.length - 1)] : undefined
 }
@@ -277,7 +276,7 @@ function cantWork(state: GameState, { id }: { id: string }, context: PluginConte
   if (!job) return stringOf(game, 'jobs/unknown')
   const held = slice.held[job.id]
   if (!held) return stringOf(game, 'jobs/notHired')
-  if (!atWork(job, context)) return stringOf(game, 'jobs/notHere')
+  for (const entry of job.shift.blocked ?? []) if (holds(state, game, entry.when)) return reasonOf(game, entry.reason)
   const today = dayOf(state, game)
   // A finished shift says so first: once worked, the shift's day and hours
   // have usually moved on, and "not today" would hide why.
@@ -428,12 +427,14 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,
+    // A shift's `blocked` can ask places where the player is.
     cooperates: ['calendar', 'places'],
     strings: {
       unknown: 'There’s no such job.',
       alreadyHired: 'You already work there.',
       wasFired: 'They won’t have you back.',
       notHired: 'You don’t work there.',
+      // A reason for a shift's `places.onlyAt()` entry: `{ string: 'jobs/notHere' }`.
       notHere: 'You aren’t at work.',
       noShiftToday: 'No shift today.',
       notNow: 'Not a time for a shift.',
@@ -541,15 +542,14 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
       },
       content: (game) =>
         DATA.jobs.content(game, (job) => [
-          // Where a job is worked is the places plugin's to know, by name; without it there is no map to check against.
-          ...(game.plugins?.some((plugin) => plugin.id === 'places') ? (job.at ?? []) : []).map((location): Reference => ({
-            entity: location.includes(':') ? location : `location:${location}`,
-            carrying: 'places/location',
-          })),
           ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
           {
             within: 'shift',
-            refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }],
+            refs: [
+              ...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })),
+              { effects: job.shift?.effects },
+              ...(job.shift?.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
+            ],
           },
           ...(job.ranks ?? []).map((rank): Reference => ({
             within: `rank ${rank.id}`,

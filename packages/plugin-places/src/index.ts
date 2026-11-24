@@ -230,6 +230,8 @@ const CALLS = defineCalls(ID, {
     at: { location: placeList() },
     /** The player is in one of these, or somewhere inside one. */
     within: { location: placeList() },
+    /** The player is in none of these, or nowhere. False in a game without places, so what it refuses isn't refused there. */
+    away: { location: placeList() },
   },
   effects: {
     /** Be somewhere else at once. */
@@ -410,6 +412,8 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
         const around = [slice.at, ...ancestors((id) => locationOf(state, game, id), slice.at)]
         return location.map(placeId).some((id) => around.includes(id))
       },
+      /** `{ 'places/away': { location: ['cafe'] } }`: the player is in none of these, or nowhere. What `places.onlyAt()` refuses by. */
+      away: (_state, { location }, { slice }) => slice.at === null || !location.map(placeId).includes(slice.at),
     },
     effects: {
       /** `{ 'places/move': { location: 'park' } }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
@@ -559,13 +563,25 @@ const at = (...places: string[]): Condition => CALLS.conditions.at({ location: p
 const within = (...places: string[]): Condition => CALLS.conditions.within({ location: places })
 /** The effect that puts the player somewhere at once. */
 const moveTo = (place: string): EffectRef => CALLS.effects.move({ location: place })
-/** A `blocked` entry: refused anywhere but these places, with `reason` (the plugin's `places/notHere` string, "Not here.", if left out). */
+/** True in none of these places, or nowhere. */
+const away = (...places: string[]): Condition => CALLS.conditions.away({ location: places })
 /** Where the player is, by the place's id: the `places/here` query, asked of the game's places plugin. Null when nowhere. */
 const where = (state: GameState, game: Game): string | null => pluginQuery(game, 'places/here')?.(state) ?? null
-const onlyAt = (places: string[], reason?: Reason): Blocked => ({ when: { not: at(...places) }, reason: reason ?? { string: `${ID}/notHere` } })
+/**
+ * A `blocked` entry: refused anywhere but these places, with `reason` (the
+ * plugin's `places/notHere` string, "Not here.", if left out). Its `when` is
+ * `places.away(...)`, which never holds in a game without places, so there
+ * nothing is refused by it. With `hide`, a button it refuses is left off the
+ * screen, and a vendor isn't `here`.
+ */
+const onlyAt = (places: string[], reason?: Reason, options: { hide?: boolean } = {}): Blocked => ({
+  when: away(...places),
+  reason: reason ?? { string: `${ID}/notHere` },
+  ...(options.hide ? { hide: true } : {}),
+})
 
 /**
  * The plugin, with its helpers on it: `places()` makes the plugin for the
  * game's `plugins`, and content is written with `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
  */
-export const places = Object.assign(placesPlugin, { location, locationRef, pickUp, go, at, within, move: moveTo, onlyAt, where })
+export const places = Object.assign(placesPlugin, { location, locationRef, pickUp, go, at, within, away, move: moveTo, onlyAt, where })

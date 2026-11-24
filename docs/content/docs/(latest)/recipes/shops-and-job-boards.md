@@ -73,7 +73,7 @@ const paper: EntityDef = {
 
 ## From a phone or a laptop
 
-An app's actions section has buttons that run effects too. A vendor opened away from its `at` won't sell, so leave `at` out of an online shop.
+An app's actions section has buttons that run effects too. A vendor with a [`places.onlyAt()`](/docs/plugins/shop#where-it-stands) entry won't sell anywhere else, even with its counter open, so leave that entry out of an online shop.
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'

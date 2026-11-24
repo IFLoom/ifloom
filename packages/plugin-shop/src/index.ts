@@ -14,10 +14,11 @@
  *
  * A thing's price is the good's, else its `shop/sellable` trait's.
  *
- * A vendor is closed while one of its `blocked` entries holds, such as the
- * opening hours `shop.hours(['morning'])` writes, which ask the calendar. With the
- * places plugin, its `at` is where on the map it stands; without it, every
- * vendor is everywhere.
+ * A vendor is refused while one of its `blocked` entries holds: closed by
+ * one such as the opening hours `shop.hours(['morning'])` writes, which ask
+ * the calendar, and not here by one with `hide`, such as
+ * `places.onlyAt(['cafe'], undefined, { hide: true })`, which asks the places
+ * plugin and never holds without it.
  */
 import {
   arg,
@@ -110,13 +111,13 @@ export type DiscountDef = {
  * player buys from. Its name is the entity's: "The counter".
  */
 export type Vendor = {
-  /** Where it is, with the places plugin: the location ids it stands at. Everywhere if left out. */
-  at?: string[]
   /**
-   * Closed while one of these holds, with its reason: what the player reads,
-   * and what buying and selling are refused with. The first that holds wins.
-   * `shop.hours(['morning', 'afternoon'])` writes opening hours as one, with
-   * the calendar. Always open if left out.
+   * Refused while one of these holds, with its reason: what buying and
+   * selling are refused with, the first that holds winning. An entry with
+   * `hide` says where the vendor is: while it holds, the vendor isn't `here`
+   * (`places.onlyAt(['cafe'], undefined, { hide: true })`). Any other closes
+   * it, its reason what the player reads (`shop.hours(['morning', 'afternoon'])`
+   * writes opening hours as one, with the calendar). Open everywhere if left out.
    */
   blocked?: Blocked[]
   goods: GoodDef[]
@@ -135,10 +136,9 @@ declare module '@ifloom/engine' {
 
 /**
  * What `shop.vendor()` takes: an entity's fields (its `of` is `'vendor'` if left
- * out) and the `shop/vendor` trait's, side by side. `at` is the trait's:
- * where on the places map it stands.
+ * out) and the `shop/vendor` trait's, side by side.
  */
-export type VendorDef = Omit<EntityDef, 'of' | 'at'> & Vendor & { of?: string }
+export type VendorDef = Omit<EntityDef, 'of'> & Vendor & { of?: string }
 
 /**
  * When a vendor's stock of a good was last topped up: the turn or day it
@@ -189,9 +189,9 @@ export type VendorView = {
   /** Its entity: `'vendor:counter'`. */
   ref: EntityRef
   name: string
-  /** At the player's location, or everywhere. */
+  /** Where the player is: refused by none of its `blocked` entries with `hide`. */
   here: boolean
-  /** Why it's closed, in the words `shop/buy` is refused with, or null while it's open. */
+  /** Why it's closed, its first `blocked` entry without `hide` that holds, in the words `shop/buy` is refused with; null while it's open. */
   closed: string | null
   /** Takes things back. */
   buysBack: boolean
@@ -420,15 +420,19 @@ function times(price: Record<string, number>, count: number): Record<string, num
   return Object.fromEntries(Object.entries(price).map(([stat, amount]) => [stat, amount * count]))
 }
 
-/** Is the player where the vendor is? Always, without the places plugin or a vendor with no `at`. */
-function isHere(one: One, cx: Ctx): boolean {
-  if (!one.vendor.at) return true
-  const here = cx.query('places/here')
-  return here === undefined || (here !== null && one.vendor.at.includes(here))
+/** Is the player where the vendor is? While none of its `blocked` entries with `hide` holds. */
+function isHere(state: GameState, one: One, cx: Ctx): boolean {
+  return !one.vendor.blocked?.some((blocked) => blocked.hide && holds(state, cx.game, blocked.when))
 }
 
-/** Why the vendor is closed, its first `blocked` entry that holds, or undefined if it's open. */
+/** Why the vendor is closed, its first `blocked` entry without `hide` that holds, or undefined if it's open. */
 function closedReason(state: GameState, one: One, cx: Ctx): string | undefined {
+  const entry = one.vendor.blocked?.find((blocked) => !blocked.hide && holds(state, cx.game, blocked.when))
+  return entry ? reasonOf(cx.game, entry.reason) : undefined
+}
+
+/** Why buying or selling is refused by the vendor: its first `blocked` entry that holds, or undefined. */
+function refusedReason(state: GameState, one: One, cx: Ctx): string | undefined {
   const entry = one.vendor.blocked?.find((blocked) => holds(state, cx.game, blocked.when))
   return entry ? reasonOf(cx.game, entry.reason) : undefined
 }
@@ -444,9 +448,8 @@ function cantBuy(state: GameState, args: Trade, slice: ShopState, cx: Ctx): stri
   const one = oneOf(state, game, args.vendor)
   const good = one && goodOf(state, game, one, args.entity)
   if (!one || !good || !entityOf(state, game, good.entity)) return stringOf(game, 'shop/unknown')
-  if (!isHere(one, cx)) return stringOf(game, 'shop/notHere')
-  const closed = closedReason(state, one, cx)
-  if (closed) return closed
+  const refused = refusedReason(state, one, cx)
+  if (refused) return refused
   const count = countOf(args)
   const left = stockLeft(state, slice, one, good, cx)
   if (left !== null && left < count) return stringOf(game, 'shop/soldOut')
@@ -463,9 +466,8 @@ function cantSell(state: GameState, args: Trade, cx: Ctx): string | undefined {
   const good = one && goodOf(state, game, one, args.entity)
   if (!one || !good) return stringOf(game, 'shop/unknown')
   if (one.vendor.buysBack === undefined) return stringOf(game, 'shop/noBuyBack')
-  if (!isHere(one, cx)) return stringOf(game, 'shop/notHere')
-  const closed = closedReason(state, one, cx)
-  if (closed) return closed
+  const refused = refusedReason(state, one, cx)
+  if (refused) return refused
   if (heldCount(state, game, good.entity, YOU) < countOf(args)) return stringOf(game, 'shop/notOwned')
   return undefined
 }
@@ -553,7 +555,7 @@ function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView {
           sellFor: sellable ? priceView(game, sellPrice(state, game, one, good)) : null,
         }
       })
-    return { id: one.id, ref: one.ref, name: entityName(state, game, one.ref), here: isHere(one, cx), closed, buysBack: sellable, goods }
+    return { id: one.id, ref: one.ref, name: entityName(state, game, one.ref), here: isHere(state, one, cx), closed, buysBack: sellable, goods }
   })
   // The open counter, as `shop.open(vendor)` names it: by its id, or its whole reference.
   const open = panelOf(state, game)
@@ -623,13 +625,8 @@ const vendorTrait: TraitDef<'shop/vendor'> = {
   id: VENDOR,
   words: { blocked: [{ reason: true }] },
   check: (data, { game }) => vendorProblems(data, game),
-  references: (vendor, { game }) => {
-    // Where a vendor stands is the places plugin's to know, by name; without it there is no map to check against.
-    const places = game.plugins?.some((plugin) => plugin.id === 'places')
+  references: (vendor) => {
     return [
-      ...(places
-        ? (vendor?.at ?? []).map((location): Reference => ({ entity: location.includes(':') ? location : `location:${location}`, carrying: 'places/location' }))
-        : []),
       { within: 'blocked', refs: (vendor?.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry?.when }, { reason: entry?.reason }]) },
       ...(Array.isArray(vendor?.goods) ? vendor.goods : [])
         .filter((good) => typeof good?.entity === 'string')
@@ -661,6 +658,7 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
     traits: [sellableTrait, vendorTrait],
     strings: {
       unknown: 'That isn’t for sale here.',
+      // A reason for a vendor's `places.onlyAt()` entry: `{ string: 'shop/notHere' }`.
       notHere: 'You aren’t at that shop.',
       closed: 'Closed.',
       soldOut: 'Sold out.',
@@ -743,7 +741,7 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
   })
 }
 
-const VENDOR_FIELDS = ['at', 'blocked', 'goods', 'buysBack', 'discounts'] as const
+const VENDOR_FIELDS = ['blocked', 'goods', 'buysBack', 'discounts'] as const
 
 /**
  * A vendor, for content's `entities`: an entity of the kind `vendor` (or
@@ -751,7 +749,7 @@ const VENDOR_FIELDS = ['at', 'blocked', 'goods', 'buysBack', 'discounts'] as con
  * trait's written side by side.
  *
  * ```ts
- * entities: [shop.vendor({ id: 'counter', name: 'The counter', at: ['cafe'], goods: [{ entity: 'food:bun', price: { coins: 2 } }] })]
+ * entities: [shop.vendor({ id: 'counter', name: 'The counter', blocked: [places.onlyAt(['cafe'], undefined, { hide: true })], goods: [{ entity: 'food:bun', price: { coins: 2 } }] })]
  * ```
  */
 function vendor(def: VendorDef): EntityDef {

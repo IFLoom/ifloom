@@ -24,12 +24,11 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { shop, vendorOf, vendorsOf, type ShopView } from '../src/index.ts'
 
-/** The café counter: coffee for coins, three biscuits a day, and half back on a sandwich. */
+/** The café counter, in the café only: coffee for coins, three biscuits a day, and half back on a sandwich. */
 const counter = shop.vendor({
   id: 'counter',
   name: 'The counter',
-  at: ['cafe'],
-  blocked: [shop.hours(['morning', 'afternoon'], 'The shutter is down.')],
+  blocked: [places.onlyAt(['cafe'], { string: 'shop/notHere' }, { hide: true }), shop.hours(['morning', 'afternoon'], 'The shutter is down.')],
   buysBack: 0.5,
   goods: [
     { entity: 'food:coffee', price: { coins: 3 } },
@@ -223,7 +222,6 @@ describe('the shop, on its own', () => {
             shop.vendor({
               id: 'bad',
               name: 'Bad',
-              at: ['moon'],
               buysBack: 2,
               goods: [
                 { entity: 'stone:moon', price: { charm: 1 } },
@@ -236,7 +234,6 @@ describe('the shop, on its own', () => {
       ],
       { id: 'g', title: 'g', plugins: [shop()] },
     )
-    // A location on the places map is only checked when the game has places.
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action y: unknown entity "vendor:kiosk"',
       'action y: unknown kind "fruit"',
@@ -401,19 +398,26 @@ describe('a vendor is an entity with the vendor trait', () => {
     expect(shown(fresh(g), g).vendors[0].name).toBe('The counter')
   })
 
-  it('checks where it stands against the places map, when the game has places', () => {
+  it('has where it stands checked by places, when the game has places', () => {
     const loaded = loadGame(
       [
         {
           name: 'town',
           ...things,
           stats: [{ id: 'coins', label: 'Coins', spendable: true }],
-          entities: [...things.entities!, shop.vendor({ id: 'van', name: 'Van', at: ['moon'], goods: [] }), place('street', [])],
+          entities: [
+            ...things.entities!,
+            shop.vendor({ id: 'van', name: 'Van', blocked: [places.onlyAt(['moon'], undefined, { hide: true })], goods: [] }),
+            place('street', []),
+          ],
         },
       ],
       { id: 'g', title: 'g', plugins: [places({ start: 'street' }), shop()] },
     )
-    expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(['trait shop/vendor on vendor:van: unknown entity "location:moon"'])
+    // places checks the place its `places/away` names; without places, nothing is asked.
+    expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'trait shop/vendor on vendor:van: blocked: unknown entity "location:moon"',
+    ])
   })
 
   it('carries an older pack’s vendors forward into entities', () => {
@@ -536,7 +540,7 @@ describe('the shop’s opening hours', () => {
 })
 
 describe('the shop with places', () => {
-  it('sells only where the vendor stands', () => {
+  it('sells only where the vendor stands, and shows it here only there', () => {
     const g = game(places({ start: 'street' }))
     const street = fresh(g)
     expect(whyNot(street, g, shop.buy('counter', 'food:coffee'))).toBe('You aren’t at that shop.')

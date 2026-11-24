@@ -219,6 +219,7 @@ const SAMPLES: Record<string, Call> = {
   'commands:messages/read': messages.read('ava'),
   'conditions:places/at': places.at('cafe'),
   'conditions:places/within': places.within('cafe'),
+  'conditions:places/away': places.away('cafe'),
   'effects:places/move': places.move('park'),
   'commands:places/go': places.go('park'),
   'commands:places/pickUp': places.pickUp('item:paper'),

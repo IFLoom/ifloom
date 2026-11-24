@@ -28,9 +28,9 @@ Then add `jobs()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one
 The plugin works on its own. It cooperates with the [calendar](/docs/plugins/calendar) and [places](/docs/plugins/places) when the game has them:
 
 - **Calendar.** A job's `days` are the calendar's weekdays and its `hours` are periods. A shift's `passes` moves the clock on, and "a day" for one shift a day and for missed shifts is the calendar's day.
-- **Places.** A job's `at` lists where shifts are worked.
+- **Places.** A workplace is a [`places.onlyAt()`](/docs/plugins/places#helpers) entry in the shift's `blocked`, so a shift is worked only there.
 
-Without the calendar, every day has a shift, a day is a turn, and a shift takes no time. Without places, a shift can be worked anywhere.
+Without the calendar, every day has a shift, a day is a turn, and a shift takes no time. Without places, a `places.onlyAt()` entry never holds, so a shift can be worked anywhere.
 
 ## jobs
 
@@ -47,16 +47,17 @@ Jobs are content. They go in your content's [`data`](/docs/reference/loader#cont
 ```ts
 import type { Content } from '@ifloom/engine'
 import { jobs, type JobDef } from '@ifloom/plugin-jobs'
+import { places } from '@ifloom/plugin-places'
 
 const weekend: JobDef = {
   id: 'weekend',
   name: 'Weekend help',
   description: 'Saturday mornings behind the counter at the Corner Café.',
   blocked: [{ when: { not: { stat: 'friendship', of: 'character:ava', gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
-  at: ['cafe'],
   days: [5],
   hours: ['morning'],
-  shift: { cost: { energy: 25 }, passes: 1 },
+  // Worked at the café, refused elsewhere in the plugin's own words.
+  shift: { cost: { energy: 25 }, passes: 1, blocked: [places.onlyAt(['cafe'], { string: 'jobs/notHere' })] },
   ranks: [
     { id: 'help', name: 'Weekend help', pay: { coins: 12 } },
     { id: 'barista', name: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
@@ -83,7 +84,6 @@ type JobDef = {
   name: string
   description?: string
   blocked?: Blocked[]
-  at?: string[]
   days?: number[]
   hours?: string[]
   shift: ShiftDef
@@ -98,7 +98,6 @@ type JobDef = {
 | `name` | Its name on the job board and in its notices. |
 | `description` | A line or two about it. |
 | `blocked` | Why an application is refused. Each is a [`Blocked`](/docs/reference/actions#blocked) entry, `{ when, reason }`, as an action's are. The first whose `when` holds refuses `jobs/apply` with its `reason`. |
-| `at` | The [places](/docs/plugins/places) locations shifts are worked at. Anywhere if left out. |
 | `days` | The calendar's weekdays it has shifts on, from 0 (with the default week, 0 is Monday and 5 is Saturday). Every day if left out. |
 | `hours` | The calendar's periods a shift can start in. Any if left out. |
 | `shift` | What a shift takes. See [ShiftDef](#shiftdef). |
@@ -108,11 +107,12 @@ type JobDef = {
 ### ShiftDef
 
 ```ts
-type ShiftDef = { cost?: Record<string, number>; passes?: number; effects?: EffectRef[] }
+type ShiftDef = { blocked?: Blocked[]; cost?: Record<string, number>; passes?: number; effects?: EffectRef[] }
 ```
 
 | Field | What it is |
 |---|---|
+| `blocked` | Why a shift is refused, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds refuses `jobs/work` with its `reason`. A workplace is one: `places.onlyAt(['cafe'], { string: 'jobs/notHere' })` refuses a shift anywhere but the café with `You aren’t at work.` With no reason it's places' `Not here.`. |
 | `cost` | Stats a shift spends, such as `{ energy: 25 }`. Checked against what the stat reads, as an action's cost is, and shown as the button's price. |
 | `passes` | How many of the calendar's periods it takes, applied as [`calendar/pass`](/docs/plugins/calendar#effects). The calendar's [price note](/docs/plugins/calendar#price-notes), such as `until afternoon`, shows on the button. |
 | `effects` | More effects, applied after the cost and the time and before the pay, such as a performance stat going up. |
@@ -154,7 +154,7 @@ type FireDef = { missed?: number; when?: Condition }
 
 1. `There’s no such job.`
 2. `You don’t work there.` when the player doesn't hold the job.
-3. `You aren’t at work.` when the game has places and the player isn't at one of the job's `at`.
+3. The `reason` of the shift's first `blocked` entry that holds, such as `You aren’t at work.` away from its workplace.
 4. `No shift today.` when the game has the calendar and today isn't one of the job's `days`.
 5. `Not a time for a shift.` when the game has the calendar and it isn't one of the job's `hours`.
 6. `You’ve done today’s shift.` when the player has already worked one today.
@@ -264,7 +264,7 @@ Give it a fallback for when they don't: `You work as {{jobs/rank job=cafe|nothin
 | `jobs/alreadyHired` | `You already work there.` |
 | `jobs/wasFired` | `They won’t have you back.` |
 | `jobs/notHired` | `You don’t work there.` |
-| `jobs/notHere` | `You aren’t at work.` |
+| `jobs/notHere` | `You aren’t at work.`, for a shift's [`places.onlyAt()`](/docs/plugins/places#helpers) entry: `{ string: 'jobs/notHere' }`. The plugin doesn't use it itself. |
 | `jobs/noShiftToday` | `No shift today.` |
 | `jobs/notNow` | `Not a time for a shift.` |
 | `jobs/workedToday` | `You’ve done today’s shift.` |
@@ -447,9 +447,9 @@ When the game loads, the plugin reports these problems against the content or pa
 
 - No ranks (`has no ranks`), two ranks with one id, or `requires` on the first rank.
 - An unknown stat in the shift's cost or a rank's pay (`rank barista: unknown stat "gold"`).
-- Anything a `blocked` entry, the shift's effects, a rank's `when` or `fire.when` names that the game doesn't have.
+- Anything a `blocked` entry (the job's or the shift's), the shift's effects, a rank's `when` or `fire.when` names that the game doesn't have.
 - A `days` entry that isn't a whole number from 0, a negative `passes`, or `fire.missed` below 1.
-- An unknown location in `at`, when the game has places.
+- An unknown location in a shift's `places.onlyAt()` entry, when the game has places. The places plugin reports it.
 
 A command that names a job the game doesn't have gives `unknown job "…"` where it's written.
 

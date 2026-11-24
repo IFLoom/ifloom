@@ -70,10 +70,10 @@ const stats: StatDef[] = [{ id: 'owed', label: 'Wages owed', max: 9999, listed: 
 
 const office: JobDef = {
   id: 'office',
-  title: 'Filing clerk',
+  name: 'Filing clerk',
   shift: { cost: { energy: 20 }, passes: 2 },
   // Each shift adds to what's owed, not to coins.
-  ranks: [{ id: 'clerk', title: 'Filing clerk', pay: { owed: 15 } }],
+  ranks: [{ id: 'clerk', name: 'Filing clerk', pay: { owed: 15 } }],
 }
 
 const rules: GameRules = {

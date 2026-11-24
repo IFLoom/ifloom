@@ -12,6 +12,8 @@ export const people: Content = {
       fullName: 'Ruth Okafor',
       description: 'Baker',
       pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
+      // Her picture, in public/art/. Without one the cast looks for art/character/ruth.jpg.
+      image: 'art/character/ruth.svg',
       ui: { hue: 30 },
       schedule: [
         // Monday to Friday (0 is Monday), mornings and afternoons, at the café.

@@ -74,7 +74,7 @@ export const opening: Content = {
 }
 ```
 
-`introScene` is the scene on screen when a new game starts. Then give `src/game.ts` the game's own id and title:
+`introScene` is the scene on screen when a new game starts. Then replace `src/game.ts` with this, which gives the game its own id and title:
 
 ```ts
 // src/game.ts
@@ -95,6 +95,8 @@ The words are plain text, with `**bold**` and `*italic*` as in Markdown (see [Pr
 `loadGame` takes your content, in a list, and a base with the game's `id` and `title`. Everything the story holds, its first scene included, is content. The base holds only what says which game this is, its plugins and its own code.
 
 The default export is the [game module](/docs/cli#the-game-module), made with `defineGame`. Its `build` returns what `loadGame` returns, `{ game, problems }`. The page calls it to start the game, and `npm run check` calls it too and prints each problem, or `No problems.` when there are none.
+
+The template's `game.ts` also had `probes`, and a `build` that takes `({ unlocked })`. This story needs neither yet, so the file above leaves them out. [Organising a game](/docs/guide/organising#the-layout) explains both.
 
 ## 2. Choices
 
@@ -182,7 +184,7 @@ choices: [
 ],
 ```
 
-The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/docs/reference/conditions#range) keys:
+The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/docs/reference/conditions#range) keys. Add it and the two endings to the end of the `scenes` list, after the second chapter:
 
 ```ts fragment
 {
@@ -215,7 +217,9 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
 
 A key that was never set counts as 0, so the honest player's line needs nothing written first. The `wave` ending uses the stat. Only a player who shared the umbrella and paid the fare has a warmth of 2.
 
-The two `end.` scenes are endings. The player reads the ending's words and sees its one button. A choice with a `command` sends that command when it's picked, and [`newGame`](/docs/reference/commands#newgame) starts the story over from the first scene, keeping the player's settings. An ending with `choices: []` works too, but then the page shows no button at all, and the player has to know to start again from a menu. [Endings](/docs/reference/scenes#endings) has more. A story like this one always has a scene on screen. In a game with places, closing a scene shows the room the player is in instead, as [The scene and the room](/docs/guide/concepts#the-scene-and-the-room) shows.
+The two `end.` scenes are endings. The player reads the ending's words and sees its one button. A choice with a `command` sends that command when it's picked, and [`newGame`](/docs/reference/commands#newgame) starts the story over from the first scene, keeping the player's settings. An ending with `choices: []` works too, but then the page shows no button at all, and the player has to know to start again from a menu. [Endings](/docs/reference/scenes#endings) has more.
+
+A story like this one keeps a scene on screen from the first chapter to an ending, because every choice opens another scene. The one command that closes a scene without a choice is [`leave`](/docs/reference/commands#leave), and nothing on this story's page sends it. If something does, a story with no places has no room to show, so the screen has the game's title and nothing to read or press. In a game with places, closing a scene shows the room the player is in, as [The scene and the room](/docs/guide/concepts#the-scene-and-the-room) shows.
 
 ## 6. A name the player types
 
@@ -244,26 +248,7 @@ choices: [
 ],
 ```
 
-Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `playerName` field for a load screen to show, which comes from the game's `saveName`. It's code, so it goes in the game's [`rules`](/docs/reference/rules#gamerules), in the base in `src/game.ts`:
-
-```ts
-// src/game.ts
-import { loadGame } from '@ifloom/engine'
-import { defineGame } from '@ifloom/cli/game'
-import { stats } from './world/stats.ts'
-import { opening } from './story/opening.ts'
-
-export default defineGame({
-  build: () =>
-    loadGame([stats, opening], {
-      id: 'last-bus',
-      title: 'The Last Bus',
-      rules: {
-        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
-      },
-    }),
-})
-```
+A game can also name each save after the player from this same key, with [`saveName`](/docs/reference/rules#savename) in its rules, for a load screen of your own to show. This story has none, so it leaves that out.
 
 ## 7. A chapter is a turn
 
@@ -275,7 +260,7 @@ The engine dates things in turns. The turn is a number in the state, `state.turn
 
 Effects run in the order they're written. Ending the turn first means the next chapter opens on the new turn, so whatever the new scene does or asks as it opens counts in its own chapter. Add `{ turn: true }` the same way to `share`, and to `pay`, `excuse` and `blame` in the second chapter.
 
-Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, such as `Turn 2`, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
+Now `state.turn` is the chapter the player has reached, counting from 0, so the first chapter is turn 0 and the third is turn 2. What the player reads counts from 1: a save named by its turn says `Turn 1` in the first chapter, and the playtest transcript heads the chapters `Turn 1`, `Turn 2` and `Turn 3`. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
 
 ## 8. Draw it
 
@@ -404,7 +389,7 @@ npm run check   # No problems.
 
 If you misspelled a scene id or a key along the way, `check` names it.
 
-A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So give the game module a `start`, a player who has already typed a name. `startingState` builds a new game, and its `kv` writes keys to the kv store before the first scene:
+A playtest plays the game with no one at the keyboard, pressing what's on screen. It doesn't type, so a new game gives it nothing to press: the first chapter's choices wait for a name. It then sends [`leave`](/docs/reference/commands#leave), which closes the scene, and the rest of the transcript is the empty screen from step 5. So give the game module a `start`, a player who has already typed a name. `startingState` builds a new game, and its `kv` writes keys to the kv store before the first scene:
 
 ```ts
 // src/game.ts
@@ -418,9 +403,6 @@ export default defineGame({
     loadGame([stats, opening], {
       id: 'last-bus',
       title: 'The Last Bus',
-      rules: {
-        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
-      },
     }),
   // Where `ifloom playtest` starts: a player who has already typed a name.
   start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
@@ -455,9 +437,6 @@ export default defineGame({
     loadGame([stats, opening], {
       id: 'last-bus',
       title: 'The Last Bus',
-      rules: {
-        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
-      },
     }),
   /** Where `ifloom playtest` starts: a player who has already typed a name. */
   start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),

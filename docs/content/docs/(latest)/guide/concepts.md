@@ -123,7 +123,7 @@ The view holds different things in each:
 | `actions` | Empty | The room's buttons, then the game's own `actions` |
 | `plugins` | The plugins' parts, with no exits or people to talk to | The ways out, who is here and what lies here, from the places and cast plugins |
 
-A game with the [places plugin](/docs/plugins/places) spends most of its time in the room, and opens a scene for a conversation or an event. A story with no places, such as [Your first story](/docs/guide/first-story), has no room to go back to, so it keeps a scene open from the first one to an ending. See [The idle screen](/docs/reference/view#the-idle-screen).
+A game with the [places plugin](/docs/plugins/places) spends most of its time in the room, and opens a scene for a conversation or an event. A story with no places, such as [Your first story](/docs/guide/first-story), has no room to go back to, so it keeps a scene open from the first one to an ending: every choice opens the next scene, and its page offers no `leave`. With no scene open, its screen would have only the game's title. See [The idle screen](/docs/reference/view#the-idle-screen).
 
 ## The turn
 

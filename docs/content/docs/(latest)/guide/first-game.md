@@ -4,7 +4,9 @@ description: The second tutorial. Builds a small town game with a calendar, plac
 ---
 This is the second tutorial. [Your first story](/docs/guide/first-story) built a novel with no plugins. This one is for games with a calendar, places and people, and it builds a small one from nothing: a house, a high street, and a café that keeps hours. Ruth, the baker, works the café counter on weekdays. You can talk to her, and you can buy a coffee.
 
-The player carries a few coins and some energy, and the coffee spends one to buy the other. Steps 1 to 5 write the game's content, steps 6 to 9 play it in code with `apply` and `view`, and step 10 drives it with a runner, with undo and saves. Step 11 puts it in the browser, as a set of files for the template you picked. The engine code from steps 1 to 10 is in one file at the [bottom of the page](#the-whole-thing).
+The player carries a few coins and some energy, and the coffee spends one to buy the other. Steps 1 to 5 write the game's content, steps 6 to 9 play it in code with `apply` and `view`, and step 10 drives it with a runner, with undo and saves. Step 11 puts it in the browser, as a set of files for the template you picked.
+
+Steps 1 to 10 are one script. Put their code in a file `town.ts` at the root of the project, with each step's imports moved to the top so each name is imported once, and run it with `node town.ts`. Node 22.18 and later run TypeScript directly, as [Play it without a browser](/docs/guide/running-a-game#play-it-without-a-browser) says. [The whole thing](#the-whole-thing) at the bottom of the page is that file, printing what the comments in the steps show.
 
 There's more to take in here than in the first story. Each step says what's new in it first, and the rest of the page builds on that.
 
@@ -119,6 +121,7 @@ const ruth = cast.person({
   fullName: 'Ruth Okafor',
   description: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
+  image: 'art/character/ruth.svg',
   ui: { hue: 30 },
   schedule: [
     // Monday to Friday (0 is Monday), mornings and afternoons, at the café.
@@ -127,6 +130,8 @@ const ruth = cast.person({
   talk: 'ruth.talk',
 })
 ```
+
+`image` is her picture, a path in the game's `public/` folder, which step 11 adds. Give everyone in the cast one: a person with no `image` is drawn from `art/character/<id>.jpg`, so a UI that shows faces, such as the React UI, asks for a file that isn't there.
 
 A `when` is any [condition](/docs/reference/conditions), so a schedule can follow the story as well as the clock. `talk` names the scene the Talk button opens. It can also be a list of scenes, each with its own `when`, for a conversation that changes as the story does.
 
@@ -327,6 +332,8 @@ state = apply(state, game, { type: 'choose', id: 'chat' }).state
 statValue(state, game, 'friendship', cast.character('ruth')) // 5
 ```
 
+`state.turn` counts from 0, so moving day is turn 0 and Tuesday, after the first night's sleep, is turn 1. What the player reads counts from 1, like the calendar's `Day 2`, and the [playtest](/docs/cli#ifloom-playtest) transcript heads Tuesday's screens `Turn 2`.
+
 `go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `cast.talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
 
 Try the same choice twice in one day and it is refused:
@@ -363,8 +370,13 @@ screen.statsById.coins.text   // '5c'
 Every button in the view carries the `command` it sends. Your UI's whole loop is to render the view, and when a button is pressed, `apply` its command and render again.
 
 ```ts given continues
-import type { Command } from '@ifloom/engine'
-import { render } from './ui.ts' // your UI: React, Svelte, plain DOM, a terminal
+import type { Command, View } from '@ifloom/engine'
+
+/** Your UI draws the view: React, Vue, plain DOM. This script prints it. */
+function render(shown: View) {
+  console.log(`# ${shown.scene.title}`)
+  for (const button of [...shown.scene.choices, ...shown.actions]) console.log(`[${button.label}]${button.disabled ? ` ${button.disabled}` : ''}`)
+}
 
 function press(choice: { command: Command }) {
   state = apply(state, game, choice.command).state
@@ -389,6 +401,8 @@ room.actions[0].price
 // { stats: [{ id: 'coins', amount: 3, text: '3c' }], notes: ['until afternoon'], text: '3c · until afternoon' }
 room.actions[2].disabled         // 'Too early.'
 ```
+
+`scene.body` is the scene's words as one plain string, paragraphs apart, which is handy in a test or a script like this one. A UI draws `beats` instead.
 
 The stats in the price are the engine's, and the note is the calendar's, which prices every button that passes time. Bed is greyed out with the calendar's reason until the evening. Buying a coffee costs three coins and a period, and five coins don't stretch to a second one.
 
@@ -421,26 +435,26 @@ New in this step: the runner, where saves are kept, and how far back undo goes.
 
 Calling `apply` and `view` by hand is how the engine works, and it's enough for a test. A UI wants more around them, such as an undo button, saves and autosave. The [runner](/docs/reference/runner) wraps all of that in one object. Undo and autosave are off until you turn them on.
 
-Saves need somewhere to live. A driver says where, and the engine has no default, so the game picks one. In a browser, `localStorageDriver()` is the simplest and `indexedDbDriver()` has more room. In a test, use `memoryDriver()`.
+Saves need somewhere to live. A driver says where, and the engine has no default, so the game picks one. This script runs in Node, so it keeps them in memory with `memoryDriver()`, as a test does. In a browser, `localStorageDriver()` from `@ifloom/browser` is the simplest and `indexedDbDriver()` has more room, and step 11 uses one.
 
-```ts given
-import { localStorageDriver } from '@ifloom/browser'
-import { createRunner, saves, startingState, type Command } from '@ifloom/engine'
-import { render } from './ui.ts'
+```ts given continues
+import { createRunner, memoryDriver, saves } from '@ifloom/engine'
 
 const runner = createRunner(game, startingState(game), {
-  saves: saves(game, localStorageDriver()),
+  saves: saves(game, memoryDriver()),
   history: { stopAtNewTurn: true }, // undo, but never back into the last turn
-  autosave: { every: 'scene' },     // to the 'auto' slot, whenever the scene changes
+  autosave: { every: 'command' },   // to the 'auto' slot, after every command
 })
 ```
 
-The UI's loop becomes sending each button's command to the runner, and drawing again whenever it says the state has changed.
+Most of this game is played in the room, where walking and going to bed open no scene, so it autosaves after every command. An autosave `every: 'scene'` would miss those, and one `every: 'turn'` would lose the day's walks.
 
-```ts continues
+The UI's loop becomes sending each button's command to the runner, and drawing again whenever it says the state has changed. `render` is the one from step 8.
+
+```ts given continues
 runner.subscribe(({ view }) => render(view))
 
-function press(button: { command: Command }) {
+function send(button: { command: Command }) {
   const result = runner.apply(button.command)
   if (!result.ok) console.warn(result.reason)
 }
@@ -448,33 +462,31 @@ function press(button: { command: Command }) {
 
 Play the first morning again. Going to bed moves the calendar to the next morning and ends the turn. A new turn is a barrier, which means undo stops there: with `stopAtNewTurn`, the player can take back what they did today but not yesterday.
 
-```ts given
-import { calendar } from '@ifloom/plugin-calendar'
-import { places } from '@ifloom/plugin-places'
-
+```ts given continues
 runner.apply({ type: 'choose', id: 'bed' })
-runner.apply(calendar.sleep())                              // Tuesday morning: turn 1
-runner.snapshot().canUndo                                     // false: a new turn is a barrier
+runner.apply(calendar.sleep())                     // Tuesday morning: turn 1
+runner.snapshot().canUndo                          // false: a new turn is a barrier
 runner.apply(places.go('high-street'))
-runner.undo()                                      // back in the house
+runner.undo()
+places.where(runner.state, runner.game)            // 'house': back in the house
 runner.redo()                                      // on the high street again
 ```
+
+`places.where(state, game)` is the places plugin's helper for where the player is, by the place's id. It reads the state, so it works on any state, a runner's or one `apply` gave you.
 
 Undo can't be used to re-roll anything. Every draw is seeded, so the same command from the same state gives the same result.
 
 Save to a slot of your own, and load it back. Slots are names you pick:
 
-```ts given
-import { places } from '@ifloom/plugin-places'
-import { cast } from '@ifloom/plugin-cast'
-
+```ts given continues
 await runner.save('1', 'Before the café')
 
-runner.apply(places.go('cafe'))
-runner.apply(cast.talk('ruth'))  // a new scene: autosaved to 'auto'
+runner.apply(places.go('cafe'))  // autosaved to 'auto'
+runner.apply(cast.talk('ruth'))  // and again
 
-const loaded = await runner.load('1')   // back on the high street, with a fresh undo history
+const loaded = await runner.load('1')       // back on the high street, with a fresh undo history
 if (!loaded.ok) console.warn(loaded.reason) // why it could not be read
+places.where(runner.state, runner.game)     // 'high-street'
 ```
 
 The saves are kept under keys that start with the game's id, `new-in-town`, so another game opened in the same browser never reads them. See [Saves](/docs/reference/saves) and [Shipping a game](/docs/guide/shipping#saves).
@@ -497,6 +509,12 @@ The template you started from has a `src/game.ts`, a `src/world/stats.ts` and a 
 
 ::include[../../../../snippets/first-game/world/cast.ts]
 
+`public/art/character/ruth.svg` is her picture, her initial on a coloured disc. Vite copies `public/` into the build, so it ends up at `art/character/ruth.svg` beside the page:
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><circle cx="48" cy="48" r="48" fill="hsl(30 55% 55%)"/><text x="48" y="62" font-family="Georgia, serif" font-size="44" text-anchor="middle" fill="white">R</text></svg>
+```
+
 `src/story/opening.ts` has the intro from step 4 and the house the player wakes up in:
 
 ::include[../../../../snippets/first-game/story/opening.ts]
@@ -513,9 +531,11 @@ The template you started from has a `src/game.ts`, a `src/world/stats.ts` and a 
 
 ::include[../../../../snippets/first-game/game.ts]
 
-Run `npm run check`, which prints `No problems.`, and `npm run playtest`, which plays a few days and writes what it saw to `playtest/run.txt`.
+Run `npm run check`, which prints `No problems.`, and `npm run playtest`, which plays a few days and writes what it saw to `playtest/run.txt`. The numbers it prints have a column for each stat the player has and one for each kind of entity the game lists, with how many there are: `character` is the cast's kind, so it counts Ruth. Ruth's friendship is a stat of hers, not the player's, so it has no column. See [`ifloom playtest`](/docs/cli#ifloom-playtest).
 
 Then draw it. The page needs more than the scene and its choices now. With no scene open, the room's buttons are in `view.actions`, the ways out are in `view.plugins.places.exits`, labelled with where they go, and each person here has a Talk button in `view.plugins.cast.present`. Ruth's line is a `say` beat, and who she is is in `view.scene.speaker`. Each tab below is every file to change in that template:
+
+Every runner below autosaves after every command, for the reason in step 10.
 
 - **Plain JS.** Add `src/runner.ts`, replace `src/main.ts`, and delete `src/layout.ts`, which only the template's `main.ts` used.
 - **React.** Replace `src/main.ts`. It lists each plugin's React UI in `plugins`, so the exits, the people with their Talk buttons and the calendar's part are drawn. Leave one out and the React UI draws nothing for that plugin, so the player couldn't leave the house. Keep `src/layout.tsx` and `src/styles.css` as they are.
@@ -542,7 +562,7 @@ if (problems.length) console.warn(problems)
 
 export const runner = await browserRunner(game, {
   history: { depth: 50, stopAtNewTurn: true },
-  autosave: { every: 'scene' },
+  autosave: { every: 'command' },
 })
 await runner.load('auto')
 
@@ -555,12 +575,12 @@ export const view = derived(snapshot, (now) => now.view)
 <script lang="ts">
   import { runner, view } from './runner.ts'
 
-  // The scene's choices, the room's buttons, the ways out and a Talk button for each person here.
+  // The scene's choices, the room's buttons, the ways out and a Talk button for each person here, under their name.
   const buttons = $derived([
     ...$view.scene.choices,
     ...$view.actions,
     ...($view.plugins.places?.exits ?? []),
-    ...($view.plugins.cast?.present ?? []).flatMap((person) => person.actions),
+    ...($view.plugins.cast?.present ?? []).flatMap((person) => person.actions.map((action) => ({ ...action, label: `${person.name}: ${action.label}` }))),
   ])
 </script>
 
@@ -577,9 +597,9 @@ export const view = derived(snapshot, (now) => now.view)
 <p>{$view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
 ```
 
-Then run `npm run dev` and play. Go to bed twice, once to close the intro and once to sleep, then walk to the café and talk to Ruth. Reload the page and the game carries on from the autosave: in Plain JS, Vue and Svelte, `src/runner.ts` loads the `auto` slot as it starts, and in React the title screen's Continue does. `npm run build` makes the one HTML file to ship (see [Shipping a game](/docs/guide/shipping)).
+Then run `npm run dev` and play. Go to bed twice, once to close the intro and once to sleep, then walk to the café and talk to Ruth. Reload the page at any point and the game carries on from the autosave, made after the last thing you did: in Plain JS, Vue and Svelte, `src/runner.ts` loads the `auto` slot as it starts, and in React the title screen's Continue does. `npm run build` makes the one HTML file to ship (see [Shipping a game](/docs/guide/shipping)).
 
-The runner here is [`browserRunner`](/docs/browser#browserrunner), from `@ifloom/browser`. It makes the runner of step 10 with what a browser game wants by default: a random seed, saves and the player's settings in `localStorage`, 50 steps of undo and an autosave each turn. The options you pass go over those, here an undo that stops at a new turn and an autosave on every scene. React's [`mountGame`](/docs/react#mountgame) makes one the same way, from its `runner` option.
+The runner here is [`browserRunner`](/docs/browser#browserrunner), from `@ifloom/browser`. It makes the runner of step 10 with what a browser game wants by default: a random seed, saves and the player's settings in `localStorage`, 50 steps of undo and an autosave each turn. The options you pass go over those, here an undo that stops at a new turn and an autosave after every command. React's [`mountGame`](/docs/react#mountgame) makes one the same way, from its `runner` option.
 
 The page draws text, spoken lines and buttons, which is all this game needs. [Your own UI in any framework](/docs/guide/frameworks) draws the rest of the view, such as inputs, pictures and notices, and [Building UI for plugins](/docs/recipes/plugin-ui) draws the plugins' parts in more detail.
 
@@ -643,6 +663,7 @@ const ruth = cast.person({
   fullName: 'Ruth Okafor',
   description: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
+  image: 'art/character/ruth.svg',
   ui: { hue: 30 },
   schedule: [
     { location: 'cafe', when: { all: [calendar.weekday(0, 1, 2, 3, 4), calendar.period('morning', 'afternoon')] } },
@@ -742,7 +763,7 @@ console.log(apply(state, game, { type: 'action', id: 'places/coffee' }).reason) 
 const runner = createRunner(game, startingState(game), {
   saves: saves(game, memoryDriver()),
   history: { stopAtNewTurn: true },
-  autosave: { every: 'scene' },
+  autosave: { every: 'command' },
 })
 runner.subscribe(({ view }) => console.log(view.scene.title))
 

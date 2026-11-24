@@ -4,12 +4,13 @@ import { computed } from 'vue'
 import { runner, view } from './runner.ts'
 
 // The scene's choices. With no scene open, the room's buttons and the game's,
-// the ways out, each labelled with where it goes, and a Talk button for each person here.
+// the ways out, each labelled with where it goes, and a Talk button for each person here,
+// under their name ("Ruth: Talk"), so two people's buttons don't read the same.
 const buttons = computed(() => [
   ...view.value.scene.choices,
   ...view.value.actions,
   ...(view.value.plugins.places?.exits ?? []),
-  ...(view.value.plugins.cast?.present ?? []).flatMap((person) => person.actions),
+  ...(view.value.plugins.cast?.present ?? []).flatMap((person) => person.actions.map((action) => ({ ...action, label: `${person.name}: ${action.label}` }))),
 ])
 </script>
 

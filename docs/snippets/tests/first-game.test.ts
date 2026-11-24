@@ -10,6 +10,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, waitFor } from '@testing-library/react'
 import { browserRunner } from '@ifloom/browser'
 import { createApp, nextTick } from 'vue'
+import type { Runner } from '@ifloom/engine'
+import { places } from '@ifloom/plugin-places'
 import module from '../first-game/game.ts'
 
 afterEach(() => {
@@ -32,15 +34,28 @@ const pressed = (root: HTMLElement) => async (label: string) => {
   await nextTick()
 }
 
-/** From moving day to Ruth's first line, by the buttons on screen. */
-async function toRuth(root: HTMLElement): Promise<void> {
+/** From moving day to the high street on Tuesday morning, by the buttons on screen: none of it opens a scene. */
+async function toStreet(root: HTMLElement): Promise<void> {
   const press = pressed(root)
   await press('Go to bed') // the intro's choice
   await press('Go to bed') // the game's action: to Tuesday morning
   await press('The high street')
+}
+
+/** On from the high street to Ruth's first line. */
+async function toRuth(root: HTMLElement): Promise<void> {
+  const press = pressed(root)
   await press('The corner café')
   expect(root.textContent).toContain('Ruth is behind the counter')
-  await press('Talk')
+  await press('Ruth: Talk')
+}
+
+/** A reload: a new runner on the same localStorage, carrying on from the autosave as the page does. */
+async function reloaded(runner: Runner): Promise<Runner> {
+  await runner.settled()
+  const again = await browserRunner(runner.game)
+  expect((await again.load('auto')).ok).toBe(true)
+  return again
 }
 
 describe('A game with a world, in the browser', () => {
@@ -53,22 +68,27 @@ describe('A game with a world, in the browser', () => {
     const { runner } = await import('../first-game/plain/runner.ts')
     await import('../first-game/plain/main.ts')
     expect(root.querySelector('h2')?.textContent).toBe('Moving day')
+    await toStreet(root)
+    // Sleeping and walking open no scene, and a reload still carries on from where they left the player.
+    const street = await reloaded(runner)
+    expect(places.where(street.state, street.game)).toBe('high-street')
+    expect(street.view().when).toBe('Day 2 · Tuesday morning · The high street')
     await toRuth(root)
     expect(root.querySelector('h3')?.textContent).toBe('Ruth')
     expect(root.textContent).toContain('“Morning. What can I get you?”')
-
-    await runner.settled()
-    const again = await browserRunner(runner.game)
-    expect((await again.load('auto')).ok).toBe(true)
-    expect(again.view().scene.speaker?.name).toBe('Ruth')
+    expect((await reloaded(runner)).view().scene.speaker?.name).toBe('Ruth')
   })
 
   it('Vue: the same, from App.vue', async () => {
     const root = page()
+    const { runner } = await import('../first-game/vue/runner.ts')
     const { default: App } = await import('../first-game/vue/App.vue')
     createApp(App).mount(root)
     await nextTick()
     expect(root.querySelector('h2')?.textContent).toBe('Moving day')
+    await toStreet(root)
+    const street = await reloaded(runner)
+    expect(places.where(street.state, street.game)).toBe('high-street')
     await toRuth(root)
     expect(root.querySelector('h3')?.textContent).toBe('Ruth')
     expect(root.textContent).toContain('“Morning. What can I get you?”')

@@ -13,7 +13,7 @@ mountGame(module.build(), {
   pages: true,
   // Each plugin's own UI: the calendar's, where you are with the ways out, and who's here with a Talk button.
   plugins: [calendarUi, placesUi, castUi],
-  // Over browserRunner's defaults: undo never goes back past the start of a turn,
-  // and the game autosaves whenever the scene changes.
-  runner: { history: { depth: 50, stopAtNewTurn: true }, autosave: { every: 'scene' } },
+  // Over browserRunner's defaults: undo never goes back past the start of a turn, and the
+  // game autosaves after every command, since walking and sleeping open no scene.
+  runner: { history: { depth: 50, stopAtNewTurn: true }, autosave: { every: 'command' } },
 })

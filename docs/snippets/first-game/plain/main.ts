@@ -12,10 +12,10 @@ function add<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K,
   return element
 }
 
-/** A button for each choice, greyed out with its reason when it can't be pressed. */
-function buttons(parent: HTMLElement, choices: readonly RenderedChoice[]): void {
+/** A button for each choice, greyed out with its reason when it can't be pressed. `who` goes before each label. */
+function buttons(parent: HTMLElement, choices: readonly RenderedChoice[], who = ''): void {
   for (const choice of choices) {
-    const button = add(parent, 'button', choice.label)
+    const button = add(parent, 'button', who ? `${who}: ${choice.label}` : choice.label)
     button.disabled = Boolean(choice.disabled)
     button.title = choice.disabled ?? ''
     button.onclick = () => runner.apply(choice.command)
@@ -39,9 +39,9 @@ function draw({ view }: RunnerSnapshot): void {
   buttons(add(root, 'div'), [...view.scene.choices, ...view.actions])
 
   // With no scene open, the ways out, each labelled with where it goes,
-  // and a Talk button for each person here.
+  // and a Talk button for each person here, under their name ("Ruth: Talk").
   buttons(add(root, 'nav'), view.plugins.places?.exits ?? [])
-  for (const person of view.plugins.cast?.present ?? []) buttons(add(root, 'div'), person.actions)
+  for (const person of view.plugins.cast?.present ?? []) buttons(add(root, 'div'), person.actions, person.name)
 
   add(root, 'p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '))
 }

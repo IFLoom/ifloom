@@ -77,17 +77,15 @@ export default defineConfig({
     // Keep keys quoted as written: the plugin template's '__id__' is replaced by a name that may hold a dash.
     quoteProps: 'preserve',
     sortPackageJson: false,
-    // CI checks the site repo out into ifloom-site/ for the docs build; it has its own format and lint.
-    ignorePatterns: ['**/*.md', '**/*.mdx', '**/*.json', '**/*.css', '**/*.html', '**/*.yml', '**/*.yaml', 'docs/content/**', 'ifloom-site/**'],
+    ignorePatterns: ['**/*.md', '**/*.mdx', '**/*.json', '**/*.css', '**/*.html', '**/*.yml', '**/*.yaml', 'docs/content/**'],
   },
   lint: {
     plugins: ['typescript', 'oxc'],
     // Type-aware rules (tsgolint, on TypeScript 7's checker). tsc on TypeScript 6 stays the typecheck (`vp run typecheck:all`),
     // so no `typeCheck` here. Any warning fails `vp check`.
     options: { typeAware: true, denyWarnings: true },
-    // The templates are copied into a new game, with packages the checkout doesn't install for them. CI checks the site
-    // repo out into ifloom-site/, which has its own lint.
-    ignorePatterns: ['packages/cli/templates/**', 'ifloom-site/**'],
+    // The templates are copied into a new game, with packages the checkout doesn't install for them.
+    ignorePatterns: ['packages/cli/templates/**'],
     rules: {
       // Plugins turn content's `with` arguments (`unknown`) into ids with String() on purpose; argProblems catches a wrong shape.
       'typescript/no-base-to-string': 'off',

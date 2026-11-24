@@ -13,7 +13,7 @@ import { wordClashes } from './words.ts'
 import { artSrc } from './sceneBody.ts'
 import { stringOf } from './strings.ts'
 import { carryChecks, featureChecks, markupChecks, probeChecks, resolverSteps, type FeatureList } from './features/registry.ts'
-import type { FeatureCheckTools, ResolveTools, Resolvers } from './features/feature.ts'
+import type { FeatureCheckTools, ResolveTools } from './features/feature.ts'
 import { COMMAND_TYPES, conditionKeys, effectKeys, featureContext } from './core.ts'
 import type { Condition, GameState } from './types.ts'
 
@@ -159,7 +159,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   // The references each feature answers for, by the key that tells each apart.
   const leaves: Record<string, (ref: never, where: string) => string[]> = {}
   for (const step of resolverSteps) {
-    for (const [key, leaf] of Object.entries(step.resolve(game, resolveTools) as Resolvers)) {
+    for (const [key, leaf] of Object.entries(step.resolve(game, resolveTools) as Record<string, unknown>)) {
       if (Object.hasOwn(leaves, key)) throw new Error(`The reference "${key}" is resolved by two features.`)
       leaves[key] = leaf as (ref: never, where: string) => string[]
     }

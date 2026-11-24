@@ -71,6 +71,10 @@ export type UiShape = {
     ui?: Ui<GameUi>
   }
   lists: 'ui'
+  references: {
+    /** A `ui` field of presentation hints, which must be data. */
+    ui: { ui: unknown }
+  }
 }
 
 /** Is it a plain object, as a hint is written? */

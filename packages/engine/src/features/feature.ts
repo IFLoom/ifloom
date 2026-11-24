@@ -183,13 +183,8 @@ export type ResolveTools = {
   warn: (where: string, what: string) => void
 }
 
-/** The references that have `K` as a key. */
-export type ReferenceOf<K extends string> = Extract<Reference, { [P in K]: unknown }>
-
-type ReferenceKey = Reference extends infer R ? (R extends unknown ? keyof R & string : never) : never
-
-/** How a feature resolves the references it answers for, by the key that tells each apart: what the game lacks, worded as a problem. */
-export type Resolvers = { [K in ReferenceKey]?: (ref: ReferenceOf<K>, where: string) => string[] }
+/** How a feature resolves the references it declares, by the key that tells each apart: what the game lacks, worded as a problem. */
+export type Resolvers<R> = { [K in keyof R]-?: (ref: R[K], where: string) => string[] }
 
 /** The kinds of things a feature declares, as types. Each key is optional. */
 export type FeatureShape = {
@@ -207,6 +202,8 @@ export type FeatureShape = {
   pack?: object
   /** Its fields of the view. */
   view?: object
+  /** Its kinds of `Reference`, by the key that tells each apart: `{ timer: { timer: string } }`. Its `resolve` answers for each. */
+  references?: object
   /** Its lists, as problems name them: `'setting'`. */
   lists?: string
   /** What `MigrationTools.fill` fills for it, by name: `'settings'`. */
@@ -218,8 +215,15 @@ type Part<T extends FeatureShape, K extends keyof FeatureShape> = T[K] extends o
 /** A feature's state fields, each with its start and load defaults. */
 export type FieldsOf<S> = { [K in keyof S]-?: StateField<S[K]> }
 
-/** A feature as `defineFeature` takes it. */
-export type FeatureSpec<T extends FeatureShape> = {
+/**
+ * A feature as `defineFeature` takes it. What its shape declares, it must
+ * answer for: a feature with references has a `resolve`.
+ */
+export type FeatureSpec<T extends FeatureShape> = FeatureParts<T> &
+  (keyof Part<T, 'references'> extends never ? unknown : { resolve: (game: Game, tools: ResolveTools) => Resolvers<Part<T, 'references'>> })
+
+/** What a feature can declare, each part optional. */
+type FeatureParts<T extends FeatureShape> = {
   /** Its name, as other features' `requires` name it. */
   name: string
   /** The features it needs, by name. The registry refuses to build without them. */
@@ -255,8 +259,8 @@ export type FeatureSpec<T extends FeatureShape> = {
   lists?: readonly (T['lists'] & string)[]
   /** Its own checks on the game's content. */
   check?: (game: Game, tools: FeatureCheckTools, cx: FeatureContext) => void
-  /** The references it answers for, resolved against one game. Called once per check. */
-  resolve?: (game: Game, tools: ResolveTools) => Resolvers
+  /** The references it declares, each resolved against one game. Called once per check. */
+  resolve?: (game: Game, tools: ResolveTools) => Resolvers<Part<T, 'references'>>
   /** What is wrong with prose markup it reads, such as a sound or a pool it names. It records the files the markup names. */
   markup?: (game: Game, text: string, where: string, tools: ResolveTools, shownWhen?: Condition) => string[]
   /** Its checks against one probe state. */

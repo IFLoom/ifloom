@@ -127,6 +127,8 @@ export type FeatureGame = Merged<'game'>
 export type FeaturePack = Merged<'pack'>
 /** The features' fields of `View`. */
 export type FeatureView = Merged<'view'>
+/** The features' kinds of `Reference`, by the key that tells each apart. */
+export type FeatureReferences = Merged<'references'>
 /** The lists the features' problems name. */
 export type FeatureList = Shapes extends infer T ? (T extends { lists: infer L } ? L : never) : never
 

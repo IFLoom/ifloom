@@ -75,6 +75,10 @@ export type SettingsShape = {
   }
   lists: 'setting'
   fill: 'settings'
+  references: {
+    /** A `play` setting, and the value it is compared with or given. */
+    setting: { setting: string; is?: KvValue }
+  }
 }
 
 /** The setting with this id, if the game declares it. */

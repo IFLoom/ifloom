@@ -186,6 +186,14 @@ export type StatsShape = {
   }
   lists: 'stat'
   fill: 'stats'
+  references: {
+    /**
+     * A stat, read on the player or, with `of`, on an entity (`'staff:ana'`, or
+     * `'staff:*'` for any of a kind). `writes` for an effect that changes it.
+     * With `starts`, a stat an entity of that kind is given a starting value for.
+     */
+    stat: { stat: string; of?: string; writes?: boolean } | { stat: string; starts: string }
+  }
 }
 
 export function statOf(game: Game, id: string): StatDef | undefined {

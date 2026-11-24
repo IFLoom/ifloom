@@ -43,6 +43,10 @@ export type ActionsShape = {
     actions?: ActionDef[]
   }
   lists: 'action'
+  references: {
+    /** An action the `action` command does, by its id. */
+    action: { action: string }
+  }
 }
 
 /**

@@ -99,6 +99,10 @@ export type TimersShape = {
     timers: TimerView[]
   }
   lists: 'timer'
+  references: {
+    /** A timer, by id, with a `timer` effect's `to` and `by`, which must be milliseconds. */
+    timer: { timer: string; to?: unknown; by?: unknown }
+  }
 }
 
 /** The most things one tick runs out, so a timer that keeps starting itself again can't hang the game. */

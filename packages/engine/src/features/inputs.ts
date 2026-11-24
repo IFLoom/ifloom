@@ -61,6 +61,9 @@ export type InputsShape = {
     inputs: InputView[]
   }
   lists: 'input'
+  references: {
+    input: { input: string }
+  }
 }
 
 export function inputOf(game: Game, id: string): InputDef | undefined {

@@ -210,6 +210,19 @@ export type EntitiesShape = {
     entities: EntitiesView[]
   }
   lists: 'kind' | 'entity' | 'trait'
+  references: {
+    /** A kind of entity. */
+    kind: { kind: string }
+    /**
+     * An entity content declares, by reference: `'food:apple'`. `'$'` and
+     * `'food:*'` pass. With `carrying`, it must also carry that trait: a
+     * place the places plugin can take the player to, `{ entity:
+     * 'location:cafe', carrying: 'places/location' }`.
+     */
+    entity: { entity: string; carrying?: string }
+    /** Who a spoken line is under, by id: `@ava: "…"` in prose, or a `say` block's `speaker`. `'you'` and `'player'` pass. */
+    speaker: { speaker: string }
+  }
 }
 
 /** The entities a selection picks, in the game's order of its entities, or a holder's order of what it holds. */

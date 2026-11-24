@@ -161,6 +161,12 @@ export type MinigamesShape = {
     minigame: MinigameView | null
   }
   lists: 'minigame'
+  references: {
+    /** A minigame, by id. */
+    minigame: { minigame: string }
+    /** A key some minigame declares in its `kv`, as `{ kv, of: 'minigame' }` names it. */
+    minigameKv: { minigameKv: string }
+  }
 }
 
 /** A scene's field that starts a minigame. */

@@ -32,6 +32,9 @@ export type StorylinesShape = {
     storylines?: StorylineDef[]
   }
   lists: 'storyline'
+  references: {
+    storyline: { storyline: string }
+  }
 }
 
 export const storylines = defineFeature<StorylinesShape>({

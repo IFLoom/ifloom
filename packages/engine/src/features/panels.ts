@@ -54,6 +54,10 @@ export type PanelsShape = {
     /** The panel open over the story: one the `panel` effect opened, else the open scene's own, else null. */
     panel: OpenPanel | null
   }
+  references: {
+    /** A panel an effect opens, by name, with what it is opened with: asked of the plugins' `references.panels`. */
+    openPanel: { openPanel: string; with?: PluginArgs }
+  }
 }
 
 /** Whether a command moved the story on from under a panel that was already open: a turn ended, or the scene on screen changed. */

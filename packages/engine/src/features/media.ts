@@ -114,6 +114,14 @@ export type MediaShape = {
     media?: GameMedia
   }
   lists: 'pool'
+  references: {
+    /** A pool, with the tags asked of it. */
+    pool: { pool: string; tags?: readonly string[] }
+    /** A `{ media }` block. */
+    media: { media: SceneMedia }
+    /** A layered picture with hotspots. `choices` are its scene's choice ids, or null for a picture with no scene. */
+    layered: { layered: PictureDef | undefined; choices: readonly string[] | null }
+  }
 }
 
 /** A save's media before anything has been picked. */

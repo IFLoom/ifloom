@@ -145,6 +145,14 @@ export type AudioShape = {
     audio: AudioView
   }
   lists: 'track' | 'channel' | 'audio'
+  references: {
+    /** Background audio: a track (or silence) on a channel. */
+    channel: { channel: string; track: string | null | undefined }
+    /** A track played once. */
+    sound: { sound: string }
+    /** A sound file, through `audioSrc`. */
+    audio: { audio: string }
+  }
 }
 
 /** What `view.audio` holds. */

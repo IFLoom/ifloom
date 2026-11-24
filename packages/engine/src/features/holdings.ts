@@ -86,6 +86,18 @@ export type HoldingsShape = {
      */
     held: HeldView[]
   }
+  references: {
+    /**
+     * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
+     * thing given to it, which can't be the holder itself; `protagonist` for a
+     * `you` effect, which names the one to play.
+     */
+    holder: { holder: string; holds?: string; protagonist?: boolean }
+    /** The entity a `create` makes a thing like, and the kind it makes, if it says. */
+    like: { like: string; of?: string }
+    /** A trait, by id. */
+    trait: { trait: string }
+  }
 }
 
 /** One holder's things as the view draws them. */

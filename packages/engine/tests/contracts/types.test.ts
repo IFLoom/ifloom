@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { Command, Condition, Content, Effect, Game, GameState, Pack, View } from '../../src/index.ts'
+import type { Command, Condition, Content, Effect, Game, GameState, Pack, Reference, View } from '../../src/index.ts'
 import type { EffectKey } from '../../src/types.ts'
 import type {
   FrozenCommand,
@@ -10,6 +10,7 @@ import type {
   FrozenGame,
   FrozenGameState,
   FrozenPack,
+  FrozenReference,
   FrozenView,
 } from './frozen-types.ts'
 
@@ -33,6 +34,7 @@ const shapes = {
   pack: true as Mutual<Pack, FrozenPack>,
   content: true as Mutual<Content, FrozenContent>,
   view: true as Mutual<View, FrozenView>,
+  reference: true as Mutual<Reference, FrozenReference>,
 } satisfies Record<string, true>
 
 describe('the built public types', () => {

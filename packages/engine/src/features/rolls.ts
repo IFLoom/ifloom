@@ -75,6 +75,10 @@ export type RollsShape = {
     /** The rolls the last command made, in order. Empty when it made none. */
     rolls: Roll[]
   }
+  references: {
+    /** A roll effect's dice and key, which must be well formed. */
+    dice: { dice: unknown; key?: unknown }
+  }
 }
 
 /** Dice notation: an optional count, `d`, the sides, and an optional `+n` or `-n`. */

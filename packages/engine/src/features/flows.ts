@@ -54,6 +54,10 @@ export type FlowsShape = {
      */
     point: { point: string }
   }
+  references: {
+    /** A jump to a point, `{ point }` as an effect: only a choice's, in the scene that has the point. */
+    jump: { jump: string }
+  }
 }
 
 /** A content block the flow reached, with where it is in the scene and the hints of the sections around it. */

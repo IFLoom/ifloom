@@ -124,6 +124,21 @@ export type ScenesShape = {
     introScene?: string
   }
   lists: 'scene' | 'introScene'
+  references: {
+    /** A scene, as a gate (`{ seen }`), as somewhere an effect goes, or as a button opens it. */
+    scene: { scene: string; as?: 'gate' | 'go' | 'open' }
+    /** A choice, by `scene#choice`. */
+    choice: { choice: string }
+    /** A draw some scene's `drawnFrom` has to name. */
+    drawnFrom: { drawnFrom: string }
+    /** Prose blocks, as a data scene's body. */
+    blocks: { blocks: readonly Block[] | undefined }
+    /**
+     * The inline actions (`[[act:id]]`) in a body, as blocks or as rendered
+     * prose, against `offers`: the ids of the choices or buttons it can name.
+     */
+    actionsIn: { actionsIn: readonly Block[] | string | undefined; offers: readonly string[] }
+  }
 }
 
 function isDataScene(scene: Scene | DataScene): scene is DataScene {

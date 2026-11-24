@@ -1,13 +1,23 @@
 ---
 title: "The words table"
-description: "Give every label, name and line of a game other words with one pack: the words table, the key each field has, translatableFields, and how a plugin says which of its fields are words."
+description: "Reference for a pack's words table, the key each field a player reads has, translatableFields, WordField, WordShape and WordPart, and its checks."
 ---
-Every word a player reads in your content is written in place: a choice's `label`, an entity's `name`, a `{ text }` block in a scene. A translation gives those fields other words with one pack that carries a `words` table, keyed by field.
+The words table is a pack's `words`, which gives other words to the fields of your content that a player reads, each by its key. Every such field is [written in place](/docs/reference/glossary#words-in-place), such as a choice's `label`, an entity's `name` or a `{ text }` block, so a translation is one pack with this table, its `prose` and its `strings`. [Translate your game](/docs/how-to/translate-your-game) makes one, and [Content and packs](/docs/explanation/content-and-packs) explains how a pack goes over the content.
 
 ```ts
-import { SCHEMA, translatableFields, type Pack, type WordField, type WordShape, type WordPart } from '@ifloom/engine'
+import { translatableFields, type WordField, type WordPart, type WordShape } from '@ifloom/engine'
+```
 
-const french: Pack = {
+## words
+
+The `words` key of a [`Pack`](/docs/reference/content#pack), other words for content's fields by key. Every form is in [`Pack`](/docs/api/engine#pack).
+
+[`loadGame`](/docs/reference/content#loadgame) lays the table over the content once everything is merged, and a later pack's words go over an earlier one's. The game's content files stay as they are. A key is the path to the field in content, with each list entry named by its id.
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+export const french: Pack = {
   id: 'lang:fr',
   schema: SCHEMA,
   words: {
@@ -17,135 +27,61 @@ const french: Pack = {
     'scene.cafe.counter.text.intro': 'Ava lève les yeux de la caisse.',
     'scene.cafe.counter.choice.tea.label': 'Une théière',
   },
-  // Lines read by key, from `{ prose }` blocks, variants and pools, are translated in the pack's own prose.
-  prose: { 'place.cafe': 'Six tables, dont une bancale.' },
+  prose: { 'cafe.menu': 'Thé, café, tartines.' },
 }
 ```
 
-[`loadGame`](/docs/reference/content#loadgame) lays the table over your content once everything is merged, and a later pack's words go over an earlier one's. The game's content files stay as they are. A key that names no field is a [problem](#problems). [Translating a game](/docs/recipes/translating) walks through making one.
-
-The words table is for the words in your content. The engine's and plugins' own words (refusals such as "You can't afford that", the calendar's day names) are [strings](/docs/reference/strings), which a pack overrides in its `strings` table, as before.
-
-## Keys
-
-A key is the path to the field, as your content writes it, with each list entry named by its id.
-
-| Field | Key |
+| Key | Meaning |
 |---|---|
-| An action's label | `action.wait.label` |
-| A label that depends on state | `action.tip.labels.<hash>.label` |
-| Why it's refused | `action.tip.blocked.<hash>.reason` |
-| Its once-a-turn reason and warning | `action.tip.once.reason`, `action.tip.irreversible` |
-| A scene's title | `scene.cafe.counter.title` |
-| A choice in a scene, anywhere in it | `scene.cafe.counter.choice.tea.label` |
-| A block of words in a scene | `scene.cafe.counter.text.intro`, or `scene.cafe.counter.text.<hash>` |
-| A picture's `alt`, a fold's label | `scene.cafe.counter.alt.<hash>`, `scene.cafe.counter.fold.<hash>` |
-| A hotspot on a scene's picture | `scene.flat.picture.hotspots.door.label` |
-| A notice an effect raises | `action.wait.notify.<id or hash>.title` and `.text` |
-| What a `create` effect names the thing it makes | `action.sketch.create.<hash>.name` and `.description` |
-| Words in a plugin's effect, as its calls declare with [`arg.words()`](/docs/reference/plugins#arg) | `action.snap.feed/post.<hash>.text` |
-| An entity's name and description | `entity.character:ava.name`, `entity.character:ava.description` |
-| A kind's label and plural | `kind.staff.label`, `kind.staff.plural` |
-| A trait's words on an entity | `entity.location:cafe.traits.places/location.blocked.<hash>.reason` |
-| A trait's words a kind gives | `kind.vendor.traits.shop/vendor.blocked.<hash>.reason` |
-| A stat's label, format and refusal | `stat.coins.label`, `stat.coins.format` (or `.format.one` and `.format.other`), `stat.coins.lacking`, `stat.coins.levels.notice` |
-| A storyline's name | `storyline.ava.name` |
-| A setting's or an input's label, and an option's | `setting.difficulty.label`, `setting.difficulty.options.hard.label` |
-| A lock's reason, a saveable reason | `lock.<id or hash>.reason`, `saveable.<id or hash>.reason` |
-| A timer's label | `timer.phone.label` |
-| A minigame's title and a state's label | `minigame.arrows.title`, `minigame.arrows.states.round.label` |
-| A plugin's content | `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.name`, `quests/quests.coffee.stages.order.hint` |
+| `action.wait.label` | An action's label, and `action.tip.labels.<hash>.label` a label under a condition. |
+| `action.tip.blocked.<hash>.reason` | An action's refusal, beside `action.tip.once.reason` and `action.tip.irreversible`. |
+| `scene.cafe.counter.title` | A scene's title. |
+| `scene.cafe.counter.choice.tea.label` | A choice in a scene, in its ending choices or at a decision. |
+| `scene.cafe.counter.text.intro` | A `{ text }` block or `say` line, by its `id` or a hash of its words. |
+| `scene.cafe.counter.alt.<hash>` | A picture's `alt`, beside `scene.cafe.counter.fold.<hash>` for a fold's label. |
+| `scene.flat.picture.hotspots.door.label` | A hotspot's label on a scene's picture. |
+| `action.wait.notify.<id>.title` | A notice an effect raises, beside its `.text`. |
+| `action.sketch.create.<hash>.name` | The name a `create` effect gives what it makes, beside its `.description`. |
+| `action.snap.feed/post.<hash>.text` | Words in a plugin's effect, as its calls declare with [`arg.words()`](/docs/reference/plugin-calls). |
+| `entity.character:ava.name` | An entity's name, beside its `.description`. |
+| `kind.staff.label` | A kind's label, beside its `.plural`. |
+| `entity.location:cafe.traits.places/location.blocked.<hash>.reason` | A trait's words on an entity, and `kind.vendor.traits.…` the words a kind's trait gives. |
+| `stat.coins.label` | A stat's label, beside `.format` (or `.format.one` and `.format.other`), `.lacking` and `.levels.notice`. |
+| `storyline.ava.name` | A storyline's name. |
+| `setting.difficulty.label` | A setting's or an input's label, and `setting.difficulty.options.hard.label` an option's. |
+| `lock.<id>.reason` | A lock's reason, beside `saveable.<id>.reason`. |
+| `timer.phone.label` | A timer's label. |
+| `minigame.arrows.title` | A minigame's title, beside `minigame.arrows.states.round.label`. |
+| `phrase.outfit.verdict.0` | A [phrase](/docs/reference/phrases)'s row, counted from 0. |
+| `quests/quests.coffee.name` | A plugin's content, `<plugin>/<list>.<id>.<field>`. |
 
-Some things are named so that a key stays put while you rearrange a scene:
+A key stays put while you rearrange a scene. Every choice is `scene.<scene>.choice.<id>` wherever it stands, and every block of words is `scene.<scene>.text.<id>`, in the body, a section or a choice's `then`. A notice's key holds its `id`, or a hash of its title and text. An entry of a list with no id, such as a `blocked` entry, takes its `value`, else a hash of its words, else its place in the list. Blocks, choices and notices in an entity's trait take keys under the entity the same way.
 
-- **Every choice** in a scene is `scene.<scene>.choice.<id>`, whether it's among the ending choices or at a decision in the body. A choice's id is unique in its scene.
-- **Every block of words** written in place, `{ text }` or `say`, is `scene.<scene>.text.<id>`, wherever it sits: in the body, in a section, in a choice's `then`. Give a block an `id` (`text('…', { id: 'intro' })`) to name it. Without one, it's named by six hex digits of a hash of its words.
-- **Every notice** an effect raises is `<entry>.notify.<id>`, by the notice's `id`, or a hash of its title and text. A `create` effect's words are `<entry>.create.<hash>`, and a plugin effect's `<entry>.<plugin>/<name>.<hash>`, each by a hash of its own words.
-- **An entry of a list with no id**, such as a `blocked` entry or a `labels` entry, is named by its `value` (a setting's option), else a hash of its own words, else its place in the list.
+A block with no `id` takes six hex digits of a hash of its words as its key, so changing the words changes the key and the old translation names no field. The loader reports that key, which says the line needs translating again. A block with an `id` keeps its key whatever its words, and two blocks with the same words in one scene share one key.
 
-Blocks, choices and notices in an entity's trait are named under the entity in the same way: a place's room text is `entity.location:cafe.text.<hash>`, and its button `entity.location:cafe.traits.places/location.actions.sit.label`.
+The table leaves out these words, which a pack gives elsewhere:
 
-### Words named by a hash
-
-A block with no `id` has a key made from its words, so the key changes when you change the words, and a translation of the old words no longer names a field. The loader reports that key, which tells you the line needs translating again. If you'd rather fix a typo without that, give the block an `id`: its key then stays the same whatever its words are, and the old translation keeps applying.
-
-Two blocks with the same words in one scene share a key, and a translation gives them both the same words.
-
-### What isn't in the table
-
-- **Lines read by key**: `{ prose }` blocks, `variants`, the lines a pool or a `[[tip:…]]` names, and the prose a `[[ui:modal|…]]` piece shows. Translate them in the pack's own `prose`, under the same keys.
-- **Strings**: the engine's and plugins' own words, in the pack's `strings`.
-- **UI hints**, which are carried as written, except a `fold()`'s label, which is the player's words.
-- **A plugin call's arguments its plugin doesn't declare** with [`arg.words()`](/docs/reference/plugins#arg). The feed's post and comment text are in the table; a call's ids aren't.
-- **A generator's pools.** Their values can be names, but also kv values a condition reads, so translating one could change what the game decides. Give a translated game its own pools in a pack instead.
-
-## translatableFields
-
-```ts shape
-function translatableFields(game: Game): WordField[]
-```
-
-Every field of a game's content a player reads, each once, by its key, with the words it has now and where it is. Call it on the game loaded without its translation packs, and you have the words to translate:
-
-```ts
-import { loadGame, translatableFields } from '@ifloom/engine'
-import { town } from './world/town.ts'
-
-const { game } = loadGame([town], { id: 'small-town', title: 'Small Town' })
-const table = Object.fromEntries(translatableFields(game).map((field) => [field.key, field.text]))
-// { 'action.wait.label': 'Wait a while', 'scene.cafe.counter.title': 'The counter', … }
-console.log(JSON.stringify(table, null, 2))
-```
-
-It lists the fields of every storyline, trigger, scene, minigame, timer, action, input, setting, stat, kind and entity (with the words of the traits plugins declare words for), lock, saveable reason and phrase, in that order, then each plugin's content. A field is listed once even when several share its key, such as a kind's trait default that every entity of the kind has.
-
-[`ifloom words`](/docs/cli#ifloom-words) prints this list for a game, and `ifloom words --out words.en.json` writes the table above to a file.
-
-**Gotcha.** On a game loaded with a translation, a block with no `id` has the translated words, and so a key made from them. List the fields from the game in the language you write it in.
+- Lines read by key, `{ prose }` blocks, variants, a pool's and a tooltip's lines and the React UI's modal, which the pack's `prose` translates under the same keys.
+- The engine's and plugins' own lines, which the pack's [`strings`](/docs/reference/strings) translate.
+- UI hints, carried as written, apart from a fold's label.
+- A plugin call's arguments its plugin doesn't declare with `arg.words()`.
+- A generator's pools, whose values a condition can read. A translated game gives its own pools in a pack.
 
 ## WordField
 
-```ts shape
-type WordField = {
-  key: string
-  text: string
-  where: string
-}
-```
+One field of a game's content that a player reads, with its key in the words table, its words now and where it is. Every field is in [`WordField`](/docs/api/engine#wordfield).
 
-| Field | Type | What it holds |
-|---|---|---|
-| `key` | `string` | Its key in a pack's `words` table, such as `'action.wait.label'`. |
-| `text` | `string` | The words it has, as written, tokens and markup included. |
-| `where` | `string` | Where it is, as a problem names it: `'scene cafe.counter'`, `'quests coffee'`. |
+`text` holds the words as written, tokens and markup included. `where` names the field as a problem names it, such as `'scene cafe.counter'`.
+
+```ts fragment
+{ key: 'action.wait.label', text: 'Wait a while', where: 'action wait' }
+```
 
 ## WordShape
 
-```ts shape
-type WordShape = { readonly [field: string]: WordPart }
-```
+The fields of a piece of content that are words, for a plugin to say of its own data and traits. Every form is in [`WordShape`](/docs/api/engine#wordshape).
 
-### WordPart
-
-What one field of a `WordShape` says its field holds, as the table below lists.
-
-```ts shape
-type WordPart = true | 'blocks' | 'effects' | 'button' | WordShape | readonly [WordPart]
-```
-
-Which fields of a piece of content are words, for a plugin to say of its own content and traits. Each field of the shape is one of these:
-
-| Part | Means |
-|---|---|
-| `true` | A field of words, or a record of them, such as a stat's `{ one, other }` or a person's `pronouns`. |
-| `'blocks'` | A list of blocks, as a scene's body: its words, pictures' `alt`, folds and choices. |
-| `'effects'` | A list of effects: the words of the notices they raise. |
-| `'button'` | A button, as an action is: its label, labels, blocked reasons, once reason, warning and effects. |
-| A shape | An object's own fields. |
-| `[part]` | A list of entries, each named by its id. |
-| `{ '*': part }` | A record of entries, each named by its key. |
-
-A plugin gives one for each list of its `data` in its [data lists](/docs/reference/plugins#data-lists), and a trait gives one for its data in its [`TraitDef.words`](/docs/reference/entities#traits):
+A plugin gives one for each list of its `data` in its [data lists](/docs/reference/plugin-calls), and a trait gives one in its [`TraitDef`](/docs/api/engine-plugin#traitdef)'s `words`. Every first-party plugin declares its own, so a quest's name and hints, a location's room text and a person's pronouns are in the table. A field no plugin declares isn't.
 
 ```ts
 import { defineData, definePlugin, list } from '@ifloom/engine/plugin'
@@ -155,23 +91,48 @@ const DATA = defineData('quests', {
   quests: list<QuestDef>({ noun: 'quest', words: { name: true, description: true, stages: [{ hint: true }] } }),
 })
 
-export const quests = definePlugin<null>({
-  id: 'quests',
-  version: 1,
-  data: DATA,
-  traits: [{ id: 'quests/giver', words: { greeting: true } }],
-})
+export const quests = definePlugin<null>({ id: 'quests', version: 1, data: DATA, traits: [{ id: 'quests/giver', words: { greeting: true } }] })
 ```
 
-Every first-party plugin declares its own: the quests' titles, summaries and hints, a place's room text, buttons and refusals, a vendor's `closed`, a person's full name, pronouns and talk labels, and so on. A field a plugin doesn't declare isn't in the table.
+## WordPart
 
-## Problems
+What one field of a `WordShape` holds. Every form is in [`WordPart`](/docs/api/engine#wordpart).
 
-[`loadGame`](/docs/reference/content#loadgame) and [`checkGame`](/docs/reference/checks) report:
+| Kind | Meaning |
+|---|---|
+| `true` | A field of words, or a record of them, such as a stat's `{ one, other }` or a person's `pronouns`. |
+| `'blocks'` | A list of blocks, such as a scene's body, with its words, pictures' `alt`, folds and choices. |
+| `'effects'` | A list of effects, with the words of the notices they raise. |
+| `'button'` | A button, as an action is, with its label, labels, refusals, once reason, warning and effects. |
+| A `WordShape` | An object's own fields. |
+| `[part]` | A list of entries, each named by its id. |
+| `{ '*': part }` | A record of entries, each named by its key. |
 
-| Problem | Where | Means |
-|---|---|---|
-| `names no field the game has (translatableFields lists every key)` | `words <key>` | The pack's key is misspelt, or names a block whose words changed since it was translated. |
-| `two fields with different words share the words key "…"; give a block of words an id, or rename one` | The entry | Two blocks in one scene have the same `id`, or two ids join into the same key. |
+## Functions
 
-The first is pinned on the pack that brought the key.
+### translatableFields
+
+Returns every field of a game's content that a player reads, each once, by its key, with its words now and where it is. Its signature is in [`translatableFields`](/docs/api/engine#translatablefields).
+
+It lists the fields of every storyline, trigger, scene, minigame, timer, action, input, setting, stat, kind and entity, lock, saveable reason and phrase, in that order, then each plugin's content. A field several entities share, such as a kind's trait default, is listed once. [`ifloom words`](/docs/reference/cli#ifloom-words) prints the list, and `ifloom words --out words.en.json` writes it as a table.
+
+```ts
+import { loadGame, translatableFields } from '@ifloom/engine'
+import { town } from './world/town.ts'
+
+const { game } = loadGame([town], { id: 'small-town', title: 'Small Town' })
+export const table = Object.fromEntries(translatableFields(game).map((field) => [field.key, field.text]))
+```
+
+## Checks
+
+[`loadGame`](/docs/reference/content#loadgame) and [`checkGame`](/docs/reference/checks) check every words table:
+
+| Problem | Cause |
+|---|---|
+| `names no field the game has (translatableFields lists every key)` | A key in a pack's `words` is misspelt, or names a block whose words changed since it was translated. The problem is pinned on the pack that brought the key. |
+| `two fields with different words share the words key "…"; give a block of words an id, or rename one` | Two blocks in one scene have the same `id`, or two ids join into one key. |
+
+## Caveats
+
+- On a game loaded with a translation, a block with no `id` has the translated words, and so a key made from them. List the fields from the game in the language you write it in.

@@ -1,191 +1,34 @@
 ---
 title: "Storylets"
-description: "Scenes drawn at random from a named set by weight and condition, with once, at-most and cooldown recipes."
+description: "Reference for StoryletFields and the scene effect's from: scenes drawn at random from a named set by weight and condition, the seeded draw, and its checks."
 ---
-A storylet is a scene drawn at random from a named set. You mark the scenes that can come up with the name of the set, give each a weight and its own `when`, and an effect draws one of the eligible ones. Use them for the small things that happen while the player sits in a café or waits at a bus stop, without keeping a list of those things anywhere.
+A storylet is a scene an effect draws at random from a named set, such as the small things that happen while the player sits in the café. A scene in content's `scenes` joins a set with its [`StoryletFields`](#storyletfields), and the [`scene` effect](#scene) with `from` draws one of the scenes eligible now. [Offer a random scene](/docs/how-to/offer-a-random-scene) sets one up, with recipes for once, at most and a cooldown, and [Why IFLoom works this way](/docs/explanation/design#the-same-save-gives-the-same-draws) explains why a draw can't be had again by reloading.
+
+In the showcase: `examples/showcase/src/story/cafe.ts`, whose `sit` action draws one of three `cafe.*` scenes, or the quiet table when none can happen.
 
 ```ts
-import type { DataScene, Effect } from '@ifloom/engine'
-
-// A scene that can come up when the player sits in the café.
-const windowSeat: DataScene = {
-  id: 'cafe.window',
-  drawnFrom: ['cafe'],
-  weight: 3,
-  when: { not: { seen: 'cafe.window', gte: 2 } },
-  body: [{ prose: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ scene: null }] }],
-}
-
-// The effect that draws one, on an action or a choice.
-const sit: Effect = { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
+import type { StoryletFields } from '@ifloom/engine'
 ```
 
-A storylet is an ordinary scene in `game.scenes`. It renders, records [seen](/docs/reference/state#seen) and counts as the scene on screen like any other. The only difference is that an effect can pick it by chance.
+## StoryletFields
 
-## Marking a scene
+The fields that make a scene a storylet, the sets it is drawn from, its weight and its condition. Every field is in [`StoryletFields`](/docs/api/engine#storyletfields).
 
-Any [scene](/docs/reference/scenes#datascene) can be a storylet. These three fields make it one (they're the [`StoryletFields`](/docs/reference/scenes#storyletfields) type):
+A storylet is an ordinary scene in `game.scenes`. It renders, counts as [seen](/docs/reference/state#seen) and stays on screen as any other scene does, and the only difference is that an effect can draw it.
 
-| Field | Default | What it does |
-|---|---|---|
-| `drawnFrom` | none | The sets the scene can be drawn from, by name, such as `['cafe']`. A scene can be in more than one. |
-| `weight` | `1` | How likely a draw is to pick it, against the other eligible scenes. A scene of weight 3 comes up three times as often as one of weight 1. |
-| `when` | always | A [condition](/docs/reference/conditions). The scene is only eligible while it holds. |
+| Field | Meaning |
+|---|---|
+| `drawnFrom` | The sets the scene can be drawn from, such as `['cafe']`. A scene can be in several, and `tags` play no part. |
+| `weight` | How often a draw picks the scene against the other eligible ones, 1 if left out. A scene of weight 3 comes up three times as often as one of weight 1. |
+| `when` | The condition the scene is eligible under. It gates draws only, so a `scene` command or a `{ scene: 'id' }` effect opens the scene whether it holds or not. |
 
-`drawnFrom` is separate from `tags`. Tags style a scene in the UI and have nothing to do with draws.
-
-`when` only gates draws. A `{ scene: 'id' }` effect or a `scene` command that names the scene opens it whether `when` holds or not.
-
-## Drawing one
-
-```ts fragment
-{ scene: { from: 'cafe' } }
-{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
-```
-
-This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an action, a trigger or a thing's use. When it runs, it:
-
-1. Finds the eligible scenes: the scenes in `game.scenes` whose `drawnFrom` includes `from` and whose `when` holds.
-2. Draws one of them by weight, with [`weighted`](/docs/reference/random#weighted).
-3. Opens the scene it drew.
-
-If no scene is eligible, it opens `otherwise`. If you gave no `otherwise`, the effect leaves the scene on screen as it was. `otherwise` can be any scene, and doesn't need a `drawnFrom` of its own.
-
-`when` is tested against the state as the effect finds it, so an effect earlier in the same list counts. A storylet whose `when` reads a kv key that the same choice sets will see the new value.
-
-## How the draw is seeded
-
-A draw is worked out from the save's [seed](/docs/reference/random#the-seed), the [turn](/docs/reference/state#turn), the name of the set, and how many draws the set has had so far. That count is kept in the kv key `storylet:<name>`, such as `storylet:cafe`, and goes up by one on every draw, including one that found nothing to draw.
-
-So:
-
-- The same save draws the same scene, and reloading doesn't re-roll it.
-- A second draw from the same set in the same turn is a fresh draw, because the count has moved on.
-- Two saves with different seeds draw differently.
-- [`replay`](/docs/reference/runner#replay) runs the same commands on the same start and draws the same scenes, because the draw is part of the command.
-
-**Gotchas.**
-- The draw walks the eligible scenes in the order they sit in `game.scenes`. Content or a mod that adds a storylet to a set changes which scene a given save draws next, even when the new one isn't the one drawn.
-- The count is per set, not per place. Two actions that both draw from `'cafe'` share one count.
-- The engine writes `storylet:` keys itself, so don't use that prefix for your own. See [the kv store](/docs/reference/state#kv).
-
-## Once, at most, and only while
-
-There's no separate once or cooldown setting for a storylet. Its `when` covers it:
-
-```ts fragment
-when: { not: { seen: 'cafe.crossword' } }          // once ever
-when: { not: { seen: 'cafe.window', gte: 2 } }     // at most twice
-when: cast.here('ava')                                  // only while Ava is in the café
-when: { stat: 'friendship', of: cast.character('ava'), gte: 25 }  // only once you know her
-```
-
-For once a turn, set a kv key in the storylet's choice, list that key in your content's [`resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
-
-### A cooldown
-
-`{ since }` counts from the first time a scene was seen, so it can't say "not within three days of the last time". For a cooldown, have the storylet's choice write the turn into a kv key, and test it with a small condition of the game's own:
+A set has no list of its members. Every scene that names the set in `drawnFrom` is one, so another content file or a [mod](/docs/reference/mods) adds to a set by declaring a scene.
 
 ```ts
-import type { DataScene, GameRules } from '@ifloom/engine'
+import type { DataScene } from '@ifloom/engine'
+import { cast } from '@ifloom/plugin-cast'
 
-// in the game's rules
-const rules: GameRules = {
-  conditions: {
-    // True when the key was never written, or at least `turns` turns ago.
-    cooledDown: (state, args) => {
-      const last = state.kv[String(args.key)]
-      return typeof last !== 'number' || state.turn - last >= Number(args.turns ?? 1)
-    },
-  },
-  macros: {
-    stamp: (state, args) => [{ kv: String(args.key), to: state.turn }],
-  },
-}
-
-const samAtTheCafe: DataScene = {
-  id: 'cafe.sam',
-  drawnFrom: ['cafe'],
-  when: { 'game/cooledDown': { key: 'cafe.sam.last', turns: 3 } },
-  body: [{ prose: 'cafe.sam' }],
-  choices: [{ id: 'leave', effects: [{ 'game/stamp': { key: 'cafe.sam.last' } }, { scene: null }] }],
-}
-```
-
-Sam turns up at most once every three days. Stamp the key in every way out of the scene, or in the effect that opens it, so a player who leaves another way still starts the wait.
-
-### A chance that it happens at all
-
-A draw always opens something while any storylet is eligible. To make an event rare, put an ordinary storylet in the same set with a bigger weight, such as a `cafe.ordinary` visit where nothing happens. With the window seat at weight 1 and an ordinary visit at weight 3, the window seat comes up about one sit in four. For a chance worked out from the state, such as 20% plus 8% per rank, roll it in one of the game's own [macros](/docs/reference/custom#macros) with [`chance`](/docs/reference/random#chance) and return the draw only when it comes up:
-
-```ts
-import { chance } from '@ifloom/engine'
-import type { Macro } from '@ifloom/engine/plugin'
-
-// in rules.macros, called as { 'game/maybeSomething': { rank: 2 } }
-const maybeSomething: Macro = (state, args) =>
-  chance(20 + 8 * Number(args.rank ?? 0), 100, state.seed, state.turn, 'cafe.event')
-    ? [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }]
-    : []
-```
-
-## Adding to a set
-
-A set has no list of members. Every scene that names it in `drawnFrom` is a member, so another file of your content or a [mod](/docs/reference/mods) adds one by declaring a scene:
-
-```ts
-import type { Pack } from '@ifloom/engine'
-import { SCHEMA } from '@ifloom/engine'
-
-export const rainyDays: Pack = {
-  id: 'mod:rainy-days',
-  schema: SCHEMA,
-  prose: {
-    'cafe.umbrella': 'Someone has left an umbrella hooked over the back of your chair. Nobody comes back for it.',
-  },
-  scenes: [
-    {
-      id: 'cafe.umbrella',
-      drawnFrom: ['cafe'],
-      body: [{ prose: 'cafe.umbrella' }],
-      choices: [{ id: 'leave', label: 'Leave it where it is', effects: [{ scene: null }] }],
-    },
-  ],
-}
-```
-
-## The showcase café
-
-The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while" button in the café. It's a room action on the `cafe` location whose effect draws one:
-
-```ts fragment
-// the cafe location's actions
-{ id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
-```
-
-Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when none of them can happen:
-
-```ts fragment
-// The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
-{
-  id: 'cafe.window',
-  title: 'The window seat',
-  drawnFrom: ['cafe'],
-  weight: 3,
-  when: { not: { seen: 'cafe.window', gte: 2 } },
-  body: [{ prose: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ scene: null }] }],
-},
-{
-  id: 'cafe.crossword',
-  title: 'Seven down',
-  drawnFrom: ['cafe'],
-  when: { not: { seen: 'cafe.crossword' } },
-  body: [{ prose: 'cafe.crossword' }],
-  choices: [{ id: 'leave', effects: [{ stat: 'charm', by: 1 }, { scene: null }] }],
-},
-{
+export const avasBreak: DataScene = {
   id: 'cafe.break',
   title: 'Ava’s break',
   speaker: 'ava',
@@ -194,36 +37,50 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   when: cast.here('ava'),
   body: [{ prose: 'cafe.break' }],
   choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: cast.character('ava') }, { scene: null }] }],
-},
-// When none of them can happen.
-{
-  id: 'cafe.quiet',
-  title: 'A quiet table',
-  body: [{ prose: 'cafe.quiet' }],
-  choices: [{ id: 'leave', effects: [{ scene: null }] }],
-},
+}
 ```
 
-While Ava is on shift and nothing has been seen, the window seat has weight 3, Ava's break 2 and the crossword 1, so out of six draws you'd expect three window seats, two breaks and one crossword. The window seat drops out once it's been seen twice, and the crossword once it's been seen at all. Ava's break only comes up while she's [in the room](/docs/plugins/cast#conditions), so on a Sunday, when she isn't working, it's out of the draw too. With all three out, sitting down opens `cafe.quiet`.
+## Effects
 
-`here` and `person` are the [cast plugin](/docs/plugins/cast#helpers)'s helpers, and `onlyAt` is the [places plugin](/docs/plugins/places#helpers)'s. The showcase's test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` sits down with twenty seeds and checks both.
+### scene
 
-## The checks
+Draws a scene from the set `from` and opens it, or opens `otherwise` when no scene in the set is eligible. Every field is in the `scene` form of [`Effect`](/docs/api/engine#effect).
 
-The [content checker](/docs/reference/checks) reports:
+This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of a scene's id, so it goes in any list of effects, a choice's, an action's, a trigger's or a thing's use. When it runs, the engine takes these steps:
 
-| Problem | Where | When |
-|---|---|---|
-| `draws from "…", but no scene is drawn from it` | the effect's list | No scene names the set in its `drawnFrom`. Usually a typo. |
-| `goes to unknown scene "…"` | the effect's list | `otherwise` names a scene that doesn't exist. |
-| `weight must be above 0` | `scene <id>` | A `weight` of 0 or less, or one that isn't a number. |
-| `has a weight but no drawnFrom, so it is never drawn` | `scene <id>` | A `weight` on a scene that isn't in any set. |
-| `has a when but no drawnFrom; when only gates draws` | `scene <id>` | A `when` on a scene that isn't in any set. |
+1. It finds the eligible scenes, those in `game.scenes` whose `drawnFrom` holds `from` and whose `when` holds.
+2. It draws one by weight with [`weighted`](/docs/reference/random#weighted).
+3. It opens the scene it drew.
 
-A storylet's `when` is checked like [any other condition](/docs/reference/checks#in-a-condition), for unknown stats, scenes and so on.
+With no eligible scene, the effect opens `otherwise`, which can be any scene and needs no `drawnFrom` of its own. With no `otherwise`, the screen stays as it was. The engine tests each `when` against the state as the effect finds it, so an effect earlier in the same list counts.
 
-The effect is checked wherever it is, in actions and triggers too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.
+```ts fragment
+{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
+```
 
-## See it in an example
+The engine seeds the draw from the save's seed, the [turn](/docs/reference/state#turn), the set's name and the count of the set's draws so far. The same save draws the same scene, a second draw from one set in one turn is a fresh draw, and a [replay](/docs/reference/runner#replay) draws what the save drew.
 
-Small Town: the `sit` action and the `cafe.*` scenes in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts). The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) plays them.
+## State
+
+The engine counts each set's draws in the [kv store](/docs/reference/glossary#kv) under `storylet:<name>`, such as `storylet:cafe`. The count goes up by one on every draw, one that found nothing to draw included, and goes into the next draw's seed.
+
+## Checks
+
+The [content checker](/docs/reference/checks) checks every storylet and every draw:
+
+| Problem | Cause |
+|---|---|
+| `draws from "cafe", but no scene is drawn from it` | No scene names the set in its `drawnFrom`, which is usually a typo. |
+| `goes to unknown scene "cafe.quiet"` | `otherwise` names a scene the game doesn't have. |
+| `weight must be above 0` | A scene's `weight` is 0 or less, or isn't a number. |
+| `has a weight but no drawnFrom, so it is never drawn` | A scene has a `weight` and is in no set. |
+| `has a when but no drawnFrom; when only gates draws` | A scene has a `when` and is in no set. |
+
+The checker checks a storylet's `when` as it checks [any other condition](/docs/reference/conditions#checks), and checks the draw wherever it stands, in actions and triggers too.
+
+## Caveats
+
+- The draw walks the eligible scenes in their order in `game.scenes`. A content file or mod that adds a storylet to a set changes which scene a save draws next, even when the new one isn't the one drawn.
+- The count is per set. Two actions that draw from `'cafe'` share one count.
+- The engine writes the `storylet:` keys, so keep that prefix out of your own kv keys.
+- A draw opens a scene whenever any scene in the set is eligible. A rare event needs an ordinary scene of greater weight beside it in the set, as [Offer a random scene](/docs/how-to/offer-a-random-scene) shows.

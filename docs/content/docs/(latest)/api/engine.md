@@ -583,7 +583,7 @@ type CarryOver = {
 
 ## cases
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#cases).
 
 Returns a `{ cases }` block that shows only the first of `blocks` whose own `when` holds, or that has none. Leave the
 last without a `when` as the fallback.
@@ -799,7 +799,7 @@ type Choice = {
 
 ## choice
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#choice).
 
 Returns a choice for a decision or a scene's ending choices, with `label` as its words. Its id is unique within the
 scene.
@@ -1244,7 +1244,7 @@ type DataScene = {
 
 ## decide
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#decide).
 
 Returns a decision, where the flow waits until the player chooses one of `choices`. Its id is unique within the
 scene.
@@ -1902,7 +1902,7 @@ type FlowStep = { chose: string } | { point: string } | { minigame: string } | {
 
 ## fold
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#fold).
 
 Returns a fold, a section the player can open and shut under `label`, such as a letter to read. A UI without the
 `fold` hint shows the blocks open.
@@ -2513,7 +2513,7 @@ type HotspotView = {
 
 ## image
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#image).
 
 Returns a `{ media }` block, a picture or a video at this place in the flow, such as `image('cafe/cup', { alt: 'A cup of tea' })`.
 
@@ -2746,7 +2746,7 @@ Uses: [`Game`](#game).
 
 ## jump
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#jump).
 
 Returns the jump effect `{ point: id }`, which carries the flow on from a point instead of after the choice's
 decision, once its `then` is done. A flow loops only this way, through a choice.
@@ -4580,7 +4580,7 @@ type SavingView = {
 
 ## say
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#say).
 
 Returns a `{ say }` block, a spoken line under the id of who says it. Its beat is a `say` beat with that speaker and
 their name.
@@ -5177,7 +5177,7 @@ type StatWords = string | { one: string; other: string }
 
 ## StoryletFields
 
-Type. Explained in [Scenes](/docs/reference/scenes#storyletfields).
+Type. Explained in [Storylets](/docs/reference/storylets#storyletfields).
 
 The fields that make a scene a storylet, a scene the `{ scene: { from } }` effect draws at random from a named set.
 They name the sets, the scene's weight and when it can be drawn.
@@ -5484,7 +5484,7 @@ Uses: [`Effect`](#effect).
 
 ## text
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#text).
 
 Returns a `{ text }` block of words in place, one paragraph or several. A blank line between lines starts a new
 paragraph.
@@ -6079,7 +6079,7 @@ function weighted<T>(items: readonly T[], weightOf: (item: T) => number | undefi
 
 ## when
 
-Function. Explained in [Flowing scenes](/docs/reference/flows#the-builders).
+Function. Explained in [Flowing scenes](/docs/reference/flows#when).
 
 Returns a section of blocks shown only while `condition` holds. A section can hold any block a body can.
 

@@ -1,62 +1,48 @@
 ---
 title: "Storylines"
-description: "Storylines: threads of the story with their own kv store, closed for some turns and opened again."
+description: "Reference for StorylineDef, StorylineState and storylineOpen: threads of the story, each with its own kv store, closed for some turns and open again."
 ---
-A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps a kv store of its own and whether it's closed for a while.
+A storyline is one thread of the story, such as a friendship with Ava or the business of a lost cat. Your content declares each one in `storylines`, and the engine keeps a kv store for it and whether it's closed for a while. [Entities, things and traits](/docs/explanation/entities-and-traits#stats-the-kv-store-and-storylines) explains a storyline beside stats and the kv store.
 
-Declare your storylines in your [content](/docs/reference/content#content)'s `storylines`. A new game starts each one open and with an empty kv store.
+In the showcase: `examples/showcase/src/world/cast.ts`, which declares a storyline each for Ava and Sam and names it on each character.
+
+```ts
+import { storylineOpen, type StorylineDef, type StorylineState } from '@ifloom/engine'
+```
 
 ## StorylineDef
 
-```ts shape
-type StorylineDef = { id: string; name: string }
-```
+A thread of the story the game declares in `storylines`, with an id and a name. Every field is in [`StorylineDef`](/docs/api/engine#storylinedef).
 
-A storyline as content declares it. Each declared storyline gets a [`StorylineState`](#storylinestate) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#person-1) character can belong to one through their `storyline` field, but a storyline doesn't need a character. The view draws no storylines of its own. A game or a plugin shows them, as the [quests](/docs/plugins/quests) plugin does when it groups quests by storyline.
+A new game starts each declared storyline open with an empty kv store. The [`closeStoryline`](/docs/reference/effects#closestoryline) effect closes one for some turns, and the [`storyline`](/docs/reference/conditions#storyline) condition asks whether it's open. The engine gives being closed no other meaning, so the game and its plugins decide what it stops. The [cast plugin](/docs/reference/plugins/cast) won't let the player talk to or call someone whose storyline is closed, and the [quests plugin](/docs/reference/plugins/quests) groups quests by storyline. A character names its storyline in its `storyline` field, but a storyline needs no character. The view renders no storylines of its own.
 
-## StorylineState
+```ts
+import type { Content } from '@ifloom/engine'
 
-```ts shape
-type StorylineState = {
-  closedUntil: number | null
-  kv: Record<string, KvValue>
+export const ava: Content = {
+  storylines: [{ id: 'ava', name: 'Ava' }],
+  actions: [
+    { id: 'apologise', label: 'Say sorry to Ava', when: { storyline: 'ava' }, effects: [{ kv: 'apologies', by: 1, of: 'storyline:ava' }] },
+    { id: 'snap', label: 'Snap at Ava', effects: [{ closeStoryline: 'ava', turns: 3 }] },
+  ],
 }
 ```
 
-A storyline's live state, `state.storylines[id]`. Reading a storyline that isn't in the save gives an empty one (open, nothing set), so an undeclared id doesn't crash.
+## State
 
-| Field | Meaning |
-|---|---|
-| `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ closeStoryline: storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
-| `kv` | The storyline's own kv store. Set its keys with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and `of: 'storyline:<id>'`, as in `{ kv: 'visits', by: 1, of: 'storyline:ava' }`, read them with the [`kv` condition](/docs/reference/conditions#kv) and the same `of`, add to them with the effect's `by`, and show them with the `{{kv:visits of=storyline:ava}}` token. |
+### StorylineState
 
-## Using them
+A storyline as the save keeps it, at `state.storylines[id]`. Every field is in [`StorylineState`](/docs/api/engine#storylinestate).
 
-```ts fragment
-storylines: [{ id: 'ava', name: 'Ava' }]
+`closedUntil` is the [turn](/docs/reference/state#turn) the storyline opens again, or `null` while it's open. `{ closeStoryline: 'ava', turns: 3 }` sets it to the current turn plus 3. `kv` is the storyline's own kv store. The [`kv` effect](/docs/reference/effects#kv) and [`kv` condition](/docs/reference/conditions#kv) reach it with `of: 'storyline:<id>'`, and prose prints a key with `{{kv:visits of=storyline:ava}}`. A storyline the save has no record of reads as open with an empty kv store.
 
-// Ava has had enough of you for three turns.
-{ closeStoryline: 'ava', turns: 3 }
+## Functions
 
-// A choice offered only while she's talking to you.
-{ id: 'apologise', when: { storyline: 'ava' }, effects: [/* … */] }
-// And one for while she isn't.
-{ id: 'leave-a-note', when: { storyline: 'ava', open: false }, effects: [/* … */] }
-```
+### storylineOpen
 
-The game and its plugins decide what being closed means. The engine itself only answers the [`{ storyline }`](/docs/reference/conditions#storyline) condition. The [cast](/docs/plugins/cast) won't let the player talk to or call someone whose storyline is closed, and the [quests](/docs/plugins/quests) plugin groups quests by storyline.
+Returns whether a storyline is open on the state's turn. Every parameter is in [`storylineOpen`](/docs/api/engine#storylineopen).
 
-The core has no characters. People, who's in the room, and talking and calling come from the [cast plugin](/docs/plugins/cast), and a friendship is a [stat](/docs/reference/stats#entity-stats) on a character rather than part of a storyline.
-
-## storylineOpen
-
-```ts shape
-import { storylineOpen } from '@ifloom/engine'
-
-function storylineOpen(state: GameState, id: string): boolean
-```
-
-Whether a storyline is open: `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5. A storyline the save has no record of is open. Its kv keys are read like any others, with `{ kv: 'met', of: 'storyline:ava' }` in a condition.
+A storyline is open when its `closedUntil` is `null` or the turn has reached it, so one closed until turn 5 is open again on turn 5. A storyline the save has no record of is open.
 
 ```ts given
 import { storylineOpen } from '@ifloom/engine'
@@ -64,8 +50,10 @@ import { storylineOpen } from '@ifloom/engine'
 storylineOpen(state, 'ava') // true on a new game
 ```
 
-**Gotcha.** A storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `kv` effect with `of: 'storyline:…'` or a `closeStoryline` effect that names an unknown storyline.
+## Checks
 
-## See it in an example
+The [content checker](/docs/reference/checks) reports a `storyline` condition, a `kv` effect or condition with `of: 'storyline:…'` and a `closeStoryline` effect that name a storyline the game doesn't declare.
 
-Small Town: [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts) declares a storyline each for Ava and Sam and names it on each character, and [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) ties the `friend` quest to Ava's. No example uses a storyline's kv store or closes a storyline yet.
+## Caveats
+
+- A storyline the game doesn't declare reads as empty and open at run time, so a typo in its id fails silently until the checker runs.

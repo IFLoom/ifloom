@@ -1315,7 +1315,7 @@ type Dice = string | { count?: number; sides: number }
 
 ## dismiss
 
-Function. Explained in [Notices](/docs/reference/notices#dismiss).
+Function. Explained in [Commands](/docs/reference/commands#dismiss).
 
 Returns the state with the notice `id` marked seen, or every notice when `id` is left out.
 
@@ -3350,7 +3350,7 @@ type NoticeView = {
 
 ## notify
 
-Function. Explained in [Notices](/docs/reference/notices#notify).
+Function. Explained in [Effects](/docs/reference/effects#notify).
 
 Returns the state with a notice raised. A notice with the id of an earlier one replaces it, unseen, as the newest.
 

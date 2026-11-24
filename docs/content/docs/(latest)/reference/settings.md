@@ -1,125 +1,78 @@
 ---
 title: "Settings"
-description: "Settings the player can change: play settings in the state that conditions read, and ui settings kept in the profile."
+description: "Reference for SettingDef: the settings a player can change, play settings kept in the state and read by conditions, and ui settings kept in the profile."
 ---
-Settings are what the player can change from a settings screen, such as whether hints are shown or how large the text is. The engine has none of its own, so you declare every one your game offers in your content's `settings`.
+A setting is something the player changes from a settings screen, such as whether hints show or how large the text is. The engine declares none of its own, so your content declares each one in `settings`. [Add a settings page](/docs/how-to/add-a-settings-page) puts them on screen.
+
+In the showcase: `examples/showcase/src/world/settings.ts`, which declares `hints`, a play setting the high street reads, and `textSize`, a ui setting.
+
+```ts
+import type { SettingDef } from '@ifloom/engine'
+```
+
+## SettingDef
+
+A setting the game declares in `settings`, a toggle, a choice of options or a number in a range. Every field is in [`SettingDef`](/docs/api/engine#settingdef).
+
+`affects` says what the setting changes, and every setting is one of two sorts:
+
+- **A play setting**, `affects: 'play'` or left out, is part of the game. Its value is in [`state.settings`](/docs/reference/state#settings), the save keeps it, and the [`setting`](/docs/reference/conditions#setting) condition reads it.
+- **A ui setting**, `affects: 'ui'`, never enters the state. The player's [profile](/docs/reference/profile) keeps it, and only a UI reads it, as for a text size or a volume.
+
+The player's last value for either sort is kept in the profile's `core:settings`, so it carries over to their next game. A `default` is the value until the player changes it, and it has to be one the setting can take. A `range` steps by `step` from `min` when `step` is given.
+
+[`runner.setSetting`](/docs/reference/runner#setsetting) changes either sort, and refuses an unknown id or a value the setting can't take. A play setting goes through the [`setting`](/docs/reference/commands#setting) command, so the log keeps it and a replay gives the same game, and no lock stops it. A ui setting is written to the profile and leaves the state alone.
 
 ```ts
 import type { SettingDef } from '@ifloom/engine'
 
-const settings: SettingDef[] = [
+export const settings: SettingDef[] = [
   { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
-  {
-    id: 'difficulty',
-    label: 'Difficulty',
-    type: 'choice',
-    options: [
-      { value: 'gentle', label: 'Gentle' },
-      { value: 'usual', label: 'Usual' },
-      { value: 'hard', label: 'Hard' },
-    ],
-    default: 'usual',
-  },
   {
     id: 'textSize',
     label: 'Text size',
     type: 'choice',
     affects: 'ui',
     options: [
-      { value: 'small', label: 'Small' },
+      { value: 'normal', label: 'Normal' },
       { value: 'large', label: 'Large' },
     ],
-    default: 'small',
+    default: 'normal',
   },
 ]
 ```
 
-Each setting either changes the game or only changes how it looks:
-
-- **A `play` setting** (the default) is part of the game. Its value is in [`state.settings`](/docs/reference/state#settings), it's saved with the game, and conditions can read it. `hints` and `difficulty` above are play settings.
-- **A `ui` setting** never enters the state. It lives in the player's [profile](/docs/reference/profile), and only your UI reads it. `textSize` is one, and so is a volume.
-
-Whichever type it is, the player's last choice is stored in the profile's `core:settings`, so it carries over to their next game.
-
-## SettingDef
-
-```ts shape
-type SettingDef = {
-  id: string
-  label: string
-  affects?: 'play' | 'ui'
-} & (
-  | { type: 'toggle'; default: boolean }
-  | { type: 'choice'; options: { value: string; label: string }[]; default: string }
-  | { type: 'range'; min: number; max: number; step?: number; default: number }
-)
-```
-
-| Field | What it is |
-|---|---|
-| `id` | How content and the profile name it. |
-| `label` | What the settings screen calls it. |
-| `affects` | `'play'` if left out. `'ui'` keeps it out of the state. |
-| `type` | A `toggle` is on or off. A `choice` is one of its `options`, by `value`. A `range` is a number from `min` to `max`, in steps of `step` from `min` if given. |
-| `default` | Its value until the player changes it. It has to be one the setting can take. |
-
-## Reading a setting
-
-Content reads a play setting with the [`{ setting }`](/docs/reference/conditions#setting) condition, which works like `{ kv }`:
+The high street reads the play setting in a choice's `when`:
 
 ```ts fragment
-// Rosa offers a hint only to players who keep hints on.
-{ id: 'ask-rosa', label: 'bakery#ask-rosa', when: { setting: 'hints' }, effects: [] }
-
-// Something only a hard game has.
-{ when: { setting: 'difficulty', is: 'hard' }, text: 'bakery.queue-long' }
+{ id: 'ask-ava', label: 'Ask Ava for a tip', when: { setting: 'hints' }, effects: [] }
 ```
 
-A UI reads every setting, play and ui alike, from [`view.settings`](/docs/reference/view#settings). That's enough to draw the whole settings screen. A `ui` setting's `value` there is `null`, so read it from the profile.
+## State
 
-## Changing a setting
+[`state.settings`](/docs/reference/state#settings) holds the play settings by id. A new game takes the player's stored values: pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) or [`browserRunner`](/docs/reference/browser#browserrunner) read them from the profile. A setting with no stored value, or a stored value it can't take any more, starts at its `default`.
 
-Change either kind with [`runner.setSetting`](/docs/reference/runner#setsetting). It checks the value against the declaration, and refuses an unknown id or a value the setting can't take.
+A save keeps the play settings it was made with, so loading it doesn't apply the player's newer values. A setting the game added after the save was made gets its `default` when the save loads.
 
-```ts given
-runner.setSetting('difficulty', 'hard') // a play setting: sent as the setting command
-runner.setSetting('textSize', 'large')  // a ui setting: written to the profile
-```
+## View
 
-A play setting goes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it. A ui setting is written to the profile and leaves the state alone. [`runner.snapshot().settings`](/docs/reference/runner#settings) gives every setting's value now.
-
-## A new game
-
-A new game takes the player's stored values for play settings. Pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) or [`browserRunner`](/docs/browser#browserrunner) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
-
-A save keeps the play settings it was made with. Loading it doesn't apply the player's newer choices. A save from before settings existed, or one made before you added a setting, gets each missing setting's default when it loads.
-
-## Drawing it
-
-`view.settings` has every setting the game declares, as a [`SettingView`](/docs/reference/view#settingview): its `label`, its `type`, and the `options` of a choice or the range of a slider. Read the values of both kinds from [`runner.snapshot().settings`](/docs/reference/runner#settings), since a `ui` setting isn't in the state. Send a change through [`runner.setSetting`](/docs/reference/runner#setsetting).
-
-The React UI draws a Settings page when you turn on its [pages](/docs/react#pages), and [`useSetting`](/docs/react/components#usesetting) reads one setting for a part of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../snippets/plain/settings.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../snippets/react/mount-settings.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/react/settings.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/vue/Settings.vue]{meta='tab="Vue" tab-group="framework"'}
+`view.settings` lists every setting the game declares, play and ui alike, each a [`SettingView`](/docs/api/engine#settingview) with its `label`, its `type` and its options or range. A ui setting's `value` there is `null`, so read both sorts' values from [`runner.snapshot().settings`](/docs/reference/runner#runnersnapshot). To render them, see [Render a settings screen](/docs/how-to/render/saves-and-settings#render-a-settings-screen).
 
 ## Checks
 
-The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/content#checks) report:
+The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/content#checks) report these problems with settings:
 
-- two settings with the same id in one list
-- a `default` the setting can't take
-- a choice with no options
-- a range whose `min` is above its `max`
-- a `{ setting }` condition that names an unknown setting, a ui setting, or an `is` value the setting can't take
+| Problem | Cause |
+|---|---|
+| `a choice with no options` | A `choice` setting has an empty or missing `options`. |
+| `min is above max` | A `range` setting's `min` is above its `max`. |
+| `step must be above 0` | A `range` setting's `step` is 0 or less. |
+| `default "huge" is not one of the options` | The `default` is a value the setting can't take. |
+| `unknown setting "hints"` | A `setting` condition names no declared setting. |
+| `setting "textSize" is a ui setting; conditions read only play settings` | A `setting` condition names a ui setting. |
 
-**Gotcha.** Conditions can only read play settings. If the story needs to branch on something, make it a play setting, even if the player thinks of it as a preference.
+The checker also reports two settings with the same id, an `affects` other than `play` or `ui`, and a `setting` condition's `is` that the setting can't take.
 
-## See it in an example
+## Caveats
 
-Small Town: [`examples/showcase/src/world/settings.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/settings.ts) declares `hints`, a play setting the high street reads with `{ setting: 'hints' }`, and `textSize`, a ui setting its [`ui.settings`](/docs/react/hints#settings) hint has the React UI size the page by.
+- Conditions read only play settings. A preference the story branches on has to be a play setting, even when the player thinks of it as how the game looks.

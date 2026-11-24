@@ -1,313 +1,131 @@
 ---
 title: "Minigames"
-description: "Minigames as data: states, inputs, timers and variables, for quick-time events and small games inside a story."
+description: "Reference for MinigameDef and its states, transitions, scene field, state and view: small games inside the story, declared as data and run by ticks and inputs."
 ---
-A minigame is a small game inside the story, such as a quick-time event, a lock to pick or a round of snap. You declare it as data: a few states, the inputs each one listens for, timers that move it on, and number variables it keeps while it runs. The engine runs it, and the UI draws it from [`view.minigame`](/docs/reference/view#minigame) and sends what the player presses.
+A minigame is a small game inside the story, such as a timed button press, a lock to pick or a round of snap. Your content declares each one in `minigames` as data, a few states with the inputs each listens for, timers that move it on and numbers it keeps while it runs. The [`minigame` effect](/docs/reference/effects#minigame) starts one, and the player plays it with the [`minigame`](/docs/reference/commands#minigame) and [`tick`](/docs/reference/commands#tick) commands. [Build a minigame](/docs/how-to/build-a-minigame) writes one from start to finish.
+
+In the showcase: `examples/showcase/src/story/park.ts`, whose `arrows` minigame is five rounds of arrows to press in time, started by the park's `arrows` action.
 
 ```ts
-import { type MinigameDef, type MinigameStateDef, type MinigameTransition, type MinigameTarget, type MinigameState, type MinigameView, type MinigameInput, type MinigameSceneFields } from '@ifloom/engine'
+import type { MinigameDef, MinigameInput, MinigameSceneFields, MinigameState, MinigameStateDef, MinigameTarget, MinigameTransition, MinigameView } from '@ifloom/engine'
 ```
-
-## A worked example
-
-The showcase's park has a game of quick feet with the kids. There are five rounds, and each one picks an arrow at random and gives you 1.5 seconds to press it. Three or more right wins five coins and a short scene. Fewer gets a different scene.
-
-```ts
-import type { MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
-
-const ARROWS = ['up', 'down', 'left', 'right'] as const
-const POINTS = { up: 'She points at the sky. Up!', down: 'She points at her shoes. Down!', left: 'She points at the river. Left!', right: 'She points at the swings. Right!' }
-
-// One arrow on screen. The right input scores. A wrong one, or the time running out, doesn't.
-const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
-  label: POINTS[arrow],
-  after: { ms: 1500, go: 'round' },
-  on: ARROWS.map((input) => ({
-    input,
-    go: 'round',
-    ...(input === arrow ? { effects: [{ kv: 'score', of: 'minigame', by: 1 }] } : {}),
-  })),
-})
-
-const quickFeet: MinigameDef = {
-  id: 'arrows',
-  title: 'Quick feet',
-  start: 'round',
-  kv: { round: 0, arrow: 0, score: 0 },
-  keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
-  states: {
-    // A new round draws an arrow. After the fifth, the score is counted.
-    round: {
-      always: [
-        { when: { kv: 'round', of: 'minigame', gte: 5 }, go: 'tally' },
-        {
-          go: 'pick',
-          effects: [
-            { kv: 'round', of: 'minigame', by: 1 },
-            { kv: 'arrow', of: 'minigame', random: [1, 4] },
-          ],
-        },
-      ],
-    },
-    pick: { always: ARROWS.map((arrow, i) => ({ when: { kv: 'arrow', of: 'minigame', is: i + 1 }, go: arrow })) },
-    ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
-    tally: { always: [{ when: { kv: 'score', of: 'minigame', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ stat: 'coins', by: 5 }, { scene: 'park.arrows-won' }] } },
-    lost: { final: { effects: [{ scene: 'park.arrows-lost' }] } },
-  },
-}
-
-export const park: Content = {
-  minigames: [quickFeet],
-  // ...and the park's location, in entities, lists an action that starts it:
-  // { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] }
-}
-```
-
-The park offers it as a room action whose effects apply [`{ minigame: 'arrows' }`](/docs/reference/effects#minigame). From then on the UI reads `view.minigame` and sends two commands:
-
-```ts given
-import { apply, view } from '@ifloom/engine'
-
-let next = apply(state, game, { type: 'action', id: 'places/arrows' }).state
-view(next, game).minigame
-// { id: 'arrows', title: 'Quick feet', state: 'left', label: 'She points at the river. Left!',
-//   timeLeft: 1500, timeTotal: 1500, inputs: ['up', 'down', 'left', 'right'],
-//   kv: { round: 1, arrow: 3, score: 0 }, keys: { up: ['ArrowUp', 'w'], ... } }
-
-next = apply(next, game, { type: 'tick', ms: 400 }).state           // time passing
-next = apply(next, game, { type: 'minigame', input: 'left' }).state // the player pressed left
-```
-
-The full example is in the showcase's `src/story/park.ts`, and its test plays it through with ticks and inputs.
-
-The React UI draws a minigame with [`MinigameCard`](/docs/react/components#minigamecard), which sends the ticks and maps the keys, and you can replace it with your own panel by minigame id. The [Minigames recipe](/docs/recipes/minigames) walks through both. Any other UI draws `view.minigame` itself.
-
-## How a minigame runs
-
-- **Starting.** The [`minigame` effect](/docs/reference/effects#minigame) starts one, from a choice, an action, a trigger or anything else that applies effects. A scene with a `minigame` field starts it when the scene is entered (see [`MinigameSceneFields`](#minigamescenefields)). It starts in its `start` state with its `kv` at their starting values. Starting one while another runs drops the old one.
-- **While it runs.** The view draws it over the open scene or the room. `view.scene` keeps the scene's id, but its title is the minigame's `title` and its body is the running state's words. The scene's choices and the room's buttons are left out. Every command but [`tick`](/docs/reference/commands#tick), [`minigame`](/docs/reference/commands#minigame), [`dismiss`](/docs/reference/commands#dismiss) and [`setting`](/docs/reference/commands#setting) is refused with `Finish this first.`, apart from a plugin command that ignores locks, such as the [debugger](/docs/plugins/debug)'s.
-- **Inputs.** `{ type: 'minigame', input }` takes the running state's first `on` entry for that input whose `when` holds. An input with no such entry isn't live, and is refused with `That does nothing now.` `view.minigame.inputs` lists the live ones.
-- **Timers.** `{ type: 'tick', ms }` adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, its transition is taken. Whatever is left of `ms` carries on into the next state, so one long tick can run out several timers in a row. It stops when the minigame ends. See [Minigames and the game's timers](#minigames-and-the-games-timers).
-- **Transitions.** A transition runs its `effects`, then goes to `go`, or to a state drawn from `to`. Entering a state resets its clock to 0. A transition with neither stays where it is: an `on` entry keeps the clock running, and an `after` starts it again.
-- **Moving on by itself.** On entering a state, its first `always` entry whose `when` holds is taken straight away. Use it for a state that only decides where to go, such as counting rounds or checking a score.
-- **Ending.** Entering a state with `final` ends the minigame. Its `copy` is written to the game's [kv store](/docs/reference/state#kv), the minigame closes, and then its `effects` apply. They can be anything, such as a stat, a scene or a [`turn`](/docs/reference/effects#turn). If no final effect opens another scene, the scene that was open shows again with its choices.
-
-No more than 1,000 transitions are taken in one command. That keeps a timer with a tiny `ms`, or `always` entries that go round in a circle, from hanging the game.
-
-### Its kv store
-
-A minigame keeps its own numbers in its `kv`, such as a score, a round or a streak. They're a kv store of the running minigame's, named `of: 'minigame'`. Transitions change them with the [`kv` effect](/docs/reference/effects#whose-key-it-is), `{ kv: 'score', of: 'minigame', by: 1 }`, which sets a value, adds to it or draws a whole number at random. Conditions read them with the [`kv` condition](/docs/reference/conditions#kv), `{ kv: 'score', of: 'minigame', gte: 3 }`, and prose prints one with `{{kv:score of=minigame}}`. They're gone when the minigame ends, unless the final state's `copy` writes them to the [kv store](/docs/reference/state#kv).
-
-Every key a minigame uses has to be declared in its `kv`, and the checker reports one that isn't. Before schema 22 these were `vars`, and a pack or a save from then is read with them moved to `kv`.
-
-### Randomness
-
-A transition's `to` draws its next state by weight, and a `kv` effect with `of: 'minigame'` and `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in the kv key `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
-
-### Minigames and the game's timers
-
-A state's `after` is a timer of its own, kept in the minigame (as `elapsed`) rather than among the game's named [timers](/docs/reference/timers). It's tied to the state: entering another state starts it from 0, and staying put with `after` starts it again. One `tick` runs both kinds down together. Whatever would run out first goes first, and on the same millisecond the minigame's `after` goes before a named timer. The game's timers keep running while a minigame plays, so a phone can ring out in the middle of a round, and a minigame's effects can start, stop or extend a named timer with the [`timer` effect](/docs/reference/effects#timer).
-
-A tick runs the clock of the minigame that was playing when it began. If a transition ends that minigame and starts another, the new one's clock starts on the next tick, as it always has.
-
-### In the runner
-
-Ticks are commands like any other, so they're in the runner's [log](/docs/reference/runner#commandlog) and [`replay`](/docs/reference/runner#replay) plays them back. The runner treats them differently in three ways, because a UI sends about ten a second:
-
-- **Undo steps over them.** One undo goes back to before the last command that wasn't a tick.
-- **They add nothing to the backlog.** Neither does the minigame drawn over a scene.
-- **Autosave.** With `every: 'command'`, a tick never autosaves. With `'scene'` or `'turn'`, it saves only when it changed the scene or the turn, such as a final state that ends one.
 
 ## MinigameDef
 
-```ts shape
-type MinigameDef = {
-  id: string
-  title?: string
-  start: string
-  kv?: Record<string, number>
-  keys?: Record<string, string[]>
-  states: Record<string, MinigameStateDef>
+A small game the game declares in `minigames`, made of named states. Every field is in [`MinigameDef`](/docs/api/engine#minigamedef).
+
+A minigame starts in its `start` state, with each key of its `kv` at the number it's declared with. Starting one while another runs drops the old one. While it runs, the view renders it over the open scene or the room. `view.scene` keeps the scene's id, takes the minigame's `title`, and holds the running state's words as its body, with no choices or actions. The engine refuses every command but `tick`, `minigame`, `dismiss` and `setting` with `Finish this first.`, apart from a plugin command that ignores locks, such as the [debug plugin](/docs/reference/plugins/debug)'s.
+
+`kv` is the minigame's own kv store, named `of: 'minigame'`, for a score, a round or a streak. The [`kv` effect](/docs/reference/effects#kv) changes a key, as in `{ kv: 'score', of: 'minigame', by: 1 }`, the [`kv` condition](/docs/reference/conditions#kv) reads it, and prose prints it with `{{kv:score of=minigame}}`. Every key is a number, and every key the minigame uses has to be declared in `kv`. The store goes when the minigame ends, unless the final state's `copy` writes keys to the game's kv store.
+
+`keys` maps each input to the keyboard keys a UI binds to it, as `KeyboardEvent.key` names them. Minigames merge by id, so a pack's minigame replaces one with the same id.
+
+```ts
+import type { MinigameDef } from '@ifloom/engine'
+
+export const coinToss: MinigameDef = {
+  id: 'toss',
+  title: 'Heads or tails',
+  start: 'call',
+  kv: { wins: 0 },
+  keys: { heads: ['h'], tails: ['t'] },
+  states: {
+    call: { label: 'Call it in the air.', after: { ms: 3000, go: 'lost' }, on: [{ input: 'heads', go: 'flip' }, { input: 'tails', go: 'flip' }] },
+    flip: { always: [{ to: ['won', 'lost'] }] },
+    won: { final: { effects: [{ stat: 'coins', by: 2 }] } },
+    lost: { final: {} },
+  },
 }
 ```
-
-| Field | What it does |
-|---|---|
-| `id` | What the `minigame` effect and a scene's `minigame` field name. |
-| `title` | What the UI calls it, its heading. It's `view.minigame.title`, and the title of `view.scene` while it runs. |
-| `start` | The state it starts in. |
-| `kv` | Its kv store: each key it uses, with the number it starts at. None if left out. |
-| `keys` | The keys a UI maps to each input, by input name, as `KeyboardEvent.key` names them. A UI uses its own if left out. |
-| `states` | Its states, by id. |
-
-Declare minigames in your [content](/docs/reference/content#content)'s `minigames`. They merge by id, so a pack's minigame replaces one with the same id.
 
 ## MinigameStateDef
 
-```ts shape
-type MinigameStateDef = {
-  label?: string
-  after?: { ms: number } & MinigameTransition
-  on?: ({ input: string; when?: Condition; label?: string } & MinigameTransition)[]
-  always?: ({ when?: Condition } & MinigameTransition)[]
-  final?: { effects?: EffectRef[]; copy?: Record<string, string> }
-}
-```
+One state of a minigame, with its words, its timer, the inputs it listens for and where it goes by itself. Every field is in [`MinigameStateDef`](/docs/api/engine#minigamestatedef).
 
-| Field | What it does |
-|---|---|
-| `label` | What the player reads while the minigame is in this state, as written, with [tokens](/docs/reference/prose#tokens) filled in. Before schema 25 it was a prose key, which an older pack has rewritten to its words and the checker reports in your own content. |
-| `after` | A timer. Once `ms` milliseconds of ticks have passed in this state, its transition is taken. |
-| `on` | What each input does here. The first entry for the input whose `when` holds is taken. Several entries can share an input, each with its own `when`. An entry's `label` is the input's words on its button in this state, with tokens filled in, such as a quiz question's answers. |
-| `always` | Taken as soon as the state is entered: the first entry whose `when` holds. |
-| `final` | Entering this state ends the minigame. `copy` maps minigame variables to kv keys, as `{ score: 'arrows.best' }`. Then `effects` apply, with the minigame already closed. |
+`label` is the words the player reads while the minigame is in the state, written in place with their tokens filled. The fields that move the minigame on work in this way:
+
+- **`on`** lists what each input does. The engine takes the first entry for the input whose `when` holds, so several entries can share an input. An input with no such entry isn't live, and the engine refuses it with `That does nothing now.` An entry's `label` is the input's words on its button in this state.
+- **`after`** is a timer of the state's own. Once its `ms` of ticks have passed in the state, its transition is taken. The rest of a longer tick carries on into the next state, so one tick can run out several states in a row.
+- **`always`** is taken as the state is entered, the first entry whose `when` holds, for a state that only decides where to go, such as counting rounds.
+- **`final`** ends the minigame on entering the state. The engine writes its `copy` to the game's kv store, as `{ score: 'arrows.best' }`, closes the minigame, then applies its `effects`. When no final effect opens another scene, the scene that was open shows again with its choices.
+
+The `after` timer is kept in the minigame as `elapsed`, not among the game's named [timers](/docs/reference/timers), and entering a state starts it from 0. One `tick` runs both kinds down. Whatever would run out first goes first, and on the same millisecond the minigame's `after` goes before a named timer. The game's timers keep running while a minigame plays, and a transition's effects can start or stop one. A tick runs the clock of the minigame that was playing when it began, so one that a transition starts counts from the next tick.
 
 ## MinigameTransition
 
-```ts shape
-type MinigameTransition = {
-  go?: string
-  to?: MinigameTarget[]
-  effects?: EffectRef[]
-}
-```
+Where a minigame goes next and what it does on the way, shared by `on`, `after` and `always`. Every field is in [`MinigameTransition`](/docs/api/engine#minigametransition).
 
-| Field | What it does |
-|---|---|
-| `go` | The state it goes to. |
-| `to` | A state drawn at random when there's no `go`. A weight left out is 1, so `['heads', { state: 'tails', weight: 3 }]` lands on tails three times in four. |
-| `effects` | What it does before it moves. Any [effect](/docs/reference/effects), or a call to a plugin's or the game's own, can go here, including a `turn`. |
+A transition runs its `effects`, then goes to `go`, or to a state drawn from `to`. The engine draws from `to` before the effects run, so they can't change the draw. A transition with neither stays where it is. An `on` entry keeps the state's clock running, and an `after` starts it again. If the effects end the minigame or start another, the transition goes no further. The engine takes at most 1,000 transitions in one command, so a tiny `ms` or `always` entries that go round in a circle can't hang the game.
 
-The state from `to` is drawn before the effects run, so they can't change the draw. If the effects end the minigame or start one, the transition goes no further.
+The draw from `to` and a `kv` effect's `random` on `of: 'minigame'` are seeded from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many steps it has taken. The same save and commands draw the same, and a replay with its ticks plays back exactly. The kv key `minigame:<id>` counts each start, so playing again draws afresh, and `{ kv: 'minigame:arrows', gte: 1 }` asks whether the player has played it.
 
 ### MinigameTarget
 
-Where a minigame state's input goes: a state by name, or one drawn among several by `weight`, as in the `to` field above.
-
-```ts shape
-type MinigameTarget = string | { state: string; weight?: number }
-```
+A state in a transition's `to`, by name or with a `weight`. Every form is in [`MinigameTarget`](/docs/api/engine#minigametarget). A weight left out is 1, so `['heads', { state: 'tails', weight: 3 }]` lands on tails three times in four.
 
 ## MinigameSceneFields
 
-```ts shape
-type MinigameSceneFields = {
-  minigame?: string
-}
-```
+The `minigame` field of a [scene](/docs/reference/scenes#datascene), which starts that minigame when the scene opens. Every field is in [`MinigameSceneFields`](/docs/api/engine#minigamescenefields).
 
-A field on a [scene](/docs/reference/scenes). The minigame starts when the scene is entered, in the same command, after the scene is counted as [seen](/docs/reference/state#seen). Redrawing the scene that's already open doesn't start it again. If a new game opens on a scene with one, it's running from the first frame.
+The minigame starts in the same command, after the engine counts the scene as [seen](/docs/reference/state#seen). Rendering the scene that's already open doesn't start it again. A new game that opens on a scene with one has it running from the first screen. When the minigame ends, the scene shows again with its choices, unless a final effect opened another.
 
 ```ts fragment
-{
-  id: 'fair.coconut',
-  title: 'The coconut shy',
-  minigame: 'coconut',
-  body: [{ prose: 'fair.coconut' }],
-  choices: [{ id: 'leave', effects: [{ scene: null }] }],
-}
+{ id: 'park.toss', title: 'A coin in the air', minigame: 'toss', body: [{ text: 'Sam flicks a coin.' }], choices: [{ id: 'leave', label: 'Walk on', effects: [{ scene: null }] }] }
 ```
 
-When the minigame ends, the scene shows again with its choices, unless a final effect opened another.
+## Commands
 
-## MinigameState
+### minigame
 
-```ts shape
-type MinigameState = {
-  id: string
-  state: string
-  elapsed: number
-  kv: Record<string, number>
-  steps: number
-}
-```
+`{ type: 'minigame', input }` presses one of the running state's live inputs. The [`minigame` command](/docs/reference/commands#minigame) lists its refusals.
 
-The minigame being played, as the save keeps it in [`state.minigame`](/docs/reference/state#minigame), or `null`. `elapsed` is the milliseconds of ticks since it entered `state`. `steps` counts the transitions it has taken, which seeds its draws.
+### tick
 
-## MinigameView
+`{ type: 'tick', ms }` adds `ms` to the time the minigame has been in its state, and runs down the game's timers too. The engine refuses a tick with `Nothing is counting down.` when no state timer and no named timer is running. A UI sends about ten ticks a second, so the runner treats them in three ways of their own:
 
-```ts shape
-type MinigameView = {
-  id: string
-  title: string | null
-  state: string
-  label: string | null
-  timeLeft: number | null
-  timeTotal: number | null
-  inputs: MinigameInput[]
-  kv: Record<string, number>
-  keys: Record<string, string[]>
-}
-```
+- **Undo** steps over them, back to before the last command that wasn't a tick.
+- **The backlog** gets nothing from a tick, nor from a minigame rendered over a scene.
+- **Autosave** never saves on a tick with `every: 'command'`. With `'scene'` or `'turn'`, it saves only when the tick changed the scene or the turn.
 
-What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
+## State
 
-| Field | What it holds |
-|---|---|
-| `id`, `state` | The minigame and the state it's in. |
-| `title` | Its `title`, or `null`. |
-| `label` | The running state's words, with tokens filled in, or `null` if it has no `label`. `view.scene.body` has the same words rendered with their markup. |
-| `timeLeft`, `timeTotal` | Milliseconds left on the state's timer and its whole length, or `null` for a state with no timer. |
-| `inputs` | The inputs that do something now, without repeats, as buttons: each has its name as `id`, its words as `label` and the [`minigame` command](/docs/reference/commands#minigame) that presses it, so a UI draws them as it draws any [`RenderedChoice`](/docs/reference/view#renderedchoice). |
-| `kv` | Its kv store now. |
-| `keys` | The keys the game maps to each input, or `{}`. |
+### MinigameState
 
-An input's `label` comes from the first live `on` entry for it in the running state that has a `label`. Without one it's the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels). The engine has `Up`, `Down`, `Left`, `Right` and `Space` for `up`, `down`, `left`, `right` and `space`. Any other input with no string is its own name with a capital, so name yours in `strings`: `{ 'minigame.jump': 'Jump' }`.
+The minigame being played, as the save keeps it in [`state.minigame`](/docs/reference/state#minigame), or `null`. Every field is in [`MinigameState`](/docs/api/engine#minigamestate).
 
-A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/docs/reference/view#timers) isn't empty. A tick with nothing counting down is refused with `Nothing is counting down.`
+`elapsed` is the milliseconds of ticks since it entered `state`. `steps` counts the transitions it has taken, which seeds its draws.
+
+## View
+
+### MinigameView
+
+The running minigame as [`view.minigame`](/docs/reference/view#minigame) holds it, or `null`. Every field is in [`MinigameView`](/docs/api/engine#minigameview).
+
+`label` is the running state's words with tokens filled, and `view.scene.body` holds the same words as markup. `timeLeft` and `timeTotal` are the state's timer in milliseconds, or `null` for a state with no timer. A UI sends ticks while `timeLeft` isn't `null`, and while [`view.timers`](/docs/reference/view#timers) isn't empty. To render it, see [Render a minigame](/docs/how-to/render/timers-minigames-panels#render-a-minigame).
 
 ### MinigameInput
 
-One live input of a running minigame, as `view.minigame.inputs` lists it, with the command that sends it.
+One live input in `view.minigame.inputs`, ready to render as a button. Every field is in [`MinigameInput`](/docs/api/engine#minigameinput).
 
-```ts shape
-type MinigameInput = {
-  id: string
-  label: string
-  command: { type: 'minigame'; input: string }
-}
-```
+The list holds each input that does something now, once. Its `command` is the `minigame` command a press sends, so a UI renders it as it renders any [`RenderedChoice`](/docs/api/engine#renderedchoice). Its `label` comes from the first live `on` entry for it with a `label`, else from the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels). The engine has `Up`, `Down`, `Left`, `Right` and `Space` for `up`, `down`, `left`, `right` and `space`. Any other input with no string reads as its own name with a capital.
 
-| Field | Type | What it holds |
-|---|---|---|
-| `id` | `string` | The input's name, such as `'up'`. |
-| `label` | `string` | Its words, such as `'Up'`. |
-| `command` | `{ type: 'minigame'; input: string }` | The command a press sends. |
+## Checks
 
-## Drawing it
+The [content checker](/docs/reference/checks) reports these problems with minigames:
 
-While a minigame runs, `view.minigame` is its [`MinigameView`](#minigameview), and `view.scene` holds its title and the running state's words. Each of its `inputs` is a ready button, with its words in `label` and the `{ type: 'minigame', input }` it sends in `command`, so draw them as any other button, and a bar from `timeLeft` and `timeTotal` while the state has a timer. Something has to send the ticks: the templates call [`startClock`](/docs/browser#startclock), which does.
-
-The React UI's [`Scene`](/docs/react/components#scene) draws a [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene and runs the clock. For one minigame of your own, put a component under its id in `panels`, and use [`useMinigame`](/docs/react/components#useminigame) in it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../snippets/plain/minigame.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../snippets/react/minigame.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/vue/Minigame.vue]{meta='tab="Vue" tab-group="framework"'}
-
-## The checks
-
-The [content checker](/docs/reference/checks) reports:
-
-- a `start`, `go` or `to` naming a state the minigame doesn't have
+- a `start`, `go` or `to` that names a state the minigame doesn't have
 - a minigame with no final state reachable from its start
-- a timer with `ms` of 0 or less
+- an `after` with `ms` of 0 or less
 - a final state that also has `after`, `on` or `always`, which never run
 - an input in `keys` that no state's `on` uses
 - a `to` with no states, or a weight of 0 or less
 - an unknown minigame in a `minigame` effect or a scene's `minigame` field
-- a key of a minigame's kv used in a condition or an effect that no minigame declares, one a minigame uses but another declares, and a `copy` of one that isn't declared
-- a state's `label` or an `on` entry's `label` written as a prose key, and anything a transition's `when` or `effects` names that the game doesn't have
+- a key of `of: 'minigame'` that no minigame declares, one a minigame uses but only another declares, and a `copy` of an undeclared key
+- a state's or an `on` entry's `label` written as a prose key, and anything a transition's `when` or `effects` names that the game lacks
 
-## Gotchas
+## Caveats
 
-- **Ticks come from the UI.** The engine has no clock. Nothing happens to a timer until something sends `{ type: 'tick', ms }`, so a minigame with timers waits for ever in a UI that doesn't tick.
-- **Locks don't stop it.** `tick` and `minigame` ignore [locks](/docs/reference/locks) and plugin guards, because the minigame is already running. To keep the player out of one, gate what starts it.
-- **`{ kv, of: 'minigame' }` is false with no minigame running**, whatever the range, `lt` included, and a `kv` effect on it does nothing. A minigame's variables are numbers: a `kv` effect that sets one `to` anything else sets it to 0.
-- **A variable is a number.** Use `copy` to keep one in the kv store, and `{ kv }` to read it afterwards.
-
-## See it in an example
-
-Small Town: quick feet, `quickFeet` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts), is five rounds of arrows to press in time, started by the park's `arrows` action. [`examples/showcase/tests/quick-feet.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/quick-feet.test.tsx) plays it in the React UI.
+- The engine has no clock. A minigame with timers waits for ever in a UI that sends no ticks.
+- `tick` and `minigame` ignore [locks](/docs/reference/locks) and plugins' guards, because the minigame is already running. To keep the player out of one, gate what starts it.
+- `{ kv, of: 'minigame' }` is false while no minigame runs, whatever its range, `lt` included, and a `kv` effect on it does nothing.
+- A `kv` effect that sets a minigame key `to` anything but a number sets it to 0.

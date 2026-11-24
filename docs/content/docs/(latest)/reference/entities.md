@@ -1,251 +1,141 @@
 ---
 title: "Entities"
-description: "Kinds and entities: the things a game keeps, such as staff, dishes, apples, notes or photos, each with its own stats and kv store, declared in content, created and removed in play, held by the player or by someone, and listed in the view when you say."
+description: "Reference for KindDef, EntityDef, EntityState, holders, traits and Select, with the functions that read entities, their traits and what each holder holds."
 ---
-Use entities for the things your game keeps: what the player carries, the notes and photos they collect, and anything there are several of with numbers of their own. A café might have staff, each with a skill and a wage, and dishes on its menu, each with a price. A kind names such a thing (`staff`, `dish`, `photo`) and an entity is one of them (Ana, the soup, the photo of the pier). A [stat](/docs/reference/stats) declared with `of: 'staff'` is kept on every member of staff rather than on the player.
+An entity is one of a kind of thing a game keeps, such as a member of staff, a dish, a person or a sandwich, and a kind names the sort (`staff`, `dish`, `character`). Your content declares the kinds in `kinds` and the entities there are at the start in `entities`, and the save keeps only what play changes. [Entities, things and traits](/docs/explanation/entities-and-traits) explains kinds, holders and traits, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) adds things to a game. The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove), [`each`](/docs/reference/effects#each), [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change entities, and the [`entity`](/docs/reference/conditions#entity) and [`count`](/docs/reference/conditions#count) conditions ask about them.
 
-The game declares its kinds and the entities that exist at the start. In play, you can:
-
-- [`create`](/docs/reference/effects#create) more entities and [`remove`](/docs/reference/effects#remove) them with effects
-- run the same effects over every entity of a kind with [`each`](/docs/reference/effects#each)
-- ask how many there are, or whether one is there, with the [`{ count }`](/docs/reference/conditions#count) and [`{ entity }`](/docs/reference/conditions#entity) conditions
-- give things to the player or to someone, and move them between holders, with the [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects (see [Holding things](#holding-things))
-
-What an entity is (its name, description, picture, tags and where its numbers start) lives in your content. The save only keeps what play has changed, so a name you fix in an update shows in every old save too. The [view](/docs/reference/view#entities) hands the UI the kinds and entities you say are [listed](#listing), with the stats the player can see on each. For a whole game built on entities, see the management game in [Shapes of game](/docs/guide/shapes#a-management-game-the-corner-café).
+In the showcase: `examples/showcase/src/world/things.ts`, which declares clothing as a unique kind and food and the newspaper as kinds that stack.
 
 ```ts
-import { PLAYER, YOU, canHold, entitiesOf, entityDescription, entityImage, entityKv, entityName, entityOf, entityTags, give, heldBy, heldCount, holderOf, holding, isUnique, move, parseRef, protagonist, resolveHolder, take, writeEntity, type CreatedEntity, type EntityDef, type EntityRef, type EntityState, type Holder, type KindDef, type Placement, type Select } from '@ifloom/engine'
-import { bindCurrent } from '@ifloom/engine/plugin'
-```
-
-## A worked example
-
-The Corner Café (`examples/cafe` in the IFLoom repository) keeps staff and dishes. The player has coins and a reputation. Each member of staff has a skill, a morale and a wage, and each dish has a price and a quality.
-
-```ts
-import type { Content } from '@ifloom/engine'
-
-const corner: Content = {
-  kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff', unique: true }, { id: 'dish', label: 'Dish', plural: 'Menu' }],
-  stats: [
-    { id: 'coins', label: 'Coins', start: 120, min: -9999, max: 99999, format: '£{n}', spendable: true },
-    { id: 'reputation', label: 'Reputation', start: 20 },
-    { id: 'skill', label: 'Skill', of: 'staff', start: 1, min: 1, max: 10 },
-    { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
-    { id: 'wage', label: 'Wage', of: 'staff', start: 10, max: 50, format: '£{n}' },
-    { id: 'price', label: 'Price', of: 'dish', start: 4, min: 1, max: 20, format: '£{n}' },
-    { id: 'quality', label: 'Quality', of: 'dish', start: 2, min: 1, max: 5 },
-  ],
-  entities: [
-    { id: 'ana', of: 'staff', name: 'Ana', description: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } },
-    { id: 'toast', of: 'dish', name: 'Cheese on toast', description: 'Thick bread, sharp cheddar.', stats: { price: 4, quality: 2 } },
-    { id: 'soup', of: 'dish', name: 'Soup of the day', description: 'Whatever the market had.', stats: { price: 6, quality: 3 } },
-  ],
-  // ...
-}
-```
-
-A new game has the player's stats in `state.stats`. `state.entities` starts empty, because nothing about Ana or the dishes has changed yet. Read them through the functions below, which look at the save first and then at your content:
-
-```ts given
-import { entitiesOf, entityName, startingState, statValue } from '@ifloom/engine'
-
-const state = startingState(game)
-state.stats                                // { coins: 120, reputation: 20 }
-state.entities                             // {}
-entitiesOf(state, game, 'staff')           // ['staff:ana']
-entityName(state, game, 'staff:ana')       // 'Ana'
-statValue(state, game, 'morale', 'staff:ana') // 60, the stat's start
-statValue(state, game, 'skill', 'staff:ana')  // 5, from her declaration
-```
-
-Content names her `'staff:ana'`:
-
-```ts fragment
-{ stat: 'quality', by: 1, of: 'dish:soup' }          // better ingredients
-{ stat: 'quality', of: 'dish:soup', lt: 5 }                         // there is still room to improve it
-{ each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }   // a long week for everyone
-{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }                   // two of them are happy
+import { PLAYER, YOU, canHold, declaredTrait, declaredWithTrait, entitiesOf, entityDescription, entityImage, entityKv, entityName, entityOf, entityTags, give, heldBy, heldCount, holderOf, holding, isUnique, move, parseRef, protagonist, resolveHolder, take, traitOf, withTrait, writeEntity } from '@ifloom/engine'
+import type { EntityDef, EntityState, Holder, KindDef, Placement, Select, TraitData, TraitRegistry, TraitSource, TraitTable } from '@ifloom/engine'
+import { anyOf, bindCurrent, setTraitState, traitState } from '@ifloom/engine/plugin'
 ```
 
 ## KindDef
 
-```ts shape
-type KindDef = {
-  id: string
-  label: string
-  plural?: string
-  unique?: boolean
-  listed?: boolean | Condition
-  tags?: string[]
-  flags?: Record<string, Condition>
-  traits?: Record<string, unknown>
-  ui?: Ui<EntityUi>
-}
+A sort of entity the game declares in `kinds`, such as `staff` or `photo`. Every field is in [`KindDef`](/docs/api/engine#kinddef).
+
+A stat declared with [`of`](/docs/reference/stats#of) naming the kind is kept on each of its entities. `plural` is the label for more than one, the `label` if left out. `tags` come before each entity's own, and `traits` are defaults that each entity's own trait of the same id is laid over. `ui` holds [presentation hints](/docs/reference/ui-hints) for each entity, under each entity's own.
+
+Kinds merge by id, the plugins' first, then your content's, then each pack's. A later kind replaces an earlier one, and when it replaces a plugin's kind, the fields it leaves out keep the plugin's. A game can reword the cast's `character` kind without listing every character.
+
+```ts
+import type { KindDef } from '@ifloom/engine'
+
+export const kinds: KindDef[] = [
+  { id: 'clothing', label: 'Clothing', unique: true, listed: false },
+  { id: 'item', label: 'Thing', plural: 'Things', listed: false },
+  { id: 'staff', label: 'Member of staff', plural: 'Staff', unique: true, flags: { senior: { stat: 'skill', of: '$', gte: 4 } } },
+]
 ```
 
-| Field | Default | What it does |
-|---|---|---|
-| `id` | | The name stats, entities, effects and conditions use for the kind, as in `of: 'staff'` or `{ count: 'staff' }`. |
-| `label` | | What the player reads for one, such as "Member of staff". |
-| `plural` | `label` | What the player reads for more than one, such as "Staff". The [React UI](/docs/react/components#entitytable) heads each kind's table with it. |
-| `unique` | `false` | Each entity of the kind is one particular thing, such as a person or a scarf, rather than a sort of thing, such as an apple. Only unique entities [hold things](#holding-things), and a unique thing is in one place at a time. Things of a kind that isn't unique stack: the player holds 3 of `'food:apple'`. The cast's characters are unique. The view passes it on as [`unique`](/docs/reference/view#entitiesview-and-entityview). |
-| `listed` | `true` for your kinds, `false` for a plugin's | Whether the view lists the kind's entities. `false` leaves the kind out of the view altogether. A condition is asked for each entity, with `'$'` as that one. See [Listing](#listing). |
-| `tags` | `[]` | Words every entity of the kind has, before its own [`tags`](#entitydef). |
-| `flags` | `{}` | Named true/false conditions asked for each listed entity, with `'$'` as that one. The view gives each entity a `flags` record of the answers, so a UI can split a list without hiding anything. See [Listing](#listing). |
-| `traits` | `{}` | [Traits](#traits) every entity of the kind has, by trait id. They're defaults: an entity's own trait of the same id is laid over them. |
-| `ui` | none | [Presentation hints](/docs/reference/ui-hints) for each of its entities, under each one's own, such as the React UI's [`hue`](/docs/react/hints#hue). The engine carries them to the view as written. |
+### unique
 
-Kinds go in [`Game.kinds`](/docs/reference/game#game). You declare them in your [content](/docs/reference/content#content)'s `kinds`, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own in its `content`. They merge by id, the plugins' first, then your content's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
+`true` when each entity of the kind is one particular thing, such as a person, a location or a scarf, rather than a sort of thing, such as an apple. Only a unique entity holds things, and a unique thing is held by one holder at a time, with a count of 0 or 1. Things of a kind that isn't unique stack, so the player holds 3 of `'food:apple'`. It's `false` if left out, and the view passes it on as `unique`.
+
+### listed
+
+Whether the view lists the kind's entities: `true`, `false`, or a [condition](/docs/reference/conditions) asked of each entity with `'$'` as that entity. A game's own kinds are listed unless they say otherwise, and a plugin's are not unless the plugin sets `listed`. `false` leaves the kind out of `view.entities` altogether. An entity's own `visible` narrows it further. The cast's `character` kind is listed with `{ 'cast/met': { character: '$' } }`, so a character appears once the player has met them.
+
+Only the view is filtered. `each`, `count`, the `entity` condition and every function on this page see every entity, listed or not. [Entities, things and traits](/docs/explanation/entities-and-traits#the-engine-decides-what-the-view-lists) explains why the engine filters rather than the UI.
+
+### flags
+
+Named conditions the view asks of each listed entity, with `'$'` as that entity. Each entity in `view.entities` gets a `flags` record of the answers, such as `{ senior: true }`, so a UI can split a list without hiding anything more.
 
 ## EntityDef
 
-```ts shape
-type EntityDef = {
-  id: string
-  of: string
-  name: string
-  description?: string
-  image?: string
-  tags?: string[]
-  visible?: Condition
-  stats?: Record<string, number>
-  kv?: Record<string, KvValue>
-  at?: Placement
-  traits?: Record<string, unknown>
-  ui?: Ui<EntityUi>
-}
+One entity the game declares in `entities`, there from the start of the game until a `remove` takes it out. Every field is in [`EntityDef`](/docs/api/engine#entitydef).
+
+The entity's `id` is unique within its kind, and content names it `'<kind>:<id>'`, an [entity reference](/docs/reference/common#entityref). An id can't be a whole number, because the engine keeps entities in order and JavaScript puts keys that look like whole numbers first. An entity [created](/docs/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/docs/reference/state#created) and never given twice.
+
+`name` and `description` are words in place, with [prose tokens](/docs/reference/prose#tokens) filled each time they're read, so `'{{partnerName}}'` shows the name the player typed. `image` goes through [`artSrc`](/docs/reference/prose#artsrc). `stats` are starting values for stats declared `of` its kind, and `kv` is its own [kv store](/docs/reference/glossary#kv) at the start. `at` says who holds it at the start, a [`Placement`](#holder-and-placement). `visible` is a condition asked with `'$'` as the entity, which narrows its kind's [`listed`](#listed).
+
+Entities merge by kind and id, in the order your content lists them, and a pack's entity replaces one with the same kind and id whole. A [plugin](/docs/reference/plugin-views)'s `entities` adds more once the content and packs are merged, after the game's own, and the game's wins over a plugin's with the same kind and id. Only [`loadGame`](/docs/reference/content#loadgame) asks plugins for entities.
+
+```ts
+import type { EntityDef } from '@ifloom/engine'
+
+export const staff: EntityDef[] = [
+  { id: 'ana', of: 'staff', name: 'Ana', description: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } },
+  { id: 'ben', of: 'staff', name: 'Ben', visible: { kv: 'benStarted' } },
+  { id: 'apple', of: 'food', name: 'Apple', at: { player: 2, 'place:larder': 6 } },
+]
 ```
-
-One entity that exists from the start of the game, and stays until a [`remove`](/docs/reference/effects#remove) takes it out.
-
-| Field | What it does |
-|---|---|
-| `id` | Unique within its kind. Two kinds may each have an entity with the same id. It can't be a whole number, so the loader refuses `'7'` (see [Ids](#ids)). |
-| `of` | Its kind's id. |
-| `name` | What the player reads, such as "Ana". [Prose tokens](/docs/reference/prose#tokens) are filled in each time it's read, so `'{{partnerName}}'` shows the name the player typed. |
-| `description` | A line or two about it, filled in the same way. |
-| `image` | Its picture, through [`artSrc`](/docs/reference/prose#artsrc). The [content checker](/docs/reference/checks) lists the file. |
-| `tags` | Words a UI or a plugin can sort or pick it by. They come after its kind's tags. |
-| `visible` | Whether the view lists it, asked with `'$'` as it. Always, if left out. It narrows its kind's [`listed`](#listing), and changes nothing else: `each`, `count` and the rest still see it. |
-| `stats` | Starting values for any of its stats that differ from each stat's `start`. Only stats declared `of` its kind. |
-| `kv` | Its own [kv store](/docs/reference/state#kv) at the start. Read a key with `{ kv, of }` and set it with the `kv` effect's `of`. |
-| `at` | Who holds it at the start: `'player'` or a unique entity for one of it, or how many each holds, such as `{ player: 2, 'place:larder': 6 }`. Held by nobody if left out. A unique thing starts in one place. See [Holding things](#holding-things). |
-| `traits` | Its [traits](#traits), by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. |
-| `ui` | Its [presentation hints](/docs/reference/ui-hints), laid over its kind's field by field and carried to the view as written (see [`entityUi`](/docs/reference/ui-hints#entityui)). |
-
-Entities go in [`Game.entities`](/docs/reference/game#game), from your content. They merge by kind and id (`'staff:ana'`), in the order you list your content. A pack's entity replaces one with the same kind and id, whole.
-
-A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the content and packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/content#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
 
 ## EntityState
 
-```ts shape
-type EntityState = {
-  name?: string
-  description?: string
-  image?: string
-  like?: EntityRef
-  tags?: string[]
-  traitData?: Record<string, unknown>
-  stats?: Stats
-  kv?: Record<string, KvValue>
-  traits?: Record<string, unknown>
-}
-```
+What play has changed about one entity, at [`state.entities`](/docs/reference/state#entities) by kind and id. Every field is in [`EntityState`](/docs/api/engine#entitystate).
 
-What play has changed about one entity, at [`state.entities[kind][id]`](/docs/reference/state#entities). A declared entity has no record until an effect changes it, and then only what changed is there: `{ stats: { morale: 52 } }` after Ana's first week. Everything else is read from your content. An entity [created](/docs/reference/effects#create) in play has a record from the start, with what it was given: a `name`, a `description` and an `image`, the entity it was made `like`, its own `tags`, its trait data (`traitData`), stats and kv.
+A declared entity has no record until an effect changes it, and then the record holds only what changed, such as `{ stats: { morale: 52 } }`. An entity created in play has a record from the start, with the name, description, picture, tags, trait data, stats and kv it was given and the entity it was made `like`. Definitions never go into a save, so a fix to a name reaches old saves and a save stays small.
 
-Reads fall back in this order:
+The functions on this page read each value in this order:
 
-- **A stat:** the record, then the entity it was made [like](#things-made-like-another), then the declaration's `stats`, then the stat's `start`. [`statValue`](/docs/reference/stats#statvalue) does this.
-- **A kv key:** the record, then the declaration's `kv`, then the `like`'s. See [`entityKv`](#entitykv).
-- **The name:** the record's `name` (one created in play), then the `like`'s, then the declaration's, always with its tokens filled. See [`entityName`](#entityname).
-- **The description and picture:** the record's (one created in play), then the `like`'s, then the declaration's. See [`entityDescription`](#entitydescription) and [`entityImage`](#entityimage).
-- **Tags:** the kind's, the `like`'s, the declaration's and the record's, each once.
-- **A trait's data:** the record's `traitData` laid over the `like`'s, else over the kind's default. See [`traitOf`](#traitof).
-- **A trait's state:** the record's `traits`, for the rare [trait](#traits) that keeps state, then where the trait says it starts. See [`traitState`](#traitstate).
+- **A stat** reads the record, then the `like` entity, then the declaration's `stats`, then the stat's `start`.
+- **A kv key** reads the record, then the declaration's `kv`, then the `like` entity's.
+- **The name, description and picture** read the record, then the `like` entity, then the declaration.
+- **Tags** are the kind's, the `like` entity's, the declaration's and the record's, each once.
+- **A trait's data** is the record's `traitData` laid over the `like` entity's trait, else over the kind's default.
 
-Definitions never go into a save. That's why a fix to a name or a starting value reaches old saves, and why a save stays small however many entities the game declares.
-
-## EntityRef
-
-```ts shape
-type EntityRef = `${string}:${string}`
-type Holder = EntityRef | 'player' | 'you'
-```
-
-Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'staff:#2'`. The type says so, so in code a bare id where a reference is wanted fails to compile: `const ava: EntityRef = 'ava'` is an error. A `Holder` is anyone who can hold things: `'player'`, `'you'` or a unique entity.
-
-What the engine hands back is typed `EntityRef`, such as [`entitiesOf`](#entitiesof)'s list. The functions that read an entity, such as [`entityName`](#entityname) and [`entityOf`](#entityof), take any string, since content names references as plain strings, and answer for one that names nothing as they would for a missing entity. Content's own fields that name an entity are plain strings too, because they can also hold `'$'`.
-
-**`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) asks for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
+A thing made with `create` and `like`, such as a cake that goes stale, reads whatever it wasn't given from the entity it was made like. A copy reads the pattern as it reads now, so copies that never set a stat of their own follow the pattern's.
 
 ```ts fragment
-{ each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
+{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
 ```
 
-A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner one, and there's no way to name the outer one:
+## `Holder` and `Placement`
 
-```ts fragment
-// For each member of staff: is anyone at all skilled enough to learn from? The inner $ is the inner one.
-{ each: 'staff', where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } }, effects: [{ kv: 'learning', to: true, of: '$' }] }
-```
+A holder is who has things, and a placement says where a thing starts or is put. Every form is in [`Holder`](/docs/api/engine#holder) and [`Placement`](/docs/api/engine#placement).
 
-**Where `'$'` is replaced.** It's replaced where it's the value of an `of`, `entity`, `at` or `like` key, the target of a `remove`, `move` or `you` effect (`{ remove: '$' }`), or a `move`'s `from` or `to`, at any depth, and anywhere in a call's arguments, a plugin's or the game's own, or in what a `create` is made `with`. That's how one of the game's functions or a plugin learns which entity it's working on. `{ 'game/payBonus': { of: '$' } }` is called with `args.of` set to `'staff:ana'`, then `'staff:#1'`, and so on, and the cast lists a character once `{ 'cast/met': { character: '$' } }` holds for them. A `'$'` under any other key, such as a kv condition's `is`, is left as it is.
+A holder is one of three:
 
-## Traits
+- **`'player'`** is the person playing the game, whoever they're playing.
+- **A unique entity**, such as `'character:ava'` or `'location:larder'`, holds things while it's in the game.
+- **`'you'`** is whoever the player is playing now, `'player'` until a [`you`](/docs/reference/effects#you) effect chooses a protagonist.
 
-A trait is a named piece of data an entity carries, such as "wash this at 30 degrees". The engine doesn't know what any trait means. A [plugin](/docs/reference/plugins#traits) declares the traits it reads and gives them meaning, and your game can keep traits of its own. Stats and kv stay as they are: a trait is for what an entity *is*, written in content, never for what changes in play.
+A placement is one holder for one of the thing, or a record of how many each holder has, such as `{ player: 2, 'location:larder': 6 }`. A unique thing starts with one holder. Nothing holds itself, however far round, so the gift box can't go into the scarf it holds.
 
-A trait's id says whose it is. `laundry/washable` belongs to a plugin called `laundry`, and an id with no `/`, such as `cosy`, is your game's own, for the game's own [code](/docs/reference/rules) to read. The first-party plugins' traits are the [cast](/docs/plugins/cast#person-1)'s `cast/person` (who a character is: their schedule, talk and call), the [places plugin](/docs/plugins/places#the-location-trait)'s `places/location` (a place: its exits, body and actions), the [shop](/docs/plugins/shop#the-vendor-trait)'s `shop/vendor` (a vendor: its goods and hours) and `shop/sellable`, the [wardrobe](/docs/plugins/wardrobe#the-wearable-trait)'s `wardrobe/wearable` and the [inventory](/docs/plugins/inventory#usable)'s `inventory/usable`. The cast, places and shop each have a helper that writes a whole entity with its trait: `cast.person()`, `places.location()` and `shop.vendor()`.
-
-You can write a trait in three places:
+A new game's [`state.held`](/docs/reference/state#held) is empty, and holdings read from each entity's `at` until play changes them. Once an effect writes a count, the save keeps it, 0 included. A thing that was used up stays used up, while a thing an update places for the first time reaches every save that never touched it. Removing a holder with `remove` hands what it held to whoever held it, or removes it too when nobody did.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
-export const clothes: Content = {
-  // On a kind: a default for every entity of it.
-  kinds: [{ id: 'clothing', label: 'Clothing', traits: { 'laundry/washable': { temp: 40 }, cosy: true } }],
+export const house: Content = {
+  kinds: [{ id: 'gift', label: 'Gift', unique: true }, { id: 'food', label: 'Food' }],
   entities: [
-    // On an entity.
-    { id: 'scarf', of: 'clothing', name: 'Red scarf', traits: { 'laundry/washable': { gentle: true } } },
-    { id: 'coat', of: 'clothing', name: 'Winter coat', traits: { 'laundry/washable': { temp: 30 }, cosy: false } },
-    { id: 'hat', of: 'clothing', name: 'Bobble hat' },
+    { id: 'scarf', of: 'gift', name: 'A red scarf', at: 'player' },
+    { id: 'box', of: 'gift', name: 'A gift box' },
+    { id: 'apple', of: 'food', name: 'Apple', at: 'player' },
   ],
-  // In the `traits` table, by trait and then entity.
-  traits: { 'laundry/washable': { 'clothing:hat': { temp: 30, gentle: true } } },
 }
 ```
 
-```ts given
-import { traitOf, withTrait } from '@ifloom/engine'
+### PLAYER and YOU
 
-traitOf(state, game, 'clothing:scarf', 'laundry/washable')   // { temp: 40, gentle: true }
-traitOf(state, game, 'clothing:hat', 'laundry/washable')     // { temp: 30, gentle: true }
-traitOf(state, game, 'clothing:coat', 'cosy')                // false
-withTrait(state, game, 'laundry/washable')                   // ['clothing:scarf', 'clothing:coat', 'clothing:hat']
+The two reserved holders, `'player'` and `'you'`, as constants for code. Every value is in [`PLAYER`](/docs/api/engine#player) and [`YOU`](/docs/api/engine#you).
+
+A game where the player plays more than one person, such as two siblings taking turns, sets [`state.you`](/docs/reference/state#you) with `{ you: 'character:sam' }` and clears it with `{ you: null }`. While Sam is played, `'you'` as a holder is Sam, and `of: 'you'` in a `stat`, `level` or `kv` condition or effect is Sam. Declare the stats that belong to a body, such as energy, `of` the protagonists' kind and read them `of: 'you'`. `'player'` stays the player, for the money the household shares. A game with one protagonist never runs a `you` effect, so `'you'` and `of: 'you'` mean the player.
+
+## Select
+
+Which entities a `count` condition or an `each` effect looks at, narrowed by kind, holder, tag, trait and condition. Every field is in [`Select`](/docs/api/engine#select).
+
+Each field narrows the set. `at` takes what a holder holds, `tag` matches the kind's tags or the entity's own, and `where` is a condition asked with `'$'` as each entity. With no field, it's every entity in the game. The entities come in the game's order, declared ones as your content lists them, then those created in play. `count` counts distinct things unless it has `units: true`, which adds up how many of each a holder holds, so 2 apples and a scarf are 2 things and 3 units.
+
+`'$'` is the entity being looked at inside an `each` effect's `where` and `effects` and a `count` condition's `where`. The view binds it in the same way for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind. Anywhere else `'$'` names nothing, so an effect with it does nothing and a condition with it fails. A nested `each` or `count` binds its own `'$'`, and there is no way to name the outer one. [`bindCurrent`](#bindcurrent) lists the fields where the engine replaces it.
+
+```ts fragment
+{ count: { at: 'you', tag: 'fruit' }, gte: 3 }
+{ count: { of: 'food', at: 'location:larder' }, units: true, lt: 4 }
+{ each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
 
-**Which one wins.** A row in the `traits` table wins over the entity's own, and either is laid over the kind's default. When both the default and the entity's value are objects, they're merged field by field, so the scarf keeps the kind's `temp`. Anything else, such as `true` or a list, is replaced whole. A row replaces the entity's own value whole too, though it still gets the kind's default under it.
+## TraitRegistry and TraitData
 
-**What the table is for.** It gives an entity a trait without writing the entity out again, so a [mod](/docs/reference/mods) can change how the hat is washed with one row. In your own content, each row is declared once, like everything else (see [One key declared twice](/docs/reference/content#checks)). A pack's row replaces an earlier one. See [the `traits` key](/docs/reference/content#traits).
+`TraitRegistry` is the interface each plugin augments with the data of the traits it declares, and `TraitData<K>` is the data trait `K` takes. Every form is in [`TraitRegistry`](/docs/api/engine#traitregistry) and [`TraitData`](/docs/api/engine#traitdata).
 
-**Typed by the plugin.** A plugin that declares a trait adds its data's type to the engine's `TraitRegistry` interface, so `traitOf` returns that type and a typo in a field is a type error. See [Declaring traits](/docs/reference/plugins#traits).
-
-**Checked by the plugin.** The [content checker](/docs/reference/checks#traits) asks each plugin's trait about the data on every entity that has it. A trait of a plugin the game doesn't have is let through, as content for a [cooperating](/docs/reference/plugins#cooperates) plugin is.
-
-**Translated by its words.** A plugin's trait says which of its fields are words a player reads (a vendor's `closed`, a place's room text), and a translation's [words table](/docs/reference/words) gives them other words under `entity.<ref>.traits.<trait>.<field>`. Words an entity has from its kind's default are keyed under the kind, `kind.<kind>.traits.<trait>.<field>`, so a translation gives them once. An entity's own `name` and `description` are `entity.<ref>.name` and `entity.<ref>.description`.
-
-### TraitRegistry and TraitData
-
-```ts shape
-interface TraitRegistry {}
-type TraitData<K extends string> = K extends keyof TraitRegistry ? TraitRegistry[K] : unknown
-```
-
-`TraitRegistry` is empty in the engine. Each plugin adds its own traits to it with a `declare module` block, and `TraitData<'laundry/washable'>` is then the data that trait takes. A trait nobody has added, your game's own included, is `unknown`. To type your own, add them the same way:
+`TraitRegistry` is empty in the engine. A trait nobody has added, the game's own included, has `unknown` data. With the data typed, [`traitOf`](#traitof) returns that type and a typo in a field is a type error. The game types its own traits the same way:
 
 ```ts
 declare module '@ifloom/engine' {
@@ -255,432 +145,161 @@ declare module '@ifloom/engine' {
 }
 ```
 
-### TraitTable
+## TraitTable
 
-```ts shape
-type TraitTable = Record<string, Record<EntityRef, unknown>>   // typed by TraitRegistry for the ids it knows
-```
+Traits by trait id and then entity reference, the type of the `traits` key of [content and packs](/docs/reference/content#traits) and of `game.traits`. Every form is in [`TraitTable`](/docs/api/engine#traittable).
 
-Traits by trait id and then entity reference. It's the type of the `traits` key in [content and packs](/docs/reference/content#traits), and of [`game.traits`](/docs/reference/game#game). On a game [`loadGame`](/docs/reference/content#loadgame) returns, `game.traits` holds every declared entity's traits already worked out, so a tool can read them as plain data.
+A trait is written on a kind as a default, on an entity, or as a row of this table. [Entities, things and traits](/docs/explanation/entities-and-traits#traits-give-entities-meaning) explains what traits are for. A row wins over the entity's own value, and either is laid over the kind's default. When the default and the value are both objects, they merge field by field. Any other value, such as `true` or a list, replaces the default whole, and a row replaces the entity's own value whole. A mod changes one trait on one entity with one row. On a loaded game, `game.traits` holds every declared entity's traits already worked out.
 
-## Ids
-
-An entity the game declares has the id you give it. One [created](/docs/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/docs/reference/state#created). A number is never given twice, even after the entity that had it is removed, so a reference saved in a kv key never comes to mean someone else.
-
-**Why the `#`.** Entities keep their order: declared ones as your content lists them, then created ones in the order they came. The created ones' records are kept in an object, and JavaScript always puts keys that look like whole numbers first, in numeric order. The `#` avoids that, and the loader reports `an entity id must not be a whole number` for a declared one so the rule is the same for both.
-
-## Listing
-
-The view only lists what you say it may, so a UI can't give anything away by drawing everything it's handed. Two fields decide it:
-
-- **A kind's `listed`.** `true` lists every entity of the kind, and `false` leaves the kind out of the view. A condition is asked for each entity, with `'$'` as that one. Your own kinds are listed unless they say otherwise. A plugin's kinds aren't, unless the plugin sets `listed`.
-- **An entity's `visible`.** A condition that narrows it further, for one entity.
+A trait's id names its owner. `laundry/washable` is the `laundry` plugin's, and an id with no `/`, such as `cosy`, is the game's own. The content checker asks each plugin's trait about its data on every entity that has it, and lets through a trait of a plugin the game doesn't have. A translation's [words table](/docs/reference/words) gives a trait's word fields as `entity.<ref>.traits.<trait>.<field>`, or `kind.<kind>.traits.<trait>.<field>` for a kind's default.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
-const kitchen: Content = {
-  kinds: [
-    { id: 'staff', label: 'Member of staff', plural: 'Staff' },
-    // A dish is on the list once it's on the menu.
-    { id: 'dish', label: 'Dish', plural: 'Menu', listed: { kv: 'onMenu', of: '$' } },
-    // Kept for the game's own sums, never shown.
-    { id: 'supplier', label: 'Supplier', listed: false },
-  ],
+export const clothes: Content = {
+  kinds: [{ id: 'clothing', label: 'Clothing', unique: true, traits: { 'laundry/washable': { temp: 40 }, cosy: true } }],
   entities: [
-    { id: 'ana', of: 'staff', name: 'Ana' },
-    // Not on the staff list until the story brings him in.
-    { id: 'ben', of: 'staff', name: 'Ben', visible: { kv: 'benStarted' } },
-    { id: 'soup', of: 'dish', name: 'Soup of the day', kv: { onMenu: true } },
+    { id: 'scarf', of: 'clothing', name: 'Red scarf', traits: { 'laundry/washable': { gentle: true } } },
+    { id: 'hat', of: 'clothing', name: 'Bobble hat' },
   ],
+  traits: { 'laundry/washable': { 'clothing:hat': { temp: 30, gentle: true } } },
 }
 ```
 
-The [cast plugin](/docs/plugins/cast)'s `character` kind is listed with `{ 'cast/met': { character: '$' } }`, so a character appears once the player has met them.
+With this content, `traitOf` reads the scarf's `laundry/washable` as `{ temp: 40, gentle: true }` and the hat's as `{ temp: 30, gentle: true }`.
 
-To split a list rather than shorten it, give the kind `flags`. Each is a condition asked for every listed entity, and the view hands the answers over as the entity's `flags`:
+## State
 
-```ts fragment
-{ id: 'staff', label: 'Member of staff', plural: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } }
+[`state.entities`](/docs/reference/state#entities) holds each changed entity's [`EntityState`](#entitystate), and [`state.held`](/docs/reference/state#held) the counts play has written, by holder. [`state.created`](/docs/reference/state#created) counts the entities made in play per kind, and [`state.you`](/docs/reference/state#you) is the protagonist. A declared entity is in the game whether or not the save has a record of it, so an entity an update or a mod adds is there the moment an old save loads. A `remove` on a declared entity records it in [`state.removed`](/docs/reference/state#removed), and it stays gone. A `create` that names a removed declared entity's id brings it back and takes it out of `removed`.
 
-view(state, game).entities.find((kind) => kind.id === 'staff')!.entries.map((entry) => [entry.name, entry.flags.senior])   // [['Ana', true], ['Ben', false]]
-```
+## View
 
-**Gotchas.**
-- **Only the view is filtered.** `each`, `count`, `{ entity }` and the functions below see every entity in the game, listed or not.
-- **Don't hide things in the UI instead.** Anything in the view can end up on screen, in a text UI or in a tool. Say what's hidden here, and every UI keeps it hidden.
-
-## Holding things
-
-Things are held: an apple in the player's pocket, a scarf in a gift box, six apples in the larder. Any entity can be held. Holders are:
-
-- **`'player'`**, the person playing the game. What the player holds stays theirs whoever they're playing.
-- **A unique entity**, such as `'character:ava'` or `'place:larder'`. Only entities of a [`unique`](#kinddef) kind hold things. The [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters are unique, and so is every place of the [places plugin](/docs/plugins/places#each-place-is-an-entity), as `'location:<id>'`, so a thing can lie in a room.
-- **`'you'`**, whoever the player is playing now. In a game with one protagonist that's always `'player'`. See [Protagonists](#protagonists-you-and-player).
-
-A kind that isn't unique stacks, so the player holds a count of `'food:apple'` rather than separate apples. A unique thing is one particular thing, so it's held once, by one holder at most. Nothing holds itself, however far round: the box can't go into the scarf it holds.
-
-```ts
-import type { Content } from '@ifloom/engine'
-
-export const house: Content = {
-  kinds: [
-    { id: 'place', label: 'Place', unique: true },
-    { id: 'food', label: 'Food' },
-    { id: 'gift', label: 'Gift', unique: true },
-  ],
-  entities: [
-    { id: 'larder', of: 'place', name: 'The larder' },
-    { id: 'apple', of: 'food', name: 'Apple', at: { player: 2, 'place:larder': 6 } },
-    { id: 'scarf', of: 'gift', name: 'A red scarf', at: 'player' },
-    { id: 'box', of: 'gift', name: 'A gift box' },
-  ],
-}
-```
-
-In play, content changes and asks about holdings with these helpers, or the effects and conditions they write:
-
-```ts
-import { give, holding, move, take } from '@ifloom/engine'
-
-give('food:apple', 2)                           // { entity: 'food:apple', by: 2 }: two more for you
-take('food:apple')                              // { entity: 'food:apple', by: -1 }
-move('food:apple', 'place:larder', { by: 1 })   // one back in the larder
-move('gift:scarf', 'character:ava')             // a unique thing moves from wherever it is
-holding('food:apple', 3)                        // { entity: 'food:apple', at: 'you', gte: 3 }
-```
-
-The effects are [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move), and the conditions [`{ entity, at }`](/docs/reference/conditions#entity) and [`{ count }`](/docs/reference/conditions#count). [`each`](/docs/reference/effects#each) can run over what a holder holds, and [`create`](/docs/reference/effects#create) can give what it makes to a holder. The view's [`held`](/docs/reference/view#held) is what you hold, ready to draw.
-
-**Where things start.** An entity's [`at`](#entitydef) says who holds it at the start. A new game's [`state.held`](/docs/reference/state#held) is empty: holdings are read from your content until play changes them, as stats are. Once an effect writes a count, the save keeps it, 0 included. So a thing that was placed and then used up stays used up, while a thing an update places for the first time reaches every old save that never touched it.
-
-**When a holder goes.** Removing an entity with [`remove`](/docs/reference/effects#remove) hands what it held to whoever held it. Remove the gift box while the player holds it, and the scarf in it goes to the player. If nobody held the box, what it held goes with it.
-
-**Gotchas.**
-- **An effect that can't happen does nothing.** Giving to a holder that isn't there, or to an entity whose kind isn't unique, changes nothing. A `move` moves at most what's there. The [content checker](/docs/reference/checks#holders) reports the holders it can tell are wrong.
-- **Giving a unique thing takes it.** `{ entity: 'gift:scarf', at: 'character:ava', to: 1 }` takes the scarf from whoever had it. A unique thing's count is 0 or 1.
-- **Holding isn't listing.** A kind with `listed: false` still shows in [`view.held`](/docs/reference/view#held) when you hold one of it. An entity's `visible` does hide it there too.
-
-### Notes, photos and other things made in play
-
-Things the player collects, such as a note under the door or the photos they take, are entities too. A note the story knows about is declared, and given when the player finds it. A photo the player takes is made in play with [`create`](/docs/reference/effects#create), with its own name, description and picture:
-
-```ts
-import { give, type Content } from '@ifloom/engine'
-
-export const notes: Content = {
-  kinds: [
-    { id: 'note', label: 'Note', plural: 'Notes', listed: false },
-    { id: 'photo', label: 'Photo', plural: 'Photos', listed: false },
-  ],
-  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', description: 'Bins go out Thursday. — Sam, flat 2' }],
-  triggers: [{ id: 'welcome', when: { seen: 'street' }, effects: [give('note:welcome')] }],
-  actions: [
-    {
-      id: 'photo-pier',
-      label: 'Take a photo of the pier',
-      effects: [{ create: 'photo', with: { id: 'pier', name: 'The pier', description: 'Gulls, and the end of the pier.', image: 'photo/pier.jpg' }, at: 'player' }],
-    },
-  ],
-}
-```
-
-They're held, so they're in [`view.held`](/docs/reference/view#held), and you ask about them as about anything held:
-
-```ts fragment
-{ entity: 'note:welcome', at: 'player' }          // the note is in the player's hands
-{ count: { of: 'photo', at: 'player' }, gte: 3 }  // three photos taken
-```
-
-A UI lists them by kind. The [devices plugin](/docs/plugins/devices#section)'s `things` section lists the things of a kind you hold, newest first, so a [phone](/docs/recipes/phone)'s gallery is the `photo` things you hold and a notes app is `{ things: { of: 'note' } }`. To leave them out of the inventory card, list the kinds the inventory shows in its [`data.inventory.kinds`](/docs/plugins/inventory).
-
-### Protagonists: you and player
-
-A game where the player plays more than one person, such as two siblings taking turns, switches who `'you'` is with the [`you`](/docs/reference/effects#you) effect:
-
-```ts
-{ you: 'character:sam' }   // play as Sam
-{ you: null }              // back to the player
-```
-
-The protagonist is a unique entity, kept in [`state.you`](/docs/reference/state#you). While Sam is played:
-
-- `'you'` as a holder is Sam, so `give`, `take` and `holding` work on what Sam holds.
-- `of: 'you'` in a [`stat`](/docs/reference/conditions#stat), `level` or [`kv`](/docs/reference/conditions#kv) condition or effect is Sam. Declare the stats that belong to a body, such as energy, `of` the protagonists' kind, and read them `of: 'you'`.
-- `'player'` is still the player: the money the household shares, say, or a phone that survives the switch.
-
-A game with one protagonist never runs a `you` effect, and `'you'` and `of: 'you'` then mean the player.
-
-### Things made like another
-
-A thing with state of its own, such as a cake that goes stale, is made in play with [`create`](/docs/reference/effects#create) and `like`. It reads whatever it isn't given (its name, description, picture, tags, stats, kv and traits) from the entity it was made like, so the save keeps only a reference:
-
-```ts fragment
-{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
-```
-
-The new entity is a `food` named "Cake", held by you, with a `fresh` of its own. Make things like a declared entity you keep as a pattern, held by nobody. A copy reads the pattern as it reads now, so if play changes the pattern's stats, copies that never set their own follow it.
-
-### Counting
-
-`{ count }` counts distinct things by default: 2 apples and a scarf are 2 things. Add `units: true` to add up how many of each are held instead, 3 here. A [`Select`](#select) picks what's counted:
-
-```ts fragment
-{ count: 'staff', gte: 2 }                                          // two members of staff: a kind, the short form
-{ count: { at: 'you', tag: 'fruit' }, gte: 3 }                      // three sorts of fruit on you
-{ count: { of: 'food', at: 'place:larder' }, units: true, lt: 4 }   // the larder is running low
-```
-
-### Select
-
-```ts shape
-type Select = { of?: string; at?: string; tag?: string; trait?: string; where?: Condition }
-```
-
-Which entities a [`count`](/docs/reference/conditions#count) or an [`each`](/docs/reference/effects#each) looks at. Each field narrows it:
-
-| Field | What it picks |
-|---|---|
-| `of` | Entities of a kind. |
-| `at` | What a holder holds: `'you'`, `'player'` or a unique entity. |
-| `tag` | Entities with a tag, their kind's or their own. |
-| `trait` | Entities with a [trait](#traits), by id. |
-| `where` | Entities a condition holds for, with `'$'` as each one. |
-
-With none of them, it's every entity in the game. Either way they come in the game's order: declared entities as your content lists them, then those created in play.
-
-## Entities in old saves
-
-A declared entity is in the game unless it was removed, whether or not a save has a record of it. So when an update writes Ben into the café, or the player turns on a mod that adds staff, Ben is there in every old save the moment it loads. Nothing has to fill him in.
-
-The exception is an entity that left in play. A [`remove`](/docs/reference/effects#remove) effect on a declared entity records it in [`state.removed`](/docs/reference/state#removed), and it stays gone. If Ben quit, he doesn't come back. An entity created in play isn't recorded there: once its record goes, nothing would bring it back.
-
-```ts given
-import { applyEffects, entitiesOf } from '@ifloom/engine'
-
-entitiesOf(state, game, 'staff')  // ['staff:ana', 'staff:ben']: Ben is there, record or not
-
-const left = applyEffects(state, game, [{ remove: 'staff:ben' }])
-left.removed                      // ['staff:ben']
-entitiesOf(left, game, 'staff')   // ['staff:ana']: he stays gone
-```
-
-Saves made before version 16 kept the player's items and the game's collections apart from entities. When one loads, each item's count is held by the player as the entity it became (`item:<id>`, or the one entity your game declares with that id), and each collection entry becomes a thing made in play and held by the player: of a kind named after the collection (the phone's `gallery` is `photo`), with its title as its name, its prose as its description, its picture and its data as kv. See the [15 → 16 step](/docs/reference/saves#the-engines-steps).
-
-Saves made before version 15 copied every declared entity's name and starting numbers into the save. When one loads, [`loadState`](/docs/reference/saves#loadstate) drops a declared entity's copied name, and every stat and kv key equal to where it starts, so they read from your content again. A record with nothing left goes.
-
-**Gotchas.**
-- **Taken on again.** A `create` that names a removed declared entity's id brings it back and takes it out of `removed`. Its record keeps the name the `create` gave, and the rest reads from its declaration. Removing it again records it once.
-- **Saves from before version 7 recorded no removals.** Their `removed` starts empty, so a declared entity removed in such a save is back. See the [6 → 7 step](/docs/reference/saves#the-engines-steps).
-- **A dropped declaration.** An entity the game no longer declares stays in a save that has a record of it, and comes after the declared ones, like one created in play. One with no record is simply gone.
+`view.held` lists what you hold, the protagonist's things and then the player's, each a [`HeldView`](/docs/api/engine#heldview) with its name, description, picture and count. `view.entities` lists each [listed](#listed) kind with its entities, as [`EntitiesView`](/docs/api/engine#entitiesview), each entity with the stats the player can see and its `flags`. A kind with `listed: false` still shows in `view.held` when you hold one of it, while an entity's `visible` hides it there too. To render them, see [Render what the player holds](/docs/how-to/render/stats-and-things#render-what-the-player-holds).
 
 ## Functions
 
-The effects, conditions and view use these. The game's own [functions](/docs/reference/custom) and a [plugin](/docs/reference/plugins) can call them directly.
-
 ### entitiesOf
 
-```ts shape
-function entitiesOf(state: GameState, game: Game, kind: string): EntityRef[]
-```
+Returns every entity of a kind in the game, as references. Every parameter is in [`entitiesOf`](/docs/api/engine#entitiesof).
 
-Every entity of a kind in the game, as references: the declared ones in the order your content lists them, leaving out any removed, then the ones created in play, in the order they came. It's `[]` for a kind with none, or a kind the game has never heard of.
-
-```ts given
-import { entitiesOf } from '@ifloom/engine'
-
-entitiesOf(state, game, 'staff')   // ['staff:ana', 'staff:#1']
-```
-
-The café's own effects, in its `rules`, use it with [`statValue`](/docs/reference/stats#statvalue) to add up a stat over a kind:
+The declared entities come first, in the order your content lists them and leaving out any removed, then those created in play, in the order they came. It's `[]` for a kind with none, or one the game doesn't declare.
 
 ```ts
-import { entitiesOf, statValue, type Game, type GameRules, type GameState } from '@ifloom/engine'
+import { entitiesOf, statValue, type Game, type GameState } from '@ifloom/engine'
 
-function total(state: GameState, game: Game, kind: string, stat: string): number {
-  return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
-}
-
-export const rules: GameRules = {
-  macros: {
-    // called as { 'game/wages': true }
-    wages: (state, _args, { game }) => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
-  },
+export function wages(state: GameState, game: Game): number {
+  return entitiesOf(state, game, 'staff').reduce((sum, ref) => sum + statValue(state, game, 'wage', ref), 0)
 }
 ```
 
 ### entityOf
 
-```ts shape
-function entityOf(state: GameState, game: Game, ref: EntityRef): EntityState | undefined
-```
+Returns the record of what play changed about an entity, `{}` for a declared entity nothing has changed, or `undefined` when it isn't in the game. Every parameter is in [`entityOf`](/docs/api/engine#entityof).
 
-What play has changed about the entity a reference names: its record in the save, or `{}` for a declared entity nothing has changed yet. It's `undefined` if the entity isn't in the game (removed, never created, or not declared), or if `ref` isn't `kind:id` at all, `'$'` included. Use it to ask whether an entity is there, and with [`writeEntity`](#writeentity) to change its record. To read a value, use `statValue`, `entityKv` or `entityName`, which fall back to your content.
+It's `undefined` for an entity removed, never created or not declared, and for a string that isn't `kind:id`, `'$'` included. Use it to ask whether an entity is there, and with [`writeEntity`](#writeentity) to change its record. To read a value, use `statValue`, `entityKv` or `entityName`, which fall back to your content.
 
 ```ts given
 import { entityOf } from '@ifloom/engine'
 
-entityOf(state, game, 'staff:ana')    // {} on a new game
-entityOf(state, game, 'staff:cleo')   // undefined: nobody called Cleo works here
+entityOf(state, game, 'staff:ana') // {} on a new game
+entityOf(state, game, 'staff:cleo') // undefined
 ```
 
 ### entityName
 
-```ts shape
-function entityName(state: GameState, game: Game, ref: EntityRef): string
-```
-
-An entity's name as the player reads it: the name it was created with, or its declaration's, with [prose tokens](/docs/reference/prose#tokens) filled for this save. It's the entity's id if it has no name at all.
+Returns an entity's name as the player reads it, with its tokens filled for this save, or its id when it has no name. Every parameter is in [`entityName`](/docs/api/engine#entityname).
 
 ```ts given
 import { entityName } from '@ifloom/engine'
 
-entityName(state, game, 'staff:ana')        // 'Ana'
-entityName(state, game, 'character:partner') // 'Sam', when the declaration says '{{partnerName}}' and the player typed Sam
+entityName(state, game, 'staff:ana') // 'Ana'
 ```
 
 ### entityDescription
 
-```ts shape
-function entityDescription(state: GameState, game: Game, ref: EntityRef): string | undefined
-```
-
-An entity's description, with its tokens filled, or `undefined` if it has none. It's the one it was created with, else the `like`'s, else its declaration's.
+Returns an entity's description with its tokens filled, or `undefined` when it has none. Every parameter is in [`entityDescription`](/docs/api/engine#entitydescription). It reads the description the entity was created with, else the `like` entity's, else the declaration's.
 
 ### entityKv
 
-```ts shape
-function entityKv(state: GameState, game: Game, ref: EntityRef): Record<string, KvValue>
-```
-
-An entity's kv store as it reads: the keys of the entity it was made `like`, then its declaration's `kv`, with every key play has set laid over them. It's `{}` for an entity with none.
-
-```ts given
-import { entityKv } from '@ifloom/engine'
-
-entityKv(state, game, 'staff:ana')   // { role: 'cook', learning: true }
-```
+Returns an entity's kv store as it reads, the `like` entity's keys and then the declaration's `kv`, with every key play has set laid over them. Every parameter is in [`entityKv`](/docs/api/engine#entitykv). It's `{}` for an entity with none.
 
 ### entityTags
 
-```ts shape
-function entityTags(state: GameState, game: Game, ref: EntityRef): string[]
-```
-
-An entity's tags: its kind's, then those of the entity it was made `like`, then its declaration's or the ones it was created with, each once.
+Returns an entity's tags, its kind's, then the `like` entity's, then its own, each once. Every parameter is in [`entityTags`](/docs/api/engine#entitytags).
 
 ### entityImage
 
-```ts shape
-function entityImage(state: GameState, game: Game, ref: EntityRef): string | undefined
-```
-
-An entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc): the one it was created with, its declaration's, or else that of the entity it was made `like`.
+Returns an entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc), or `undefined`. Every parameter is in [`entityImage`](/docs/api/engine#entityimage). It reads the picture the entity was created with, else the declaration's, else the `like` entity's.
 
 ### parseRef
 
-```ts shape
-function parseRef(ref: EntityRef): { kind: string; id: string } | undefined
-```
-
-Splits a reference at its first colon. It returns `undefined` if there's no colon, or nothing on one side of it.
+Returns a reference split at its first colon into `{ kind, id }`, or `undefined` when there's no colon or nothing on one side of it. Every parameter is in [`parseRef`](/docs/api/engine#parseref).
 
 ```ts
 import { parseRef } from '@ifloom/engine'
 
-parseRef('staff:#2')   // { kind: 'staff', id: '#2' }
-parseRef('$')          // undefined
+parseRef('staff:#2') // { kind: 'staff', id: '#2' }
+parseRef('$') // undefined
 ```
 
 ### writeEntity
 
-```ts shape
-function writeEntity(state: GameState, ref: EntityRef, next: EntityState): GameState
-```
+Returns the state with an entity's record set whole, for a plugin's or the game's effect that changes an entity in a way the built-in effects can't. Every parameter is in [`writeEntity`](/docs/api/engine#writeentity).
 
-Returns the state with the record of the entity `ref` names set to `next`, whole. Whatever `next` leaves out reads from your content again. If there's no such entity, one is added after the rest of its kind. If `ref` isn't `kind:id`, the state comes back unchanged. Use it in a plugin effect or a custom effect that changes an entity in a way the built-in effects can't.
+Whatever the new record leaves out reads from your content again. A reference to no entity adds one after the rest of its kind, and a string that isn't `kind:id` leaves the state unchanged. The function checks nothing, so it doesn't hold a stat to its range. An entity it adds isn't counted in `state.created`, isn't recorded when it's later removed, and counts as one created in play unless the game declares it.
 
 ```ts given
 import { entityOf, writeEntity } from '@ifloom/engine'
 
 const ana = entityOf(state, game, 'staff:ana')!
-writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
+const next = writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 ```
-
-**Gotcha.** Nothing is checked, so a stat isn't held to its range. An entity added this way isn't counted in [`state.created`](/docs/reference/state#created), and isn't recorded when it's later removed. It counts as one created in play unless the game declares it.
 
 ### traitOf
 
-```ts shape
-function traitOf<K extends string>(state: GameState, game: Game, ref: EntityRef, id: K): TraitData<K> | undefined
-```
+Returns one trait's data on one entity as play reads it, or `undefined` when the entity doesn't have the trait. Every parameter is in [`traitOf`](/docs/api/engine#traitof).
 
-One trait's data on one entity as play reads it, worked out as [Traits](#traits) says: a table row, else the entity's own, over its kind's default. For one [created](/docs/reference/effects#create) in play, it's the trait data the `create` gave, laid over the trait of the entity it was made `like`, or over its kind's default. `undefined` when it doesn't have the trait.
+It works the data out as [`TraitTable`](#traittable) says. For an entity created in play, it's the trait data the `create` gave, laid over the `like` entity's trait or over the kind's default.
 
 ```ts given
 import { traitOf } from '@ifloom/engine'
 
-traitOf(state, game, 'clothing:coat', 'laundry/washable')?.temp   // 30
-traitOf(state, game, 'clothing:#1', 'laundry/washable')           // the scarf's, for a copy made like it
+traitOf(state, game, 'clothing:hat', 'laundry/washable') // { temp: 30, gentle: true }
 ```
 
 ### declaredTrait
 
-```ts shape
-function declaredTrait<K extends string>(game: Game, ref: EntityRef, id: K): TraitData<K> | undefined
-```
+Returns one trait's data on one entity from content alone, for code with no state, such as a plugin's check. Every parameter is in [`declaredTrait`](/docs/api/engine#declaredtrait).
 
-The same trait as content declares it, for code with no state to hand, such as a plugin's [`check`](/docs/reference/plugins#check) or a trait's own. An entity created in play has its kind's default here.
-
-**Gotcha.** It reads content only, so it doesn't know whether the entity is still in the game, nor what a thing created in play was given. Ask [`traitOf`](#traitof) for that.
+It doesn't know whether the entity is still in the game, nor what a thing created in play was given, and an entity created in play has its kind's default here. Ask [`traitOf`](#traitof) for what play reads.
 
 ### withTrait
 
-```ts shape
-function withTrait(state: GameState, game: Game, id: string): EntityRef[]
-```
-
-Every entity in the game that has the trait as play reads it: declared ones not removed, in the order your content lists them, then those created in play, through [`traitOf`](#traitof).
+Returns every entity in the game that has a trait as play reads it, through [`traitOf`](#traitof). Every parameter is in [`withTrait`](/docs/api/engine#withtrait). The declared entities not removed come first, in content order, then those created in play.
 
 ### declaredWithTrait
 
-```ts shape
-function declaredWithTrait(game: Game, id: string): EntityRef[]
-```
-
-Every declared entity that has the trait, in the order your content lists them, for code with no state, as [`declaredTrait`](#declaredtrait) reads.
+Returns every declared entity that has a trait in content, in content order, as [`declaredTrait`](#declaredtrait) reads it. Every parameter is in [`declaredWithTrait`](/docs/api/engine#declaredwithtrait).
 
 ### TraitSource
 
-```ts shape
-import type { TraitSource } from '@ifloom/engine'
-
-type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
-```
-
-What `declaredTrait` and `declaredWithTrait` read: a game's kinds, entities and `traits` table. A loaded [`Game`](/docs/reference/game#game) is one, and so is a [`Content`](/docs/reference/content#content) before it's loaded.
+The kinds, entities and `traits` table that `declaredTrait` and `declaredWithTrait` read. Every field is in [`TraitSource`](/docs/api/engine#traitsource). A loaded [`Game`](/docs/reference/game#game) is one, and so is a [`Content`](/docs/reference/content#content) before it's loaded.
 
 ### traitState
 
-```ts shape
-function traitState<S = unknown>(state: GameState, game: Game, ref: EntityRef, id: string): S | undefined
-```
+Returns one entity's state for a trait that keeps state, such as the uses left in a torch, or where the trait's `state.start` says it begins. Every parameter is in [`traitState`](/docs/api/engine-plugin#traitstate).
 
-For the rare trait that keeps state of its own on each entity, such as the uses left in a torch: what play last wrote for this entity, or else where the trait's [`state.start`](/docs/reference/plugins#traitdef) says it begins. `undefined` when the entity isn't in the game, doesn't have the trait, or the trait keeps no state. Nothing goes into the save until [`setTraitState`](#settraitstate) writes it.
+It's `undefined` when the entity isn't in the game, doesn't have the trait, or the trait keeps no state. Nothing goes into the save until [`setTraitState`](#settraitstate) writes it. [Plugin views](/docs/reference/plugin-views) describes how a plugin declares a trait with state.
 
 ### setTraitState
 
-```ts shape
-function setTraitState(state: GameState, game: Game, ref: EntityRef, id: string, next: unknown): GameState
-```
-
-The state with one entity's state for one trait replaced, kept in its record's `traits`. An entity that isn't in the game is left alone. A plugin calls it from its own effects and commands.
+Returns the state with one entity's state for one trait replaced, kept in its record's `traits`. Every parameter is in [`setTraitState`](/docs/api/engine-plugin#settraitstate). An entity that isn't in the game is left alone. A plugin calls it from its own effects and commands.
 
 ```ts
 import type { Game, GameState } from '@ifloom/engine'
 import { setTraitState, traitState } from '@ifloom/engine/plugin'
 
-function useTorch(state: GameState, game: Game): GameState {
+export function useTorch(state: GameState, game: Game): GameState {
   const left = traitState<{ uses: number }>(state, game, 'tool:torch', 'kit/lamp')?.uses ?? 0
   return setTraitState(state, game, 'tool:torch', 'kit/lamp', { uses: left - 1 })
 }
@@ -688,159 +307,93 @@ function useTorch(state: GameState, game: Game): GameState {
 
 ### anyOf
 
-```ts shape
-function anyOf(kind: string): EntityRef
-```
+Returns `'<kind>:*'`, a reference that stands for any one entity of a kind, for checking content written with `'$'` before it runs. Every parameter is in [`anyOf`](/docs/api/engine-plugin#anyof).
 
-Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/docs/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [`references`](/docs/reference/plugins#references) do this for its own conditions written per entity:
+It isn't a real entity, so `entityOf` finds nothing by it. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/docs/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [references](/docs/reference/plugin-checks) do this for its own conditions written per entity.
 
 ```ts
-import type { Condition } from '@ifloom/engine'
-import { anyOf, bindCurrent, definePlugin } from '@ifloom/engine/plugin'
+import { anyOf, bindCurrent } from '@ifloom/engine/plugin'
 
-export const regulars = definePlugin<null>({
-  id: 'regulars',
-  version: 1,
-  references: {
-    content: (game) =>
-      ((game.data?.regulars?.people ?? []) as readonly { id: string; when?: Condition }[]).map((person) => ({
-        list: 'people',
-        id: person.id,
-        refs: [{ when: bindCurrent(person.when, anyOf('regular')) }],
-      })),
-  },
-})
+export const when = bindCurrent({ stat: 'morale', of: '$', gte: 75 }, anyOf('staff')) // of: 'staff:*'
 ```
 
 ### bindCurrent
 
-```ts shape
-function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | undefined>(value: T, ref: EntityRef): T
-```
+Returns a copy of a condition or of effects with every `'$'` set to an entity. Every parameter is in [`bindCurrent`](/docs/api/engine-plugin#bindcurrent).
 
-Returns a copy of a condition or of effects, with every `of`, `entity`, `at` and `like` that is `'$'` set to `ref` (and a `remove`, `move` or `you` effect's target, and a `move`'s `from` and `to`), at any depth, and every `'$'` in a call's arguments or a `create`'s `with`. A nested `each`'s effects and a nested `count`'s `where` keep their own `'$'`. This is how `each` and `count` run their `where` and `effects` for each entity, and how the view asks a kind's `listed`. A plugin or one of the game's functions can use it to run content written for "this one" on a particular entity:
+It replaces `'$'` where it's the value of an `of`, `entity`, `at` or `like` key, the target of a `remove`, `move` or `you` effect, or a `move`'s `from` or `to`, at any depth. It also replaces every `'$'` in a call's arguments and in what a `create` is made `with`, so `{ 'game/payBonus': { of: '$' } }` is called with `args.of` set to each entity in turn. A `'$'` under any other key, such as a kv condition's `is`, stays as it is. A nested `each`'s `effects` and a nested `count`'s `where` keep their own `'$'`, so pass what's inside an `each` or a `count`, not the `each` or `count` itself.
 
 ```ts given
 import { holds } from '@ifloom/engine'
 import { bindCurrent } from '@ifloom/engine/plugin'
 
-holds(state, game, bindCurrent({ stat: 'morale', of: '$', gte: 75 }, 'staff:ana'))   // is Ana happy?
+holds(state, game, bindCurrent({ stat: 'morale', of: '$', gte: 75 }, 'staff:ana'))
 ```
-
-Anything else is copied as it is, `undefined` included. A nested `each`'s `effects` and a nested `count`'s `where` (its own or its `Select`'s) are left alone, since their `'$'` is their own.
-
-**Gotcha.** Hand it what's inside an `each` or a `count`, not the `each` or `count` itself. On one of those, its own `effects` or `where` is the part that's left alone.
-
-### PLAYER and YOU
-
-```ts
-const PLAYER = 'player'
-const YOU = 'you'
-```
-
-The two reserved holders, for code that would rather not write the strings.
-
-### Holder and Placement
-
-```ts shape
-type Holder = string
-type Placement = Holder | Record<Holder, number>
-```
-
-A holder is `'player'`, `'you'` or a unique entity's reference. A placement says where a thing is put, by an entity's `at` or a `create`'s: one holder for one of it, or how many each holder has.
 
 ### heldCount
 
-```ts shape
-function heldCount(state: GameState, game: Game, ref: EntityRef, at?: Holder): number
-```
-
-How many of a thing a holder holds, `'you'` if `at` is left out. It's 0 for a thing held elsewhere or not in the game, and for a holder that can't hold.
+Returns how many of a thing a holder holds, `'you'` if the holder is left out. Every parameter is in [`heldCount`](/docs/api/engine#heldcount). It's 0 for a thing held elsewhere or not in the game, and for a holder that can't hold.
 
 ```ts given
 import { heldCount } from '@ifloom/engine'
 
-heldCount(state, game, 'food:apple')                   // 2
-heldCount(state, game, 'food:apple', 'place:larder')   // 6
+heldCount(state, game, 'food:apple') // 2
+heldCount(state, game, 'food:apple', 'location:larder') // 6
 ```
 
 ### heldBy
 
-```ts shape
-function heldBy(state: GameState, game: Game, at?: Holder): { ref: EntityRef; count: number }[]
-```
-
-Everything a holder holds (`'you'` if left out), with how many of each, in the game's order of its entities. Things it has none of aren't listed.
+Returns everything a holder holds, `'you'` if left out, with how many of each, in the game's order of its entities. Every parameter is in [`heldBy`](/docs/api/engine#heldby). Things the holder has none of aren't listed.
 
 ### holderOf
 
-```ts shape
-function holderOf(state: GameState, game: Game, ref: EntityRef): Holder | undefined
-```
-
-Who holds a thing: one holder, which for a unique thing is the only one, and `undefined` when nobody does. It reads a reverse index, worked out once for each state and never saved.
+Returns who holds a thing, or `undefined` when nobody does. Every parameter is in [`holderOf`](/docs/api/engine#holderof). A unique thing has one holder at most. The engine works out a reverse index once for each state and never saves it.
 
 ### canHold
 
-```ts shape
-function canHold(state: GameState, game: Game, holder: Holder): boolean
-```
-
-Whether a holder can hold things now: `'player'` always, a unique entity while it's in the game. Pass a real holder: `'you'` isn't resolved here, so use [`resolveHolder`](#protagonist-and-resolveholder) first.
+Returns whether a holder can hold things now, `'player'` always and a unique entity while it's in the game. Every parameter is in [`canHold`](/docs/api/engine#canhold). It doesn't resolve `'you'`, so pass the holder through [`resolveHolder`](#protagonist-and-resolveholder) first.
 
 ### isUnique
 
-```ts shape
-function isUnique(game: Game, ref: EntityRef): boolean
-```
-
-Whether an entity's kind is [`unique`](#kinddef): each one is one particular thing, which holds things and is held one at a time. A plugin asks it to treat a person or a coat differently from a stack of apples, as the [shop](/docs/plugins/shop) does when it sells a unique thing only from the vendor's stock.
+Returns whether an entity's kind is [`unique`](#unique). Every parameter is in [`isUnique`](/docs/api/engine#isunique). A plugin asks it to treat a person or a coat differently from a stack of apples, as the [shop plugin](/docs/reference/plugins/shop) does when it sells a unique thing only from the vendor's stock.
 
 ### protagonist and resolveHolder
 
-```ts shape
-function protagonist(state: GameState): Holder
-function resolveHolder(state: GameState, holder: string): string
-```
-
-How `'you'` is read. `protagonist` is who's played now: [`state.you`](/docs/reference/state#you), or `'player'`. `resolveHolder` turns `'you'` into that and leaves any other holder alone.
+`protagonist` returns who is played now, [`state.you`](/docs/reference/state#you) or `'player'`. `resolveHolder` returns that for `'you'` and any other holder as it is. Every parameter is in [`protagonist`](/docs/api/engine#protagonist) and [`resolveHolder`](/docs/api/engine#resolveholder).
 
 ### give, take, move and holding
 
-```ts shape
-function give(ref: EntityRef, n?: number): Effect
-function take(ref: EntityRef, n?: number): Effect
-function move(ref: EntityRef, to: Holder, options?: { from?: Holder; by?: number }): Effect
-function holding(ref: EntityRef, n?: number): Condition
+Return the holding effects and condition, written for you. Every parameter is in [`give`](/docs/api/engine#give), [`take`](/docs/api/engine#take), [`move`](/docs/api/engine#move) and [`holding`](/docs/api/engine#holding).
+
+`give` and `take` change what `'you'` hold by `n`, 1 if left out. `move` writes a [`move`](/docs/reference/effects#move) effect, which moves a unique thing from wherever it is. `holding` asks whether you hold at least `n`. Giving a unique thing to a holder takes it from whoever had it.
+
+```ts
+import { give, holding, move, take } from '@ifloom/engine'
+
+export const examples = [
+  give('food:apple', 2), // { entity: 'food:apple', by: 2 }
+  take('food:apple'), // { entity: 'food:apple', by: -1 }
+  move('food:apple', 'location:larder', { by: 1 }),
+  move('gift:scarf', 'character:ava'),
+  holding('food:apple', 3), // { entity: 'food:apple', at: 'you', gte: 3 }
+]
 ```
 
-Helpers that write the holding effects and condition for you. `give` and `take` change what you hold by `n`, 1 if left out. `move` writes a [`move`](/docs/reference/effects#move) effect. `holding` asks whether you hold at least `n`. See [Holding things](#holding-things).
+## Checks
 
-## Drawing it
+The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/content#checks) report these problems with entities:
 
-Two parts of the view show entities:
+| Problem | Cause |
+|---|---|
+| `an entity id must not be a whole number` | A declared entity's id is a whole number, such as `'7'`. |
+| A kind the game doesn't declare | An entity's `of`, a stat's `of`, a `count`, an `each` or a `create` names an undeclared kind. |
+| A stat on the wrong owner | An effect or condition names a stat with an `of` whose kind doesn't keep it. |
+| A holder that can't hold | An `at`, an `entity` effect or a `move` names a holder the checker can tell isn't the player, `'you'` or a unique entity ([Holders](/docs/reference/checks#holders)). |
+| A trait's own problem | A plugin's trait reports its data on an entity ([Traits](/docs/reference/checks#traits)). |
 
-- **`view.held`** is what you [hold](#holding-things): the protagonist's things, then the player's. Each is a [`HeldView`](/docs/reference/view#heldview) with its `name`, `description`, `image` and `count`.
-- **`view.entities`** has each [listed](#listing) kind with its entities, as [`EntitiesView`](/docs/reference/view#entitiesview-and-entityview)s. Each entity carries the stats the player can see on it and its kind's `flags`, so you can split the people you've met from the rest without hiding anything more.
+## Caveats
 
-The React UI's [`Inventory`](/docs/react/components#inventory) draws what you hold, in the side column of the default layout. [`EntityTable`](/docs/react/components#entitytable) draws a listed kind as a table, and is yours to place. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../snippets/plain/entities.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../snippets/react/entities.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/vue/Entities.vue]{meta='tab="Vue" tab-group="framework"'}
-
-## Gotchas
-
-- **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and levels by id alone.
-- **A stat named on the wrong owner does nothing useful.** At run time, `{ stat: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
-- **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
-- **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.
-
-## See it in an example
-
-- The Corner Café: [`examples/cafe/src/world/staff.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/staff.ts) and [`examples/cafe/src/world/menu.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/menu.ts) declare the kinds `staff` and `dish` and start with Ana, cheese on toast and soup as entities, each with a description. [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) adds up a stat over a kind with `entitiesOf` and `statValue` in its `total` helper. The `soup` action in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts) names one entity as `'dish:soup'`.
-- Small Town: the cast's characters are entities of the kind `character`, listed in the view once the player has met them.
-- Small Town: in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts), the river shell is an entity of the unique kind `keepsake`. You pick it up by the river with `give`, and give it to Ava at the café with `move`; the café scene says so once `{ entity: 'keepsake:shell', at: 'character:ava' }` holds.
-- Small Town: the park's visitors in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) are entities of the kind `visitor`, made by the generators plugin and cleared each day with `each` and `remove`.
+- An effect that can't happen does nothing. Giving to a holder that isn't there, or to an entity whose kind isn't unique, changes nothing, and a `move` moves at most what's there.
+- A moving `max` on a stat kept on entities is worked out against the whole state, so it is the same for every entity.
+- A declaration's or a `create`'s `stats` aren't held to the range until the next effect moves them.
+- An entity the game no longer declares stays in a save that has a record of it, after the declared ones, as if created in play.

@@ -1,133 +1,71 @@
 ---
 title: "Timers"
-description: "Named countdowns in real time: declaring a timer and what happens when it runs out, the timer effect and condition, ticks, view.timers, and how timers sit beside minigames."
+description: "Reference for TimerDef, RunningTimer and TimerView: named countdowns in real time, run down by ticks, with the effects that run when one runs out."
 ---
-A timer counts down in real time and runs its effects when it gets to 0. Use one for anything the player has to beat: a phone that stops ringing, a bus about to leave, a choice that's only open for a few seconds.
+A timer is a named countdown in real time that runs its effects when it reaches 0, for a phone that stops ringing or a bus about to leave. Your content declares each timer in `timers`, the [`timer` effect](/docs/reference/effects#timer) starts, stops and extends it, and the [`timer` condition](/docs/reference/conditions#timer) reads it. [Turns, scenes and the room](/docs/explanation/turns-and-time#timers-run-in-real-time-not-turns) explains how real time sits beside turns, and [Add a countdown](/docs/how-to/add-a-countdown) builds one.
 
-You declare each timer in your content, with how long it runs and what happens when it runs out. The [`timer` effect](/docs/reference/effects#timer) starts it, and the same effect stops it or adds time.
+In the showcase: `examples/showcase/src/story/flat.ts`, whose `flat.ring` timer gives the player ten seconds to answer Ava's call.
+
+```ts
+import type { RunningTimer, TimerDef, TimerView } from '@ifloom/engine'
+```
+
+## TimerDef
+
+A countdown the game declares in `timers`, with how long it runs and the effects that run when it runs out. Every field is in [`TimerDef`](/docs/api/engine#timerdef).
+
+The engine keeps no clock. A timer runs down only when something sends the [`tick`](/docs/reference/commands#tick) command, `{ type: 'tick', ms }`, which takes `ms` off every running timer. In a browser, [`startClock`](/docs/reference/browser#startclock) sends one about every 100 ms while anything counts down. Ticks are commands, so the [command log](/docs/reference/runner#commandlog) keeps them and a replay runs every timer out at the same moment.
+
+When a tick takes a timer to 0, the engine takes the timer out of the state and then runs its `effects` inside that tick, so they can start it again. The rest of a longer tick carries on, so one long tick runs out everything it covers in order, and a timer its effects start counts from that moment. Timers that run out at the same millisecond go in order of their ids. One tick runs out at most 1,000 timers and minigame steps, so a timer that keeps restarting itself can't hang the game.
+
+The effects run like any other command's, so triggers, scenes and plugins' hooks see what they did. A timer that a `by` takes to 0 runs out on the next tick, not straight away. A running [minigame](/docs/reference/minigames#minigamestatedef)'s `after` runs down on the same ticks, and on the same millisecond the minigame's goes first. Timers merge by id, so a mod can change how long one runs or what it does.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
 export const flat: Content = {
-  timers: [
-    {
-      id: 'phone',
-      label: 'Ringing',
-      ms: 10_000,
-      // What happens if nobody answers.
-      effects: [
-        { scene: null },
-        { notify: 'Missed call: Ava' },
-      ],
-    },
-  ],
+  timers: [{ id: 'flat.ring', label: 'Ringing', ms: 10_000, effects: [{ scene: null }, { notify: 'Missed call: Ava' }] }],
   scenes: [
     {
-      id: 'phone',
+      id: 'flat.ring',
       title: 'The phone',
-      body: [{ prose: 'phone' }],
-      choices: [
-        // Answering stops the timer, so the missed call never comes.
-        { id: 'answer', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },
-      ],
+      body: [{ text: 'Your phone is ringing on the sill. Ava. Answer before it stops.', ui: { timer: 'flat.ring' } }],
+      choices: [{ id: 'answer', label: 'Answer it', effects: [{ timer: 'flat.ring', to: null }, { scene: 'ava.call' }] }],
     },
   ],
-  triggers: [
-    { id: 'phone', when: { kv: 'ringing' }, effects: [{ scene: 'phone' }, { timer: 'phone' }] },
-  ],
 }
 ```
 
-`{ timer: 'phone' }` holds while it runs, and `{ timer: 'phone', lte: 3000 }` in its last three seconds. [`view.timers`](/docs/reference/view#timers) lists each running timer with the time left, for a UI to draw a countdown. The [Timed choices and countdowns](/docs/recipes/timers) recipe builds this in each framework.
+## State
 
-```ts
-import { type RunningTimer, type TimerDef, type TimerView } from '@ifloom/engine'
-```
+### RunningTimer
 
-## How time passes
+A running timer as the save keeps it in [`state.timers`](/docs/reference/state#timers), by id. Every field is in [`RunningTimer`](/docs/api/engine#runningtimer).
 
-The engine has no clock. Time passes when something sends a [`tick`](/docs/reference/commands#tick), `{ type: 'tick', ms }`, which takes `ms` off every running timer. In the browser, [`startClock`](/docs/browser#startclock) from `@ifloom/browser` sends one about every 100 ms while anything counts down, with the real time that passed. The React UI starts it for you. Anywhere else (a test, a playtest, a server), a timer only moves when you tick it yourself.
+The save keeps only the milliseconds `left` and the `total` the timer started with. Adding time with `by` raises `total` when `left` goes above it, so a countdown bar stays full rather than overflowing. The engine reads the effects from the game's `timers` when the timer runs out, so an update that changes them reaches saves already running it.
 
-Ticks are commands, so they go in the runner's [log](/docs/reference/runner#commandlog) and [`replay`](/docs/reference/runner#replay) plays them back exactly. Undo steps over them, so one undo goes back to before the last command the player chose. See [In the runner](/docs/reference/minigames#in-the-runner).
+## View
 
-## When a timer runs out
+### TimerView
 
-When a tick takes a timer to 0, the timer stops and its `effects` run, inside that tick. It's gone from the state before they run, so they can start it again. If the tick was longer than the time left, the rest carries on: one long tick runs out everything it covers, in the order it would have, and a timer those effects start counts from that moment. Timers that run out at the same millisecond go in order of their ids. One tick runs out at most 1,000 timers and minigame transitions, so a timer that keeps starting itself can't hang the game.
+A running timer as [`view.timers`](/docs/reference/view#timers) lists it, in the order the timers started. Every field is in [`TimerView`](/docs/api/engine#timerview).
 
-The effects run like any other effects in a command, so the [triggers](/docs/reference/triggers), scenes and plugins' hooks that follow a command see what they did. A scene effect opens a scene, a `notify` adds a notice, and a `turn` ends the turn. They run the same way in every replay, because the tick that ran them is logged.
+`left / total` is the share left. The view never includes a timer's effects, so rendering every running timer gives nothing away, and a timer is in the view only while it runs. To render them, see [Render timers](/docs/how-to/render/timers-minigames-panels#render-timers).
 
-A timer whose time `by` has taken down to 0 runs out on the next tick, not straight away.
+## Checks
 
-## Timers and minigames
+The [content checker](/docs/reference/checks) reports these problems with timers:
 
-A [minigame](/docs/reference/minigames)'s `after` is a timer too, but it belongs to the minigame's state rather than to the game's `timers`. One tick runs both: whatever runs out first goes first, and on the same millisecond the minigame's goes first. The game's timers keep running during a minigame, and its effects can start or stop one. See [Minigames and the game's timers](/docs/reference/minigames#minigames-and-the-games-timers).
+| Problem | Cause |
+|---|---|
+| `a timer needs ms above 0` | A timer's `ms` isn't a number above 0. |
+| `unknown timer "flat.rnig"` | A `timer` effect or condition names a timer the game doesn't declare. |
 
-## TimerDef
+The checker also reports a `timer` effect whose `to` isn't a number above 0 or `null`, or whose `by` isn't a number, and anything a timer's `effects` name that the game lacks. [`loadGame`](/docs/reference/content#checks) reports a timer id that the game's content declares twice.
 
-```ts shape
-type TimerDef = {
-  id: string
-  label?: string
-  ms: number
-  effects?: EffectRef[]
-}
-```
+## Caveats
 
-| Field | Type | Meaning |
-|---|---|---|
-| `id` | `string` | The timer's id, which the `timer` effect and condition name. |
-| `label` | `string`, optional | What a UI calls it, shown as written. |
-| `ms` | `number` | How long it runs when started. |
-| `effects` | `EffectRef[]`, optional | What happens when it runs out. |
-
-A timer as your content's `timers` and a [pack](/docs/reference/content)'s declare it. Packs merge timers by id, so a mod can change how long one runs or what it does. The `label` is shown as written, in [`TimerView`](#timerview). The effects are any effects, [calls](/docs/reference/custom) to the game's own and plugins' included.
-
-## RunningTimer
-
-```ts shape
-type RunningTimer = { left: number; total: number }
-```
-
-A running timer as the save keeps it in [`state.timers`](/docs/reference/state#timers), by id: the milliseconds `left` and the `total` it was started with. Adding time with `by` raises `total` when `left` goes above it, so a countdown bar stays full rather than overflowing. The save keeps nothing else. The effects are read from the game's `timers` when it runs out, so an update that changes them reaches saves already running the timer.
-
-## TimerView
-
-```ts shape
-type TimerView = { id: string; label: string | null; left: number; total: number }
-```
-
-A running timer as [`view.timers`](/docs/reference/view#timers) shows it, in the order they started. `left / total` is the share left. It never includes the effects, so drawing every running timer gives nothing away. A timer is in the view only while it runs.
-
-## Drawing it
-
-`view.timers` has each running timer in the order they started, as a [`TimerView`](#timerview): its `id`, its `label`, and the milliseconds `left` of its `total`. Draw a countdown from `left / total`. Nothing runs down until something sends ticks, so start [`startClock`](/docs/browser#startclock) as the templates do. A timer is only in the view while it runs, so its countdown goes when it runs out or is stopped.
-
-The React UI's [`Scene`](/docs/react/components#scene) draws a [`Countdown`](/docs/react/components#countdown) under a block whose [`timer`](/docs/react/hints#timer) hint names a timer. [`Timers`](/docs/react/components#timers) draws them all, and [`useTimer`](/docs/react/components#usetimer-and-usetimers) gives you one to draw your own way. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../snippets/plain/timers.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../snippets/react/timers.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/vue/Timers.vue]{meta='tab="Vue" tab-group="framework"'}
-
-## The checks
-
-The [content checker](/docs/reference/checks) reports:
-
-- a timer whose `ms` isn't a number above 0
-- two timers with one id
-- anything the timer's `effects` name that the game doesn't have
-- an unknown timer in a `timer` condition or effect
-- a `timer` effect whose `to` isn't a number above 0 or `null`, or whose `by` isn't a number
-
-## Gotchas
-
-- **Nothing ticks by itself.** A timer started in a test or a playtest waits until you send a tick. `ifloom playtest` sends none, so it never sees a timer run out.
-- **Starting one that's running starts it again.** Use `{ timer, by }` to add time instead.
-- **Leaving the scene doesn't stop it.** A timer runs until it runs out or something stops it. If its effects close a scene, stop the timer in every choice that leaves, or the scene effect will close whatever is open when it runs out.
-- **The player can wait it out in another tab.** The clock drops the time a page is hidden, so a timer waits for the player. A tick only ever covers time the page was on screen.
-
-## See it in an example
-
-Small Town's flat, in [`examples/showcase/src/story/flat.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/flat.ts). An evening at home after you've answered Ava's text, a trigger opens the `flat.ring` scene and starts the `flat.ring` timer. Answer within ten seconds and her call opens. Let it ring out and the scene closes with a missed call. The block that says the phone is ringing carries the React UI's `ui: { timer: 'flat.ring' }`, so the countdown is drawn under it.
+- Nothing ticks by itself. A timer started in a test or a playtest waits until a tick comes, and `ifloom playtest` sends none, so it never sees a timer run out.
+- Starting a timer that's running starts it again from its `ms`. Use `{ timer, by }` to add time instead.
+- Leaving a scene doesn't stop its timer. If a timer's effects close a scene, stop the timer in every choice that leaves, or the `scene` effect closes whatever is open when it runs out.
+- [`startClock`](/docs/reference/browser#startclock) leaves out the time a page is hidden, so a timer waits while the player is in another tab.

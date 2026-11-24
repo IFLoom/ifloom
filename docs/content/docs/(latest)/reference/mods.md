@@ -1,44 +1,32 @@
 ---
 title: "Mods"
-description: Mod files a player adds to a built game, the store that keeps them, and loading them at start-up, with a mod manager in plain DOM, React, Vue or Svelte.
+description: "Reference for mods: the mod file a player adds to a built game, the store that keeps installed mods, and how their packs reach the game."
 ---
-A mod is a [pack](/docs/reference/content#pack) in a file that a player adds to a built game. It can bring new scenes and prose, more variants for a line, a choice patched into a scene, or a replacement location or character. The player picks the file, the game keeps it, and the next time the game starts the mod's pack is loaded over the game's content.
+A mod is a [pack](/docs/reference/content#pack) in a JSON file that a player adds to a built game. The mod store keeps it, and the next time the game starts, the game loads the packs of the mods that are on over its content. [Content, packs and the base](/docs/explanation/content-and-packs#why-a-games-files-are-content-and-a-mod-is-a-pack) explains why a mod is a pack, and [Let players add mods](/docs/how-to/let-players-add-mods) builds a mod manager.
+
+In the showcase: `examples/showcase/mods/fog-season.json`, a mod to try, and `examples/showcase/src/main.tsx`, which keeps the player's mods with `mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))`.
 
 ```ts
-import { mods, type Mods, type ModFile, type InstalledMod } from '@ifloom/engine'
+import { mods, type InstalledMod, type ModFile, type Mods } from '@ifloom/engine'
 ```
 
-A mod is data only. Nothing in it runs, so it can do what a pack can do and no more, and the game's code is the code the game shipped.
-
-Below are the file a player adds, the store that keeps it, and how a game loads it when it starts. How packs merge over the game's content, and the checks the loader runs on them, is on [Content, packs and loading](/docs/reference/content).
+A mod is data only. Nothing in it runs, so it can do what a pack can do and no more, and the game's code is the code the game shipped. [Content and packs](/docs/reference/content#pack) says how each field of a pack merges over the content.
 
 ## ModFile
 
-```ts shape
-type ModFile = {
-  ifloomMod: 1
-  id: string
-  name: string
-  version?: string
-  game: string
-  description?: string
-  pack: Pack
-}
-```
+A mod as a file: what it is, which game it's for, and the pack it adds. Every field is in [`ModFile`](/docs/api/engine#modfile).
 
-A mod as a file. It's JSON that says what the mod is, which game it's for, and the pack it adds.
-
-| Field | What it is |
+| Field | Meaning |
 |---|---|
-| `ifloomMod` | Always `1`. It marks the file as a mod. |
-| `id` | The mod's id. The store keeps one mod per id, and its pack is renamed `mod:<id>`. |
-| `name` | What the player sees in the mod list. The list is sorted by it. |
-| `version` | Shown beside the name. Optional, and never compared. |
-| `game` | The [`game.id`](/docs/reference/game#game) it was made for. Any other game refuses it. |
-| `description` | A line under the name. Optional. |
-| `pack` | The [pack](/docs/reference/content#pack). Its `schema` may be the game's [`SCHEMA`](/docs/reference/content#schema) or an older one, which is [upgraded](/docs/reference/content#upgradepack) each time the game loads it. It may record the version of each plugin's content it was written for in `plugins`. Its `id` is replaced. |
+| `ifloomMod` | Always `1`, which marks the file as a mod. |
+| `id` | The mod's id. The store keeps one mod per id and renames its pack `mod:<id>`. |
+| `name` | The name the player sees in the mod list, which the store sorts by. |
+| `game` | The [`id`](/docs/reference/content#gamebase) of the game it was made for. Any other game refuses it. |
+| `pack` | The pack. Its `schema` can be the game's [`SCHEMA`](/docs/reference/content#schema) or an older one, which [`loadGame`](/docs/reference/content#loadgame) upgrades each time it loads the mod, and its `plugins` can record the version of each plugin's content it was written for. |
 
-This is a whole mod, as the showcase ships it in `examples/showcase/mods/fog-season.json`:
+A pack in a file holds only what JSON can hold: scenes, stats, kinds, entities, `traits` rows, actions, locks, triggers, inputs, settings, timers, minigames, strings, prose, variants, patches, plugin content in `data`, and the rest of [`Pack`](/docs/reference/content#pack)'s data keys. A location, a vendor and a character are entities with their plugin's trait, so a mod adds one in `entities` and changes one by replacing it or with a `traits` row. The game's [`rules`](/docs/reference/rules) are code, so a mod can't carry them.
+
+The showcase's mod adds a fourth line to the high street's weather, because a pack's `variants` are appended, and rewrites the park, because a pack's `prose` replaces the line with the same key:
 
 ```json
 {
@@ -55,306 +43,77 @@ This is a whole mod, as the showcase ships it in `examples/showcase/mods/fog-sea
       "street.weather.fog": "Fog down the high street; the bakery's lights are the only colour in it.",
       "place.park": "The river has gone grey under the fog, and even the ducks are keeping their opinions to themselves."
     },
-    "variants": {
-      "street.weather": ["street.weather.fog"]
-    }
+    "variants": { "street.weather": ["street.weather.fog"] }
   }
 }
 ```
 
-It adds a fourth line to the high street's weather, because a pack's `variants` are appended. It rewrites the park, because a pack's `prose` replaces the line with the same key. See [Pack](/docs/reference/content#pack) for how each field merges.
+## Mods
 
-A pack in a file has only what JSON can hold: scenes, storylines, stats, the starting `kv` and `resets`, kinds, entities, traits, actions, locks, triggers, inputs, settings, timers, minigames, strings, prose, variants, patches and plugin content (`data`). The [places plugin](/docs/plugins/places#in-your-content)'s locations, the [shop](/docs/plugins/shop#writing-vendors)'s vendors and the [cast](/docs/plugins/cast#in-your-content)'s characters are entities with their plugin's trait, so a mod adds one in `entities`, and changes one by replacing the entity or with a `traits` row. A [`DataScene`](/docs/reference/scenes#datascene) is already JSON. The game's [`rules`](/docs/reference/rules) are code, so a mod file can't carry them.
+One game's installed mods, kept in a [save driver](/docs/reference/saves#savedriver), as [`mods`](#mods-1) returns them. Every member is in [`Mods`](/docs/api/engine#mods).
 
-## mods
+Each member answers a [`Result`](/docs/reference/common#result) and never rejects. When the driver fails, such as IndexedDB in a private window that refuses it, the member fails with a reason the player can read and the driver's error as its `cause`.
 
-```ts shape
-function mods(gameId: string, driver: SaveDriver): Mods
-
-interface Mods {
-  list(): Promise<Result<InstalledMod[]>>
-  add(text: string): Promise<Result<InstalledMod>>
-  remove(id: string): Promise<Result<void>>
-  setEnabled(id: string, enabled: boolean): Promise<Result<void>>
-  packs(): Promise<Result<Pack[]>>
-}
-```
-
-One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers). In a browser, use [`indexedDbDriver()`](/docs/browser#indexeddbdriver), so a mod survives a reload and needs no server.
-
-Every member answers a [`Result`](/docs/reference/common#result) and never rejects. When the driver fails, such as IndexedDB in a private window that refuses it, the member fails with a reason the player can read, and the driver's error is the failure's `cause`.
-
-| Member | What it does | When the driver fails |
-|---|---|---|
-| `list()` | Every mod added, on or off, sorted by name. A mod stored in a way that can't be read is left out. | `The mods could not be read.` |
-| `add(text)` | Reads a file's text and keeps the mod, switched on, as [below](#what-add-checks). Its `Result` holds the mod, or says why it was refused. A mod with the same `id` as one already there replaces it, and is switched on again. | `The mod could not be added.` |
-| `remove(id)` | Forgets the mod. | `The mod could not be removed.` |
-| `setEnabled(id, enabled)` | Turns a mod on or off. A mod that's off stays in the list but is left out of the game. An unknown id does nothing. | `The mod could not be changed.` |
-| `packs()` | The packs of the mods that are on, in name order. Pass them to `loadGame` as `packs`, over the game's content. | `The mods could not be read.` |
-
-These reasons are English, like the ones `add` refuses a file with, because the store has no game to take strings from.
-
-### What add checks
-
-`add` reads the file's text for the store's game. The mod keeps its pack as the file wrote it, with its `id` set to `mod:<id>`. The pack isn't upgraded here: [`loadGame`](/docs/reference/content#loadgame) upgrades it with the game's other packs each time it loads, so the game's plugins carry their own content in it forward too, and a mod a player installed keeps working after you update a plugin. Here it's only checked that this engine can read its schema. A file it can't use is refused with a reason worded for the player:
-
-| When | Reason |
+| Field | Meaning |
 |---|---|
-| The text isn't JSON, or lacks any of `ifloomMod: 1`, a string `id`, a string `name`, a string `game`, or a `pack` with a numeric `schema` | `That is not a mod file.` |
-| `game` isn't the store's game | `That mod is for another game (<game>).` |
-| `pack.schema` is newer than `SCHEMA`, or too old to upgrade | `That mod was written for a version this game cannot read (schema <n>).` |
+| `list()` | Answers every mod added, on or off, sorted by name, as [`InstalledMod`](#installedmod)s. It leaves out a mod stored in a way it can't read, and fails with `The mods could not be read.` |
+| `add(text)` | Reads a file's text and keeps the mod, switched on, then answers it. A mod with the id of one already there replaces it and is switched on again. It fails with a [refusal](#mods-1) or `The mod could not be added.` |
+| `remove(id)` | Forgets the mod, and fails with `The mod could not be removed.` |
+| `setEnabled(id, enabled)` | Turns a mod on or off. A mod that's off stays in the list and out of the game, and an unknown id does nothing. It fails with `The mod could not be changed.` |
+| `packs()` | Answers the packs of the mods that are on, in name order, for `loadGame`'s `packs`. It fails with `The mods could not be read.` |
 
-**Gotcha.** It checks the outside of the file, not the content. A pack that names a scene nobody wrote is added fine. [`loadGame`](/docs/reference/checks) reports it as a problem, against `mod:<id>`.
+These lines are English, because the store has no game to take strings from.
 
-### InstalledMod
+```ts given
+import { indexedDbDriver } from '@ifloom/browser'
+import { mods } from '@ifloom/engine'
 
-```ts shape
-type InstalledMod = {
-  id: string
-  name: string
-  version?: string
-  description?: string
-  enabled: boolean
-  pack: Pack
-}
+const store = mods(game.id, indexedDbDriver({ database: 'small-town-mods' }))
+const packs = await store.packs()
+const forLoading = packs.ok ? packs.value : []
 ```
 
-A mod as the store keeps it: the file's fields without `ifloomMod` and `game`, and whether it's on. `pack.id` is already `mod:<id>`.
+## InstalledMod
 
-### Keys
+A mod as the store keeps it: the file's fields without `ifloomMod` and `game`, and whether it's on. Every field is in [`InstalledMod`](/docs/api/engine#installedmod). Its `pack.id` is already `mod:<id>`.
 
-| What | Key |
+## Functions
+
+### mods
+
+Returns the mod store for a game, kept in a driver under the keys `<game id>.mod.<mod id>`. Every parameter is in [`mods`](/docs/api/engine#mods-1).
+
+The first argument is the game's `id`, the one each file names in `game`. The keys sit beside the saves' `<game id>.save.` keys, so one driver keeps both without them clashing. In a browser, [`indexedDbDriver`](/docs/reference/browser#indexeddbdriver) keeps a mod across reloads with no server.
+
+`add` keeps the pack as the file wrote it, with its `id` set to `mod:<id>`, and checks only the outside of the file and that this engine can read its schema. `loadGame` upgrades the pack each time it loads, so a plugin carries its own content in the mod forward and an installed mod keeps working after an update. `add` refuses a file it can't use:
+
+| Problem | Cause |
 |---|---|
-| Mod `id` | `<gameId>.mod.<id>` |
+| `That is not a mod file.` | The text isn't JSON, or lacks `ifloomMod: 1`, a string `id`, `name` or `game`, or a `pack` with a numeric `schema`. |
+| `That mod is for another game (<game>).` | The file's `game` isn't the store's game. |
+| `That mod was written for a version this game cannot read (schema <n>).` | The pack's `schema` is newer than [`SCHEMA`](/docs/reference/content#schema), or too old to upgrade. |
 
-Mods use the same drivers and the same key scheme as [saves](/docs/reference/saves#keys). Saves sit under `<gameId>.save.` and mods under `<gameId>.mod.`, so a game can keep both in one database without them clashing.
+```ts given
+import { memoryDriver, mods } from '@ifloom/engine'
 
-## Loading mods at start-up
-
-A game builds itself once, when the page opens. It reads the mods that are on, loads them over the game's content, and makes the runner from the result. This part is the same whatever draws the game:
-
-```ts
-// src/runner.ts, or src/main.ts in the vanilla template
-import { browserRunner, indexedDbDriver } from '@ifloom/browser'
-import { describeProblem, mods } from '@ifloom/engine'
-import { smallTown } from './game.ts'
-
-// The player's mods live in IndexedDB; they're loaded over the town at start-up.
-export const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-// Where the browser refuses IndexedDB, the town starts without them.
-const packs = await modStore.packs()
-if (!packs.ok) console.warn(packs.reason, packs.cause)
-const built = smallTown({ mods: packs.ok ? packs.value : [] })
-export const game = built.game
-// Each problem as a line; a mod's start with `mod:<id> `, which the manager below files under its mod.
-export const problems = built.problems.map(describeProblem)
-if (problems.length) console.warn(problems.join('\n'))
-
-export const runner = await browserRunner(game)
+const store = mods(game.id, memoryDriver())
+const added = await store.add('{"ifloomMod":1,"id":"fog","name":"Fog","game":"another-game","pack":{"id":"fog","schema":6}}')
+if (!added.ok) console.warn(added.reason) // 'That mod is for another game (another-game).'
 ```
 
-`smallTown`, in `src/game.ts`, passes the packs to [`loadGame`](/docs/reference/content#loadgame) as its third argument, over the town's content. Trimmed, it reads:
+## Checks
 
-```ts
-import { loadGame, type Pack } from '@ifloom/engine'
-import { calendar } from '@ifloom/plugin-calendar'
-import { places } from '@ifloom/plugin-places'
-import { stats } from './world/stats.ts'
-import { cafe } from './story/cafe.ts'
-
-const content = [stats, cafe /* , … */]
-
-export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}) {
-  return loadGame(
-    content,
-    { id: 'small-town', title: 'Small Town', plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), /* … */], /* … */ },
-    { packs: mods },
-  )
-}
-```
-
-The player also needs somewhere to add a file and turn mods on and off. A change takes effect when the game is built again, so each one reloads the page. The React UI has a [mod manager](/docs/react/components#modmanager) for this. The React tab is the showcase's `src/main.tsx` in full, which builds its runner by hand, with undo, a backlog and an autosave each turn, and draws `GameShell` inside React's `StrictMode`. The other tabs draw a small manager of their own, with `modStore` and `problems` from the code above:
-
-```ts tab="Plain JS" tab-group="framework"
-// src/modManager.ts
-import type { Mods } from '@ifloom/engine'
-
-/** The installed mods with a checkbox each, any problems under the mod that caused them, and a file input to add one. */
-export async function modManager(store: Mods, problems: string[]): Promise<HTMLElement> {
-  const section = document.createElement('section')
-  section.appendChild(document.createElement('h2')).textContent = 'Mods'
-  const installed = await store.list()
-  if (!installed.ok) section.appendChild(document.createElement('p')).textContent = installed.reason
-  for (const mod of installed.ok ? installed.value : []) {
-    const label = section.appendChild(document.createElement('label'))
-    const box = label.appendChild(document.createElement('input'))
-    box.type = 'checkbox'
-    box.checked = mod.enabled
-    box.onchange = async () => {
-      const changed = await store.setEnabled(mod.id, box.checked)
-      if (!changed.ok) alert(changed.reason)
-      else location.reload()
-    }
-    label.append(` ${mod.name}`)
-    for (const line of problems.filter((problem) => problem.startsWith(`mod:${mod.id} `))) {
-      section.appendChild(document.createElement('p')).textContent = line
-    }
-  }
-  const file = section.appendChild(document.createElement('input'))
-  file.type = 'file'
-  file.accept = '.json,application/json'
-  file.onchange = async () => {
-    const chosen = file.files?.[0]
-    if (!chosen) return
-    const added = await store.add(await chosen.text())
-    if (!added.ok) alert(added.reason) // why it isn't a mod for this game
-    else location.reload()
-  }
-  return section
-}
-```
-
-```tsx tab="React" tab-group="framework"
-// src/main.tsx
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
-import { createRunner, describeProblem, mods, saves, startingState } from '@ifloom/engine'
-import { GameShell } from '@ifloom/react'
-import { smallTown } from './game.ts'
-import './styles.css'
-
-// The player's mods live in IndexedDB; they're loaded over the town at start-up. Without the storage, the town starts without them.
-const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const modPacks = await modStore.packs()
-if (!modPacks.ok) console.warn(modPacks.reason, modPacks.cause)
-const built = smallTown({ withDebug: import.meta.env.DEV, mods: modPacks.ok ? modPacks.value : [] })
-const { game } = built
-const problems = built.problems.map(describeProblem)
-if (problems.length) console.warn(problems.join('\n'))
-
-// A fresh seed per new game, so each playthrough deals its own variants.
-const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-  history: { depth: 50 },
-  backlog: { limit: 200 },
-  saves: saves(game, localStorageDriver(window.localStorage)),
-  autosave: { every: 'turn' },
-})
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <GameShell runner={runner} mods={{ store: modStore, problems, onChange: () => location.reload() }} />
-  </StrictMode>,
-)
-```
-
-```vue tab="Vue" tab-group="framework"
-<!-- src/ModManager.vue -->
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import type { InstalledMod } from '@ifloom/engine'
-import { modStore, problems } from './runner.ts'
-
-const installed = ref<InstalledMod[]>([])
-const refused = ref('')
-onMounted(async () => {
-  const listed = await modStore.list()
-  if (listed.ok) installed.value = listed.value
-  else refused.value = listed.reason
-})
-
-async function toggle(mod: InstalledMod) {
-  const changed = await modStore.setEnabled(mod.id, !mod.enabled)
-  if (!changed.ok) refused.value = changed.reason
-  else location.reload()
-}
-
-async function addFile(event: Event) {
-  const chosen = (event.target as HTMLInputElement).files?.[0]
-  if (!chosen) return
-  const added = await modStore.add(await chosen.text())
-  if (!added.ok) refused.value = added.reason
-  else location.reload()
-}
-</script>
-
-<template>
-  <section>
-    <h2>Mods</h2>
-    <template v-for="mod in installed" :key="mod.id">
-      <label><input type="checkbox" :checked="mod.enabled" @change="toggle(mod)" /> {{ mod.name }}</label>
-      <p v-for="line in problems.filter((problem) => problem.startsWith(`mod:${mod.id} `))" :key="line">{{ line }}</p>
-    </template>
-    <input type="file" accept=".json,application/json" @change="addFile" />
-    <p v-if="refused">{{ refused }}</p>
-  </section>
-</template>
-```
-
-```svelte tab="Svelte" tab-group="framework"
-<!-- src/ModManager.svelte -->
-<script lang="ts">
-  import type { InstalledMod } from '@ifloom/engine'
-  import { modStore, problems } from './runner.ts'
-
-  const installed = modStore.list()
-  let refused = $state('')
-
-  async function toggle(mod: InstalledMod) {
-    const changed = await modStore.setEnabled(mod.id, !mod.enabled)
-    if (!changed.ok) refused = changed.reason
-    else location.reload()
-  }
-
-  async function addFile(event: Event) {
-    const chosen = (event.currentTarget as HTMLInputElement).files?.[0]
-    if (!chosen) return
-    const added = await modStore.add(await chosen.text())
-    if (!added.ok) refused = added.reason
-    else location.reload()
-  }
-</script>
-
-<section>
-  <h2>Mods</h2>
-  {#await installed then listed}
-    {#each listed.ok ? listed.value : [] as mod (mod.id)}
-      <label><input type="checkbox" checked={mod.enabled} onchange={() => toggle(mod)} /> {mod.name}</label>
-      {#each problems.filter((problem) => problem.startsWith(`mod:${mod.id} `)) as line (line)}<p>{line}</p>{/each}
-    {/each}
-  {/await}
-  <input type="file" accept=".json,application/json" onchange={addFile} />
-  {#if refused}<p>{refused}</p>{/if}
-</section>
-```
-
-In the React UI, `mods` on [`GameShell`](/docs/react#gameshell) adds Mods to the player's menu, and with `pages` on, a Mods section to the [settings page](/docs/react/components#settingspage). Both show the [mod manager](/docs/react/components#modmanager), where the player adds a file, turns mods on and off, and restarts with the change. `onChange` is the restart, and reloading the page runs `main.tsx` again. Each line of `problems` starting `mod:<id> ` is shown under that mod, as the other tabs do by hand.
-
-The first argument to `mods` must be the game's `id`, the same one the files name in `game`.
-
-### Problems in a mod
-
-The loader reports every problem against the pack that brought it, and a mod's pack is `mod:<id>`, so each problem a mod causes names that mod. A mod that patched a choice into Ava's scene and forgot its label would give:
+`add` doesn't check a pack's content, so a mod that names a scene nobody wrote goes in. [`loadGame`](/docs/reference/content#loadgame) reports each problem against the pack that brought it, and a mod's pack is `mod:<id>`, so [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes a mod's problems with `mod:<id>` in front:
 
 ```text
 mod:compliments · scene ava.hi · no prose for "ava.hi#coffee"
 ```
 
-The game decides what to do about problems. Loading never throws, so a mod with a broken reference still loads, and the game runs with whatever of it works. Show each line starting `mod:<id> ` under that mod, as the managers above do, so the player can see which one to turn off.
+Loading never throws, so a mod with a broken reference still loads and the game runs with what of it works. A mod manager shows each line under the mod it names, so the player can see which one to turn off.
 
-### Saves made with mods
+## Caveats
 
-[Saves](/docs/reference/saves#savemeta) record the ids of the packs the game was loaded with, `mod:<id>` among them. A save made with a mod that's now off or removed still loads, and [`LoadedSave.missingPacks`](/docs/reference/saves#loadedsave) names the mod. The React UI's saves menu says so with the `ui.missingPacks` string.
-
-## Gotchas
-
-- **A change takes effect when the game is built again.** The store changes at once, but the running game doesn't. A game is loaded once, so adding, removing or turning off a mod changes nothing until the page is reloaded (`onChange` in the React UI). Until then the player plays on with the mods the game started with.
-- **A mod can only do what a pack can.** It can add scenes, characters and the rest, replace any of the game's whole by id, replace prose by key, append members to a set of variants, add, drop or replace a choice with a [patch](/docs/reference/content#patch), and add content for the game's plugins. It can't remove a variant, change one field of a scene or a location, add a plugin, or change the game's `rules`.
-- **No code mods.** A mod file is JSON, and nothing in it runs. A mod that needs a new condition or effect worked out in code can only [call one by name](/docs/reference/custom) that the game or its plugins already have. A game that wants code from its modders has to ship that code itself.
-- **Turning a mod off can break the saves that used it**, as any [missing pack](/docs/reference/saves#loadedsave) does. The save loads, but a scene, thing or storyline that only the mod had isn't there, and the game may not play as it did. Warn the player before loading such a save, or turn the mod back on.
-- **Mods load in name order.** When two mods replace the same prose key, words key or scene, the one whose `name` sorts last wins. Their ids don't matter, and neither does the order they were added in.
-- **Adding a mod again turns it on.** `add` with a file whose `id` is already there replaces the kept mod with the new one, switched on, whatever it was before.
-
-## See it in an example
-
-Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) keeps the player's mods with `mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))` and loads their packs over the town's content before making the game. [`examples/showcase/mods/fog-season.json`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/mods/fog-season.json) is a mod file to try it with.
+- A change to the store takes effect when the game is built again. The running game keeps the mods it started with, so a mod manager reloads the page after each change.
+- Mods load in name order, so when two mods replace the same prose key, words key or scene, the one whose `name` sorts last wins. Their ids and the order they were added don't matter.
+- A mod can't remove a variant, change one field of a scene or a location, add a plugin, or change the game's `rules`. A mod that needs logic in code can only [call](/docs/reference/custom) a condition or effect the game or its plugins already have.
+- Saves record the packs the game was loaded with, so a save made with a mod that's now off still loads, and its [`LoadedSave.missingPacks`](/docs/reference/saves#loadedsave) names the mod. A scene, thing or storyline only that mod had isn't there.

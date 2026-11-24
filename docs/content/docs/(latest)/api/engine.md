@@ -3199,7 +3199,7 @@ type ModFile = {
 
 ## Mods
 
-Type. Explained in [The showcase: Small Town](/docs/guide/showcase#mods).
+Type. Explained in [Mods](/docs/reference/mods#mods).
 
 One game's mod store, returned by `mods`. No call rejects, and a driver's failure answers with a reason and the
 driver's error as its `cause`.
@@ -3225,7 +3225,7 @@ type Mods = {
 
 ## mods
 
-Function. Explained in [Mods](/docs/reference/mods#mods).
+Function. Explained in [Mods](/docs/reference/mods#mods-1).
 
 Returns the `Mods` store of a game, kept by a driver. In a browser, an IndexedDB driver keeps mods across reloads
 with no server.
@@ -3872,7 +3872,7 @@ type Problem = {
 
 ## Profile
 
-Type. Explained in [The profile](/docs/reference/profile#profile-1).
+Type. Explained in [The profile](/docs/reference/profile#profile).
 
 The player's record that outlives a save, such as settings, whether they have finished the game, and plugins' records
 like achievements. It is one JSON object of namespaces, kept at `<game id>.profile` in a save driver.
@@ -3900,7 +3900,7 @@ type Profile = {
 
 ## profile
 
-Function. Explained in [The profile](/docs/reference/profile#profile).
+Function. Explained in [The profile](/docs/reference/profile#profile-1).
 
 Returns the `Profile` of a game, kept by a driver. Reads and writes run one at a time, in order.
 
@@ -4511,7 +4511,7 @@ type SaveMeta = {
 
 ## Saves
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#saves).
+Type. Explained in [Saves](/docs/reference/saves#saves).
 
 One game's save store, returned by `saves`. No call rejects, and a driver's failure answers with a reason a player can
 read and the driver's error as its `cause`.
@@ -4541,7 +4541,7 @@ type Saves = {
 
 ## saves
 
-Function. Explained in [Saves](/docs/reference/saves#saves).
+Function. Explained in [Saves](/docs/reference/saves#saves-1).
 
 Returns the `Saves` store of a game, kept by a driver. The game chooses its slots' names, such as `'auto'`,
 `'quick'` or `'1'`.
@@ -4709,7 +4709,7 @@ const SCHEMA: 30
 
 ## Screen
 
-Type. Explained in [The view](/docs/reference/view#screen-1).
+Type. Explained in [The view](/docs/reference/view#screen).
 
 One state rendered once by `screen`, with what each choice would apply, the pool picks and the audio tracks.
 
@@ -4738,7 +4738,7 @@ type Screen = {
 
 ## screen
 
-Function. Explained in [The view](/docs/reference/view#screen).
+Function. Explained in [The view](/docs/reference/view#screen-1).
 
 Returns the `Screen` for a state, the open scene or the room rendered once. Use it when you need what `view`
 leaves out, such as each choice's effects.
@@ -5942,7 +5942,7 @@ type VideoView = {
 
 ## View
 
-Type. Explained in [The view](/docs/reference/view#view-1).
+Type. Explained in [The view](/docs/reference/view#view).
 
 One state as a UI renders it, returned by `view`. It holds the core's fields and each feature's.
 
@@ -5997,7 +5997,7 @@ type View = {
 
 ## view
 
-Function. Explained in [The view](/docs/reference/view#view).
+Function. Explained in [The view](/docs/reference/view#view-1).
 
 Returns the `View` of a state, the value a UI renders. Without `options.profile`, no plugin's view reads the
 profile.

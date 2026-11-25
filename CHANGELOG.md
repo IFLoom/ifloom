@@ -1,10 +1,10 @@
 # Changelog
 
-Every change you'd notice as someone making a game with IFLoom is listed here, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Every change you'd notice as someone making a game with IFLoom is listed here, newest first, a section for each release. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such as 0.2.0, can change what the one before it offered.
+From 0.1.2, each package has its own version, and a release publishes only the packages that changed: its section names each version it published. Before that, every package shared one version. Each package's own changes are also in its `CHANGELOG.md`, on its npm page.
 
-## [Unreleased]
+IFLoom is before 1.0, so nothing is a stable API yet: a new minor version of a package, such as 0.2.0, can change what the one before it offered.
 
 ## [0.1.2] - 2026-11-25
 
@@ -620,5 +620,3 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 - While a dialog is open, the React UI's notices wait behind it, so on a phone they no longer show under the bottom of a long dialog.
 - A job whose shift is done for the day says `You’ve done today’s shift.` instead of `Not a time for a shift.` or `No shift today.`, because the shift itself moved the clock on.
 - The cast plugin fills prose tokens in a character's `name` and `fullName` wherever it shows them (their card, a scene's speaker, `cast/person`, `cast/contacts` and its refusals), so `name: '{{friendName}}'` shows the name the player typed into an input.
-
-[Unreleased]: https://github.com/IFLoom/ifloom/commits/main

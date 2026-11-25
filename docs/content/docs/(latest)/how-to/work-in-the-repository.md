@@ -131,6 +131,16 @@ Three package managers need one more step:
 
 A plugin package beside the checkout works the same way. Make it with `--template plugin`, and point its `@ifloom/engine` dev dependency at the packed engine. Leave its peer dependency as it is, since that's the range a game sees once the plugin is on npm.
 
+## Send a change back
+
+A pull request that changes a published package adds a changeset, a small file saying which packages changed and what to tell people, which the release turns into new versions and changelog lines:
+
+```sh
+npm run changeset
+```
+
+Pick the packages and whether each is a patch or a minor (before 1.0, a minor is a breaking change), then write the line for the changelog, starting with `Added:`, `Changed:`, `Removed:` or `Fixed:`. A change to the docs or the examples needs none. [CONTRIBUTING.md](https://github.com/IFLoom/ifloom/blob/main/CONTRIBUTING.md) has the rest: the checks to run and how a release happens.
+
 ## Check it worked
 
 `npm run check` prints `No problems.` in the new game, and `npm run dev` serves it. After you pull a newer IFLoom, run `npm run pack` in the checkout again, then `npm update` in the game. With another package manager, delete `node_modules` and the lockfile and install again. yarn 1 also keeps the old files in its cache under the same version, so run `yarn cache clean` first.

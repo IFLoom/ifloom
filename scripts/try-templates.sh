@@ -22,8 +22,8 @@
 # or packed, and each game is made by the package manager's own create command
 # (`npm create ifloom@<version>`, `pnpm create`, `yarn create`, `bun create`) as
 # the docs say, its @ifloom packages installed from the registry. It checks the
-# game names the root package.json's version, so run it after that version is
-# published. With npm it also runs `npx ifloom help` in an empty folder, and
+# game names each @ifloom package at ^ its version in this checkout, so run it
+# after those versions are published. With npm it also runs `npx ifloom help` in an empty folder, and
 # installs the engine, the browser helpers, a plugin and the CLI into a bare
 # project, as "Add IFLoom to a project" does. pnpm runs through Corepack when
 # it isn't installed.
@@ -52,7 +52,8 @@ while [[ "${1:-}" == --* ]]; do
       shift 2
       ;;
     --registry)
-      registry=$(node -p 'require("./package.json").version')
+      # create-ifloom's version, which `create ifloom@<version>` fetches; each other package is checked at its own.
+      registry=$(node -p 'require("./packages/create-ifloom/package.json").version')
       shift
       ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -137,8 +138,17 @@ for pm in "${managers[@]}"; do
         continue
       fi
       # The create command fetched the release being checked, not an older create-ifloom.
-      if ! grep -q "\"@ifloom/[a-z-]*\": \"\^$registry\"" "$dir/package.json"; then
-        echo "The game doesn't name @ifloom $registry: was create-ifloom $registry fetched?" >&2
+      # Each @ifloom package the game names, at ^ its version in this checkout, as the release published it.
+      if ! wrong=$(node -e '
+        const { readFileSync } = require("node:fs")
+        const game = JSON.parse(readFileSync(process.argv[1], "utf8"))
+        const wrong = Object.entries({ ...game.dependencies, ...game.devDependencies }).filter(([name]) => name.startsWith("@ifloom/")).filter(([name, range]) => {
+          const version = JSON.parse(readFileSync(`${process.argv[2]}/packages/${name.slice("@ifloom/".length)}/package.json`, "utf8")).version
+          return range !== `^${version}`
+        })
+        if (wrong.length) { console.log(wrong.map(([name, range]) => `${name} ${range}`).join(", ")); process.exit(1) }
+      ' "$dir/package.json" "$checkout"); then
+        echo "The game names $wrong, not each package's version here: was create-ifloom $registry fetched?" >&2
         failed+=("$label")
         continue
       fi
@@ -207,11 +217,14 @@ EOF
   done
 done
 
+# The version of a package in this checkout, which the release published: `at engine`.
+at() { node -p "require('$checkout/packages/$1/package.json').version"; }
+
 if [[ -n $registry ]]; then
   # npx ifloom, with nothing installed: the `ifloom` package runs @ifloom/cli's bin.
   printf '\n== npx ifloom help in an empty folder\n'
   mkdir -p "$out/npx"
-  if (cd "$out/npx" && npm_config_yes=true npx "ifloom@$registry" help | grep -q 'ifloom new'); then
+  if (cd "$out/npx" && npm_config_yes=true npx "ifloom@$(at ifloom)" help | grep -q 'ifloom new'); then
     echo "-- npx ifloom help: prints the commands"
   else
     failed+=('npx ifloom help')
@@ -222,8 +235,8 @@ if [[ -n $registry ]]; then
   mkdir -p "$out/project"
   if (
     cd "$out/project" && npm init -y >/dev/null &&
-      npm install --no-audit --no-fund --loglevel=error "@ifloom/engine@$registry" "@ifloom/browser@$registry" "@ifloom/plugin-quests@$registry" &&
-      npm install --no-audit --no-fund --loglevel=error -D "@ifloom/cli@$registry" &&
+      npm install --no-audit --no-fund --loglevel=error "@ifloom/engine@$(at engine)" "@ifloom/browser@$(at browser)" "@ifloom/plugin-quests@$(at plugin-quests)" &&
+      npm install --no-audit --no-fund --loglevel=error -D "@ifloom/cli@$(at cli)" &&
       node --input-type=module -e "await import('@ifloom/engine'); await import('@ifloom/engine/plugin'); await import('@ifloom/browser'); await import('@ifloom/plugin-quests'); await import('@ifloom/cli/game')" &&
       npx ifloom help | grep -q 'ifloom new'
   ); then

@@ -1,6 +1,5 @@
 {
   "name": "ifloom-monorepo",
-  "version": "0.1.2",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -25,9 +24,14 @@
     "docs:dev": "node scripts/site.ts dev",
     "docs:build": "node scripts/site.ts check",
     "docs:links": "node scripts/site.ts links",
-    "api-docs": "node scripts/api-docs.ts"
+    "api-docs": "node scripts/api-docs.ts",
+    "changeset": "changeset",
+    "release:version": "node scripts/release-version.ts",
+    "release:publish": "node scripts/release-publish.ts"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
     "@tailwindcss/cli": "4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/dom": "^10.4.2",

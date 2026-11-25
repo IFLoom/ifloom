@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest'
  * How the packages name each other (AGENTS.md, "How packages depend on each
  * other"): an `@ifloom/*` package is a peer of any other that uses it, never a
  * dependency, so a game has one copy of each, but for the two that run the CLI
- * on their own; and every reference to one, in a package, an example, a template
- * or the docs' snippets, is the caret range of its version. A game lists every
+ * on their own; a package names another by a caret range that takes its version
+ * now, and an example, a template or the docs' snippets by `^` its version now. A game lists every
  * @ifloom package it needs, the ones the packages it lists require as peers
  * included, since Yarn installs no peer for it. And how each is published
  * ("Packaging"): built to dist/, public, with its folder, a README and the LICENSE.
@@ -40,10 +40,22 @@ const everything = [
 ]
 const versions = new Map(packages.map(([, pkg]) => [pkg.name!, pkg.version!]))
 
+/** Whether a caret range takes a version, as npm reads `^0.1.2`: before 1.0, the same minor; from 1.0, the same major. */
+function takes(range: string, version: string): boolean {
+  const caret = range.match(/^\^(\d+)\.(\d+)\.(\d+)$/)
+  if (!caret) return false
+  const [low, at] = [caret.slice(1).map(Number), version.split('-')[0].split('.').map(Number)]
+  const notBelow = at[0] > low[0] || (at[0] === low[0] && (at[1] > low[1] || (at[1] === low[1] && at[2] >= low[2])))
+  if (low[0] > 0) return at[0] === low[0] && notBelow
+  if (low[1] > 0) return at[0] === 0 && at[1] === low[1] && notBelow
+  return at[0] === 0 && at[1] === 0 && at[2] === low[2]
+}
+
 describe('how the packages depend on each other', () => {
-  it('gives every package the version of the checkout, which a release tag names', () => {
-    const version = (JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as Manifest).version
-    expect(packages.filter(([, pkg]) => pkg.version !== version).map(([dir, pkg]) => `${dir} ${pkg.version}`)).toEqual([])
+  it('keeps each fixed group of .changeset/config.json on one version, the CLI and the two that run it', () => {
+    const config = JSON.parse(readFileSync(join(root, '.changeset/config.json'), 'utf8')) as { fixed: string[][] }
+    expect(config.fixed).toContainEqual(['@ifloom/cli', 'create-ifloom', 'ifloom'])
+    for (const group of config.fixed) expect(new Set(group.map((name) => versions.get(name))).size, group.join(', ')).toBe(1)
   })
 
   it('finds the packages', () => {
@@ -63,14 +75,30 @@ describe('how the packages depend on each other', () => {
     expect(unpeered.sort()).toEqual(['packages/create-ifloom devDependencies @ifloom/cli', 'packages/ifloom dependencies @ifloom/cli'])
   })
 
-  it('names every @ifloom package by the caret range of its version', () => {
-    const wrong = everything.flatMap(([dir, pkg]) =>
+  it('names an @ifloom package from another by a caret range that takes its version now', () => {
+    // The oldest version it works with: a plugin may keep ^0.1.0 while the engine is at 0.1.5, and scripts/release-version.ts
+    // moves a range only when a release leaves it behind.
+    const wrong = packages.flatMap(([dir, pkg]) =>
       (['dependencies', 'devDependencies', 'peerDependencies'] as const).flatMap((field) =>
         Object.entries(pkg[field] ?? {})
-          .filter(([name, range]) => versions.has(name) && range !== `^${versions.get(name)}`)
-          .map(([name, range]) => `${dir} ${field} ${name}: ${range}`),
+          .filter(([name, range]) => versions.has(name) && !takes(range, versions.get(name)!))
+          .map(([name, range]) => `${dir} ${field} ${name}: ${range}, at ${versions.get(name)}`),
       ),
     )
+    expect(wrong).toEqual([])
+  })
+
+  it('names each @ifloom package at its version now in the templates, the examples and the docs’ snippets', () => {
+    // So a new game, and what the docs show, get the latest of each.
+    const wrong = everything
+      .filter(([dir]) => !dir.startsWith('packages/') || dir.startsWith('packages/cli/templates/'))
+      .flatMap(([dir, pkg]) =>
+        (['dependencies', 'devDependencies', 'peerDependencies'] as const).flatMap((field) =>
+          Object.entries(pkg[field] ?? {})
+            .filter(([name, range]) => versions.has(name) && range !== `^${versions.get(name)}`)
+            .map(([name, range]) => `${dir} ${field} ${name}: ${range}, not ^${versions.get(name)}`),
+        ),
+      )
     expect(wrong).toEqual([])
   })
 

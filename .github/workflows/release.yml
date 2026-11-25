@@ -1,28 +1,29 @@
 name: Release
 
-# Publishes every package to npm (scripts/publish.ts), each after the packages it uses.
+# Releases with Changesets (AGENTS.md, "Releasing"). On every push to main, changesets/action does one of two things:
 #
-# - A tag v<version> publishes, once the tag matches the version in the root package.json
-#   (set with `node scripts/version.ts <version>`).
-# - By hand, it's a dry run unless dry_run is turned off: `npm publish --dry-run` for each
-#   package, which lists each tarball's files. Turning it off publishes only from such a tag.
+# - With changesets waiting in .changeset/, it opens or updates the "Version packages" pull request:
+#   `npm run release:version` (scripts/release-version.ts) bumps the packages they name, and any a bump leaves out of
+#   range, and writes the changelogs. Nothing is published.
+# - With none waiting, which is once that pull request is merged, it publishes each package whose version isn't on
+#   npm yet: `npm run release:publish` (scripts/release-publish.ts), after the build and the trials. A push that
+#   changes no version publishes nothing.
 #
-# npm signs in with the NPM_TOKEN secret while it's set (the first release, before the
-# packages exist on npm). Without it, NODE_AUTH_TOKEN is empty and npm uses trusted publishing,
-# with this workflow named as each package's trusted publisher on npmjs.com.
-# A version already on npm is skipped, so a failed run can be run again.
+# Run by hand, it lists what would be published and runs the trials, and publishes nothing.
+#
+# npm signs in with the NPM_TOKEN secret while it's set; without it, NODE_AUTH_TOKEN is empty and npm uses trusted
+# publishing, with this workflow as each package's trusted publisher on npmjs.com. The pull request is opened with
+# RELEASE_TOKEN when it's set, so CI runs on it too; a pull request opened with the workflow's own token starts no
+# other workflow.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: Run npm publish --dry-run for each package, and publish nothing
-        type: boolean
-        default: true
 
 permissions:
-  contents: read
+  # The version commit and the tags it pushes, and the pull request it opens.
+  contents: write
+  pull-requests: write
   # Trusted publishing and provenance: npm swaps the workflow's OIDC token for its own.
   id-token: write
 
@@ -31,12 +32,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
-    env:
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -44,22 +45,27 @@ jobs:
           cache: npm
       # Trusted publishing needs npm 11.5 or later.
       - run: npm install -g npm@latest
-      - name: Check the tag names the version
-        if: env.DRY_RUN != 'true'
-        run: |
-          version=$(node -p 'require("./package.json").version')
-          if [[ "$GITHUB_REF_TYPE" != tag || "$GITHUB_REF_NAME" != "v$version" ]]; then
-            echo "Publishing needs the tag v$version, the root package.json's version; this run is on $GITHUB_REF_TYPE $GITHUB_REF_NAME." >&2
-            exit 1
-          fi
       - run: npm ci
+      # What would be published: each package whose version isn't on npm yet. The build and trials run only then.
+      - id: unpublished
+        run: node scripts/release-publish.ts --list
       # Every package's dist/, as it will be published.
-      - run: npm run build
+      - if: steps.unpublished.outputs.count != '0'
+        run: npm run build
       # The built packages, used as their users will: plain Node, a type-check against the .d.ts files, and npx ifloom.
-      - run: bash scripts/try-dist.sh --no-build
+      - if: steps.unpublished.outputs.count != '0'
+        run: bash scripts/try-dist.sh --no-build
       # A game from each template, installed from the packed tarballs, checked, playtested, built and type-checked.
-      - run: bash scripts/try-templates.sh --pm npm
-      - name: Publish
-        run: node scripts/publish.ts ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+      - if: steps.unpublished.outputs.count != '0'
+        run: bash scripts/try-templates.sh --pm npm
+      - if: github.event_name == 'push'
+        uses: changesets/action@v1
+        with:
+          version: npm run release:version
+          publish: npm run release:publish
+          title: Version packages
+          commit: Version packages
+          createGithubReleases: false
         env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

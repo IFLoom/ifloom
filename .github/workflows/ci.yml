@@ -32,6 +32,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # A pull request that changes a published package says what changed, in a changeset (.changeset/README.md). The
+      # docs, the examples and the tooling need none, and nor does the "Version packages" pull request, which uses them up.
+      - if: github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main'
+        run: npx changeset status --since=origin/${{ github.base_ref }}
       # Every package's dist/, as a game installed from npm gets it.
       - run: npm run build
       # Tests, the format, lint and typecheck (vp check, tsc), the docs' links and build, and the examples, all from src/.

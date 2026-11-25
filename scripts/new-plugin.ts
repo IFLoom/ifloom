@@ -54,9 +54,13 @@ function editNav(): void {
   })
 }
 
+/** The changeset that releases the new plugin as 0.1.0 and announces it in the changelog. */
+const announce = join(root, '.changeset', `new-plugin-${name}.md`)
+
 if (remove) {
   rmSync(pkgDir, { recursive: true, force: true })
   rmSync(page, { force: true })
+  rmSync(announce, { force: true })
   console.log(`Removed ${at(pkgDir)} and ${at(page)}`)
   editNav()
   console.log('Run npm install to drop the workspace link.')
@@ -84,15 +88,15 @@ function fromTemplate(file: string): string {
     .replaceAll('TODO:', 'TODO(new-plugin):')
 }
 
-/** Every @ifloom package has the engine's version, and names another by its caret range. */
-const { version } = JSON.parse(readFileSync(join(root, 'packages', 'engine', 'package.json'), 'utf8')) as { version: string }
-const range = `^${version}`
+/** Each @ifloom package has a version of its own, and names another by a caret range of its version now. */
+const rangeOf = (dir: string) => `^${(JSON.parse(readFileSync(join(root, 'packages', dir, 'package.json'), 'utf8')) as { version: string }).version}`
 
 const files: Record<string, string> = {
   'package.json': `${JSON.stringify(
     {
       name: `@ifloom/plugin-${name}`,
-      version,
+      // Unreleased: the changeset written beside it (.changeset/new-plugin-<name>.md) releases it as 0.1.0.
+      version: '0.0.0',
       license: 'MIT',
       description: `TODO(new-plugin): what @ifloom/plugin-${name} adds, in one sentence.`,
       keywords: ['ifloom', 'interactive-fiction', 'plugin', name],
@@ -113,9 +117,15 @@ const files: Record<string, string> = {
       scripts: { build: 'tsdown' },
       engines: JSON.parse(readFileSync(join(root, 'packages', 'cli', 'package.json'), 'utf8')).engines as unknown,
       publishConfig: { access: 'public', provenance: true },
-      peerDependencies: { '@ifloom/engine': range, '@ifloom/react': range, react: '^19.0.0', 'react-dom': '^19.0.0', '@types/react': '^19.0.0' },
+      peerDependencies: {
+        '@ifloom/engine': rangeOf('engine'),
+        '@ifloom/react': rangeOf('react'),
+        react: '^19.0.0',
+        'react-dom': '^19.0.0',
+        '@types/react': '^19.0.0',
+      },
       peerDependenciesMeta: Object.fromEntries(['@ifloom/react', 'react', 'react-dom', '@types/react'].map((peer) => [peer, { optional: true }])),
-      devDependencies: { '@ifloom/react': range, '@types/react': '^19.3.0' },
+      devDependencies: { '@ifloom/react': rangeOf('react'), '@types/react': '^19.3.0' },
     },
     null,
     2,
@@ -244,6 +254,11 @@ The React UI is optional: the \`@ifloom/plugin-${name}/react\` subpath renders t
 `,
 )
 console.log(`Made ${at(page)}`)
+writeFileSync(
+  announce,
+  `---\n"@ifloom/plugin-${name}": minor\n---\n\nAdded: \`@ifloom/plugin-${name}\`, TODO(new-plugin): what a game author can now do with it.\n`,
+)
+console.log(`Made ${at(announce)}`)
 editNav()
 
 console.log(`

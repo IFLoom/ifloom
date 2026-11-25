@@ -10,6 +10,10 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 - A portrait beside every spoken line. Each `say` beat in the view carries its speaker's picture as `image`: the speaker entity's, or for the player's own lines the new content key [`player`](/docs/reference/content#content), `player: { image: 'people/you.png' }`. The React UI shows it beside the line whenever there is one, in the `line` and `line-portrait` parts, and `ui: { portraits: false }` on the game or a scene leaves them out. Before, only a scene's single `speaker` had a picture, in the header.
 
+### Changed
+
+- The [Twine phrasebook](/docs/reference/twine-phrasebook#a-speech-macro-and-portraits) has an entry for a speech macro: a spoken line under an entity, with the entity's picture as its portrait and `player.image` for the player's.
+
 ### Fixed
 
 - A [notice](/docs/reference/notices)'s title fills its [tokens](/docs/reference/prose#tokens) as it's shown, as its `text` does and as the docs said: `{ notify: 'Now {{rank}}' }` showed the braces.

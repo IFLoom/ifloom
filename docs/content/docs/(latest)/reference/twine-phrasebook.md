@@ -203,6 +203,34 @@ triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ scene: 'br
 
 A scene can't include another scene's choices, so a shared set of links is written on each scene that offers it, or offered once as actions.
 
+### A speech macro and portraits
+
+```html
+<<speech "Mara">>There you are! Right on time.<</speech>>
+<<speech "You">>Where do I start?<</speech>>
+```
+
+SugarCube has no speech macro of its own, but most games add one, a widget or a `Macro.add` that puts the speaker's name and portrait beside the line. In IFLoom it's a spoken line: `say('mara', '…')` in a body, or `@mara: "…"` in prose. The speaker is an [entity](/docs/reference/entities), so the line shows the entity's name, and a renamed character is renamed everywhere. The entity's `image` is the portrait, which the [React UI](/docs/reference/react/components#beat) shows beside every line whose speaker has one. The player's own lines are `say('you', '…')`, and their portrait is content's [`player.image`](/docs/reference/content#content):
+
+```ts
+import { say, type Content } from '@ifloom/engine'
+
+export const counter: Content = {
+  player: { image: 'people/you.png' },
+  kinds: [{ id: 'character', label: 'Person', unique: true }],
+  entities: [{ id: 'mara', of: 'character', name: 'Mara', image: 'people/mara.png' }],
+  scenes: [
+    {
+      id: 'first-day',
+      body: [say('mara', 'There you are! Right on time.'), say('you', 'Where do I start?')],
+      choices: [{ id: 'apron', label: 'Tie on an apron', effects: [{ scene: null }] }],
+    },
+  ],
+}
+```
+
+A converted game's speech lines map one to one, so a script can turn `<<speech "Mara">>…<</speech>>` into `say('mara', '…')`. [`portraits`](/docs/reference/react/hints#portraits) turns the pictures off for a scene that's read without them. In the plugins, a [cast](/docs/reference/plugins/cast) character is the same entity, so their schedule and their lines share one picture.
+
 ### Widgets
 
 ```html

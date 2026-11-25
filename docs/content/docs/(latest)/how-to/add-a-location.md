@@ -86,7 +86,26 @@ export const office = places.location({
 })
 ```
 
-The first entry that holds gives the reason, so put the most particular first. On a Friday evening the exit is greyed out with `Closed. Back on Monday.`, and on a Tuesday evening with `Closed. Opens tomorrow morning.` An entry only stops the player walking in. To send out a player who is inside at closing time, give a [trigger](/docs/reference/triggers) on the same condition a `places.move('high-street')` effect.
+The first entry that holds gives the reason, so put the most particular first. On a Friday evening the exit is greyed out with `Closed. Back on Monday.`, and on a Tuesday evening with `Closed. Opens tomorrow morning.`
+
+## Send the player out at closing time
+
+A `blocked` entry only stops the player walking in. A player who is inside when it starts to hold stays there, so a game that closes the doors on them sends them out with a [trigger](/docs/reference/triggers). It holds while the player is at the location after hours, moves them out with `places.move`, and says why. `once: { per: 'turn' }` lets it fire each time, where a trigger without it fires once in the whole game:
+
+```ts
+import type { TriggerDef } from '@ifloom/engine'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+
+export const closing: TriggerDef = {
+  id: 'office.closing',
+  once: { per: 'turn' },
+  when: { all: [places.at('office'), { not: calendar.period('morning', 'afternoon') }] },
+  effects: [places.move('high-street'), { notify: 'The office closes, and you head out onto the high street.' }],
+}
+```
+
+`places.move` puts the player there without walking, so it's never refused and doesn't run the high street's arrival effects.
 
 ## Hide a door until it opens
 

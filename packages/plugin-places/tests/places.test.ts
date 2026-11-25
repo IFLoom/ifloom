@@ -17,7 +17,7 @@ import {
   type Content,
   type Pack,
 } from '@ifloom/engine'
-import { loadChecked } from '@ifloom/engine/testing'
+import { loadChecked, play } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { locationOf, locationsOf, places, type PlaceDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
@@ -137,6 +137,30 @@ describe('places', () => {
     const evening = clock.write(walk(g, house, 'street'), { day: 0, period: 'evening' })
     expect(whyNot(evening, g, places.go('cafe'))).toBe('Closed. Opens tomorrow morning.')
     expect(shown(evening, g).exits.find((exit) => exit.id === 'cafe')?.disabled).toBe('Closed. Opens tomorrow morning.')
+  })
+
+  it('keep a player inside a location its blocked entries close, until a trigger sends them out', () => {
+    // As how-to/add-a-location shows: blocked only refuses walking in, and a trigger moves the player out at closing.
+    const closing = {
+      id: 'cafe.closing',
+      once: { per: 'turn' as const },
+      when: { all: [places.at('cafe'), { not: calendar.period('morning', 'afternoon') }] },
+      effects: [places.move('street'), { notify: 'The café closes.' }],
+    }
+    const plain = game().game
+    const closes = loadChecked([{ name: 'base' }, { ...town, triggers: [closing] }], {
+      id: 'town',
+      title: 'Town',
+      plugins: [calendar(), places({ start: 'house' })],
+    })
+    const nap = { type: 'action' as const, id: 'nap' }
+    // Without the trigger, the evening finds the player still in the closed café.
+    const stayed = play(walk(plain, startingState(plain), 'street', 'cafe'), plain, nap, nap)
+    expect(places.where(stayed, plain)).toBe('cafe')
+    // With it, they're put out on the street once it closes, and told why.
+    const sent = play(walk(closes, startingState(closes), 'street', 'cafe'), closes, nap, nap)
+    expect(places.where(sent, closes)).toBe('street')
+    expect(view(sent, closes).notices.unseen.map((notice) => notice.title)).toContain('The café closes.')
   })
 
   it('hide an exit a hiding lock or a hiding `locked` stops', () => {

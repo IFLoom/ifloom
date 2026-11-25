@@ -177,7 +177,7 @@ A point can stand anywhere, at the top of the body, in a section or in a choice'
 
 Returns the effect `{ point }`, which carries the flow on from a point once the choice's `then` is done. Its signature is in [`jump`](/docs/api/engine#jump).
 
-From the point, the flow reads on as if it had got there by itself, to the end of the list the point is in and then on after the section or decision around it. A jump into a section shows the rest of the section, under its hints, even while the section's `when` fails. A jump works only as a choice's effect in the scene that has the point, so a flow loops only when the player chooses. An ending choice can jump too.
+From the point, the flow reads on as if it had got there by itself, to the end of the list the point is in and then on after the section or decision around it. A jump into a section shows the rest of the section, under its hints, even while the section's `when` fails. A jump works only as a choice's effect in the scene that has the point, so a flow loops only when the player chooses. An ending choice can jump too. Put it in the choice's `effects`, never its `then`: `jump(id)` and `point(id)` are the same object, so in a `then` it's a second point, and the checker reports `two points share the id`, naming the choice.
 
 ```ts fragment
 choice('beans', 'Ask about the beans', { effects: [jump('questions')] })

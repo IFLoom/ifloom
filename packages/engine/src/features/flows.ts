@@ -385,14 +385,31 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
   const flowing = flows(scene.body)
   const decisions = new Set<string>()
   const points = new Set<string>()
+  // The choice whose then holds each block. jump(id) builds the same object as point(id), so one written in a then
+  // reads as a second point there, and the problem says where the jump goes.
+  const inThen = new Map<Block, string>()
+  for (const { block } of blocks)
+    if (isDecide(block)) for (const choice of block.choices) for (const inner of everyBlock(choice.then ?? [])) inThen.set(inner.block, choice.id)
+  const pointBlocks = new Map<string, Block>()
   for (const { block, address } of blocks) {
     if (isDecide(block)) {
       if (decisions.has(block.decide)) tools.problem(source, where, `two decisions share the id "${block.decide}"`)
       decisions.add(block.decide)
     }
     if (isPoint(block)) {
-      if (points.has(block.point)) tools.problem(source, where, `two points share the id "${block.point}"`)
+      if (points.has(block.point)) {
+        const first = pointBlocks.get(block.point)
+        const choice = inThen.get(block) ?? (first && inThen.get(first))
+        tools.problem(
+          source,
+          where,
+          choice === undefined
+            ? `two points share the id "${block.point}"`
+            : `two points share the id "${block.point}": the one in choice ${choice}'s then is a point, not a jump. To go back to the point, put jump('${block.point}') in the choice's effects`,
+        )
+      }
       points.add(block.point)
+      if (!pointBlocks.has(block.point)) pointBlocks.set(block.point, block)
     }
     if (isCases(block)) {
       if (!block.cases.length) tools.problem(source, where, `block ${address}: cases lists no blocks, so it shows nothing`)

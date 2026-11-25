@@ -139,7 +139,15 @@ A passage is a scene, and each link is a [choice](/docs/reference/scenes#choice)
 
 The link text is the choice's `label`, and a scene with no choices is an ending. A setter link, `[[Buy a coffee|Cafe][$coins -= 3]]`, is a choice with more than one effect.
 
-A passage that carries on after a link, with the text the link brings below it, is a [flowing scene](/docs/reference/flows). A decision partway through the body waits for the player to choose, and the choice's `then` comes next, before the rest of the passage. A link back to an earlier part of the passage, such as a list of questions to ask, is a `point()` and a choice that `jump()`s to it.
+A passage that carries on after a link, with the text the link brings below it, is a [flowing scene](/docs/reference/flows). A decision partway through the body waits for the player to choose, and the choice's `then` comes next, before the rest of the passage. A link back to an earlier part of the passage, such as a list of questions to ask, is a `point()` and a choice that `jump()`s to it. The jump goes in the choice's `effects`, never its `then`:
+
+```ts fragment
+point('questions'),
+decide('ask', [
+  choice('beans', 'Ask about the beans', { then: [say('mara', 'From the hills, mostly.')], effects: [jump('questions')] }),
+  choice('done', 'That’s all'),
+]),
+```
 
 ### `<<link>>` and `<<button>>`
 

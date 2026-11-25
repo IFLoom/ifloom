@@ -6,6 +6,10 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ## [Unreleased]
 
+### Fixed
+
+- A `jump()` written in a choice's `then` instead of its `effects` is reported for what it is. It's the same object as `point()`, so the checker said only `two points share the id "ask"`; now it names the choice and says to put `jump('ask')` in the choice's `effects`. The [Twine phrasebook](/docs/reference/twine-phrasebook#passages-and-links) and the [flows reference](/docs/reference/flows#jump) say so too.
+
 ## [0.1.1] - 2026-11-24
 
 ### Fixed

@@ -144,6 +144,8 @@ export function point(id: string): Block {
 /**
  * Returns the jump effect `{ point: id }`, which carries the flow on from a point instead of after the choice's
  * decision, once its `then` is done. A flow loops only this way, through a choice.
+ *
+ * It goes in a choice's `effects`, never its `then`: it's the same object as `point(id)`, so in a `then` it's a point.
  */
 export function jump(id: string): { point: string } {
   return { point: id }

@@ -280,6 +280,20 @@ describe('the flow checks', () => {
     )
   })
 
+  it('say where a jump goes when one is written in a choice’s then, where it reads as a second point', () => {
+    // jump('ask') and point('ask') are the same object, so in a then it's a point, and the loop never happens.
+    const loop: DataScene = {
+      id: 'loop',
+      body: [point('ask'), decide('d', [choice('again', 'Ask again', { then: [text('Once more.'), jump('ask')] }), choice('done', 'Done')])],
+      choices: [],
+    }
+    const { problems } = loadGame([{ name: 'loop', scenes: [loop] }], { id: 'loop', title: 'Loop' })
+    expect(problems.map((problem) => problem.what)).toContain(
+      `two points share the id "ask": the one in choice again's then is a point, not a jump. To go back to the point, put jump('ask') in the choice's effects`,
+    )
+    expect(problems.map((problem) => problem.what)).not.toContain('two points share the id "ask"')
+  })
+
   it('let a decision at the end of a pick’s then jump back, since the other picks carry on', () => {
     const hub: DataScene = {
       id: 'hub',

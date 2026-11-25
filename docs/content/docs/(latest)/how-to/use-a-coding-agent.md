@@ -8,7 +8,8 @@ Use this when a coding agent, such as Claude Code, Cursor or Codex, writes or ch
 
 Hand the agent one of the files the docs site publishes for language models:
 
-- [`llms-full.txt`](https://ifloom.dev/llms-full.txt) holds every page in one file. Give it to an agent with room for it in its context.
+- [`llms-full.txt`](https://ifloom.dev/llms-full.txt) holds every page in one file, about 3 MB. Give it to an agent with room for it in its context.
+- `llms/<section>.txt` holds one section's pages in one file, such as [`llms/how-to.txt`](https://ifloom.dev/llms/how-to.txt) for the how-to guides or [`llms/reference.txt`](https://ifloom.dev/llms/reference.txt), for an agent with less room. `llms.txt` lists them.
 - [`llms.txt`](https://ifloom.dev/llms.txt) lists every page with a link and a one-line description. Give it to an agent with a small context, and let it fetch the pages it needs.
 
 Each page is also plain Markdown under `https://ifloom.dev/llms.mdx/docs/`. The Copy Markdown button at the top of a page copies it, and the Open menu beside it opens the page in ChatGPT, Claude or Cursor. An agent that works offline in a clone of the [IFLoom repository](https://github.com/IFLoom/ifloom) can read the same pages in `docs/content/docs/`.

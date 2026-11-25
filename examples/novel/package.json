@@ -12,13 +12,13 @@
     "playtest": "ifloom playtest --turns 3 --out playtest/read.txt"
   },
   "dependencies": {
-    "@ifloom/audio": "^0.1.1",
-    "@ifloom/browser": "^0.1.1",
-    "@ifloom/engine": "^0.1.1",
-    "@ifloom/react": "^0.1.1"
+    "@ifloom/audio": "^0.1.2",
+    "@ifloom/browser": "^0.1.2",
+    "@ifloom/engine": "^0.1.2",
+    "@ifloom/react": "^0.1.2"
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.1.1",
+    "@ifloom/cli": "^0.1.2",
     "@tailwindcss/vite": "4.3.3",
     "@vitejs/plugin-react": "6.1.1",
     "tailwindcss": "4.3.3"

@@ -11,12 +11,12 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
-    "@ifloom/audio": "^0.1.1",
-    "@ifloom/browser": "^0.1.1",
-    "@ifloom/engine": "^0.1.1"
+    "@ifloom/audio": "^0.1.2",
+    "@ifloom/browser": "^0.1.2",
+    "@ifloom/engine": "^0.1.2"
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.1.1",
+    "@ifloom/cli": "^0.1.2",
     "typescript": "6.0.3"
   }
 }

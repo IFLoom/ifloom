@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/plugin-calendar",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "description": "A calendar for IFLoom: the periods of a day, the days of a week, sleep and a curfew, and what a turn is.",
   "keywords": [
@@ -48,8 +48,8 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.1.1",
-    "@ifloom/react": "^0.1.1",
+    "@ifloom/engine": "^0.1.2",
+    "@ifloom/react": "^0.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@types/react": "^19.0.0"
@@ -69,7 +69,7 @@
     }
   },
   "devDependencies": {
-    "@ifloom/react": "^0.1.1",
+    "@ifloom/react": "^0.1.2",
     "@types/react": "^19.3.0"
   }
 }

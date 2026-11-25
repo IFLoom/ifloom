@@ -80,18 +80,18 @@ work/
    ```json
    {
      "dependencies": {
-       "@ifloom/engine": "file:../ifloom/packs/ifloom-engine-0.1.1.tgz",
-       "@ifloom/react": "file:../ifloom/packs/ifloom-react-0.1.1.tgz",
-       "@ifloom/audio": "file:../ifloom/packs/ifloom-audio-0.1.1.tgz",
-       "@ifloom/browser": "file:../ifloom/packs/ifloom-browser-0.1.1.tgz"
+       "@ifloom/engine": "file:../ifloom/packs/ifloom-engine-0.1.2.tgz",
+       "@ifloom/react": "file:../ifloom/packs/ifloom-react-0.1.2.tgz",
+       "@ifloom/audio": "file:../ifloom/packs/ifloom-audio-0.1.2.tgz",
+       "@ifloom/browser": "file:../ifloom/packs/ifloom-browser-0.1.2.tgz"
      },
      "devDependencies": {
-       "@ifloom/cli": "file:../ifloom/packs/ifloom-cli-0.1.1.tgz"
+       "@ifloom/cli": "file:../ifloom/packs/ifloom-cli-0.1.2.tgz"
      }
    }
    ```
 
-   List `@ifloom/audio` and `@ifloom/browser` even though they're peers of `@ifloom/react`, or the package manager fetches them from the registry. A package's file is its name without the `@`, with the `/` as a `-`, then its version, so `@ifloom/plugin-jobs` is `ifloom-plugin-jobs-0.1.1.tgz`. Add one for each plugin the game uses.
+   List `@ifloom/audio` and `@ifloom/browser` even though they're peers of `@ifloom/react`, or the package manager fetches them from the registry. A package's file is its name without the `@`, with the `/` as a `-`, then its version, so `@ifloom/plugin-jobs` is `ifloom-plugin-jobs-0.1.2.tgz`. Add one for each plugin the game uses.
 
 4. Install and run it:
 

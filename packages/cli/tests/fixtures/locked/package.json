@@ -4,8 +4,8 @@
   "type": "module",
   "description": "A tiny game with locked content, for the CLI's tests of encrypting it.",
   "dependencies": {
-    "@ifloom/cli": "^0.1.1",
-    "@ifloom/engine": "^0.1.1",
-    "@ifloom/plugin-unlocks": "^0.1.1"
+    "@ifloom/cli": "^0.1.2",
+    "@ifloom/engine": "^0.1.2",
+    "@ifloom/plugin-unlocks": "^0.1.2"
   }
 }

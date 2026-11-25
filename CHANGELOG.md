@@ -6,6 +6,8 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-25
+
 ### Added
 
 - The game's own calls can be declared and typed, as a plugin's are. Declare them with `defineCalls('game', …)` and pass the rules through the new [`defineRules`](/docs/reference/custom#definerules) (from `@ifloom/engine/plugin`): each condition, effect, macro and command gets its arguments typed, in place of `unknown`, and the checker reports a `game/` call that leaves an argument out, misspells one or gives the wrong type. `GameRules` takes `calls`. [Typed calls](/docs/reference/custom#typed-calls) shows it, with the registries that type content's calls.

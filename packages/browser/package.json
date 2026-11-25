@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/browser",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "description": "Browser helpers for IFLoom games with any framework or none: the minigame clock, keyboard shortcuts, save-slot numbers and reveal timing.",
   "keywords": [
@@ -43,6 +43,6 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.1.1"
+    "@ifloom/engine": "^0.1.2"
   }
 }

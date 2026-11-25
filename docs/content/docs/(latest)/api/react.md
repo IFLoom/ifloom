@@ -290,6 +290,8 @@ type Classes = {
   beats?: string | ((defaults: string) => string)
   beat?: string | ((defaults: string) => string)
   'speaker-name'?: string | ((defaults: string) => string)
+  line?: string | ((defaults: string) => string)
+  'line-portrait'?: string | ((defaults: string) => string)
   reveal?: string | ((defaults: string) => string)
   'inline-mail'?: string | ((defaults: string) => string)
   'mail-header'?: string | ((defaults: string) => string)
@@ -1988,6 +1990,8 @@ type PartKey =
   | 'beats'
   | 'beat'
   | 'speaker-name'
+  | 'line'
+  | 'line-portrait'
   | 'reveal'
   | 'inline-mail'
   | 'mail-header'

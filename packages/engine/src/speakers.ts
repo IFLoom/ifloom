@@ -48,8 +48,8 @@ export function playerName(state: GameState, game: Game): string {
 }
 
 /**
- * Returns the function that finds the speaker of a spoken line by its id, in this game and state. The name shown is
- * the entity's or the player's.
+ * Returns the function that finds the speaker of a spoken line by its id, in this game and state. The name and
+ * picture shown are the entity's, or the player's: their name, and content's `player.image`.
  *
  * `'player'` is the player, and `'you'` is whoever the player is playing. Any other id names an entity the way a
  * scene's `speaker` does (`'ava'` is `character:ava`, else the one entity with that id), and the line is the player's
@@ -59,9 +59,18 @@ export function playerName(state: GameState, game: Game): string {
 export function lineSpeakers(state: GameState, game: Game): SpeakerFinder {
   const playing = protagonist(state)
   return (id) => {
-    if (id === PLAYER || (id === YOU && playing === PLAYER)) return { who: 'player', name: playerName(state, game) }
+    if (id === PLAYER || (id === YOU && playing === PLAYER)) {
+      const image = game.player?.image
+      return { who: 'player', name: playerName(state, game), ...(image !== undefined ? { image: artSrc(image) } : {}) }
+    }
     const ref = speakerRef(state, game, id)
     if (ref === undefined) return { who: 'character', name: id }
-    return { who: ref === playing ? 'player' : 'character', speaker: ref, name: entityName(state, game, ref) }
+    const image = entityImage(state, game, ref)
+    return {
+      who: ref === playing ? 'player' : 'character',
+      speaker: ref,
+      name: entityName(state, game, ref),
+      ...(image !== undefined ? { image: artSrc(image) } : {}),
+    }
   }
 }

@@ -79,6 +79,7 @@ describe('core features are leaves', () => {
       'features/notices.ts',
       'features/panels.ts',
       'features/phrases.ts',
+      'features/player.ts',
       'features/rolls.ts',
       'features/saving.ts',
       'features/scenes.ts',
@@ -153,6 +154,7 @@ describe('the registry', () => {
       saving: { conditions: [], effects: [], commands: [] },
       rolls: { conditions: ['roll'], effects: ['roll'], commands: [] },
       phrases: { conditions: [], effects: [], commands: [] },
+      player: { conditions: [], effects: [], commands: [] },
       changes: { conditions: [], effects: [], commands: [] },
       ending: { conditions: [], effects: [], commands: [] },
     })

@@ -51,10 +51,20 @@ export type SceneBeat =
      * the entity when the line's id names one (`@ava: "…"`).
      *
      * `name` is the name to show, the speaker entity's, the player's, or the label of a `Name: "…"` line, and is left out
-     * for a bare quote. `voice` is the track of the line read aloud, from `[[voice:id]]` at its end, and `spans` are as
-     * a text beat's.
+     * for a bare quote. `image` is the speaker's picture through `artSrc`: their entity's, or for the player's own line
+     * content's `player.image`, left out when there's none. `voice` is the track of the line read aloud, from
+     * `[[voice:id]]` at its end, and `spans` are as a text beat's.
      */
-    | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; name?: string; text: string; voice?: string; spans?: InlineSpan[] }
+    | {
+        type: 'say'
+        who: 'character' | 'player'
+        speaker?: EntityRef
+        name?: string
+        image?: string
+        text: string
+        voice?: string
+        spans?: InlineSpan[]
+      }
     /** A picture, from `[[img:…]]` or `[[wide:…]]`, with `src` through `artSrc`. */
     | { type: 'image'; src: string; alt?: string; size: BeatSize }
     /**
@@ -264,7 +274,13 @@ function quoteOnly(block: string): string | null {
  *
  * `lineSpeakers` returns the engine's.
  */
-export type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string }
+/**
+ * The function that finds who says a spoken line from the id it's written under.
+ *
+ * It answers whose line it is, the speaker's entity, the name to show and the speaker's picture, through `artSrc` and
+ * left out when there's none.
+ */
+export type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string; image?: string }
 
 /** The default finder, for beats read with no game: `@you` and `@player` are the player's, under the engine's word for them, and any other id a character's, under the id. */
 const byId: SpeakerFinder = (id) => (id === 'you' || id === 'player' ? { who: 'player', name: STRINGS.you } : { who: 'character', name: id })
@@ -291,7 +307,14 @@ function spoken(block: string, lastSay: 'character' | 'player' | null, find: Spe
   const byIdLine = block.match(BY_ID)
   if (byIdLine) {
     const found = find(byIdLine[1])
-    return { type: 'say', who: found.who, ...(found.speaker !== undefined ? { speaker: found.speaker } : {}), name: found.name, text: byIdLine[2] }
+    return {
+      type: 'say',
+      who: found.who,
+      ...(found.speaker !== undefined ? { speaker: found.speaker } : {}),
+      name: found.name,
+      ...(found.image !== undefined ? { image: found.image } : {}),
+      text: byIdLine[2],
+    }
   }
   const named = block.match(NAMED)
   if (named) return { type: 'say', who: 'character', name: named[1].trim(), text: named[2] }

@@ -96,7 +96,7 @@ Prose has no markup for timing. A paragraph that should wait before it appears i
 
 ### Speech
 
-A spoken line is a whole paragraph of the form `@id: "…"`, under the id of who says it. The id names an entity as a scene's [`speaker`](/docs/reference/scenes#speaker) does: a bare id, a full reference such as `@staff:dev`, `@you` for whoever the player is playing, or `@player` for the player. The beat's `speaker` is the entity's reference and its `name` is the entity's name with tokens filled, so renaming an entity renames every line under its id.
+A spoken line is a whole paragraph of the form `@id: "…"`, under the id of who says it. The id names an entity as a scene's [`speaker`](/docs/reference/scenes#speaker) does: a bare id, a full reference such as `@staff:dev`, `@you` for whoever the player is playing, or `@player` for the player. The beat's `speaker` is the entity's reference and its `name` is the entity's name with tokens filled, so renaming an entity renames every line under its id. Its `image` is the speaker's picture, the entity's `image` through [`artSrc`](#artsrc), or for the player's own line content's [`player.image`](/docs/reference/content#content), and left out when there's none, so a UI can put a portrait beside every line.
 
 The player's own lines, and those of the entity the player is playing, have `who: 'player'`. They show under the name the player's saves are listed under, from [`rules.saveName`](/docs/reference/rules#savename), or else the string `you`, which a game in another language rewords in its [strings](/docs/reference/strings#buttons-and-labels).
 

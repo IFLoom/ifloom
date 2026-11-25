@@ -79,10 +79,26 @@ function ImageBeat({ beat, attrs }: { beat: Extract<SceneBeat, { type: 'image' }
   )
 }
 
+/** The picture beside a spoken line, left out when its file is missing, as a story picture is. */
+function LinePortrait({ src }: { src: string }) {
+  const portrait = usePart('line-portrait', 'mt-1 size-10 shrink-0 rounded-full object-cover')
+  const [missing, setMissing] = useState<string | null>(null)
+  if (missing === src) return null
+  return <Picture {...portrait} src={src} alt="" onError={() => setMissing(src)} />
+}
+
+/** Whether spoken lines show their speakers' pictures: the scene's `ui.portraits`, else the game's, else yes. */
+function usePortraits(): boolean {
+  const { runner, snapshot } = useGame()
+  return snapshot.view.scene.ui?.portraits ?? runner.game.ui?.portraits ?? true
+}
+
 function BeatImpl({ beat }: { beat: SceneBeat }) {
   const text = usePart('beat', 'leading-prose')
   const say = usePart('beat', beat.type === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
   const speaker = usePart('speaker-name', 'block text-xs font-semibold tracking-wide uppercase opacity-75')
+  const line = usePart('line', 'flex items-start gap-3')
+  const portraits = usePortraits()
   const chose = usePart('beat', 'leading-prose pl-6 text-sm text-muted-foreground italic')
   const image = usePart(
     'beat',
@@ -95,8 +111,8 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
           {beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}
         </p>
       )
-    case 'say':
-      return (
+    case 'say': {
+      const words = (
         <p {...say} data-beat="say" data-who={beat.who}>
           {/* Who says it, over the words. A quote that answers the line before names no one, and shows no name. */}
           {beat.name ? <span {...speaker}>{beat.name}</span> : null}
@@ -104,6 +120,15 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
           {beat.voice ? <VoiceReplay voice={beat.voice} /> : null}
         </p>
       )
+      // The speaker's picture beside the words, when they have one and the scene or game doesn't turn it off.
+      if (!beat.image || !portraits) return words
+      return (
+        <div {...line} data-who={beat.who}>
+          <LinePortrait src={beat.image} />
+          {words}
+        </div>
+      )
+    }
     case 'image':
       return <ImageBeat beat={beat} attrs={image} />
     case 'video':

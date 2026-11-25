@@ -19,6 +19,7 @@ Content has no id and no schema, because the engine it is compiled with reads it
 | `name` | The name problems give this file, such as `story.cafe`. Problems say `content` for a file without one. |
 | `scenes`, `storylines`, `stats`, `kinds`, `actions`, `triggers`, `inputs`, `minigames`, `timers`, `settings` | Lists merged by `id`, each id declared once across the content. |
 | `introScene` | The [scene](/docs/reference/scenes#datascene) a new game opens on, given by one file. A game without one opens on its room. |
+| `player` | What the game says of the player, given by one file: `image`, the picture beside the player's own spoken lines (a path in `art/` or a URL), checked as a file. A protagonist the [`you`](/docs/reference/effects#you) effect chooses is an entity, with its own picture. |
 | `finished`, `carryOver` | The condition for a finished game and what a New Game+ keeps, each given by one file. See [`CarryOver`](/docs/reference/state#carryover). |
 | `kv`, `resets` | The [kv store](/docs/reference/glossary#kv) a new game starts with, and the keys put back each turn, merged by key. See [`resets`](/docs/reference/rules#resets). |
 | `entities` | The [entities](/docs/reference/entities#entitydef) there at the start, merged by kind and id, so two kinds can each have an entity `ana`. |

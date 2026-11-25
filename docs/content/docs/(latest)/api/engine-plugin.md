@@ -1593,14 +1593,14 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 Type. Explained in [Prose and markup](/docs/reference/prose#speakerfinder).
 
-A function that returns the speaker of a line written under `@id`, given the id. It returns whether the line is the
-player's, the entity the id names, and the name to show.
+The function that finds who says a spoken line from the id it's written under.
 
-`lineSpeakers` returns the engine's.
+It answers whose line it is, the speaker's entity, the name to show and the speaker's picture, through `artSrc` and
+left out when there's none.
 
 ```ts shape
 import type { SpeakerFinder } from '@ifloom/engine/plugin'
-type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string }
+type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string; image?: string }
 ```
 
 Uses: [`EntityRef`](/docs/api/engine#entityref).

@@ -18,6 +18,8 @@
  *   dropped on a table.
  * - `ui.fold` on a section: its beats are drawn as one part that opens and
  *   shuts, under the words given. `fold()` from `@ifloom/engine` writes it.
+ * - `ui.portraits` on a scene or the game: `false` leaves out the picture
+ *   beside each spoken line, which shows whenever the speaker has one.
  *
  * It also declares the inline pieces it draws in prose by default, by
  * augmenting `InlineUi`: `[[ui:modal|words|key|title]]`,
@@ -63,6 +65,8 @@ declare module '@ifloom/engine' {
   interface SceneUi {
     /** The transitions this scene, or this location's room, comes on screen and goes off with. The game's `ui.transition` if left out. */
     transition?: Transition | TransitionName
+    /** Whether a spoken line shows its speaker's picture beside it in this scene. The game's `ui.portraits` if left out. */
+    portraits?: boolean
   }
   interface ChoiceUi {
     /** The transition the screen this leads to comes in with, over that screen's own. With `out`, it also sets how this screen goes. */
@@ -120,6 +124,8 @@ declare module '@ifloom/engine' {
     transition?: Transition | TransitionName
     /** The game's transition names beyond `TRANSITIONS`, which its own CSS plays. */
     transitionNames?: string[]
+    /** Whether a spoken line shows its speaker's picture beside it, when the speaker has one. `true` if left out. */
+    portraits?: boolean
     /**
      * The ids of the game's UI settings that the React UI acts on itself. `textSize` names a choice setting that sizes
      * the page (`small`, `normal`, `large` or `larger`).
@@ -258,6 +264,7 @@ export const UI_HINTS: readonly UiHint[] = [
         : `ui.timer "${String(timer)}" is not a timer the game has`,
   },
   { name: 'tilt', on: ['block'], check: (tilt) => (typeof tilt === 'boolean' ? undefined : 'ui.tilt is true or false') },
+  { name: 'portraits', on: ['scene', 'game'], check: (portraits) => (typeof portraits === 'boolean' ? undefined : 'ui.portraits is true or false') },
   { name: 'fold', on: ['block'], check: (fold) => (typeof fold === 'string' && fold.trim() ? undefined : 'ui.fold is the words the fold is opened by') },
   {
     name: 'display',

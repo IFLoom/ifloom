@@ -77,6 +77,8 @@ export const PART_KEYS = [
   'beats',
   'beat',
   'speaker-name',
+  'line',
+  'line-portrait',
   'reveal',
   'inline-mail',
   'mail-header',

@@ -88,6 +88,8 @@ These parts frame the page: the regions a layout is made of, its sections, and t
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `speaker-name` | The name over a spoken line: the speaker's, or the player's on their own lines. Not rendered on a line that names no one. Each preset styles it, and `display: none` hides it. |
+| `line` | A spoken line with its speaker's picture: the `line-portrait` beside the line's `beat`. Carries `data-who`. Only a line whose speaker has a picture has one, and none while the [`portraits`](/docs/reference/react/hints#portraits) hint is `false`. |
+| `line-portrait` | The speaker's picture beside a spoken line, round, `size-10`. |
 | `reveal` | The beats from a block with a [`reveal`](/docs/reference/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
 | `group` | The beats of a section with any ui hint, rendered together. Carries a `data-*` attribute for each hint that's a string, a number or true/false, such as `data-card="result"`. [Add panels, sections, components and hints](/docs/how-to/react/extend-the-react-ui) declares one of your own. |
 | `fold` | A section with a [`fold`](/docs/reference/react/hints#fold) hint, as a `<details>`, inside its `group`. |

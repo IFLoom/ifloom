@@ -356,6 +356,7 @@ function spokenBeat(block: Extract<Block, { say: string }>, state: GameState, ga
     who: found.who,
     ...(found.speaker !== undefined ? { speaker: found.speaker } : {}),
     name: found.name,
+    ...(found.image !== undefined ? { image: found.image } : {}),
     text: fillTokens(state, game, block.say),
     ...(block.voice !== undefined ? { voice: block.voice } : {}),
   }

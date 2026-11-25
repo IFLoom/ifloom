@@ -414,7 +414,7 @@ function SceneTitle() {
 | Kind | Meaning |
 |---|---|
 | `text` | A paragraph. Its `spans` render in the line, an inline action as an [`InlineAction`](#inlineaction) and a tooltip as a [`Tip`](#tip). Bold and italics are the parts `bold` and `italic`. |
-| `say` | A paragraph in `--speech` under the speaker's name, the `speaker-name` part. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a replay button while the audio player runs. |
+| `say` | A paragraph in `--speech` under the speaker's name, the `speaker-name` part. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a replay button while the audio player runs. A line whose beat has an `image` sits in a `line` part with the speaker's picture beside it, the `line-portrait` part, unless the [`portraits`](/docs/reference/react/hints#portraits) hint is `false`. A replacement reads the picture from the beat's `image`. |
 | `image` | A [`Picture`](#picture), full width or at most `max-w-sm` for `size: 'inline'`, tilted a little by the [`tilt`](/docs/reference/react/hints#tilt) hint. |
 | `video` | A [`Video`](#video), sized as a picture is. |
 | `sound` | Nothing, because the audio player plays it. |

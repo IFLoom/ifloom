@@ -14,6 +14,7 @@ A ui hint is a `ui` field content writes on a scene, a choice, a block, a stat, 
 | [`dice`](#dice) | On a block, the roll rendered above it, which the block waits for. |
 | [`timer`](#timer) | On a block, the running timer that counts down under it. |
 | [`tilt`](#tilt) | On a block, its picture set at a slight angle. |
+| [`portraits`](#portraits) | On a scene or the game, `false` to leave out the picture beside each spoken line. |
 | [`fold`](#fold) | On a section, the words the player opens and shuts its beats by. |
 | [`display`](#display) | On a stat, a number, a bar or pips. |
 | [`hue`](#hue) | On an entity or a kind, the colour of their spoken lines. |
@@ -134,6 +135,20 @@ export const body: Block[] = [{ prose: 'flat.ring', ui: { timer: 'flat.ring' } }
 import type { Block } from '@ifloom/engine'
 
 export const body: Block[] = [{ prose: 'flat.photo', ui: { tilt: true } }]
+```
+
+## portraits
+
+`portraits` on a [scene](/docs/reference/scenes#datascene) or the game set to `false` leaves out the picture beside each spoken line. A line shows its speaker's picture whenever the beat has one: the speaker entity's `image`, or the player's from content's [`player`](/docs/reference/content#content). A scene's hint wins over the game's.
+
+```ts
+import type { Content } from '@ifloom/engine'
+
+export const look: Content = {
+  player: { image: 'people/you.png' },
+  // The letter scene is read alone, so its lines show no pictures.
+  scenes: [{ id: 'letter', body: [{ text: 'Dear Sam,' }], choices: [], ui: { portraits: false } }],
+}
 ```
 
 ## fold

@@ -54,6 +54,33 @@ describe('speakers', () => {
     expect(view(nobody.state, nobody.game).scene).toMatchObject({ speaker: null, image: null })
   })
 
+  it('give each spoken line its speaker’s picture: the entity’s, or content’s player.image for the player’s own', () => {
+    const pictures = (content: Content) => {
+      const { game, state } = open('fence', content)
+      return view(state, game).scene.beats.flatMap((beat) => (beat.type === 'say' ? [[beat.name ?? null, beat.image ?? null]] : []))
+    }
+    // Sam has no picture, and nor does a line under a label; the player has none until content gives one.
+    expect(pictures(lane)).toEqual([
+      ['Ava', 'art/people/ava.jpg'],
+      ['You', null],
+      ['Sam', null],
+      ['Ruth', null],
+    ])
+    expect(pictures({ ...lane, player: { image: 'people/you.png' } })[1]).toEqual(['You', 'art/people/you.png'])
+    // A say() block reads the speaker as a line in prose does.
+    const { game, state } = open('fence', { ...lane, player: { image: 'people/you.png' } })
+    const block = (speaker: string) =>
+      view({ ...state, sceneId: 'talk' }, { ...game, scenes: [...game.scenes, { id: 'talk', body: [say(speaker, 'Hi.')], choices: [] }] })
+    expect(block('you').scene.beats[0]).toMatchObject({ who: 'player', image: 'art/people/you.png' })
+    expect(block('ava').scene.beats[0]).toMatchObject({ who: 'character', image: 'art/people/ava.jpg' })
+  })
+
+  it('check the player’s picture is a file the game has', () => {
+    const { game } = open('fence', { ...lane, player: { image: 'people/nobody.png' } })
+    const checked = checkGame(game)
+    expect(checked.files).toContainEqual(expect.objectContaining({ path: 'art/people/nobody.png', where: 'player' }))
+  })
+
   it('put the entity a spoken line is written under by id on its beat, with its name, and a label as written', () => {
     const { game, state } = open('fence')
     expect(said(view(state, game).scene.beats)).toEqual([
@@ -131,7 +158,7 @@ describe('context.beats', () => {
           { type: 'text', text: ' cat.' },
         ],
       },
-      { type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: 'Not mine.' },
+      { type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', image: 'art/people/ava.jpg', text: 'Not mine.' },
     ])
   })
 })

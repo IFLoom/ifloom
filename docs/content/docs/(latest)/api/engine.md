@@ -1036,8 +1036,7 @@ across the game's content.
 
 Content has no id or schema, since it is compiled with the engine it runs on.
 
-```ts shape
-import type { Content } from '@ifloom/engine'
+```ts fragment
 type Content = {
   name?: string
   strings?: Record<string, string>
@@ -1048,6 +1047,7 @@ type Content = {
   kinds?: KindDef[]
   entities?: EntityDef[]
   traits?: TraitTable
+  player?: PlayerDef | undefined
   kv?: Record<string, KvValue>
   resets?: Record<string, KvValue>
   storylines?: StorylineDef[]
@@ -1083,6 +1083,7 @@ type Content = {
 | `kinds` | [`KindDef[]`](#kinddef) | yes |  | The pack's kinds. A later pack's kind replaces an earlier one with the same id. |
 | `entities` | [`EntityDef[]`](#entitydef) | yes |  | The pack's entities at the start. A later pack's entity replaces an earlier one with the same kind and id. |
 | `traits` | [`TraitTable`](#traittable) | yes |  | The pack's traits, by trait id and then entity, over what each entity declares itself, such as `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's. |
+| `player` | `PlayerDef \| undefined` | yes |  | The pack's player. It replaces the content's `player` whole. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's starting kv store, by key. A later pack's value replaces an earlier one's. |
 | `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's keys reset each turn, by key. A later pack's value replaces an earlier one's. |
 | `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | The pack's storylines, merged by id over the content's. |
@@ -1942,8 +1943,7 @@ Type. Explained in [The game](/docs/reference/game#game).
 
 A loaded game, the core's fields and each feature's. `loadGame` makes it from the base, the content and the packs.
 
-```ts shape
-import type { Game } from '@ifloom/engine'
+```ts fragment
 type Game = {
   id: string
   title: string
@@ -1957,6 +1957,7 @@ type Game = {
   kinds?: KindDef[]
   entities?: EntityDef[]
   traits?: TraitTable
+  player?: PlayerDef | undefined
   kv?: Record<string, KvValue>
   resets?: Record<string, KvValue>
   storylines?: StorylineDef[]
@@ -1995,6 +1996,7 @@ type Game = {
 | `kinds` | [`KindDef[]`](#kinddef) | yes |  | The game's kinds, the sorts of entity it keeps, each with its own stats. |
 | `entities` | [`EntityDef[]`](#entitydef) | yes |  | The game's entities at the start. Play can create more. |
 | `traits` | [`TraitTable`](#traittable) | yes |  | The game's traits, by trait id and then entity. In content given to `loadGame` they're rows over what entities declare. On the game `loadGame` returns, they're every entity's traits, worked out. Read them with `declaredTrait`. |
+| `player` | `PlayerDef \| undefined` | yes |  | The game's player, such as their picture beside their own spoken lines. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv store a new game starts with, such as the stretch it opens in, `{ phase: 'arrival' }`. |
 | `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The keys the engine puts back at the start of each turn, with the value each goes back to. Use them to count something once a turn. |
 | `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | The game's storylines, threads of story each with its own kv store, which a `closeStoryline` effect rests for some turns. None if left out. |
@@ -3411,8 +3413,7 @@ Type. Explained in [Content and packs](/docs/reference/content#pack).
 Content from outside the game's code, such as a mod, unlocked supporter content or a JSON export. It goes over the
 game's content and the packs before it, replacing what they declare by id.
 
-```ts shape
-import type { Pack } from '@ifloom/engine'
+```ts fragment
 type Pack = {
   id: string
   schema: number
@@ -3425,6 +3426,7 @@ type Pack = {
   kinds?: KindDef[]
   entities?: EntityDef[]
   traits?: TraitTable
+  player?: PlayerDef | undefined
   kv?: Record<string, KvValue>
   resets?: Record<string, KvValue>
   storylines?: StorylineDef[]
@@ -3463,6 +3465,7 @@ type Pack = {
 | `kinds` | [`KindDef[]`](#kinddef) | yes |  | The pack's kinds. A later pack's kind replaces an earlier one with the same id. |
 | `entities` | [`EntityDef[]`](#entitydef) | yes |  | The pack's entities at the start. A later pack's entity replaces an earlier one with the same kind and id. |
 | `traits` | [`TraitTable`](#traittable) | yes |  | The pack's traits, by trait id and then entity, over what each entity declares itself, such as `{ 'laundry/washable': { 'clothing:scarf': { temp: 30 } } }`. A later pack's row replaces an earlier one's. |
+| `player` | `PlayerDef \| undefined` | yes |  | The pack's player. It replaces the content's `player` whole. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's starting kv store, by key. A later pack's value replaces an earlier one's. |
 | `resets` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The pack's keys reset each turn, by key. A later pack's value replaces an earlier one's. |
 | `storylines` | [`StorylineDef[]`](#storylinedef) | yes |  | The pack's storylines, merged by id over the content's. |
@@ -4606,7 +4609,7 @@ of the block it starts.
 
 ```ts shape
 import type { SceneBeat } from '@ifloom/engine'
-type SceneBeat = ({ type: 'text'; text: string; spans?: InlineSpan[] } | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; name?: string; text: string; voice?: string; spans?: InlineSpan[] } | { type: 'image'; src: string; alt?: string; size: BeatSize } | { type: 'video'; src: string; poster?: string; alt?: string; size: BeatSize; autoplay: boolean; loop: boolean; muted: boolean; controls: boolean } | { type: 'sound'; track: string } | { type: 'chose'; label: string }) & { ui?: Ui<BlockUi>; section?: Ui<BlockUi> }
+type SceneBeat = ({ type: 'text'; text: string; spans?: InlineSpan[] } | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; name?: string; image?: string; text: string; voice?: string; spans?: InlineSpan[] } | { type: 'image'; src: string; alt?: string; size: BeatSize } | { type: 'video'; src: string; poster?: string; alt?: string; size: BeatSize; autoplay: boolean; loop: boolean; muted: boolean; controls: boolean } | { type: 'sound'; track: string } | { type: 'chose'; label: string }) & { ui?: Ui<BlockUi>; section?: Ui<BlockUi> }
 ```
 
 Uses: [`InlineSpan`](#inlinespan), [`EntityRef`](#entityref), [`BeatSize`](#beatsize), [`Ui`](#ui), [`BlockUi`](#blockui).

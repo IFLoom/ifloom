@@ -148,11 +148,11 @@ describe('levels', () => {
   it('are where a stat stands against its thresholds', () => {
     const game = levelled({ at: [10, 30, 60] })
     const at = (value: number) => statLevel(begin(game, { stats: { ...startingState(game).stats, cooking: value } }), game, 'cooking')
-    expect(at(0)).toEqual({ level: 0, next: 10, progress: 0 })
-    expect(at(5)).toEqual({ level: 0, next: 10, progress: 0.5 })
-    expect(at(10)).toEqual({ level: 1, next: 30, progress: 0 })
-    expect(at(45)).toEqual({ level: 2, next: 60, progress: 0.5 })
-    expect(at(80)).toEqual({ level: 3, next: null, progress: 1 })
+    expect(at(0)).toEqual({ level: 0, name: null, next: 10, progress: 0 })
+    expect(at(5)).toEqual({ level: 0, name: null, next: 10, progress: 0.5 })
+    expect(at(10)).toEqual({ level: 1, name: null, next: 30, progress: 0 })
+    expect(at(45)).toEqual({ level: 2, name: null, next: 60, progress: 0.5 })
+    expect(at(80)).toEqual({ level: 3, name: null, next: null, progress: 1 })
     expect(statLevel(begin(game), game, 'baking')).toBeUndefined()
   })
 
@@ -169,7 +169,7 @@ describe('levels', () => {
   it('show in the view only on a stat that has them', () => {
     const game = levelled({ at: [10, 30] })
     const stats = view(begin(game, { stats: { ...startingState(game).stats, cooking: 20 } }), game).statsById
-    expect(stats.cooking.level).toEqual({ level: 1, next: 30, progress: 0.5 })
+    expect(stats.cooking.level).toEqual({ level: 1, name: null, next: 30, progress: 0.5 })
     expect(stats.baking).not.toHaveProperty('level')
   })
 
@@ -201,6 +201,28 @@ describe('levels', () => {
       'town · stat a · levels.at must go up, each threshold above the last',
       "town · stat b · levels.at 60 outside the stat's range (0 to 50)",
       'town · stat c · levels.at needs at least one threshold',
+    ])
+  })
+  it('have names, one for each level from 0, shown in the view and named in the notice by {name}', () => {
+    const ranked = withStats({
+      id: 'fitness',
+      label: 'Fitness',
+      levels: { at: [5, 10], names: ['Couch potato', 'Jogger', 'Runner'], notice: 'You’re a {name} now. {{phase}}' },
+    })
+    const withRun = { ...ranked, actions: [...(ranked.actions ?? []), { id: 'run', effects: [{ stat: 'fitness', by: 3 }] }] }
+    const start = begin(withRun, { stats: { ...startingState(withRun).stats, fitness: 3 } })
+    expect(view(start, withRun).statsById.fitness.level).toMatchObject({ level: 0, name: 'Couch potato' })
+    const after = apply(start, withRun, { type: 'action', id: 'run' }).state
+    expect(view(after, withRun).statsById.fitness.level).toMatchObject({ level: 1, name: 'Jogger' })
+    // The notice keeps its tokens, and the view fills them as it shows the notice.
+    expect(after.notices.at(-1)?.title).toBe('You’re a Jogger now. {{phase}}')
+    expect(view(after, withRun).notices.unseen[0].title).toBe('You’re a Jogger now. open')
+  })
+
+  it('report names that aren’t one for each level', () => {
+    const pack: Content = { name: 'town', stats: [{ id: 'a', label: 'A', levels: { at: [10, 20], names: ['Low', 'High'] } }] }
+    expect(loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)).toEqual([
+      'town · stat a · levels.names needs 3 names, one for level 0 and one for each threshold in at',
     ])
   })
 })

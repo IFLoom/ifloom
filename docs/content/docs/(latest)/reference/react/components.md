@@ -627,7 +627,7 @@ function TopLine() {
 
 `StatList` renders the stats the view lists, each label beside its formatted value, such as `12 coins`. Its props are in [`StatList`](/docs/api/react#statlist). A stat the game doesn't list isn't in the view, and with no stats it renders nothing.
 
-A stat with [`levels`](/docs/reference/stats#statlevels) shows its level in its label (`ui.statLevel`) and a `progressbar` towards the next one (`ui.statProgress`). A stat whose [`display`](/docs/reference/react/hints#display) hint is `'bar'` gets a bar from its `min` to its `max`, and one with `'pips'` gets a pip per point, in rows of ten at most. A range over 20 renders as a bar. Both are a `meter` for screen readers.
+A stat with [`levels`](/docs/reference/stats#statlevels) shows its level in its label, the level's name from `levels.names` or else `ui.statLevel`, and a `progressbar` towards the next one (`ui.statProgress`). A stat whose [`display`](/docs/reference/react/hints#display) hint is `'bar'` gets a bar from its `min` to its `max`, and one with `'pips'` gets a pip per point, in rows of ten at most. A range over 20 renders as a bar. Both are a `meter` for screen readers.
 
 ```ts fragment
 stats: [

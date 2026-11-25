@@ -98,7 +98,8 @@ function StatListImpl() {
               {stat.label}
               {level ? (
                 <span {...levelPart} data-level={level.level}>
-                  {words('statLevel', { level: level.level })}
+                  {/* The level's name from the stat's levels.names, else its number. */}
+                  {level.name ?? words('statLevel', { level: level.level })}
                 </span>
               ) : null}
             </dt>

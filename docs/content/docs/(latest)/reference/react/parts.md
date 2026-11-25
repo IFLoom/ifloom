@@ -67,7 +67,7 @@ These parts frame the page: the regions a layout is made of, its sections, and t
 | `stat` | One stat's row. Carries `data-stat`. |
 | `stat-label` | A stat's label. |
 | `stat-value` | A stat's value, as the game formats it. |
-| `stat-level` | A levelled stat's level (`ui.statLevel`, "Level 2"), inside its label. Carries `data-level`. |
+| `stat-level` | A levelled stat's level, its name from `levels.names` or else `ui.statLevel` ("Level 2"), inside its label. Carries `data-level`. |
 | `stat-progress` | A levelled stat's bar towards its next level, a `progressbar` holding one `<span>` as wide as the progress, labelled with `ui.statProgress`. Not rendered at the top level. The `paper` preset hides it, so a stat there shows only its level. |
 | `stat-bar` | A stat with the hint `ui: { display: 'bar' }`: a `meter` holding one `<span>` as wide as the value is from `min` to `max`. |
 | `stat-pips` | A stat with `ui: { display: 'pips' }`: a `meter` holding a pip for each point. |

@@ -5058,6 +5058,7 @@ The levels a stat declares in its `levels`, thresholds it passes as it grows. It
 import type { StatLevels } from '@ifloom/engine'
 type StatLevels = {
   at: number[]
+  names?: string[]
   notice?: string
   hidden?: boolean
 }
@@ -5066,7 +5067,8 @@ type StatLevels = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `at` | `number[]` |  |  | The value each level starts at, lowest first. A value below the first is level 0. |
-| `notice` | `string` | yes |  | The notice raised, tagged `level`, when a command takes the player's stat up a level, such as `'{label} is now level {level}.'`. The engine fills `{label}` and `{level}`, and raises no notice if left out. |
+| `names` | `string[]` | yes |  | The levels' names, one for each level from level 0 (below the first threshold) up, so one more than `at`, such as `['Couch potato', 'Jogger', 'Runner']` for `at: [10, 25]`. The view gives the stat's level its name. |
+| `notice` | `string` | yes |  | The notice raised, tagged `level`, when a command takes the player's stat up a level, such as `'{label} is now level {level}.'`. The engine fills `{label}`, `{level}` and `{name}`, the level's name, and raises no notice if left out. The view fills its tokens as it does any notice's. |
 | `hidden` | `boolean` | yes |  | The levels' hidden mark, true to keep them from the player. The view then gives the stat no `level`, and `{ level }` conditions still read them. Use it for a hidden rating, such as how much a character trusts you. |
 
 ## statOf
@@ -5153,7 +5155,7 @@ type StatView = {
   min: number
   max: number
   text: string
-  level?: { level: number; next: number | null; progress: number }
+  level?: { level: number; name: string | null; next: number | null; progress: number }
   ui?: Ui<StatUi>
 }
 ```
@@ -5166,7 +5168,7 @@ type StatView = {
 | `min` | `number` |  |  | The stat's lowest value now. |
 | `max` | `number` |  |  | The stat's highest value now. |
 | `text` | `string` |  |  | The stat's value written with its `format`, such as `'12 coins'` or `'80%'`. The bare number with no format. |
-| `level` | `{ level: number; next: number \| null; progress: number }` | yes |  | The stat's place in its `levels`, with its level, the value the next level starts at (null at the top) and its progress towards it, from 0 to 1. It's left out for a stat with no levels or hidden ones. |
+| `level` | `{ level: number; name: string \| null; next: number \| null; progress: number }` | yes |  | The stat's place in its `levels`, with its level and that level's name, null without `levels.names`. It also has the value the next level starts at (null at the top) and the progress towards it, from 0 to 1. It's left out for a stat with no levels or hidden ones. |
 | `ui` | [`Ui`](#ui)`<`[`StatUi`](#statui)`>` | yes |  | The stat's ui hints, kept as written. Left out if it has none. |
 
 ## StatWords

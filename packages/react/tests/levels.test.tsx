@@ -7,14 +7,14 @@ import { GameShell } from '../src/index.ts'
 afterEach(cleanup)
 
 /** A kitchen where cooking has levels and coins don't. */
-function kitchen(strings: Record<string, string> = {}) {
+function kitchen(strings: Record<string, string> = {}, names?: string[]) {
   const { game, problems } = loadGame(
     [
       { name: 'base', strings, actions: [] },
       {
         name: 'kitchen',
         stats: [
-          { id: 'cooking', label: 'Cooking', start: 15, levels: { at: [10, 30, 60] } },
+          { id: 'cooking', label: 'Cooking', start: 15, levels: { at: [10, 30, 60], ...(names ? { names } : {}) } },
           { id: 'coins', label: 'Coins', start: 5 },
         ],
         actions: [{ id: 'cook', label: 'Cook', effects: [{ stat: 'cooking', by: 50 }] }],
@@ -49,6 +49,15 @@ describe('StatList', () => {
     act(() => void runner.apply({ type: 'action', id: 'cook' }))
     expect(row('cooking').querySelector('[data-part="stat-level"]')!.textContent).toBe('Level 3')
     expect(row('cooking').querySelector('[data-part="stat-progress"]')).toBeNull()
+  })
+
+  it('shows the level’s name in place of its number when the stat names its levels', () => {
+    const game = kitchen({}, ['Can boil water', 'Home cook', 'Line cook', 'Chef'])
+    const runner = createRunner(game, startingState(game))
+    render(<GameShell runner={runner} />)
+    expect(row('cooking').querySelector('[data-part="stat-level"]')!.textContent).toBe('Home cook')
+    act(() => void runner.apply({ type: 'action', id: 'cook' }))
+    expect(row('cooking').querySelector('[data-part="stat-level"]')!.textContent).toBe('Chef')
   })
 
   it('writes the level in the game’s words', () => {

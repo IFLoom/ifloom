@@ -35,7 +35,7 @@ describe('stats', () => {
     expect(holds(sharp, game, { level: 'intelligence', gte: 1 })).toBe(true)
     expect(holds(sharp, game, { level: 'intelligence', gte: 2 })).toBe(false)
     expect(holds(sharp, game, { level: 'coins', gte: 1 })).toBe(false)
-    expect(statLevel(sharp, game, 'intelligence')).toEqual({ level: 1, next: 20, progress: 0.2 })
+    expect(statLevel(sharp, game, 'intelligence')).toEqual({ level: 1, name: null, next: 20, progress: 0.2 })
     expect(view(sharp, game).statsById.intelligence?.level).toBeUndefined()
   })
 

@@ -40,8 +40,16 @@ export type StatLevels = {
   /** The value each level starts at, lowest first. A value below the first is level 0. */
   at: number[]
   /**
+   * The levels' names, one for each level from level 0 (below the first threshold) up, so one more than `at`, such as
+   * `['Couch potato', 'Jogger', 'Runner']` for `at: [10, 25]`. The view gives the stat's level its name.
+   */
+  names?: string[]
+  /**
    * The notice raised, tagged `level`, when a command takes the player's stat up a level, such as
-   * `'{label} is now level {level}.'`. The engine fills `{label}` and `{level}`, and raises no notice if left out.
+   * `'{label} is now level {level}.'`.
+   *
+   * The engine fills `{label}`, `{level}` and `{name}`, the level's name, and raises no notice if left out. The view
+   * fills its tokens as it does any notice's.
    */
   notice?: string
   /**
@@ -137,12 +145,13 @@ export type StatView = {
   /** The stat's value written with its `format`, such as `'12 coins'` or `'80%'`. The bare number with no format. */
   text: string
   /**
-   * The stat's place in its `levels`, with its level, the value the next level starts at (null at the top) and its
-   * progress towards it, from 0 to 1.
+   * The stat's place in its `levels`, with its level and that level's name, null without `levels.names`.
+   *
+   * It also has the value the next level starts at (null at the top) and the progress towards it, from 0 to 1.
    *
    * It's left out for a stat with no levels or hidden ones.
    */
-  level?: { level: number; next: number | null; progress: number }
+  level?: { level: number; name: string | null; next: number | null; progress: number }
   /** The stat's ui hints, kept as written. Left out if it has none. */
   ui?: Ui<StatUi>
 }
@@ -298,8 +307,8 @@ export function levelAt(value: number, at: readonly number[]): number {
 }
 
 /**
- * Returns a stat's place in its `levels`, with its level and the value the next level starts at (null at the top).
- * Undefined for a stat with no levels.
+ * Returns a stat's place in its `levels`, with its level, its name from `levels.names` (null without names) and the
+ * value the next level starts at (null at the top). Undefined for a stat with no levels.
  *
  * `progress` runs from 0 at this level's start to 1 at the next, and is 1 at the top.
  */
@@ -309,17 +318,18 @@ export function statLevel(
   id: string,
   of: string | undefined,
   cx: FeatureContext,
-): { level: number; next: number | null; progress: number } | undefined {
+): { level: number; name: string | null; next: number | null; progress: number } | undefined {
   const def = statOf(game, id)
   if (!def?.levels) return undefined
   const at = def.levels.at
   const value = statValue(state, game, id, of, cx)
   const level = levelAt(value, at)
+  const name = def.levels.names?.[level] ?? null
   const next = level < at.length ? at[level] : null
-  if (next === null) return { level, next, progress: 1 }
+  if (next === null) return { level, name, next, progress: 1 }
   const from = level === 0 ? statMin(state, game, id, cx) : at[level - 1]
   const progress = next > from ? Math.max(0, Math.min(1, (value - from) / (next - from))) : 0
-  return { level, next, progress }
+  return { level, name, next, progress }
 }
 
 /** Returns the ids of the stats a formula reads. */
@@ -367,6 +377,9 @@ export function statProblems(game: Game): { where: string; what: string }[] {
         const max = typeof stat.max === 'number' ? stat.max : stat.max === undefined ? 100 : Infinity
         const outside = at.filter((n) => n < min || n > max)
         if (outside.length) out.push({ where, what: `levels.at ${outside.join(', ')} outside the stat's range (${min} to ${max})` })
+        const names = stat.levels.names
+        if (names !== undefined && (!Array.isArray(names) || names.length !== at.length + 1 || names.some((name) => typeof name !== 'string' || !name.trim())))
+          out.push({ where, what: `levels.names needs ${at.length + 1} names, one for level 0 and one for each threshold in at` })
       }
     }
   }
@@ -474,9 +487,13 @@ function levelUps(before: GameState, after: GameState, game: Game, cx: FeatureCo
   for (const stat of game.stats ?? []) {
     if (stat.of || !stat.levels?.notice) continue
     const was = statLevel(before, game, stat.id, undefined, cx)?.level ?? 0
-    const now = statLevel(after, game, stat.id, undefined, cx)?.level ?? 0
+    const reached = statLevel(after, game, stat.id, undefined, cx)
+    const now = reached?.level ?? 0
     if (now <= was) continue
-    const title = stat.levels.notice.replaceAll('{label}', stat.label).replaceAll('{level}', String(now))
+    const title = stat.levels.notice
+      .replaceAll('{label}', stat.label)
+      .replaceAll('{level}', String(now))
+      .replaceAll('{name}', reached?.name ?? String(now))
     next = notify(next, { id: `level.${stat.id}`, title, tag: 'level' })
   }
   return next
@@ -567,7 +584,9 @@ export const stats = defineFeature<StatsShape>({
       }
     },
   },
-  content: { stats: { declares: byId('stat'), words: listWords('stats', 'stat', { label: true, format: true, lacking: true, levels: { notice: true } }) } },
+  content: {
+    stats: { declares: byId('stat'), words: listWords('stats', 'stat', { label: true, format: true, lacking: true, levels: { notice: true, names: [true] } }) },
+  },
   lists: ['stat'],
   // A kept stat of the player's the save lacks starts at its start. An entity's reads its start until play changes it.
   fill: {

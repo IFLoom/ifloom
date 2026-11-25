@@ -132,14 +132,22 @@ The `levels` field, the thresholds a stat passes as it grows. Every field is in 
 
 The stat itself doesn't change, and effects and conditions still work on its value. The levels read that value. With `at: [10, 30, 60]`, a value below 10 is level 0, from 10 level 1, from 30 level 2 and from 60 level 3. A value equal to a threshold is at that level. A derived stat can have levels, and so can an entity's stat, read per entity.
 
-The [`level`](/docs/reference/conditions#level) condition reads the level, and the stat's view gets a `level` of `{ level, next, progress }`, as [`statLevel`](#statlevel) returns. `hidden: true` leaves `level` out of the view, so a UI never shows the thresholds, while conditions still read them.
+The [`level`](/docs/reference/conditions#level) condition reads the level, and the stat's view gets a `level` of `{ level, name, next, progress }`, as [`statLevel`](#statlevel) returns. `hidden: true` leaves `level` out of the view, so a UI never shows the thresholds, while conditions still read them.
 
-When a command run through [`apply`](/docs/reference/commands#apply) takes one of the player's stats up one or more levels, and its `levels` has a `notice`, the engine raises a [notice](/docs/reference/notices) after the command. `{label}` in the line is the stat's label and `{level}` the level it ends the command at. The notice's id is `level.<stat>` and its tag `level`, so a second level-up replaces the first while it's unseen. One command that jumps two levels raises one notice.
+`names` gives each level a name, a rank such as "Jogger", one for each level from level 0 up, so one more than `at`. The view's `level.name` is the current one, `null` without names, and the React UI's [`StatList`](/docs/reference/react/components#statlist) shows it in place of the level's number. A translation gives other names in its [words table](/docs/reference/words).
+
+When a command run through [`apply`](/docs/reference/commands#apply) takes one of the player's stats up one or more levels, and its `levels` has a `notice`, the engine raises a [notice](/docs/reference/notices) after the command. `{label}` in the line is the stat's label, `{level}` the level it ends the command at and `{name}` that level's name, or its number without names. The notice's [tokens](/docs/reference/prose#tokens) are filled as it's shown, as any notice's are. The notice's id is `level.<stat>` and its tag `level`, so a second level-up replaces the first while it's unseen. One command that jumps two levels raises one notice.
 
 ```ts
 import type { StatDef } from '@ifloom/engine'
 
 export const cooking: StatDef = { id: 'cooking', label: 'Cooking', levels: { at: [10, 30, 60], notice: '{label} is now level {level}.' } }
+
+export const fitness: StatDef = {
+  id: 'fitness',
+  label: 'Fitness',
+  levels: { at: [10, 25, 50], names: ['Couch potato', 'Jogger', 'Runner', 'Athlete'], notice: 'You’re a {name} now.' },
+}
 ```
 
 ## State
@@ -226,6 +234,7 @@ The [content checker](/docs/reference/checks) reports these problems with stats:
 | `levels.at needs at least one threshold` | A stat's `levels.at` is empty or missing. |
 | `levels.at must go up, each threshold above the last` | The thresholds are out of order or repeated. |
 | `levels.at … outside the stat's range (… to …)` | A threshold is below the stat's `min` or above its `max`. A `max` given as a `{ value }` has no upper bound here. |
+| `levels.names needs … names, one for level 0 and one for each threshold in at` | `names` isn't one more than `at`, or a name is empty. |
 
 The checker also reports a derived stat with `spendable` or a `start`, and a formula that names an undeclared stat or one with another owner.
 

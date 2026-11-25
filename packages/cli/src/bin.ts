@@ -7,7 +7,8 @@
  *                            from react, vanilla, vue, svelte, next, novel, cafe or town,
  *                            or a plugin package of its own from plugin;
  *                            --theme paper|terminal|studio|storybook picks the React UI's preset, or none for its plain look
- *   ifloom dev               the game in a browser, reloading as you edit
+ *   ifloom dev [--port n] [--host [address]] [--open]
+ *                            the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
  *                            one HTML file and its art and sound, checked to open from disk;
  *                            --inline-assets puts the art inside the file too (never sound or video)
@@ -275,7 +276,25 @@ function create(name: string | undefined, template: string | undefined, theme: s
 async function main(): Promise<number> {
   switch (command) {
     case 'dev': {
-      const server = await createServer({ configLoader: configLoader() })
+      // Vite's own --port, --host and --open, which a game's vite.config.ts can set too. Anything else is said, not ignored.
+      const known = new Set(['--port', '--host', '--open'])
+      const unknown = rest.filter((arg, at) => arg.startsWith('--') && !known.has(arg) && !(at > 0 && rest[at - 1] === '--port'))
+      if (unknown.length) console.error(`ifloom dev takes --port, --host and --open, and ignores ${unknown.join(' ')}.`)
+      const port = flag('port')
+      if (port !== undefined && !/^\d+$/.test(port)) {
+        console.error(`--port takes a number, such as --port 5199, not ${port ?? 'nothing'}.`)
+        return 1
+      }
+      const hostAt = rest.indexOf('--host')
+      const host = hostAt < 0 ? undefined : rest[hostAt + 1] && !rest[hostAt + 1].startsWith('--') ? rest[hostAt + 1] : true
+      const server = await createServer({
+        configLoader: configLoader(),
+        server: {
+          ...(port !== undefined ? { port: Number(port) } : {}),
+          ...(host !== undefined ? { host } : {}),
+          ...(rest.includes('--open') ? { open: true } : {}),
+        },
+      })
       await server.listen()
       server.printUrls()
       return new Promise(() => {})
@@ -314,7 +333,7 @@ async function main(): Promise<number> {
     }
     default:
       console.log(
-        `ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | words [module] [--out file] | unlock-hash <unlock> [module]`,
+        `ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev [--port n] [--host [address]] [--open] | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | words [module] [--out file] | unlock-hash <unlock> [module]`,
       )
       return command === 'help' ? 0 : 1
   }

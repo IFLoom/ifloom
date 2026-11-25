@@ -46,9 +46,10 @@ Every game has the scripts `dev`, `build`, `check`, `playtest` and `typecheck`, 
 
 ```sh
 ifloom dev
+ifloom dev --port 5199 --open
 ```
 
-It takes no flags and ignores any you pass. The server's port and settings go in the preset's `vite` option, such as `ifloom({ vite: { server: { port: 5180 } } })`. `import.meta.env.DEV` is `true` here, so a game adds the [debug plugin](/docs/reference/plugins/debug) when it's set. [Locked content](#locked-content) is encrypted into the page here too, and an unlock whose code isn't set is left out with a warning.
+It takes Vite's own `--port <n>`, `--host [address]` (all addresses with none, so a phone on the same network can open the game) and `--open`, which opens a browser. It names any other flag it ignores. Other server settings go in the preset's `vite` option, such as `ifloom({ vite: { server: { port: 5180 } } })`, and a flag wins over it. `import.meta.env.DEV` is `true` here, so a game adds the [debug plugin](/docs/reference/plugins/debug) when it's set. [Locked content](#locked-content) is encrypted into the page here too, and an unlock whose code isn't set is left out with a warning.
 
 ## ifloom build
 

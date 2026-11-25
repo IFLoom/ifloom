@@ -8,6 +8,7 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ### Added
 
+- [`ifloom dev`](/docs/reference/cli#ifloom-dev) takes Vite's `--port <n>`, `--host [address]` and `--open`, and says which flags it ignores. It ignored every flag before, so `--port 5199` silently ran on 5173.
 - A shift that pays raises a notice, `Paid 12 coins at Weekend help`, with the pay of the rank it was worked at, as a promotion or a firing does. Reword the [`jobs/paid`](/docs/reference/plugins/jobs#strings) string to `''` for none.
 - Named levels: a stat's [`levels`](/docs/reference/stats#statlevels) take `names`, one for each level from 0, such as `['Couch potato', 'Jogger', 'Runner']`. The view gives the current one as `level.name`, the React UI's stat list shows it in place of "Level 2", a level notice names it as `{name}`, and a translation can reword them. The checker reports names that aren't one per level.
 - A location's picture is shown in the room. A [`RoomScene`](/docs/reference/plugin-views#roomscene) takes an `image`, which the view gives as `view.scene.image`, and the places plugin passes the location entity's `image`, so the React UI shows it above the words as a banner. Before, a location's `image` was only on its exits and its card.

@@ -8,6 +8,7 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ### Added
 
+- The game's own calls can be declared and typed, as a plugin's are. Declare them with `defineCalls('game', …)` and pass the rules through the new [`defineRules`](/docs/reference/custom#definerules) (from `@ifloom/engine/plugin`): each condition, effect, macro and command gets its arguments typed, in place of `unknown`, and the checker reports a `game/` call that leaves an argument out, misspells one or gives the wrong type. `GameRules` takes `calls`. [Typed calls](/docs/reference/custom#typed-calls) shows it, with the registries that type content's calls.
 - [`ifloom dev`](/docs/reference/cli#ifloom-dev) takes Vite's `--port <n>`, `--host [address]` and `--open`, and says which flags it ignores. It ignored every flag before, so `--port 5199` silently ran on 5173.
 - A shift that pays raises a notice, `Paid 12 coins at Weekend help`, with the pay of the rank it was worked at, as a promotion or a firing does. Reword the [`jobs/paid`](/docs/reference/plugins/jobs#strings) string to `''` for none.
 - Named levels: a stat's [`levels`](/docs/reference/stats#statlevels) take `names`, one for each level from 0, such as `['Couch potato', 'Jogger', 'Runner']`. The view gives the current one as `level.name`, the React UI's stat list shows it in place of "Level 2", a level notice names it as `{name}`, and a translation can reword them. The checker reports names that aren't one per level.

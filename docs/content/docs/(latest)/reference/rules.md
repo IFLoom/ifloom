@@ -15,7 +15,7 @@ import type { TurnContext } from '@ifloom/engine/plugin'
 
 The game's own code, a plain object with the members a plugin has. Every member is in [`GameRules`](/docs/api/engine#gamerules).
 
-The engine runs it as the first plugin, with the id `game`, so no plugin can take that id. Its providers answer before every plugin's, its hooks run before theirs, and each function gets the same [`PluginContext`](/docs/reference/plugin-api#plugincontext) a plugin's does. Every member is optional, and each means what a plugin's member of that name means, except `migrations`. A plugin's id, versions, content, strings, declared calls and data lists are the game's own content, so `GameRules` leaves them out. Content's [`locks`](/docs/reference/locks) and [`resets`](#resets) are data, so a mod can change them.
+The engine runs it as the first plugin, with the id `game`, so no plugin can take that id. Its providers answer before every plugin's, its hooks run before theirs, and each function gets the same [`PluginContext`](/docs/reference/plugin-api#plugincontext) a plugin's does. Every member is optional, and each means what a plugin's member of that name means, except `migrations`. A plugin's id, versions, content, strings and data lists are the game's own content, so `GameRules` leaves them out. Its `calls` declare the game's own calls, so each function gets its arguments typed and content's `game/` calls are checked, as [Typed calls](/docs/reference/custom#typed-calls) shows with [`defineRules`](/docs/reference/custom#definerules). Content's [`locks`](/docs/reference/locks) and [`resets`](#resets) are data, so a mod can change them.
 
 | Field | Meaning |
 |---|---|

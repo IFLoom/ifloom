@@ -20,6 +20,45 @@ Each game owns its functions, with no registry shared between games, so two game
 | `effects` | Effects that return the next state, written in the same places as a macro. |
 | `values` | Numbers or words, printed in prose as `{{breadPrice}}` and named elsewhere as `{ value: 'game/breadPrice' }`. |
 
+## Typed calls
+
+Without a declaration, each function gets its arguments loose, so `args.times` is `unknown` and content's calls aren't checked. Declare the calls once with [`defineCalls`](/docs/reference/plugin-calls#definecalls) and the id `game`, as a plugin declares its own, and pass the rules through [`defineRules`](#definerules). Each function then gets its arguments typed, the [content checker](/docs/reference/checks) reports a `game/` call that leaves an argument out, misspells one or gives the wrong type, and the declaration's writers write the calls. To type the calls content writes too, extend the registries from it, as a plugin does:
+
+```ts
+import type { GameState } from '@ifloom/engine'
+import { arg, defineCalls, defineRules, type ConditionsOf, type EffectsOf } from '@ifloom/engine/plugin'
+
+const CALLS = defineCalls('game', {
+  conditions: { met: { who: arg.string() } },
+  effects: { greet: { who: arg.string(), warmly: arg.boolean().optional() } },
+})
+
+declare module '@ifloom/engine' {
+  interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
+}
+
+export const rules = defineRules<null, typeof CALLS>({
+  calls: CALLS,
+  conditions: {
+    // `who` is a string here, read from content and checked.
+    met: (state, { who }) => state.kv[`met.${who}`] === true,
+  },
+  effects: {
+    greet: (state: GameState, { who, warmly }) => ({ ...state, kv: { ...state.kv, [`met.${who}`]: true, warm: warmly === true } }),
+  },
+})
+
+// Content writes the calls with the declaration's writers, or by hand, typed either way.
+export const hello = { id: 'hello', label: 'Say hello', effects: [CALLS.effects.greet({ who: 'ava', warmly: true })] }
+```
+
+A game in plain JavaScript leaves out the types and the registries, and still gets the checks.
+
+### defineRules
+
+Returns the game's rules as written, with each condition, effect, macro and command given its arguments as the rules' `calls` declare them. Its signature is in [`defineRules`](/docs/api/engine-plugin#definerules), and what it takes in [`RulesDef`](/docs/api/engine-plugin#rulesdef). It throws when a declared call has no implementation, or an implemented one has no declaration. Name the calls' type, `defineRules<State, typeof CALLS>`, with the game's state type first (`null` without one).
+
 ## CustomContext
 
 The part of every function's context that needs no plugin: the game, queries, values and seeded draws. Every field is in [`CustomContext`](/docs/api/engine#customcontext).

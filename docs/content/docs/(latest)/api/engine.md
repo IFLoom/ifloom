@@ -2099,8 +2099,10 @@ The engine runs it as the plugin `game`, before every other plugin, with the sam
 `start`. Every member is optional and means what a plugin's does (see `Plugin`), except `migrations`, which carry
 the whole save from one version of the game to the next.
 
-A plugin's id, versions, content, strings, calls and data are the game's own content, so `GameRules` leaves them
-out. Locks and per-turn resets are content too, in `locks` and `resets`.
+A plugin's id, versions, content, strings and data are the game's own content, so `GameRules` leaves them out.
+Locks and per-turn resets are content too, in `locks` and `resets`. Its `calls`, declared with `defineCalls('game',
+…)` and passed through `defineRules`, type its members' arguments and let the content checker check every `game/`
+call against them.
 
 ```ts shape
 import type { GameRules, Game } from '@ifloom/engine'
@@ -2118,6 +2120,7 @@ type GameRules<S = any> = {
   label?: ((state: GameState, context: PluginContext<S>) => string | undefined)
   start?: ((game: Game) => S)
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
+  calls?: AnyCalls
   macros?: Record<string, Macro<S, PluginArgs>>
   queries?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => unknown>
   statModifiers?: ((state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined)
@@ -2149,6 +2152,7 @@ type GameRules<S = any> = {
 | `label` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns a few words on the time or place in the game for a header or a save, such as "Day 3 · Wednesday morning". |
 | `start` | `((game:` [`Game`](#game)`) => S)` | yes |  | Returns the plugin's state in a new game. A plugin with no state leaves it out. |
 | `values` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => string…` | yes |  | The plugin's values, words and numbers content reads by name with arguments, as a condition is asked. Prose prints one as `{{id/name channel=texts}}`, and an `Amount` reads one as `{ value: 'id/name', with }`. |
+| `calls` | [`AnyCalls`](/docs/api/engine-plugin#anycalls) | yes |  | The declaration of the plugin's conditions, effects and commands, each with the arguments it takes, from `defineCalls`. Every declared call needs an implementation, and every implementation a declaration. The implementations get their arguments read by it. The content checker reports a call that leaves an argument out, gets one wrong or names something the game lacks, and a translation reaches the words in a call's arguments. |
 | `macros` | `Record<string,` [`Macro`](/docs/api/engine-plugin#macro)`<S,` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`>>` | yes |  | The plugin's macros, effects that stand for other effects, by name without the prefix. A name is an effect's or a macro's, never both. Content calls one as any effect. It returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. See `Macro`. |
 | `queries` | `Record<string, (state:` [`GameState`](#gamestate)`, args:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => unknown>` | yes |  | The plugin's queries, answers other plugins ask for by name without importing it, such as `context.query('calendar/whenNext', { when })`. A query answers what a condition's yes or no can't, such as a location, a time or a list. |
 | `statModifiers` | `((state:` [`GameState`](#gamestate)`, context:` [`PluginContext`](/docs/api/engine-plugin#plugincontext)`<S>) => readonly` [`StatModifier[]`](/docs/api/engine-plugin#statmodifier) `\| undefined)` | yes |  | Returns the changes to what the player's stats read now, worked out from the plugin's state, such as a timed boost. It must not read stats itself, or it reads itself. Nothing is written into the state. Every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. |

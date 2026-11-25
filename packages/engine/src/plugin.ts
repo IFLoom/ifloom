@@ -562,16 +562,39 @@ type Implemented<S, C, T extends 'conditions' | 'effects', R> = {
  *
  * A declared effect is implemented in `effects` or `macros`.
  */
-export type PluginDef<S, V, C extends AnyCalls> = Omit<Plugin<S, V>, CallTables | 'calls'> &
-  ([C] extends [never]
-    ? Pick<Plugin<S, V>, CallTables>
-    : {
-        calls: C
-        conditions?: Implemented<S, C, 'conditions', boolean>
-        effects?: Partial<Implemented<S, C, 'effects', GameState>>
-        macros?: { [K in keyof CallArgs<C, 'effects'>]?: Macro<S, CallArgs<C, 'effects'>[K]> }
-        commands?: { [K in keyof CallArgs<C, 'commands'>]: PluginCommand<S, CallArgs<C, 'commands'>[K]> }
-      })
+export type PluginDef<S, V, C extends AnyCalls> = Omit<Plugin<S, V>, CallTables | 'calls'> & TypedCalls<S, V, C>
+
+/** The call tables of a plugin or the game's rules: as written with no `calls`, else exactly the declared calls, typed. */
+type TypedCalls<S, V, C extends AnyCalls> = [C] extends [never]
+  ? Pick<Plugin<S, V>, CallTables>
+  : {
+      calls: C
+      conditions?: Implemented<S, C, 'conditions', boolean>
+      effects?: Partial<Implemented<S, C, 'effects', GameState>>
+      macros?: { [K in keyof CallArgs<C, 'effects'>]?: Macro<S, CallArgs<C, 'effects'>[K]> }
+      commands?: { [K in keyof CallArgs<C, 'commands'>]: PluginCommand<S, CallArgs<C, 'commands'>[K]> }
+    }
+
+/**
+ * The game's rules `defineRules` takes. When they declare their `calls`, their conditions, effects, macros and
+ * commands must be exactly the declared ones, each given its arguments typed.
+ */
+export type RulesDef<S, C extends AnyCalls> = Omit<GameRules<S>, CallTables | 'calls'> & TypedCalls<S, unknown, C>
+
+/**
+ * Returns the game's rules as written, with each condition, effect, macro and command handed its arguments as the
+ * rules' `calls` declare them.
+ *
+ * It throws when a declared call has no implementation or an implemented one has no declaration.
+ *
+ * Declare the calls with `defineCalls('game', …)` and name its type, `defineRules<State, typeof CALLS>`. The content
+ * checker then checks every `game/` call content writes against the declaration, as it checks a plugin's.
+ */
+export function defineRules<S = any, C extends AnyCalls = never>(def: RulesDef<S, C>): GameRules<S> {
+  const rules = def as unknown as GameRules<S>
+  if (rules.calls) matchCalls({ ...rules, id: GAME_ID, version: 1 } as Plugin)
+  return rules
+}
 
 /**
  * Returns a plugin with `read` and `write` for its own state, for code outside it such as tests. It throws when a

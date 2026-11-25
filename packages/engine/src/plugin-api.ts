@@ -37,7 +37,8 @@ export type {
   StatModifier,
   TurnContext,
 } from './plugin.ts'
-export { definePlugin } from './plugin.ts'
+export { definePlugin, defineRules } from './plugin.ts'
+export type { RulesDef } from './plugin.ts'
 
 // A plugin's calls, data lists and trait kinds, declared once
 export type {

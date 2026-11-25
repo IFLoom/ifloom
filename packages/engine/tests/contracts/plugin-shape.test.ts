@@ -104,6 +104,7 @@ describe('the plugin shape (ADR 0009)', () => {
       migrations: 'upgrade',
       start: 'identity',
       traits: 'declares',
+      calls: 'declares',
       references: 'checks',
       check: 'checks',
       saveName: 'provider',

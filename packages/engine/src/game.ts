@@ -188,8 +188,10 @@ export type StorylineDef = {
  * `start`. Every member is optional and means what a plugin's does (see `Plugin`), except `migrations`, which carry
  * the whole save from one version of the game to the next.
  *
- * A plugin's id, versions, content, strings, calls and data are the game's own content, so `GameRules` leaves them
- * out. Locks and per-turn resets are content too, in `locks` and `resets`.
+ * A plugin's id, versions, content, strings and data are the game's own content, so `GameRules` leaves them out.
+ * Locks and per-turn resets are content too, in `locks` and `resets`. Its `calls`, declared with `defineCalls('game',
+ * …)` and passed through `defineRules`, type its members' arguments and let the content checker check every `game/`
+ * call against them.
  */
 export type GameRules<S = any> = Omit<
   Plugin<S>,
@@ -203,7 +205,6 @@ export type GameRules<S = any> = Omit<
   | 'commandMigrations'
   | 'content'
   | 'strings'
-  | 'calls'
   | 'data'
 > & {
   /**

@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import { apply } from '../../src/reduce.ts'
 import { holds } from '../../src/condition.ts'
 import { checkGame } from '../../src/check.ts'
-import { definePlugin } from '../../src/plugin.ts'
+import { definePlugin, defineRules } from '../../src/plugin.ts'
 import { arg, defineCalls, defineData, list, type CommandsOf, type ConditionsOf, type EffectsOf } from '../../src/pluginCalls.ts'
 import type { CommandRef, ConditionRegistry, EffectRef } from '../../src/calls.ts'
 import type { Condition } from '../../src/types.ts'
@@ -197,6 +197,51 @@ describe('a plugin’s calls, declared once', () => {
         commands: { two: { run: (state) => state } },
       }),
     ).toThrow('"odd/three" is implemented but not declared')
+  })
+})
+
+describe('the game’s own calls, declared once', () => {
+  const GAME = defineCalls('game', {
+    conditions: { met: { who: arg.string() } },
+    effects: { greet: { who: arg.string(), warmly: arg.boolean().optional() } },
+  })
+  const rules = defineRules<null, typeof GAME>({
+    calls: GAME,
+    conditions: {
+      met: (state, { who }) => {
+        expectTypeOf(who).toEqualTypeOf<string>()
+        return state.kv[`met.${who}`] === true
+      },
+    },
+    effects: { greet: (state, { who, warmly }) => ({ ...state, kv: { ...state.kv, [`met.${who}`]: true, warm: warmly === true } }) },
+  })
+
+  it('hands the rules their arguments typed, and runs them as the plugin game', () => {
+    const g: Game = { ...fixture(), rules, actions: [{ id: 'hi', effects: [{ 'game/greet': { who: 'ava', warmly: true } }] }] }
+    const state = apply(begin(g), g, { type: 'action', id: 'hi' }).state
+    expect(state.kv).toMatchObject({ 'met.ava': true, warm: true })
+    expect(holds(state, g, { 'game/met': { who: 'ava' } })).toBe(true)
+  })
+
+  it('checks content’s game/ calls against the declaration, as a plugin’s are', () => {
+    const g: Game = {
+      ...fixture(),
+      rules,
+      actions: [
+        { id: 'a', effects: [{ 'game/greet': {} }] },
+        { id: 'b', effects: [{ 'game/greet': { who: 'ava', loudly: true } }] },
+      ],
+    }
+    const problems = checkGame(g).problems.map((problem) => `${problem.where}: ${problem.what}`)
+    expect(problems).toContain('action a: "game/greet" needs "who"')
+    expect(problems).toContain('action b: "game/greet" takes no "loudly"; it takes "who", "warmly"')
+  })
+
+  it('refuses rules whose implementations and declaration differ', () => {
+    // @ts-expect-error the declared condition `met` has no implementation
+    expect(() => defineRules<null, typeof GAME>({ calls: GAME, conditions: {}, effects: { greet: (state) => state } })).toThrow(
+      '"game/met" is declared in its calls\' conditions but not implemented',
+    )
   })
 })
 

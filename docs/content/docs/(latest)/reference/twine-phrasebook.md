@@ -269,7 +269,7 @@ export const rules: GameRules = {
 }
 ```
 
-A set of widgets that keeps its own state, such as a loyalty card, is a plugin ([Write a plugin](/docs/how-to/write-a-plugin)). A widget that only prints markup has no counterpart, because prose can't run code. Its words go in a block of text, or a line kept by key when several scenes share it, and its looks go in the UI.
+A widget's `_args` arrive loose, as `args.price` of type `unknown`. Declare the game's calls once, as [Typed calls](/docs/reference/custom#typed-calls) shows, and each function gets its arguments typed and content's calls are checked. A set of widgets that keeps its own state, such as a loyalty card, is a plugin ([Write a plugin](/docs/how-to/write-a-plugin)). A widget that only prints markup has no counterpart, because prose can't run code. Its words go in a block of text, or a line kept by key when several scenes share it, and its looks go in the UI.
 
 ### `StoryInit` and starting state
 

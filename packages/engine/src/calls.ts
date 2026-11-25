@@ -66,8 +66,14 @@ export interface ViewRegistry {}
 /** One call in short per declared name: `{ 'quests/done': { quest: string } }`. */
 type DeclaredCall<R> = { [K in keyof R & CallName]: { [P in K]: R[K] } }[keyof R & CallName]
 
-/** A call to a name nobody declares: any arguments, so long as the name isn't a declared one. */
-type UndeclaredCall<R> = PluginCall & { [K in keyof R & CallName]?: never }
+/** Every name a registry declares, as a condition, an effect or a command. */
+type DeclaredName = keyof (ConditionRegistry & EffectRegistry & CommandRegistry)
+
+/**
+ * A call to a name nobody declares: any arguments, so long as no registry declares the name. A name declared as
+ * another kind of call is refused too, so a command's writer put among effects fails to compile.
+ */
+type UndeclaredCall<R> = PluginCall & { [K in (keyof R | DeclaredName) & CallName]?: never }
 
 /** A call in the short form, type-checked against registry `R` when its name is declared there and loose otherwise. */
 export type CallIn<R> = DeclaredCall<R> | UndeclaredCall<R>

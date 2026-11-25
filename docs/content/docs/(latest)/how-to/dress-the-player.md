@@ -69,6 +69,15 @@ export const flat = places.location({
 
 Without a `label` the button reads `Wardrobe`. The closet needs the [places plugin](/docs/reference/plugins/places). Any choice or action opens the same panel with `{ panel: 'wardrobe' }`, as [Open a shop, a job board or another panel](/docs/how-to/open-a-panel) describes. A button of your own can also send `wardrobe.wear('clothing:scarf')` or `wardrobe.takeOff('coat')`.
 
+Both are commands, not effects, so a choice or an action that dresses the player sends one as its `command`, which runs before its effects. In `effects`, one doesn't compile:
+
+```ts
+import type { Choice } from '@ifloom/engine'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+
+export const wrapUp: Choice = { id: 'wrap-up', label: 'Put on the scarf', command: wardrobe.wear('clothing:scarf'), effects: [{ kv: 'warm', to: true }] }
+```
+
 ## Make the story notice
 
 Read what the player has on with `wardrobe.wearing(thing)`, anywhere a condition goes. People in the café notice the raincoat, and the bench by the river is too cold without a scarf:

@@ -82,6 +82,18 @@ describe('a plugin’s calls, declared once', () => {
     // @ts-expect-error a missing argument
     const missing: EffectRef = { 'loyalty/stamp': { by: 2 } }
     const among: Condition = { 'loyalty/among': { card: ['cafe', 'bakery'] } }
+    // A call declared as one kind can't stand in for another, as it could while only its own registry was asked.
+    // @ts-expect-error a command where an effect is wanted
+    const commandAsEffect: EffectRef = { 'loyalty/redeem': { id: 'cafe' } }
+    // @ts-expect-error a condition where an effect is wanted
+    const conditionAsEffect: EffectRef = { 'loyalty/full': { card: 'cafe' } }
+    // @ts-expect-error an effect where a command is wanted
+    const effectAsCommand: CommandRef = { 'loyalty/stamp': { card: 'cafe' } }
+    // @ts-expect-error a command where a condition is wanted
+    const commandAsCondition: Condition = { 'loyalty/redeem': { id: 'cafe' } }
+    // A name nobody declares stays loose, for a plugin without declarations.
+    const loose: EffectRef = { 'other/anything': { at: 3 } }
+    expect([commandAsEffect, conditionAsEffect, effectAsCommand, commandAsCondition, loose]).toHaveLength(5)
     expectTypeOf<ConditionRegistry['loyalty/full']>().toEqualTypeOf<{ card: string }>()
     expect([full, misspelt, wrong, missing, among]).toHaveLength(5)
   })

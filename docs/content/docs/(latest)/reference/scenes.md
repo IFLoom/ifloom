@@ -183,4 +183,4 @@ The checker also checks what each block, choice and picture names, as it checks 
 - A `variants` block whose every member is gated out renders nothing, with no problem reported.
 - A `per: 'turn'` choice is free again once the turn ends, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't free it, and a choice that ends the turn is dated the turn it was chosen in.
 - A plugin guard's soft warning, such as the [calendar](/docs/reference/plugins/calendar)'s `That would run past dawn.`, leaves the choice pressable, and `choose` is refused with the warning.
-- `view.scene.image` is the speaker's picture, set beside `view.scene.picture` when the scene has both, and a UI decides which to render.
+- `view.scene.image` is the speaker's picture, or in the room the room's own, such as a location's `image`. It's set beside `view.scene.picture` when there are both, and a UI decides which to render.

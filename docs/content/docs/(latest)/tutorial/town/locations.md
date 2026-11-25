@@ -21,7 +21,7 @@ A location is an entity, one of the things the game keeps, written with the plug
 
 ::include[../../../../../snippets/tutorial/town/story/opening.ts]
 
-The kitchen has a new choice, **Step outside**, whose effect is `{ scene: null }`. That closes the scene. With no scene open, the page shows the room, which is the location the player is at, with its `body` as the words and its exits as buttons. [Turns, scenes and the room](/docs/explanation/turns-and-time#a-scene-and-the-room) has a picture of it.
+The kitchen has a new choice, **Step outside**, whose effect is `{ scene: null }`. That closes the scene. With no scene open, the page shows the room, which is the location the player is at, with its `body` as the words, its exits as buttons, and its `image`, when it has one, as a banner above the words. [Turns, scenes and the room](/docs/explanation/turns-and-time#a-scene-and-the-room) has a picture of it.
 
 The house's `exits` list the locations the player can walk to from it. An exit goes one way, so the street lists the house and the house lists the street. `description` is the short line under a location's name.
 

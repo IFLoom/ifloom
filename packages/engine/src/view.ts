@@ -44,7 +44,7 @@ type ViewBase = {
     tags: string[]
     /** The scene's `speaker`, read from their entity, or null. */
     speaker: SpeakerView | null
-    /** The speaker's picture to show with the scene, or null without one. */
+    /** The picture to show with the scene: the open scene's speaker's, or the room's, such as a location's. Null without one. */
     image: string | null
     /** The scene's layered picture and its hotspots, or null when it has none. `pictureView` builds it. */
     picture: PictureView | null

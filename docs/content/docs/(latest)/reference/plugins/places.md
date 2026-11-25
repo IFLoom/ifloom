@@ -85,7 +85,7 @@ The `places/location` trait, which makes any entity carrying it a location the p
 |---|---|
 | `exits` | The locations one step away, by id. Exits are one-way, so the location at the other end lists the way back. |
 | `blocked` | Entries that refuse walking in while their `when` holds. The first that holds gives the [reason](/docs/reference/actions#reason), which is both the refusal and the exit's `disabled` line, so put the most particular entry first. With `hide: true` the exit is left off the screen while the entry holds. |
-| `body` | The [blocks](/docs/reference/scenes#block) the room shows while no scene is open. The plugin renders them under the location's own id, so a `variants` block keeps a rotation for each location. |
+| `body` | The [blocks](/docs/reference/scenes#block) the room shows while no scene is open. The plugin renders them under the location's own id, so a `variants` block keeps a rotation for each location. The location entity's `image` is the room's picture, `view.scene.image`, which the React UI shows above the words as a banner. |
 | `actions` | The location's [actions](/docs/reference/actions#actiondef), offered before the game's own while no scene is open, priced and refused like them. A room's action is sent as `{ type: 'action', id: 'places/<id>' }`. |
 | `parent` | The location it is inside, such as a back room's café, which [`places/within`](#placeswithin) follows. |
 | `picture` | A [layered picture](/docs/reference/media#picturedef) with hotspots. A hotspot sends a `command`, because a room has no choices. |

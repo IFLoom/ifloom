@@ -375,6 +375,12 @@ export type StatModifier = {
 export type RoomScene = {
   /** The room's title, such as a location's name. */
   title: string
+  /**
+   * The room's picture, a path in the game's `art/` folder or a URL, such as a location's `image`.
+   *
+   * The view gives it as `view.scene.image`, which a UI shows with the room, as the React UI does above the words.
+   */
+  image?: string
   /** The room's body, as a scene's blocks, such as prose keys, variants and conditions. */
   body?: readonly Block[]
   /**

@@ -1542,6 +1542,7 @@ The screen shown while no scene is open, from a plugin's `scene` provider.
 import type { RoomScene } from '@ifloom/engine/plugin'
 type RoomScene = {
   title: string
+  image?: string
   body?: readonly Block[]
   id?: string
   ui?: Ui<SceneUi>
@@ -1551,6 +1552,7 @@ type RoomScene = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `title` | `string` |  |  | The room's title, such as a location's name. |
+| `image` | `string` | yes |  | The room's picture, a path in the game's `art/` folder or a URL, such as a location's `image`. The view gives it as `view.scene.image`, which a UI shows with the room, as the React UI does above the words. |
 | `body` | `readonly` [`Block[]`](/docs/api/engine#block) | yes |  | The room's body, as a scene's blocks, such as prose keys, variants and conditions. |
 | `id` | `string` | yes |  | The id the room's blocks are rendered under. The plugin's id if left out. Variants drawn here rotate per id, so a location gives its own id to keep its lines its own. |
 | `ui` | [`Ui`](/docs/api/engine#ui)`<`[`SceneUi`](/docs/api/engine#sceneui)`>` | yes |  | The room's `ui` hints, carried to `view.scene.ui` as a scene's are. See `SceneUi`. |

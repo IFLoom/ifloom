@@ -444,7 +444,15 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     scene: (state, { slice, game }) => {
       const place = locationOf(state, game, slice.at)
       if (!place || slice.at === null) return undefined
-      return { id: slice.at, title: entityName(state, game, locationRef(slice.at)), body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) }
+      // The location's picture is the room's, which a UI shows with it, as the React UI does above the words.
+      const image = entityImage(state, game, locationRef(slice.at))
+      return {
+        id: slice.at,
+        title: entityName(state, game, locationRef(slice.at)),
+        ...(image !== undefined ? { image } : {}),
+        body: place.body,
+        ...(place.ui !== undefined ? { ui: place.ui } : {}),
+      }
     },
     actions: (state, { slice, game }) => locationOf(state, game, slice.at)?.actions,
     audio: (state, { slice, game }) => locationOf(state, game, slice.at)?.audio,

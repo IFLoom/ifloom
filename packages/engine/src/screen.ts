@@ -210,7 +210,7 @@ function standing(state: GameState, game: Game, scene: ReturnType<typeof pluginS
     fresh: 0,
     tags: [],
     speaker: null,
-    image: null,
+    image: scene?.image !== undefined ? artSrc(scene.image) : null,
     ...withUi(scene?.ui),
   }
 }

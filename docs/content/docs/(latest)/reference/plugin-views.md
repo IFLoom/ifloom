@@ -94,6 +94,7 @@ The screen a [`scene`](#scene) provider shows while no scene is open, and what t
 | Field | Meaning |
 |---|---|
 | `id` | The id the body's blocks are rendered under, the plugin's id if left out. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that shows several locations gives each its own. It's also in [`view.scene.key`](/docs/reference/view#scene), as `room:<id>`. |
+| `image` | The room's picture, a path in the game's `art/` folder or a URL, such as a location's `image`. It's [`view.scene.image`](/docs/reference/view#scene), which the React UI shows above the words. |
 | `ui` | The room's [UI hints](/docs/reference/ui-hints), carried to `view.scene.ui` as a scene's are. |
 
 ```ts fragment

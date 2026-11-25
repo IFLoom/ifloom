@@ -207,6 +207,20 @@ describe('places', () => {
     expect(shown(state, g)).toEqual({ location: null, exits: [], things: [] })
   })
 
+  it('show the location’s picture with the room, as view.scene.image', () => {
+    const { game: g } = game({ start: 'house' })
+    const house = startingState(g)
+    expect(view(house, g).scene.image).toBe('art/place/house.jpg')
+    expect(view(walk(g, house, 'street'), g).scene.image).toBe('art/place/street.jpg')
+    // A scene opened over the room shows its own speaker's picture, or none: never the location's.
+    const withScene = loadChecked([{ name: 'base' }, { ...town, scenes: [{ id: 'note', body: [{ text: 'A note.' }], choices: [] }] }], {
+      id: 'town',
+      title: 'Town',
+      plugins: [calendar(), places({ start: 'house' })],
+    })
+    expect(view({ ...startingState(withScene), sceneId: 'note' }, withScene).scene).toMatchObject({ key: 'scene:note', image: null })
+  })
+
   it('give the room its hints and a key by the place', () => {
     const hinted: Content = { ...town, entities: townPlaces({ street: { ui: { transition: 'slide-left' } } }) }
     const { game: g, problems } = loadGame([hinted], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })

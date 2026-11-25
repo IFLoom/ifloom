@@ -14,6 +14,7 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ### Changed
 
+- `ifloom playtest`'s transcript writes each spoken line under who says it, as `Ava: "Morning."`, from a `say()` block or an `@id:` line, which it left without a speaker or printed as written. A picture or a video shows as a `[picture: …]` note.
 - The [Twine phrasebook](/docs/reference/twine-phrasebook#a-speech-macro-and-portraits) has an entry for a speech macro: a spoken line under an entity, with the entity's picture as its portrait and `player.image` for the player's.
 
 ### Fixed

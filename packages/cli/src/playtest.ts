@@ -56,12 +56,36 @@ export type Playtest = {
 }
 
 /**
+ * The body as the player reads it, one paragraph a beat: a spoken line under who says it, as `Ava: "…"`, and a picture
+ * or a video as a note. The body's markup would leave a `say()` line's speaker out and an `@id:` line as written. A past
+ * pick and a sound are left out, as the body leaves them.
+ */
+function beatsText(beats: View['scene']['beats']): string {
+  return beats
+    .flatMap((beat) => {
+      switch (beat.type) {
+        case 'text':
+          return [beat.text]
+        case 'say':
+          return [beat.name ? `${beat.name}: "${beat.text}"` : `"${beat.text}"`]
+        case 'image':
+          return [`[picture: ${beat.alt || beat.src}]`]
+        case 'video':
+          return [`[video: ${beat.alt || beat.src}]`]
+        default:
+          return []
+      }
+    })
+    .join('\n\n')
+}
+
+/**
  * Returns a view as plain text, as `ifloom playtest` writes it. The text has the turn, the time, the body, each choice
  * and action with its price or reason, and the inputs.
  */
 export function screenText(screen: View): string {
   const where = [`Turn ${screen.turn + 1}`, screen.when].filter(Boolean)
-  const lines = [`== ${where.join(' · ')}`, `# ${screen.scene.title}`, screen.scene.body]
+  const lines = [`== ${where.join(' · ')}`, `# ${screen.scene.title}`, beatsText(screen.scene.beats)]
   const buttons = [
     ...inlineChoices(screen.scene.beats),
     ...screen.scene.choices,

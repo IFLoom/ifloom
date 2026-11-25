@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
+import { applyEffects, loadGame, say, startingState, view, type Game } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { explorer, metricsText, playtest, snapshot, type Policy } from '../src/index.ts'
@@ -130,6 +130,30 @@ describe('playtest', () => {
     const result = playtest(g, startingState(g), explorer(), { turns: 2 })
     expect(result.transcript).toContain('# Hello\nA door.\n  [>] Go in\n  [input] Your name: —')
     expect(result.transcript.split('! Rent paid: The landlord nods.').length - 1).toBe(1)
+  })
+
+  it('writes each spoken line under who says it, from a say() block or an @id: line in prose', () => {
+    const g = loadGame(
+      [
+        {
+          name: 'cafe',
+          introScene: 'counter',
+          kinds: [{ id: 'character', label: 'Person', unique: true }],
+          entities: [{ id: 'ava', of: 'character', name: 'Ava' }],
+          scenes: [
+            {
+              id: 'counter',
+              title: 'The counter',
+              body: [say('ava', 'Morning.'), { text: '@you: "A tea, please."' }, { text: 'Rain on the window.' }],
+              choices: [{ id: 'sit', label: 'Sit down', effects: [{ scene: null }] }],
+            },
+          ],
+        },
+      ],
+      { id: 'cafe', title: 'Café' },
+    ).game
+    const result = playtest(g, startingState(g), explorer(), { turns: 1 })
+    expect(result.transcript).toContain('# The counter\nAva: "Morning."\n\nYou: "A tea, please."\n\nRain on the window.\n  [>] Sit down')
   })
 
   it('stops going round in circles, rather than walking between two rooms until the step limit', () => {

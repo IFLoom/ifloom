@@ -41,7 +41,7 @@ A bakery, a launderette, a bus stop with a bench nobody sits on.
 > {"type":"custom","name":"cast/talk","with":{"who":"sam"}}
 ```
 
-`[>]` is a button the player can press, `[ ]` one that's greyed out with its reason after the dash, and `->` a way out. Run a playtest before and after a change to pacing, such as a price, a reward or a door's hours, and read both. The numbers say when things happened, such as the turn the coins stopped climbing. Only the transcript shows a line that prints on every screen, a variant dealt five days running, or a gate meant for week two that's open on day two.
+The words are as the player reads them, one paragraph a beat: a spoken line under who says it, as `Ava: "Morning."`, and a picture or a video as a `[picture: …]` note. `[>]` is a button the player can press, `[ ]` one that's greyed out with its reason after the dash, and `->` a way out. Run a playtest before and after a change to pacing, such as a price, a reward or a door's hours, and read both. The numbers say when things happened, such as the turn the coins stopped climbing. Only the transcript shows a line that prints on every screen, a variant dealt five days running, or a gate meant for week two that's open on day two.
 
 ## Set where it starts and what it chooses
 

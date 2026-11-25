@@ -11,8 +11,8 @@ name: Release
 #
 # Run by hand, it lists what would be published and runs the trials, and publishes nothing.
 #
-# npm signs in with the NPM_TOKEN secret while it's set; without it, NODE_AUTH_TOKEN is empty and npm uses trusted
-# publishing, with this workflow as each package's trusted publisher on npmjs.com. The pull request is opened with
+# npm signs in with the NPM_TOKEN secret while it's set; without it, changesets/action uses trusted publishing, with
+# this workflow as each package's trusted publisher on npmjs.com. The pull request is opened with
 # RELEASE_TOKEN when it's set, so CI runs on it too; a pull request opened with the workflow's own token starts no
 # other workflow.
 on:
@@ -68,4 +68,6 @@ jobs:
           createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          # changesets/action signs npm in with NPM_TOKEN when it's set, and with trusted publishing (OIDC) once it isn't.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -106,6 +106,20 @@ describe('jobs, on their own', () => {
     expect(whyNot({ ...state, stats: { ...state.stats, energy: 10 } }, g, jobs.work('cafe'))).toBe('Too tired.')
   })
 
+  it('say what a shift paid, at the rank it was worked at, unless the game rewords the notice to nothing', () => {
+    const g = game()
+    const titles = (state: GameState, of: Game) => view(state, of).notices.unseen.map((notice) => notice.title)
+    const worked = play(freshState(g), g, act('meet'), jobs.apply('cafe'), jobs.work('cafe'))
+    expect(titles(worked, g)).toContain('Paid 12 coins at Weekend help')
+    // Raised again with the same id, a second payday replaces the first while it's unseen.
+    const again = play(worked, g, act('rest'), act('sleep'), jobs.work('cafe'))
+    expect(titles(again, g).filter((title) => title.startsWith('Paid'))).toEqual(['Paid 12 coins at Weekend help'])
+    const quiet = { ...g, strings: { ...g.strings, 'jobs/paid': '' } }
+    expect(titles(play(freshState(quiet), quiet, act('meet'), jobs.apply('cafe'), jobs.work('cafe')), quiet).some((title) => title.startsWith('Paid'))).toBe(
+      false,
+    )
+  })
+
   it('promote up the ladder as shifts and conditions allow, with a notice and more pay', () => {
     const g = game()
     let state = play(freshState(g), g, act('meet'), jobs.apply('cafe'))

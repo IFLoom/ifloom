@@ -458,6 +458,8 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
       notNow: 'Not a time for a shift.',
       workedToday: 'You’ve done today’s shift.',
       promoted: 'Promoted: {title}',
+      // The notice a paid shift raises, with the job's name and its pay. Reworded to '', no notice.
+      paid: 'Paid {pay} at {title}',
       firedNotice: 'You’ve lost your job: {title}',
       // The button that leaves a job.
       quit: 'Quit',
@@ -525,6 +527,10 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
           const slice = context.get(next)
           const record = slice.held[job.id] ?? held
           next = context.set({ ...slice, held: { ...slice.held, [job.id]: { ...record, shifts: record.shifts + 1, lastWorked: today } } }, next)
+          // Say what the shift paid, at the rank it was worked at, as a promotion or a firing is said.
+          const wage = priceView(context.game, payOf(job, held))
+          const paid = wage ? stringOf(context.game, 'jobs/paid', { title: job.name, pay: wage.text }) : ''
+          if (paid.trim()) next = notify(next, { id: `job.${job.id}.paid`, title: paid, tag: 'jobs' })
           return next
         },
       },

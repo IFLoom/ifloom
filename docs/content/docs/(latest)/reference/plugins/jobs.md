@@ -184,7 +184,7 @@ The plugin refuses it, in this order:
 
 ### jobs/work
 
-Works one shift at the job, which applies the [shift](#shiftdef) and counts it. A job has one shift a day, however many `hours` it lists, and with the calendar's turn set to a period, several turns can pass in a day with still one shift.
+Works one shift at the job, which applies the [shift](#shiftdef) and counts it. A job has one shift a day, however many `hours` it lists, and with the calendar's turn set to a period, several turns can pass in a day with still one shift. A shift that pays raises a [notice](/docs/reference/notices), `Paid 12 coins at Weekend help` (`jobs/paid`), with the pay of the rank it was worked at, tagged `jobs`. A game that wants no pay notice rewords `jobs/paid` to `''`.
 
 ```ts fragment
 { 'jobs/work': { id: 'weekend' } } // jobs.work('weekend')
@@ -365,6 +365,7 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 | `jobs/notNow` | `Not a time for a shift.` |
 | `jobs/workedToday` | `You’ve done today’s shift.` |
 | `jobs/promoted` | `Promoted: {title}`, the promotion notice's title, with the new rank's name. |
+| `jobs/paid` | `Paid {pay} at {title}`, the notice a paid shift raises, with its pay and the job's name. Reworded to `''`, no notice. |
 | `jobs/firedNotice` | `You’ve lost your job: {title}`, the firing notice's title, with the job's name. |
 | `jobs/quit` | `Quit`, the label of a held job's `quit` button. |
 

@@ -35,6 +35,14 @@ describe('notices', () => {
     expect(view(state, game).notices).toEqual({ unseen: [], byTag: {} })
   })
 
+  it('fill the tokens in the title as in the text, when they are shown', () => {
+    const game: Game = { ...fixture(), actions: [{ id: 'phase', effects: [{ notify: 'Now {{phase}}', text: 'The town is {{phase}}.' }] }] }
+    const state = apply(begin(game), game, act('phase')).state
+    expect(view(state, game).notices.unseen[0]).toMatchObject({ title: 'Now open', text: 'The town is open.' })
+    // The state keeps the words as written, so a token reads what holds when it's shown.
+    expect(state.notices.at(-1)?.title).toBe('Now {{phase}}')
+  })
+
   it('raised again with the same id come back unseen, as the newest', () => {
     const game = withNotices()
     let state = apply(begin(game), game, act('rent')).state

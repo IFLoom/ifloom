@@ -12,7 +12,7 @@ export const NOTICES_KEPT = 50
 export type Notice = {
   /** The notice's id. A notice raised with the id of an earlier one replaces it. */
   id: string
-  /** The notice's short line, kept as written. */
+  /** The notice's short line, kept as written. The view fills its tokens. */
   title: string
   /** The notice's longer words, kept as written. The view fills their tokens. */
   text?: string

@@ -11,7 +11,7 @@ import { defineFeature } from './feature.ts'
 export type NoticeView = {
   /** The notice's id, which the `dismiss` command takes. */
   id: string
-  /** The notice's short line, kept as written. */
+  /** The notice's short line, with its tokens filled in. */
   title: string
   /** The notice's longer words, with their tokens filled in. Empty if it has none. */
   text: string
@@ -41,7 +41,7 @@ export type NoticesShape = {
     /**
      * An effect that raises a notice outside a scene, such as
      * `{ notify: 'A note under your door', text: 'It says the bins go out on Tuesday.' }`. The view fills the tokens in
-     * `text`, and an `id` already used replaces that notice.
+     * both, and an `id` already used replaces that notice.
      */
     notify: { notify: string; text?: string; image?: string; tag?: string; id?: string }
   }
@@ -85,7 +85,7 @@ export const notices = defineFeature<NoticesShape>({
       notices: {
         unseen: unseen.map((notice) => ({
           id: notice.id,
-          title: notice.title,
+          title: cx.fillTokens(state, game, notice.title),
           text: notice.text ? cx.fillTokens(state, game, notice.text) : '',
           image: notice.image === undefined ? null : artSrc(notice.image),
           tag: notice.tag ?? null,

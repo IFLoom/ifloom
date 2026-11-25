@@ -3297,7 +3297,7 @@ type Notice = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | The notice's id. A notice raised with the id of an earlier one replaces it. |
-| `title` | `string` |  |  | The notice's short line, kept as written. |
+| `title` | `string` |  |  | The notice's short line, kept as written. The view fills its tokens. |
 | `text` | `string` | yes |  | The notice's longer words, kept as written. The view fills their tokens. |
 | `image` | `string` | yes |  | The notice's picture, as a path in the game's `art/` folder (`'notes/bins.jpg'`) or a URL. |
 | `tag` | `string` | yes |  | The notice's subject, for grouping badges, such as `'messages'` or `'quests'`. |
@@ -3344,7 +3344,7 @@ type NoticeView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `id` | `string` |  |  | The notice's id, which the `dismiss` command takes. |
-| `title` | `string` |  |  | The notice's short line, kept as written. |
+| `title` | `string` |  |  | The notice's short line, with its tokens filled in. |
 | `text` | `string` |  |  | The notice's longer words, with their tokens filled in. Empty if it has none. |
 | `image` | `string \| null` |  |  | The notice's picture, as a path through `artSrc`. Null if it has none. |
 | `tag` | `string \| null` |  |  | The notice's subject, for grouping badges, such as `'messages'`. Null if it has none. |

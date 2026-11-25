@@ -8,6 +8,7 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ### Fixed
 
+- A [notice](/docs/reference/notices)'s title fills its [tokens](/docs/reference/prose#tokens) as it's shown, as its `text` does and as the docs said: `{ notify: 'Now {{rank}}' }` showed the braces.
 - A plugin's call put where another kind belongs no longer compiles: a command's helper such as `wardrobe.wear('clothing:scarf')` in `effects`, a condition in `effects`, or an effect as a `command`. A name declared as one kind of call was let through as an undeclared one of another, so only `ifloom check` caught it. A name no plugin declares still type-checks loosely. [Dress the player](/docs/how-to/dress-the-player) shows a choice sending `wardrobe.wear()` as its `command`.
 - A `jump()` written in a choice's `then` instead of its `effects` is reported for what it is. It's the same object as `point()`, so the checker said only `two points share the id "ask"`; now it names the choice and says to put `jump('ask')` in the choice's `effects`. The [Twine phrasebook](/docs/reference/twine-phrasebook#passages-and-links) and the [flows reference](/docs/reference/flows#jump) say so too.
 

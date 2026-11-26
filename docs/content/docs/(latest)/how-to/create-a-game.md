@@ -93,5 +93,6 @@ bun run typecheck
 The new game's files follow [Organise your game's files](/docs/how-to/organise-your-files), and its `AGENTS.md` briefs a coding agent (see [Work with a coding agent](/docs/how-to/use-a-coding-agent)). For more, see:
 
 - [`ifloom new`](/docs/reference/cli#ifloom-new), every flag of the command `npm create ifloom` runs.
-- [The town tutorial](/docs/tutorial/town/create-a-game), which builds a game from here step by step.
+- [The story tutorial](/docs/tutorial/story/start-a-story), which writes a short branching story, with no plugins, in four steps.
+- [The town tutorial](/docs/tutorial/town/create-a-game), which builds a game with places, people and time, step by step.
 - [Run the examples from the repository](/docs/how-to/work-in-the-repository), to try unreleased code.

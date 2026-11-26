@@ -173,4 +173,4 @@ reasonOf(game, { string: 'places/notHere' }) // the places plugin's line, or the
 - `Strings` takes any key, and the loader checks no keys, so a misspelt key does nothing and the English shows.
 - A key no table has comes back as the key, such as `'kites/noWind'`, which shows on screen. `stringOf` finds a plugin's defaults only when the game has the plugin.
 - A placeholder with no value stays as written, so `stringOf(game, 'notEnough')` gives `'Not enough {stat}.'`.
-- The engine substitutes words and nothing more. It has no plurals and can't move a word a line builds, so a language that needs either can't be fully translated yet (see [Stability and planned renames](/docs/upgrading/status)).
+- The engine substitutes words and nothing more. It has no plurals and can't move a word a line builds, so a language that needs either can't be fully translated yet (see [Stability before 1.0](/docs/upgrading/status)).

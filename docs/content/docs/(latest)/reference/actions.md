@@ -96,6 +96,12 @@ A choice, an action and a [cheat](/docs/reference/plugins/unlocks#cheatdef) take
 once: { per: 'turn', reason: 'Once a day is plenty.' }
 ```
 
+For a wait of more than one turn, leave out `once` and refuse the choice with a `blocked` entry on the [`since`](/docs/reference/conditions#since) condition, counting from the last time it was chosen, as [Rest a scene between visits](/docs/how-to/schedule-daily-work#rest-a-scene-between-visits) shows:
+
+```ts fragment
+blocked: [{ when: { since: 'cafe.counter#chat', last: true, lt: 3 }, reason: 'You only just talked.' }]
+```
+
 ## View
 
 While no scene is open, `view.actions` lists the room's actions, each a [`RenderedChoice`](/docs/reference/view#renderedchoice) made by [`renderAction`](/docs/reference/view#renderaction). It lists the game's own first, then each plugin's, then content's actions with a label. A lock that denies `'*'` empties it (see [`lockedOut`](/docs/reference/locks#lockedout)). The view leaves out an action whose command a lock with `hide` stops, and one whose own `blocked` entry with `hide` holds.

@@ -9,7 +9,7 @@ to a single `index.html` that opens straight from disk or uploads to itch.io as
 it is.
 
 IFLoom hasn't reached 1.0, so its API can still change. See
-[Stability and planned renames](https://ifloom.dev/docs/upgrading/status).
+[Stability before 1.0](https://ifloom.dev/docs/upgrading/status).
 
 **Docs:** in [`docs/content/docs/`](docs/content/docs); run `npm run docs:dev` to
 read them in a browser (it needs the website's repo beside this one, see below). They're published at https://ifloom.dev/docs, with

@@ -1,8 +1,8 @@
 ---
-title: "Stability and planned renames"
-description: "IFLoom has no stable API before 1.0, but saves and packs already carry old data forward, and a few renames are still planned."
+title: "Stability before 1.0"
+description: "IFLoom has no stable API before 1.0, but saves and packs already carry old data forward when the engine changes."
 ---
-IFLoom hasn't reached 1.0, so it has no stable API yet. Names, shapes and defaults can change between releases, and the [changelog](/docs/changelog) lists each change. Saves and packs already carry old data forward, and this page lists the renames still planned.
+IFLoom hasn't reached 1.0, so it has no stable API yet. Names, shapes and defaults can change between releases, and the [changelog](/docs/changelog) lists each change. Saves and packs already carry old data forward, as this page explains.
 
 ## The API
 
@@ -29,14 +29,4 @@ Two parts of the engine already handle change, so an engine update keeps old dat
 - **Saves record their version.** Each save records the version of its format, [`SAVE_VERSION`](/docs/reference/saves#save_version). When the format changes, [`loadState`](/docs/reference/saves#loadstate) carries an older save forward one step at a time, so a player's saves survive an engine update. Plugins version their own state the same way. [Older saves](/docs/upgrading/old-saves) lists each version.
 - **Packs record their schema.** A pack, such as a mod, records the version of the content format it was written for in `schema`. The loader upgrades a pack written for an older schema, and skips one written for a newer schema with a problem, so it never misreads one. Your own content has no schema, because you build it with the engine it runs on. [Schema history](/docs/upgrading/schema-history) lists each schema.
 
-Everything else can still change, including function names, option names and the shapes of content. When one changes, the reference pages change with it. A known gap is described on the reference page it affects, under its caveats, such as the lack of plurals in [strings](/docs/reference/strings#caveats).
-
-## Planned renames
-
-The renames below are planned and not yet made:
-
-| Key | Meaning |
-|---|---|
-| A choice's and an action's `once` | `once` is planned to split into `once` and `cooldown`. |
-
-The reference pages use the names exported today. [Upgrade IFLoom](/docs/upgrading) describes how to move a game to a release that makes a rename.
+Everything else can still change, including function names, option names and the shapes of content. When one changes, the reference pages change with it. A known gap is described on the reference page it affects, under its caveats, such as the lack of plurals in [strings](/docs/reference/strings#caveats). The [changelog](/docs/changelog) says what to write instead of anything renamed or removed, and [Upgrade IFLoom](/docs/upgrading) describes how to move a game to a new release.

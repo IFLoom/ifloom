@@ -95,5 +95,5 @@ These pages describe what the upgrade uses:
 
 - [Schema history](/docs/upgrading/schema-history), what each schema changed in packs
 - [Older saves](/docs/upgrading/old-saves), what each save version changed
-- [Stability and planned renames](/docs/upgrading/status), what can still change
+- [Stability before 1.0](/docs/upgrading/status), what can still change
 - [Content, packs and the base](/docs/explanation/content-and-packs), why content and packs upgrade differently

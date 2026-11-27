@@ -4,7 +4,7 @@
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * page, and the in-game menu leads back to `title`.
  */
-import type { KvValue, GameState, SaveMeta, SettingView } from '@ifloom/engine'
+import { creditsOf, type KvValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -28,9 +28,6 @@ export type PageDef = {
   showOnTitle?: boolean
 }
 
-/** One line of the credits page, as text or as a link with its label. */
-export type Credit = string | { label: string; href: string }
-
 /** A notice the player confirms once before the title screen, in `PagesOptions.gate`. The game writes every word of it. */
 export type GateOptions = {
   /** The gate's heading. */
@@ -49,8 +46,6 @@ export type PagesOptions = {
   subtitle?: string
   /** The path of the title screen's picture. */
   art?: string
-  /** The credits page's lines and links. The title screen has no Credits button without them. */
-  credits?: Credit[]
   /** The notice shown before the title screen until the player confirms it. */
   gate?: GateOptions
   /** The pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, replaces it. */
@@ -303,7 +298,7 @@ function TitlePageImpl({ className }: { className?: string }) {
             {page.label}
           </button>
         ))}
-        {options.credits?.length ? (
+        {creditsOf(runner.game).length ? (
           <button {...button} data-title-button="credits" onClick={() => go('credits')}>
             {words('credits')}
           </button>
@@ -496,28 +491,49 @@ function LoadPageImpl({ className }: { className?: string }) {
 export const LoadPage = overridable('LoadPage', LoadPageImpl)
 
 function CreditsPageImpl({ className }: { className?: string }) {
+  const { runner } = useGame()
   const words = useWords()
-  const { options } = usePage()
   const section = usePageParts(className, 'credits-page')
-  const list = usePart('credits', 'flex flex-col gap-2')
-  const line = usePart('credit', '')
-  const link = usePart('credit-link', 'text-primary underline underline-offset-4')
+  const groups = usePart('credits', 'flex flex-col gap-8')
+  const group = usePart('credit-group', 'flex flex-col gap-3')
+  const title = usePart('credit-group-title', 'font-heading text-xl font-semibold')
+  const description = usePart('credit-group-description', 'text-muted-foreground')
+  const list = usePart('credit-list', 'flex flex-col gap-3')
+  const line = usePart('credit', 'flex items-start gap-3')
+  const art = usePart('credit-art', 'size-12 shrink-0 rounded-md object-cover')
+  const name = usePart('credit-name', 'font-medium')
+  const link = usePart('credit-link', 'font-medium text-primary underline underline-offset-4')
+  const role = usePart('credit-role', 'text-muted-foreground')
+  const meta = usePart('credit-meta', 'text-sm text-muted-foreground')
   return (
     <section {...section} data-page="credits">
       <PageHeading>{words('credits')}</PageHeading>
-      <ul {...list}>
-        {(options.credits ?? []).map((credit, index) => (
-          <li key={index} {...line}>
-            {typeof credit === 'string' ? (
-              credit
-            ) : (
-              <a {...link} href={credit.href} target="_blank" rel="noreferrer">
-                {credit.label}
-              </a>
-            )}
-          </li>
+      <div {...groups}>
+        {creditsOf(runner.game).map((entry) => (
+          <section key={entry.id} {...group} data-credit-group={entry.id}>
+            <h3 {...title}>{entry.title}</h3>
+            {entry.description ? <p {...description}>{entry.description}</p> : null}
+            <ul {...list}>
+              {entry.credits.map((credit, index) => (
+                <li key={index} {...line}>
+                  {credit.art ? <Picture {...art} src={credit.art} alt="" /> : null}
+                  <div>
+                    {credit.href ? (
+                      <a {...link} href={credit.href} target="_blank" rel="noreferrer">
+                        {credit.name}
+                      </a>
+                    ) : (
+                      <span {...name}>{credit.name}</span>
+                    )}
+                    {credit.role ? <span {...role}> · {credit.role}</span> : null}
+                    {credit.description || credit.licence ? <p {...meta}>{[credit.description, credit.licence].filter(Boolean).join(' · ')}</p> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ul>
+      </div>
       <div>
         <BackButton />
       </div>
@@ -525,7 +541,10 @@ function CreditsPageImpl({ className }: { className?: string }) {
   )
 }
 
-/** Renders the credits page from `PagesOptions.credits`, a line each. Its links open in a new tab. */
+/**
+ * Renders the credits page from the game's `credits`, a heading for each group and a line for each credit with its
+ * role, description, licence and picture. Its links open in a new tab.
+ */
 export const CreditsPage = overridable('CreditsPage', CreditsPageImpl)
 
 function GatePageImpl({ className }: { className?: string }) {

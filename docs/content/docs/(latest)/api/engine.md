@@ -4,9 +4,9 @@ description: "Every export of @ifloom/engine, the main entry for writing and run
 ---
 Generated from the source of `@ifloom/engine` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
-- Functions: [`actionOf`](#actionof), [`amountOf`](#amountof), [`apply`](#apply), [`applyEffects`](#applyeffects), [`artSrc`](#artsrc), [`audioSrc`](#audiosrc), [`buildEffects`](#buildeffects), [`callOf`](#callof), [`canHold`](#canhold), [`cases`](#cases), [`chance`](#chance), [`checkGame`](#checkgame), [`choice`](#choice-1), [`clampStat`](#clampstat), [`commandOf`](#commandof), [`createRunner`](#createrunner), [`decide`](#decide), [`declaredTrait`](#declaredtrait), [`declaredWithTrait`](#declaredwithtrait), [`describeProblem`](#describeproblem), [`dismiss`](#dismiss), [`draw`](#draw), [`drawOne`](#drawone), [`effectsOf`](#effectsof), [`entitiesOf`](#entitiesof), [`entityDescription`](#entitydescription), [`entityImage`](#entityimage), [`entityKv`](#entitykv), [`entityName`](#entityname), [`entityOf`](#entityof), [`entityTags`](#entitytags), [`explain`](#explain), [`explainText`](#explaintext), [`fillTokens`](#filltokens), [`fold`](#fold), [`give`](#give), [`hash`](#hash), [`heldBy`](#heldby), [`heldCount`](#heldcount), [`holderOf`](#holderof), [`holding`](#holding), [`holds`](#holds), [`image`](#image), [`inlineChoices`](#inlinechoices), [`inlineMarkup`](#inlinemarkup), [`inRange`](#inrange), [`isUnique`](#isunique), [`jump`](#jump), [`lackingLine`](#lackingline), [`loadGame`](#loadgame), [`loadState`](#loadstate), [`mediaType`](#mediatype), [`memoryDriver`](#memorydriver), [`minigame`](#minigame), [`mods`](#mods-1), [`move`](#move), [`need`](#need), [`notify`](#notify), [`panel`](#panel), [`parseRef`](#parseref), [`pluginQuery`](#pluginquery), [`point`](#point), [`profile`](#profile-1), [`proseBeats`](#prosebeats), [`protagonist`](#protagonist), [`reasonOf`](#reasonof), [`replay`](#replay), [`resolveHolder`](#resolveholder), [`saves`](#saves-1), [`say`](#say), [`sceneOf`](#sceneof), [`screen`](#screen-1), [`startingState`](#startingstate), [`statLevel`](#statlevel), [`statOf`](#statof), [`statValue`](#statvalue), [`storylineOpen`](#storylineopen), [`stringOf`](#stringof), [`take`](#take), [`text`](#text), [`traitOf`](#traitof), [`translatableFields`](#translatablefields), [`uiInContent`](#uiincontent-1), [`upgradePack`](#upgradepack), [`view`](#view-1), [`weighted`](#weighted), [`when`](#when), [`whyNot`](#whynot), [`withTrait`](#withtrait), [`writeEntity`](#writeentity)
+- Functions: [`actionOf`](#actionof), [`amountOf`](#amountof), [`apply`](#apply), [`applyEffects`](#applyeffects), [`artSrc`](#artsrc), [`audioSrc`](#audiosrc), [`buildEffects`](#buildeffects), [`callOf`](#callof), [`canHold`](#canhold), [`cases`](#cases), [`chance`](#chance), [`checkGame`](#checkgame), [`choice`](#choice-1), [`clampStat`](#clampstat), [`commandOf`](#commandof), [`createRunner`](#createrunner), [`creditsOf`](#creditsof), [`decide`](#decide), [`declaredTrait`](#declaredtrait), [`declaredWithTrait`](#declaredwithtrait), [`describeProblem`](#describeproblem), [`dismiss`](#dismiss), [`draw`](#draw), [`drawOne`](#drawone), [`effectsOf`](#effectsof), [`entitiesOf`](#entitiesof), [`entityDescription`](#entitydescription), [`entityImage`](#entityimage), [`entityKv`](#entitykv), [`entityName`](#entityname), [`entityOf`](#entityof), [`entityTags`](#entitytags), [`explain`](#explain), [`explainText`](#explaintext), [`fillTokens`](#filltokens), [`fold`](#fold), [`give`](#give), [`hash`](#hash), [`heldBy`](#heldby), [`heldCount`](#heldcount), [`holderOf`](#holderof), [`holding`](#holding), [`holds`](#holds), [`image`](#image), [`inlineChoices`](#inlinechoices), [`inlineMarkup`](#inlinemarkup), [`inRange`](#inrange), [`isUnique`](#isunique), [`jump`](#jump), [`lackingLine`](#lackingline), [`loadGame`](#loadgame), [`loadState`](#loadstate), [`mediaType`](#mediatype), [`memoryDriver`](#memorydriver), [`minigame`](#minigame), [`mods`](#mods-1), [`move`](#move), [`need`](#need), [`notify`](#notify), [`panel`](#panel), [`parseRef`](#parseref), [`pluginQuery`](#pluginquery), [`point`](#point), [`profile`](#profile-1), [`proseBeats`](#prosebeats), [`protagonist`](#protagonist), [`reasonOf`](#reasonof), [`replay`](#replay), [`resolveHolder`](#resolveholder), [`saves`](#saves-1), [`say`](#say), [`sceneOf`](#sceneof), [`screen`](#screen-1), [`startingState`](#startingstate), [`statLevel`](#statlevel), [`statOf`](#statof), [`statValue`](#statvalue), [`storylineOpen`](#storylineopen), [`stringOf`](#stringof), [`take`](#take), [`text`](#text), [`traitOf`](#traitof), [`translatableFields`](#translatablefields), [`uiInContent`](#uiincontent-1), [`upgradePack`](#upgradepack), [`view`](#view-1), [`weighted`](#weighted), [`when`](#when), [`whyNot`](#whynot), [`withTrait`](#withtrait), [`writeEntity`](#writeentity)
 - Constants: [`PLAYER`](#player), [`SAVE_VERSION`](#save_version), [`SCHEMA`](#schema), [`STRINGS`](#strings), [`YOU`](#you)
-- Types: [`ActionCost`](#actioncost), [`ActionDef`](#actiondef), [`Amount`](#amount), [`Applied`](#applied), [`AudioChannelView`](#audiochannelview), [`AudioCue`](#audiocue), [`AudioState`](#audiostate), [`AudioView`](#audioview), [`AutosaveOptions`](#autosaveoptions), [`BacklogEntry`](#backlogentry), [`BacklogOptions`](#backlogoptions), [`BeatSize`](#beatsize), [`Block`](#block), [`Blocked`](#blocked), [`BlockExtras`](#blockextras), [`BlockUi`](#blockui), [`BrokenSave`](#brokensave), [`ButtonDef`](#buttondef), [`CarryOver`](#carryover), [`Change`](#change), [`ChangesDef`](#changesdef), [`ChangeView`](#changeview), [`ChannelDef`](#channeldef), [`Checked`](#checked), [`Choice`](#choice), [`ChoiceUi`](#choiceui), [`Command`](#command), [`CommandCall`](#commandcall), [`CommandLog`](#commandlog), [`CommandRef`](#commandref), [`CommandRegistry`](#commandregistry), [`Condition`](#condition), [`ConditionCall`](#conditioncall), [`ConditionRegistry`](#conditionregistry), [`Content`](#content), [`CreatedEntity`](#createdentity), [`CreateFields`](#createfields), [`CustomContext`](#customcontext), [`DataScene`](#datascene), [`Dice`](#dice), [`Effect`](#effect), [`EffectCall`](#effectcall), [`EffectRef`](#effectref), [`EffectRegistry`](#effectregistry), [`EntitiesView`](#entitiesview), [`EntityDef`](#entitydef), [`EntityRef`](#entityref), [`EntityState`](#entitystate), [`EntityUi`](#entityui), [`EntityView`](#entityview), [`Explanation`](#explanation), [`FileRef`](#fileref), [`FillPart`](#fillpart), [`FlowChoice`](#flowchoice), [`FlowState`](#flowstate), [`FlowStep`](#flowstep), [`Formula`](#formula), [`Game`](#game), [`GameAudio`](#gameaudio), [`GameBase`](#gamebase), [`GameMedia`](#gamemedia), [`GameRules`](#gamerules), [`GameState`](#gamestate), [`GameUi`](#gameui), [`HeldView`](#heldview), [`HelperRegistry`](#helperregistry), [`HelpersIn`](#helpersin), [`HistoryOptions`](#historyoptions), [`Holder`](#holder), [`HotspotDef`](#hotspotdef), [`HotspotView`](#hotspotview), [`InlinePart`](#inlinepart), [`InlineSpan`](#inlinespan), [`InlineUi`](#inlineui), [`InlineUiArgs`](#inlineuiargs), [`InputDef`](#inputdef), [`InputView`](#inputview), [`InstalledMod`](#installedmod), [`KindDef`](#kinddef), [`KvValue`](#kvvalue), [`Loaded`](#loaded), [`LoadedSave`](#loadedsave), [`LoadOptions`](#loadoptions), [`MediaState`](#mediastate), [`MigrationTools`](#migrationtools), [`MinigameDef`](#minigamedef), [`MinigameInput`](#minigameinput), [`MinigameSceneFields`](#minigamescenefields), [`MinigameState`](#minigamestate), [`MinigameStateDef`](#minigamestatedef), [`MinigameTarget`](#minigametarget), [`MinigameTransition`](#minigametransition), [`MinigameView`](#minigameview), [`ModFile`](#modfile), [`Mods`](#mods), [`Notice`](#notice), [`NoticesView`](#noticesview), [`NoticeView`](#noticeview), [`Once`](#once), [`OpenPanel`](#openpanel), [`Pack`](#pack), [`Patch`](#patch), [`Phrase`](#phrase), [`PhraseRow`](#phraserow), [`Phrases`](#phrases), [`PhraseWithArgs`](#phrasewithargs), [`PictureDef`](#picturedef), [`PictureLayer`](#picturelayer), [`PictureLayerView`](#picturelayerview), [`PictureView`](#pictureview), [`Placement`](#placement), [`PlaylistDef`](#playlistdef), [`PluginCall`](#plugincall), [`PoolFile`](#poolfile), [`Price`](#price), [`Probe`](#probe), [`Problem`](#problem), [`Profile`](#profile), [`ProseStore`](#prosestore), [`Query`](#query), [`QueryRegistry`](#queryregistry), [`Range`](#range), [`RawPack`](#rawpack), [`Reason`](#reason), [`RenderedChoice`](#renderedchoice), [`Result`](#result), [`Roll`](#roll), [`RollsState`](#rollsstate), [`Runner`](#runner), [`RunnerOptions`](#runneroptions), [`RunnerSnapshot`](#runnersnapshot), [`RunningTimer`](#runningtimer), [`SaveDriver`](#savedriver), [`SaveExtra`](#saveextra), [`SaveFile`](#savefile), [`SaveListing`](#savelisting), [`SaveMeta`](#savemeta), [`Saves`](#saves), [`SavingView`](#savingview), [`SceneBeat`](#scenebeat), [`SceneMedia`](#scenemedia), [`ScenePanel`](#scenepanel), [`SceneUi`](#sceneui), [`Screen`](#screen), [`ScreenChoice`](#screenchoice), [`ScreenScene`](#screenscene), [`Select`](#select), [`SettingDef`](#settingdef), [`SettingView`](#settingview), [`SpeakerView`](#speakerview), [`StartOptions`](#startoptions), [`StatDef`](#statdef), [`StatKey`](#statkey), [`StatLevels`](#statlevels), [`StatRound`](#statround), [`Stats`](#stats), [`StatUi`](#statui), [`StatView`](#statview), [`StatWords`](#statwords), [`StoryletFields`](#storyletfields), [`StorylineDef`](#storylinedef), [`StorylineState`](#storylinestate), [`StringKey`](#stringkey), [`Strings`](#strings-1), [`TextLine`](#textline), [`TimerDef`](#timerdef), [`TimerView`](#timerview), [`Times`](#times), [`TrackDef`](#trackdef), [`TraitData`](#traitdata), [`TraitRegistry`](#traitregistry), [`TraitSource`](#traitsource), [`TraitTable`](#traittable), [`TriggerDef`](#triggerdef), [`Ui`](#ui), [`UiField`](#uifield), [`UiInContent`](#uiincontent), [`UiTarget`](#uitarget), [`ValueRef`](#valueref), [`VariantMember`](#variantmember), [`VideoFlags`](#videoflags), [`VideoView`](#videoview), [`View`](#view), [`ViewOptions`](#viewoptions), [`ViewRegistry`](#viewregistry), [`ViewsIn`](#viewsin), [`WordField`](#wordfield), [`WordPart`](#wordpart), [`WordShape`](#wordshape)
+- Types: [`ActionCost`](#actioncost), [`ActionDef`](#actiondef), [`Amount`](#amount), [`Applied`](#applied), [`AudioChannelView`](#audiochannelview), [`AudioCue`](#audiocue), [`AudioState`](#audiostate), [`AudioView`](#audioview), [`AutosaveOptions`](#autosaveoptions), [`BacklogEntry`](#backlogentry), [`BacklogOptions`](#backlogoptions), [`BeatSize`](#beatsize), [`Block`](#block), [`Blocked`](#blocked), [`BlockExtras`](#blockextras), [`BlockUi`](#blockui), [`BrokenSave`](#brokensave), [`ButtonDef`](#buttondef), [`CarryOver`](#carryover), [`Change`](#change), [`ChangesDef`](#changesdef), [`ChangeView`](#changeview), [`ChannelDef`](#channeldef), [`Checked`](#checked), [`Choice`](#choice), [`ChoiceUi`](#choiceui), [`Command`](#command), [`CommandCall`](#commandcall), [`CommandLog`](#commandlog), [`CommandRef`](#commandref), [`CommandRegistry`](#commandregistry), [`Condition`](#condition), [`ConditionCall`](#conditioncall), [`ConditionRegistry`](#conditionregistry), [`Content`](#content), [`CreatedEntity`](#createdentity), [`CreateFields`](#createfields), [`Credit`](#credit), [`CreditGroup`](#creditgroup), [`CustomContext`](#customcontext), [`DataScene`](#datascene), [`Dice`](#dice), [`Effect`](#effect), [`EffectCall`](#effectcall), [`EffectRef`](#effectref), [`EffectRegistry`](#effectregistry), [`EntitiesView`](#entitiesview), [`EntityDef`](#entitydef), [`EntityRef`](#entityref), [`EntityState`](#entitystate), [`EntityUi`](#entityui), [`EntityView`](#entityview), [`Explanation`](#explanation), [`FileRef`](#fileref), [`FillPart`](#fillpart), [`FlowChoice`](#flowchoice), [`FlowState`](#flowstate), [`FlowStep`](#flowstep), [`Formula`](#formula), [`Game`](#game), [`GameAudio`](#gameaudio), [`GameBase`](#gamebase), [`GameMedia`](#gamemedia), [`GameRules`](#gamerules), [`GameState`](#gamestate), [`GameUi`](#gameui), [`HeldView`](#heldview), [`HelperRegistry`](#helperregistry), [`HelpersIn`](#helpersin), [`HistoryOptions`](#historyoptions), [`Holder`](#holder), [`HotspotDef`](#hotspotdef), [`HotspotView`](#hotspotview), [`InlinePart`](#inlinepart), [`InlineSpan`](#inlinespan), [`InlineUi`](#inlineui), [`InlineUiArgs`](#inlineuiargs), [`InputDef`](#inputdef), [`InputView`](#inputview), [`InstalledMod`](#installedmod), [`KindDef`](#kinddef), [`KvValue`](#kvvalue), [`Loaded`](#loaded), [`LoadedSave`](#loadedsave), [`LoadOptions`](#loadoptions), [`MediaState`](#mediastate), [`MigrationTools`](#migrationtools), [`MinigameDef`](#minigamedef), [`MinigameInput`](#minigameinput), [`MinigameSceneFields`](#minigamescenefields), [`MinigameState`](#minigamestate), [`MinigameStateDef`](#minigamestatedef), [`MinigameTarget`](#minigametarget), [`MinigameTransition`](#minigametransition), [`MinigameView`](#minigameview), [`ModFile`](#modfile), [`Mods`](#mods), [`Notice`](#notice), [`NoticesView`](#noticesview), [`NoticeView`](#noticeview), [`Once`](#once), [`OpenPanel`](#openpanel), [`Pack`](#pack), [`Patch`](#patch), [`Phrase`](#phrase), [`PhraseRow`](#phraserow), [`Phrases`](#phrases), [`PhraseWithArgs`](#phrasewithargs), [`PictureDef`](#picturedef), [`PictureLayer`](#picturelayer), [`PictureLayerView`](#picturelayerview), [`PictureView`](#pictureview), [`Placement`](#placement), [`PlaylistDef`](#playlistdef), [`PluginCall`](#plugincall), [`PoolFile`](#poolfile), [`Price`](#price), [`Probe`](#probe), [`Problem`](#problem), [`Profile`](#profile), [`ProseStore`](#prosestore), [`Query`](#query), [`QueryRegistry`](#queryregistry), [`Range`](#range), [`RawPack`](#rawpack), [`Reason`](#reason), [`RenderedChoice`](#renderedchoice), [`Result`](#result), [`Roll`](#roll), [`RollsState`](#rollsstate), [`Runner`](#runner), [`RunnerOptions`](#runneroptions), [`RunnerSnapshot`](#runnersnapshot), [`RunningTimer`](#runningtimer), [`SaveDriver`](#savedriver), [`SaveExtra`](#saveextra), [`SaveFile`](#savefile), [`SaveListing`](#savelisting), [`SaveMeta`](#savemeta), [`Saves`](#saves), [`SavingView`](#savingview), [`SceneBeat`](#scenebeat), [`SceneMedia`](#scenemedia), [`ScenePanel`](#scenepanel), [`SceneUi`](#sceneui), [`Screen`](#screen), [`ScreenChoice`](#screenchoice), [`ScreenScene`](#screenscene), [`Select`](#select), [`SettingDef`](#settingdef), [`SettingView`](#settingview), [`SpeakerView`](#speakerview), [`StartOptions`](#startoptions), [`StatDef`](#statdef), [`StatKey`](#statkey), [`StatLevels`](#statlevels), [`StatRound`](#statround), [`Stats`](#stats), [`StatUi`](#statui), [`StatView`](#statview), [`StatWords`](#statwords), [`StoryletFields`](#storyletfields), [`StorylineDef`](#storylinedef), [`StorylineState`](#storylinestate), [`StringKey`](#stringkey), [`Strings`](#strings-1), [`TextLine`](#textline), [`TimerDef`](#timerdef), [`TimerView`](#timerview), [`Times`](#times), [`TrackDef`](#trackdef), [`TraitData`](#traitdata), [`TraitRegistry`](#traitregistry), [`TraitSource`](#traitsource), [`TraitTable`](#traittable), [`TriggerDef`](#triggerdef), [`Ui`](#ui), [`UiField`](#uifield), [`UiInContent`](#uiincontent), [`UiTarget`](#uitarget), [`ValueRef`](#valueref), [`VariantMember`](#variantmember), [`VideoFlags`](#videoflags), [`VideoView`](#videoview), [`View`](#view), [`ViewOptions`](#viewoptions), [`ViewRegistry`](#viewregistry), [`ViewsIn`](#viewsin), [`WordField`](#wordfield), [`WordPart`](#wordpart), [`WordShape`](#wordshape)
 
 ## ActionCost
 
@@ -1067,8 +1067,9 @@ type Content = {
   locks?: Lock[]
   phrases?: Phrases
   changes?: ChangesDef
-  finished?: Condition
   carryOver?: CarryOver
+  finished?: Condition
+  credits?: CreditGroup[]
 }
 ```
 
@@ -1103,8 +1104,9 @@ type Content = {
 | `locks` | [`Lock[]`](/docs/api/engine-plugin#lock) | yes |  | The pack's locks, added after the content's. A lock with the `id` of an earlier one replaces it. |
 | `phrases` | [`Phrases`](#phrases) | yes |  | The pack's phrases, words that change with the state, printed in a line as `{{name}}`. Each is a plain string or a list of `{ when?, text }` rows tried in order, and an object is a group. A later pack's phrase replaces an earlier one with the same full name, and a pack can add phrases to a group. |
 | `changes` | [`ChangesDef`](#changesdef) | yes |  | The pack's tracked stats, by id, such as `{ stats: ['coins', 'trust'] }`. The engine adds every file's and pack's lists together. |
-| `finished` | [`Condition`](#condition) | yes |  | The pack's condition for the game being finished. It replaces the content's, and the runner records the first time it holds in the profile's `core:finished`. |
 | `carryOver` | [`CarryOver`](#carryover) | yes |  | The pack's rules for a New Game+. They replace the content's `carryOver` whole. |
+| `finished` | [`Condition`](#condition) | yes |  | The pack's condition for the game being finished. It replaces the content's, and the runner records the first time it holds in the profile's `core:finished`. |
+| `credits` | [`CreditGroup[]`](#creditgroup) | yes |  | The pack's credits, in groups. A group whose id is already declared gets these credits after its own. Its `title` or `description` replaces the earlier one, and a new id adds a group after the others. |
 
 ## CreatedEntity
 
@@ -1175,6 +1177,70 @@ function createRunner(game: Game, start: GameState, options?: RunnerOptions): Ru
 ```
 
 Uses: [`Game`](#game), [`GameState`](#gamestate), [`RunnerOptions`](#runneroptions), [`Runner`](#runner).
+
+## Credit
+
+Type. Explained in [Credits](/docs/reference/credits#credit).
+
+One credit in a group, such as a person, a studio or a source the game thanks. Only `name` is needed.
+
+```ts shape
+import type { Credit } from '@ifloom/engine'
+type Credit = {
+  name: string
+  role?: string
+  description?: string
+  href?: string
+  licence?: string
+  art?: string
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `name` | `string` |  |  | The person, studio or source credited, as the credits page shows it. It's a name, so a translation leaves it alone. |
+| `role` | `string` | yes |  | The credit's role, the part they played or gave, such as `'Writer'`, `'Cover photograph'` or `'Gold patron'`. |
+| `description` | `string` | yes |  | A line more about the credit, such as `'The harbour at dawn, via Unsplash'`. |
+| `href` | `string` | yes |  | A link to them or to the source, `http:`, `https:` or `mailto:`. |
+| `licence` | `string` | yes |  | The licence the work is used under, such as `'CC BY 4.0'`. |
+| `art` | `string` | yes |  | The path of a picture beside the credit, such as a portrait or the credited image itself. |
+
+## CreditGroup
+
+Type. Explained in [Credits](/docs/reference/credits#creditgroup).
+
+A group of credits the game declares in `credits`, such as the team or the patrons, shown under its title in order.
+
+```ts shape
+import type { CreditGroup } from '@ifloom/engine'
+type CreditGroup = {
+  id: string
+  title: string
+  description?: string
+  credits: Credit[]
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The group's id. Content and packs that name the same id add to one group. |
+| `title` | `string` |  |  | The group's heading, such as `'Patrons'`. |
+| `description` | `string` | yes |  | A line under the heading, such as `'With thanks to everyone on Patreon'`. |
+| `credits` | [`Credit[]`](#credit) |  |  | The group's credits, in order. |
+
+## creditsOf
+
+Function. Explained in [Credits](/docs/reference/credits#creditsof).
+
+Returns the game's credit groups that have at least one credit, in order, as a credits page shows them. Empty when the
+game credits no one.
+
+```ts shape
+import { creditsOf, type Game } from '@ifloom/engine'
+function creditsOf(game: Pick<Game, 'credits'>): readonly CreditGroup[]
+```
+
+Uses: [`Game`](#game), [`CreditGroup`](#creditgroup).
 
 ## CustomContext
 
@@ -1979,6 +2045,7 @@ type Game = {
   changes?: ChangesDef
   carryOver?: CarryOver
   finished?: Condition
+  credits?: CreditGroup[]
 }
 ```
 
@@ -2018,6 +2085,7 @@ type Game = {
 | `changes` | [`ChangesDef`](#changesdef) | yes |  | The stats the engine tracks changes of, from the content and every pack together. Nothing is tracked if left out. |
 | `carryOver` | [`CarryOver`](#carryover) | yes |  | The game's rules for a New Game+, the parts of the last game a new one keeps. `startingState`'s `carry` applies them. |
 | `finished` | [`Condition`](#condition) | yes |  | The game's condition for being finished. The runner records the first time it holds in the profile's `core:finished`, so a title page can offer New Game+. |
+| `credits` | [`CreditGroup[]`](#creditgroup) | yes |  | The game's credits, in groups, in the order they were first declared. None if left out. |
 
 ## GameAudio
 
@@ -3453,6 +3521,7 @@ type Pack = {
   changes?: ChangesDef
   finished?: Condition
   carryOver?: CarryOver
+  credits?: CreditGroup[]
 }
 ```
 
@@ -3492,6 +3561,7 @@ type Pack = {
 | `changes` | [`ChangesDef`](#changesdef) | yes |  | The pack's tracked stats, by id, such as `{ stats: ['coins', 'trust'] }`. The engine adds every file's and pack's lists together. |
 | `finished` | [`Condition`](#condition) | yes |  | The pack's condition for the game being finished. It replaces the content's, and the runner records the first time it holds in the profile's `core:finished`. |
 | `carryOver` | [`CarryOver`](#carryover) | yes |  | The pack's rules for a New Game+. They replace the content's `carryOver` whole. |
+| `credits` | [`CreditGroup[]`](#creditgroup) | yes |  | The pack's credits, in groups. A group whose id is already declared gets these credits after its own. Its `title` or `description` replaces the earlier one, and a new id adds a group after the others. |
 
 ## panel
 

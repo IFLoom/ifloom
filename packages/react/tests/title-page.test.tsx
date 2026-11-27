@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { createRunner, loadGame, memoryDriver, profile, saves, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, profile, saves, startingState, type Content, type Game } from '@ifloom/engine'
 import { GameShell, usePage, useSetting, type PagesOptions } from '../src/index.ts'
 import { Reading, storyOf } from './layouts.tsx'
 
 afterEach(cleanup)
 
-function letter(): Game {
+function letter(...more: Content[]): Game {
   return loadGame(
     [
       { name: 'base', introScene: 'mat', carryOver: { kv: ['readBefore'] }, finished: { kv: 'readBefore' } },
@@ -40,13 +40,13 @@ function letter(): Game {
         ],
         prose: { mat: 'A letter on the mat.', again: 'You have read it before.' },
       },
+      ...more,
     ],
     { id: 'letter', title: 'The Letter' },
   ).game
 }
 
-function play(pages: boolean | PagesOptions = true, driver = memoryDriver()) {
-  const game = letter()
+function play(pages: boolean | PagesOptions = true, driver = memoryDriver(), game = letter()) {
   const runner = createRunner(game, startingState(game), {
     saves: saves(game, driver),
     profile: profile(game, driver),
@@ -199,14 +199,36 @@ describe('the pages', () => {
     }
     play({
       pages: { gallery: { label: 'Gallery', component: Gallery }, hidden: { label: 'Hidden', component: Gallery, showOnTitle: false } },
-      credits: ['Written by a friend', { label: 'Site', href: 'https://example.com/' }],
     })
     fireEvent.click(await screen.findByText('Gallery'))
     expect(screen.queryByText('Hidden')).toBeNull()
     fireEvent.click(screen.getByText('Gallery here'))
-    fireEvent.click(screen.getByText('Credits'))
-    expect(screen.getByText('Written by a friend')).toBeTruthy()
-    expect(screen.getByText('Site').getAttribute('href')).toBe('https://example.com/')
+    // The game credits no one, so there's no Credits button.
+    expect(titleButton('credits')).toBeNull()
+  })
+
+  it('shows the game’s credits in their groups, with roles, licences and links', async () => {
+    const credits: Content = {
+      name: 'credits',
+      credits: [
+        { id: 'team', title: 'Team', credits: [{ name: 'A friend', role: 'Writer' }] },
+        {
+          id: 'images',
+          title: 'Images',
+          description: 'Photographs used with thanks',
+          credits: [{ name: 'Sam Lee', role: 'Cover photograph', licence: 'CC BY 4.0', href: 'https://example.com/sam' }],
+        },
+        { id: 'patrons', title: 'Patrons', credits: [] },
+      ],
+    }
+    play(true, memoryDriver(), letter(credits))
+    fireEvent.click(await screen.findByText('Credits'))
+    const groups = [...document.querySelectorAll('[data-credit-group]')].map((group) => group.getAttribute('data-credit-group'))
+    expect(groups).toEqual(['team', 'images'])
+    expect(screen.getByText('A friend')).toBeTruthy()
+    expect(screen.getByText('Photographs used with thanks')).toBeTruthy()
+    expect(screen.getByText('Sam Lee').getAttribute('href')).toBe('https://example.com/sam')
+    expect(screen.getByText('CC BY 4.0')).toBeTruthy()
   })
 
   it('starts straight in the game when pages are off', () => {

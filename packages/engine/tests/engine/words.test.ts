@@ -178,6 +178,7 @@ describe('the words table', () => {
       timers: [{ id: 'kettle', label: 'The kettle', ms: 1000, effects: [{ notify: 'The kettle boils' }] }],
       minigames: [{ id: 'darts', title: 'Darts', start: 'throw', states: { throw: { label: 'Throw', final: {} } } }],
       phrases: { mood: [{ text: 'cheerful' }] },
+      credits: [{ id: 'team', title: 'Team', description: 'Who made it', credits: [{ name: 'Ada', role: 'Writer', description: 'Every word' }] }],
     }
     const base = { id: 'cafe', title: 'Café', plugins: [signs] }
     const { game, problems } = loadGame([cafe, every], base)

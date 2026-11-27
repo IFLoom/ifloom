@@ -33,6 +33,7 @@ import { phone } from './world/phone.ts'
 import { achievements as achievementsContent } from './world/achievements.ts'
 import { cheats as cheatsContent } from './world/cheats.ts'
 import { strings } from './world/strings.ts'
+import { credits } from './world/credits.ts'
 import { movingDay } from './story/moving-day.ts'
 import { ava } from './story/ava.ts'
 import { flat } from './story/flat.ts'
@@ -58,6 +59,7 @@ export const content: Content[] = [
   actions,
   achievementsContent,
   cheatsContent,
+  credits,
   movingDay,
   ava,
   flat,

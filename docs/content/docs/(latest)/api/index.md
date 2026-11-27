@@ -6,10 +6,10 @@ These pages list every export of every entry point, with its signature and, for 
 
 | Page | Entries | Exports |
 |---|---|---|
-| [@ifloom/engine](/docs/api/engine) | `@ifloom/engine` | 284 |
+| [@ifloom/engine](/docs/api/engine) | `@ifloom/engine` | 287 |
 | [@ifloom/engine/plugin](/docs/api/engine-plugin) | `@ifloom/engine/plugin` | 82 |
 | [@ifloom/engine/testing](/docs/api/engine-testing) | `@ifloom/engine/testing` | 8 |
-| [@ifloom/react](/docs/api/react) | `@ifloom/react` | 143 |
+| [@ifloom/react](/docs/api/react) | `@ifloom/react` | 142 |
 | [@ifloom/react/kit](/docs/api/react-kit) | `@ifloom/react/kit` | 56 |
 | [@ifloom/browser](/docs/api/browser) | `@ifloom/browser` | 16 |
 | [@ifloom/audio](/docs/api/audio) | `@ifloom/audio` | 4 |

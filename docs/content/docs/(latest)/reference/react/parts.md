@@ -570,9 +570,17 @@ These are rendered only when `pages` is on. See [Pages](/docs/reference/react/co
 | `mods-hint` | The line under the heading. |
 | `load-page` | The load page. Its slots use the saves menu's parts, `save-slot` and the rest. |
 | `credits-page` | The credits page. |
-| `credits` | Its list. |
-| `credit` | One line of it. |
-| `credit-link` | A line that is a link. |
+| `credits` | Its groups. |
+| `credit-group` | One group. Carries `data-credit-group` with the group's id. |
+| `credit-group-title` | A group's heading. |
+| `credit-group-description` | The line under a group's heading. |
+| `credit-list` | A group's credits. |
+| `credit` | One credit. |
+| `credit-art` | A credit's picture. |
+| `credit-name` | A credit's name, when it has no link. |
+| `credit-link` | A credit's name as a link, when it has an `href`. |
+| `credit-role` | A credit's role, after its name. |
+| `credit-meta` | A credit's description and licence, under its name. |
 | `achievements-page` | The achievements page, in a game with the achievements plugin. Its list uses the `achievements` parts. |
 | `gate-page` | The gate, before the title screen. |
 | `gate-title` | Its title. |

@@ -60,7 +60,6 @@ mountGame(module.build(), {
   pages: {
     subtitle: 'A new flat, a new town, and a cat with no name.',
     art: 'art/title.jpg',
-    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
   },
 })
 ```
@@ -116,7 +115,7 @@ const started = ref(false)
 </template>
 ```
 
-`pages: true` turns the React UI's title screen on with no subtitle, picture or credits. A missing `art` file takes no space, so you can add the picture later. A credit is a line of text, or a link with a `label` and an `href`.
+`pages: true` turns the React UI's title screen on with no subtitle or picture. A missing `art` file takes no space, so you can add the picture later. The credits come from your content's `credits`, which [Credit your team and supporters](/docs/how-to/credit-your-team-and-supporters) adds.
 
 Your own title screen reads three things from the runner:
 
@@ -131,7 +130,7 @@ The React UI opens on the title screen, with the game's title and a New game but
 - **Continue** loads the newest save, once the player has saved or the game has autosaved.
 - **Load** opens a list of every save.
 - **Settings** opens the settings page, once your game declares a setting (see [Add a settings page](/docs/how-to/add-a-settings-page)).
-- **Credits** shows the credits, once you give some.
+- **Credits** shows the credits, once your content's [`credits`](/docs/reference/credits) name someone.
 - **New Game+** starts a new game that keeps a little of the last, once the player has finished the game (see [Offer New Game+](/docs/how-to/offer-new-game-plus)).
 
 The title screen keeps settings and the finished mark in the player's [profile](/docs/reference/profile), so the runner needs one. `mountGame` and [`browserRunner`](/docs/reference/browser#browserrunner) make one for you. If you build your runner by hand, give it a profile:

@@ -160,7 +160,7 @@ describe('the mod manager', () => {
     render(
       <GameShell
         runner={createRunner(g, startingState(g))}
-        pages={{}}
+        pages={{ splash: false }}
         mods={{ store, problems: ['mod:naps · scene nap · no prose for "nap"'], onChange: () => void (restarted += 1) }}
       />,
     )
@@ -192,7 +192,11 @@ describe('the mod manager', () => {
     const { mods } = await import('@ifloom/engine')
     const g = game()
     render(
-      <GameShell runner={createRunner(g, startingState(g))} pages={{}} mods={{ store: mods('screens', memoryDriver()), problems: [], onChange: () => {} }} />,
+      <GameShell
+        runner={createRunner(g, startingState(g))}
+        pages={{ splash: false }}
+        mods={{ store: mods('screens', memoryDriver()), problems: [], onChange: () => {} }}
+      />,
     )
     await act(async () => void fireEvent.click(screen.getByRole('button', { name: 'New game' })))
     const menu = document.querySelector('[data-menu]') as HTMLElement

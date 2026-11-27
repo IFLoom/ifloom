@@ -206,16 +206,18 @@ describe('the finished town, in the browser', () => {
     expect(runner.view().scene.speaker?.name).toBe('Ruth')
   })
 
-  it('React: opens on the title screen, then draws the house with its way out from the places plugin’s UI', async () => {
+  it('React: opens on the Powered by IFLoom card and the title screen, then draws the house with its way out from the places plugin’s UI', async () => {
     const root = page()
     await act(async () => {
       await import('../tutorial/town/react/main.ts')
     })
-    await waitFor(() => expect(root.querySelector('[data-page="title"]')).toBeTruthy())
     const click = async (text: string) =>
       act(async () => {
         ;[...root.querySelectorAll('button')].find((each) => each.textContent?.includes(text))!.click()
       })
+    await waitFor(() => expect(root.querySelector('[data-splash-card="ifloom"]')).toBeTruthy())
+    await click('Skip')
+    await waitFor(() => expect(root.querySelector('[data-page="title"]')).toBeTruthy())
     await click('New game')
     await waitFor(() => expect(root.textContent).toContain('Moving day'))
     await click('Go down to the kitchen')

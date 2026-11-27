@@ -51,7 +51,9 @@ function play(pages: boolean | PagesOptions = true, driver = memoryDriver(), gam
     saves: saves(game, driver),
     profile: profile(game, driver),
   })
-  const view = render(<GameShell runner={runner} layout={Reading} pages={pages} />)
+  // The splash cards are tested on their own, in splash.test.tsx.
+  const shown = pages === false ? false : { splash: false as const, ...(pages === true ? {} : pages) }
+  const view = render(<GameShell runner={runner} layout={Reading} pages={shown} />)
   return { runner, driver, view }
 }
 
@@ -166,7 +168,7 @@ describe('the pages', () => {
         </p>
       )
     }
-    render(<GameShell runner={runner} layout={storyOf(<Size />)} pages />)
+    render(<GameShell runner={runner} layout={storyOf(<Size />)} pages={{ splash: false }} />)
     await act(async () => fireEvent.click(titleButton('new')!))
     expect(document.querySelector('[data-size]')?.getAttribute('data-size')).toBe('normal')
     fireEvent.click(screen.getByText('size'))

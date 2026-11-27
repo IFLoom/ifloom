@@ -138,7 +138,7 @@ describe('the one root every entry draws', () => {
     const game = porch()
     const driver = memoryDriver()
     const runner = createRunner(game, startingState(game), { profile: profile(game, driver) })
-    render(<GameShell runner={runner} layout={Reading} pages audio={false} />)
+    render(<GameShell runner={runner} layout={Reading} pages={{ splash: false }} audio={false} />)
     expect(document.querySelectorAll('[data-part="title-page"]')).toHaveLength(1)
     await act(async () => void fireEvent.click(document.querySelector('[data-title-button="new"]')!))
     expect(document.querySelectorAll('[data-part="title-page"]')).toHaveLength(0)

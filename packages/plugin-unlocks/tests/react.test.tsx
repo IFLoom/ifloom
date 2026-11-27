@@ -53,7 +53,7 @@ describe('entering a code', () => {
   it('is on the settings page: a wrong code is refused, the right one unlocks and offers a restart for its content', async () => {
     const onChange = vi.fn()
     const runner = runnerFor()
-    render(<GameShell runner={runner} pages={{}} plugins={ui({ onChange })} />)
+    render(<GameShell runner={runner} pages={{ splash: false }} plugins={ui({ onChange })} />)
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Settings' })))
     expect(screen.getByRole('heading', { name: 'Enter a code' })).toBeTruthy()
     const row = document.querySelector('[data-unlock="supporter"]') as HTMLElement
@@ -84,7 +84,7 @@ describe('entering a code', () => {
     render(
       <GameShell
         runner={runnerFor()}
-        pages={{}}
+        pages={{ splash: false }}
         plugins={ui({ problems: ['unlock:supporter · its code has changed since it was entered; enter the new one'] })}
       />,
     )

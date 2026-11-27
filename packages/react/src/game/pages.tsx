@@ -1,14 +1,28 @@
 /**
- * The pages around the game: an optional gate, the title screen, settings,
+ * The pages around the game: the splash cards, an optional gate, the title screen, settings,
  * loading, credits, and any page a game or a plugin UI adds. A small state
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * page, and the in-game menu leads back to `title`.
  */
 import { creditsOf, type KvValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type ComponentType,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
+import { cn } from '../lib/utils.ts'
 import { useGame } from './context.tsx'
 import { overridable, usePart, type PartKey } from './overrides.tsx'
+import { useMotion } from './motion.tsx'
+import { SPLASH_MS, splashCards, splashTransition, type SplashOptions } from './splash.tsx'
 import { Picture } from './picture.tsx'
 import { BrokenSlot, useSaves } from './saves.tsx'
 import { ModManager } from './mods.tsx'
@@ -16,7 +30,7 @@ import { usePluginUis } from './plugins.tsx'
 import { uiSay, useWords } from './words.ts'
 
 /** The name of a page, either a built-in one or the id of one a game or a plugin UI adds. */
-export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
+export type Page = 'splash' | 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 
 /** A page a game adds in `PagesOptions.pages`, with its button on the title screen. A plugin UI adds one as a `PluginPage`. */
 export type PageDef = {
@@ -48,6 +62,11 @@ export type PagesOptions = {
   art?: string
   /** The notice shown before the title screen until the player confirms it. */
   gate?: GateOptions
+  /**
+   * The splash cards shown one after another as the game opens, before the gate and the title screen. The "Powered by
+   * IFLoom" card alone if left out, and none for `false`.
+   */
+  splash?: false | SplashOptions
   /** The pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, replaces it. */
   pages?: Record<string, PageDef>
 }
@@ -64,16 +83,27 @@ export type PageState = {
   go: (page: Page) => void
   /** Returns to the page under this one, or to the title screen when there is none. */
   back: () => void
+  /** Ends the splash cards and shows the gate or the title screen. The splash page calls it after the last card. */
+  endSplash: () => void
   /** The options the pages were set up with. */
   options: PagesOptions
   /** Every page added to the built-in ones, by id, the plugin UIs' (such as `achievements`) with the game's own `pages` over them. */
   added: Readonly<Record<string, PageDef>>
 }
 
-const ROOTS: readonly Page[] = ['title', 'game', 'gate']
+const ROOTS: readonly Page[] = ['splash', 'title', 'game', 'gate']
 const NONE: PagesOptions = {}
 const PagesContext = createContext<PageState | null>(null)
-const OFF: PageState = { enabled: false, page: 'game', from: null, go: () => {}, back: () => {}, options: NONE, added: NONE as Record<string, PageDef> }
+const OFF: PageState = {
+  enabled: false,
+  page: 'game',
+  from: null,
+  go: () => {},
+  back: () => {},
+  endSplash: () => {},
+  options: NONE,
+  added: NONE as Record<string, PageDef>,
+}
 
 /** The pages the plugin UIs add, with their labels worded, and the game's own `pages` over them. */
 function useAddedPages(options: PagesOptions): Record<string, PageDef> {
@@ -148,7 +178,12 @@ export function PagesProvider({ options = NONE, children }: { options?: PagesOpt
       live = false
     }
   }, [gated, runner])
+  // The splash cards show over the rest until they end, whatever the stack below them holds.
+  const [splashing, setSplashing] = useState(() => splashCards(options.splash).length > 0)
+  const endSplash = useCallback(() => setSplashing(false), [])
   const go = useCallback((page: Page) => {
+    setSplashing(page === 'splash')
+    if (page === 'splash') return
     setStack((now) => {
       if (ROOTS.includes(page) || !now) return [page]
       return now.at(-1) === page ? now : [...now, page]
@@ -156,10 +191,10 @@ export function PagesProvider({ options = NONE, children }: { options?: PagesOpt
   }, [])
   const back = useCallback(() => setStack((now) => (now && now.length > 1 ? now.slice(0, -1) : ['title'])), [])
   const added = useAddedPages(options)
-  const value = useMemo<PageState | null>(
-    () => (stack ? { enabled: true, page: stack.at(-1)!, from: stack.at(-2) ?? null, go, back, options, added } : null),
-    [stack, go, back, options, added],
-  )
+  const value = useMemo<PageState | null>(() => {
+    if (splashing) return { enabled: true, page: 'splash', from: null, go, back, endSplash, options, added }
+    return stack ? { enabled: true, page: stack.at(-1)!, from: stack.at(-2) ?? null, go, back, endSplash, options, added } : null
+  }, [splashing, stack, go, back, endSplash, options, added])
   if (!value) return null
   return <PagesContext.Provider value={value}>{children}</PagesContext.Provider>
 }
@@ -187,6 +222,8 @@ export function Pages({ game }: { game: ReactNode }) {
   switch (page) {
     case 'game':
       return <>{game}</>
+    case 'splash':
+      return <SplashPage />
     case 'gate':
       return <GatePage />
     case 'title':
@@ -601,3 +638,101 @@ function GatePageImpl({ className }: { className?: string }) {
  * Declining goes to the decline button's `href`, or leaves the gate where it is.
  */
 export const GatePage = overridable('GatePage', GatePageImpl)
+
+function SplashPageImpl({ className }: { className?: string }) {
+  const { options, endSplash } = usePage()
+  const words = useWords()
+  const motion = useMotion()
+  const cards = splashCards(options.splash)
+  const skippable = options.splash ? options.splash.skippable !== false : true
+  const [at, setAt] = useState(0)
+  const [leaving, setLeaving] = useState(false)
+  const card = cards[at]
+  const transition = card ? splashTransition(card) : undefined
+  const inMs = motion && transition && transition.in !== 'none' ? transition.ms : 0
+  const outMs = motion && transition && transition.out !== 'none' ? transition.ms : 0
+  const next = useCallback(() => {
+    if (at + 1 >= cards.length) return endSplash()
+    setAt(at + 1)
+    setLeaving(false)
+  }, [at, cards.length, endSplash])
+  useEffect(() => {
+    if (!card) {
+      endSplash()
+      return
+    }
+    // Each card comes in, holds for its `ms`, then goes out before the next comes in.
+    const wait = leaving ? outMs : inMs + (card.ms ?? SPLASH_MS)
+    const timer = setTimeout(() => (leaving || !outMs ? next() : setLeaving(true)), wait)
+    return () => clearTimeout(timer)
+  }, [card, leaving, inMs, outMs, next, endSplash])
+  useEffect(() => {
+    if (!skippable) return
+    const onKey = (event: KeyboardEvent) => {
+      // A focused link or button, such as Skip or a card's own, takes Enter and Space itself.
+      if (event.key !== 'Escape' && event.target instanceof Element && event.target.closest('a, button, input')) return
+      if (event.key === 'Escape') endSplash()
+      else if (event.key === 'Enter' || event.key === ' ') next()
+      else return
+      event.preventDefault()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [skippable, next, endSplash])
+  const section = usePart(
+    'splash-page',
+    'relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background p-6 font-body',
+    className,
+  )
+  const shown = usePart('splash-card', 'flex flex-col items-center gap-4')
+  const art = usePart('splash-art', 'mx-auto max-h-48 max-w-xs object-contain')
+  const title = usePart('splash-title', 'text-center font-heading text-4xl font-semibold tracking-tight')
+  const text = usePart('splash-text', 'text-center text-lg text-muted-foreground')
+  const skip = usePart('splash-skip', cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'absolute right-4 bottom-4 text-muted-foreground'))
+  if (!card || !transition) return null
+  const Own = card.component
+  return (
+    <section {...section} data-page="splash" onClick={skippable ? next : undefined}>
+      <div
+        key={`${at}:${card.id}`}
+        {...shown}
+        data-splash-card={card.id}
+        data-transition-in={motion && !leaving ? transition.in : undefined}
+        data-leaving={leaving ? '' : undefined}
+        data-transition-out={leaving ? transition.out : undefined}
+        style={{ '--ifloom-transition-ms': `${transition.ms}ms` } as CSSProperties}
+      >
+        {Own ? (
+          <Own />
+        ) : (
+          <>
+            {card.art ? <Picture {...art} src={card.art} alt={card.title ?? ''} /> : null}
+            {card.title ? <h1 {...title}>{card.title}</h1> : null}
+            {card.text ? <p {...text}>{card.text}</p> : null}
+          </>
+        )}
+      </div>
+      {skippable ? (
+        <button
+          {...skip}
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            endSplash()
+          }}
+        >
+          {words('skipSplash')}
+        </button>
+      ) : null}
+    </section>
+  )
+}
+
+/**
+ * Renders the splash cards from `PagesOptions.splash` one after another, then calls `usePage().endSplash()`.
+ *
+ * Each card comes in, holds for its `ms` and goes out by its transition. While they're skippable, a click, Enter or
+ * Space skips a card, and Escape or the Skip button skips them all. With reduced motion the cards hold without
+ * transitions.
+ */
+export const SplashPage = overridable('SplashPage', SplashPageImpl)

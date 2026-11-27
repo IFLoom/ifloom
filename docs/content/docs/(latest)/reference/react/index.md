@@ -129,6 +129,9 @@ export const words: Content = {
 | `ui.newGame`, `ui.continue`, `ui.newGamePlus` | `New game`, `Continue` and `New Game+`, on the [`TitlePage`](/docs/reference/react/components#titlepage). |
 | `ui.settings`, `ui.noSettings` | `Settings` and `There are no settings.`, on the title screen, the menu and the settings page. |
 | `ui.credits` | `Credits`, on the title screen and the credits page. |
+| `ui.poweredBy` | `Powered by`, over the IFLoom name on the default [splash card](/docs/reference/react/components#poweredbyifloom). |
+| `ui.visitIfloom` | `Visit ifloom.dev`, the default splash card's link to the IFLoom site. |
+| `ui.skipSplash` | `Skip`, the button that skips the [splash cards](/docs/reference/react/components#splashpage). |
 | `ui.titlePage` | `Title screen`, the menu's button back to the title screen. |
 | `ui.replayVoice` | `Hear it again`, the button after a spoken line with a voice. |
 | `ui.zoom` | `Enlarge`, the button around a picture that opens the viewer, and the viewer's title when the picture has no alt text. |

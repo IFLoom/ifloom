@@ -10,19 +10,6 @@ import { PLUGIN_NAMES } from './first-party.ts'
  */
 const SOURCES = import.meta.glob('../../src/**/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
-/**
- * Lines that may name a plugin, by file and text: save steps that move an old
- * plugin's state, which have to name it.
- */
-const ALLOWED: Record<string, string[]> = {
-  '../../src/intake.ts': [
-    // 4 → 5, 5 → 6 and 12 → 13: the clock, the player's location and timed effects moved into plugins.
-    'plugins.calendar ??= {',
-    'plugins.places ??= {',
-    "if (!plugins || !('effects' in plugins) || 'statuses' in plugins) return state",
-  ],
-}
-
 /** The code on a line, without a comment that fills it or ends it. */
 function codeOf(line: string): string {
   const trimmed = line.trim()
@@ -49,7 +36,7 @@ it('names no first-party plugin in the engine’s code', () => {
   for (const [path, source] of Object.entries(SOURCES)) {
     source.split('\n').forEach((line, index) => {
       const code = codeOf(line)
-      if (!code || ALLOWED[path]?.some((allowed) => line.includes(allowed))) return
+      if (!code) return
       for (const id of PLUGIN_NAMES) {
         if (patternsFor(id).some((pattern) => pattern.test(code))) found.push(`${path.replace('../../', '')}:${index + 1} names ${id}: ${line.trim()}`)
       }

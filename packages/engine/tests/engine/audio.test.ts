@@ -7,7 +7,7 @@ import { apply } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { replay } from '../../src/runner.ts'
 import { parseBeats } from '../../src/sceneBody.ts'
-import { SAVE_VERSION, type GameState } from '../../src/types.ts'
+import { type GameState } from '../../src/types.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { fixture, loadWhole } from '../fixtures/town.ts'
@@ -345,17 +345,6 @@ describe('audio', () => {
   })
 
   describe('saves', () => {
-    it('carry a version-9 save forward with nothing played and no showings', () => {
-      const { game: g } = game()
-      const { audio: _audio, media: _media, ...now } = startingState(g)
-      expect(unwrap(loadState({ ...now, version: 9 }, g))).toEqual({
-        ...now,
-        version: SAVE_VERSION,
-        audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} },
-        media: { picks: {} },
-      })
-    })
-
     it('keep the effects’ channels and cues', () => {
       const { game: g } = game()
       const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'action', id: 'radio' }, { type: 'action', id: 'buzz' })

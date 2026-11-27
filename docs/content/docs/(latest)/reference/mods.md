@@ -38,7 +38,7 @@ The showcase's mod adds a fourth line to the high street's weather, because a pa
   "description": "Autumn comes early: fog on the high street, and the park goes quiet.",
   "pack": {
     "id": "fog-season",
-    "schema": 6,
+    "schema": 1,
     "prose": {
       "street.weather.fog": "Fog down the high street; the bakery's lights are the only colour in it.",
       "place.park": "The river has gone grey under the fog, and even the ducks are keeping their opinions to themselves."
@@ -97,7 +97,7 @@ The first argument is the game's `id`, the one each file names in `game`. The ke
 import { memoryDriver, mods } from '@ifloom/engine'
 
 const store = mods(game.id, memoryDriver())
-const added = await store.add('{"ifloomMod":1,"id":"fog","name":"Fog","game":"another-game","pack":{"id":"fog","schema":6}}')
+const added = await store.add('{"ifloomMod":1,"id":"fog","name":"Fog","game":"another-game","pack":{"id":"fog","schema":1}}')
 if (!added.ok) console.warn(added.reason) // 'That mod is for another game (another-game).'
 ```
 

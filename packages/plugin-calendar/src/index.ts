@@ -18,7 +18,6 @@ import {
   type PluginContext,
   type PluginProblem,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /** A period of the day, one entry of `CalendarOptions.periods`. A bare string in `periods` is a period with only an id. */
 export type PeriodDef = {
@@ -209,8 +208,6 @@ function calendarPlugin(options: CalendarOptions = {}): DefinedPlugin<CalendarSt
     id: ID,
     version: 1,
     calls: CALLS,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
     strings,
     start: () => ({ day: startDay, period: options.start?.period ?? ids[0] }),
     conditions: {

@@ -446,7 +446,6 @@ type ContentTools = {
   wordKeys: (pack: RawPack, rename: (key: string) => string) => RawPack
   entries: (pack: RawPack, list: string, rewrite: (entry: Record<string, unknown>) => Record<string, unknown>) => RawPack
   prose: (key: string) => string | undefined
-  effects: (pack: RawPack) => RawPack
 }
 ```
 
@@ -458,7 +457,6 @@ type ContentTools = {
 | `wordKeys` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, rename: (key: string) => string) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Returns the pack with every key of its words table (`quests/quests.settle.title`) renamed by `rename`, keeping the words. A step that renames a field uses it. |
 | `entries` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`, list: string, rewrite: (entry: Record<string, unknown>) => Record<string,…` |  |  | Returns the pack with each entry of one plugin `data` list rewritten by `rewrite`. The list is named `<plugin>/<list>` (`'quests/quests'` is `data.quests.quests`), and a pack without it comes back unchanged. |
 | `prose` | `(key: string) => string \| undefined` |  |  | Returns a prose key's line, the pack's own or else the game's under it, or undefined when neither has it. A step that turns a prose key into words in place uses it. |
-| `effects` | `(pack:` [`RawPack`](/docs/api/engine#rawpack)`) =>` [`RawPack`](/docs/api/engine#rawpack) |  |  | Returns the pack with every effect written with a `kind` field (before schema 21) in the keyed form, in plugin `data` and traits too. `{ kind: 'stat', stat, by }` becomes `{ stat, by }`. A plugin whose content holds effects the engine's own step can't reach uses it. |
 
 ## DataList
 
@@ -862,16 +860,12 @@ without it reads only the pack.
 ```ts shape
 import type { PackContext } from '@ifloom/engine/plugin'
 type PackContext = {
-  entities?: readonly unknown[]
-  you?: readonly string[]
   prose?: Readonly<Record<string, string>>
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `entities` | `readonly unknown[]` | yes |  | The entities the content, the plugins and earlier packs declare. |
-| `you` | `readonly string[]` | yes |  | The game's words for the player, from its string `you`. |
 | `prose` | `Readonly<Record<string, string>>` | yes |  | The prose keys' lines under the pack, from the content and earlier packs. |
 
 ## panelOf

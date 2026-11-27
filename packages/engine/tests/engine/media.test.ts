@@ -7,7 +7,7 @@ import { replay } from '../../src/runner.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { artSrc, mediaType, parseBeats } from '../../src/sceneBody.ts'
 import { pickKey, poolCandidates } from '../../src/features/media.ts'
-import { SAVE_VERSION, type Command, type GameState } from '../../src/types.ts'
+import { type Command, type GameState } from '../../src/types.ts'
 import type { Game } from '../../src/game.ts'
 import type { DataScene } from '../../src/scene.ts'
 import { unwrap } from '../fixtures/result.ts'
@@ -379,13 +379,5 @@ describe('media checks', () => {
       'pool shelf: a pool with no files',
       'prose flat.bad: no file in pool "door" is tagged "green"',
     ])
-  })
-})
-
-describe('saves', () => {
-  it('carry a version-10 save forward with nothing picked', () => {
-    const g = game([])
-    const { media: _media, ...now } = startingState(g)
-    expect(unwrap(loadState({ ...now, version: 10 }, g))).toEqual({ ...now, version: SAVE_VERSION, media: { picks: {} } })
   })
 })

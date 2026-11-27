@@ -1,6 +1,6 @@
 /** The Letter, read through: the novel shape needs nothing but the core. */
 import { describe, expect, it } from 'vitest'
-import { SAVE_VERSION, apply, holds, memoryDriver, saves, startingState, view, type Command, type GameState } from '@ifloom/engine'
+import { apply, holds, memoryDriver, saves, startingState, view, type Command, type GameState } from '@ifloom/engine'
 import { theLetter } from '../src/game.ts'
 
 const { game, problems } = theLetter()
@@ -127,11 +127,9 @@ describe('The Letter', () => {
           played: 0,
           turn: 2,
           when: null,
-          // What a save from before engine save version 18 called `playerName`.
-          player: 'Robin',
+          playerName: 'Robin',
           packs: ['letter'],
           plugins: {},
-          version: SAVE_VERSION,
         },
         state: saved,
       })

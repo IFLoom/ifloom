@@ -160,7 +160,7 @@ A stat the save lacks reads as its `start` either way, but a `stat` effect adds 
 
 The current format of the state inside a save, which every new state keeps in `state.version`. Its definition is in [`SAVE_VERSION`](/docs/api/engine#save_version).
 
-Code reads it from the package rather than writing the number down, since it goes up with the engine. It goes up only when a field a save already has changes shape, and the engine adds a step that reshapes the old field. A field added to `GameState` doesn't change it, because a save that lacks the field gets the field's default when it loads. [Older saves](/docs/upgrading/old-saves) lists each version.
+Code reads it from the package rather than writing the number down, since it goes up with the engine. It goes up only when a field a save already has changes shape, and the engine adds a step that reshapes the old field. A field added to `GameState` doesn't change it, because a save that lacks the field gets the field's default when it loads. [Older saves](/docs/upgrading/old-saves) says how.
 
 ## Functions
 

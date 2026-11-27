@@ -53,7 +53,6 @@ import {
   type PluginProblem,
   type Reference,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A contact as the cast's `cast/contacts` query answers it, asked by name: the fields the contacts list reads. */
 type Contact = { id: string; name: string; description: string | null; portrait: string | null; command: CommandRef }
@@ -336,13 +335,9 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
 
   return definePlugin<DevicesState, DevicesView, typeof CALLS>({
     id: ID,
-    version: 2,
+    version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     // The contacts section lists the cast's characters when the game has the cast.
     cooperates: ['cast'],
     strings: {
@@ -356,8 +351,6 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
       close: 'Close',
     },
     start: () => ({ shown: {} }),
-    // Version 1 kept the app open on every device, put away or not: each device starts put away.
-    migrations: { 1: () => ({ shown: {} }) },
     conditions: {
       /** `{ 'devices/open': { app } }`: that app is open on a device that's shown; with `device` instead, that device is shown, on any screen. */
       open: (_state, { app, device }, { slice }) =>

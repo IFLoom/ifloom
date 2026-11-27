@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
 import { describeProblem } from '../../src/check.ts'
-import { loadState, startingState } from '../../src/intake.ts'
+import { startingState } from '../../src/intake.ts'
 import { heldBy, heldCount } from '../../src/holdings.ts'
-import { saves } from '../../src/save.ts'
-import { SAVE_VERSION } from '../../src/types.ts'
 import { fixture, loadWhole } from '../fixtures/town.ts'
-import { unwrap } from '../fixtures/result.ts'
 
 function game(carryOver: Game['carryOver']): Game {
   return {
@@ -91,54 +87,5 @@ describe('New Game+', () => {
       'base · carryOver · unknown entity "umbrella": name one as "kind:id"',
       'base · carryOver · unknown kind "thing"',
     ])
-  })
-})
-
-describe('version 9 saves', () => {
-  const settings: Game['settings'] = [
-    { id: 'hints', label: 'Hints', type: 'toggle', default: true },
-    {
-      id: 'difficulty',
-      label: 'Difficulty',
-      type: 'choice',
-      options: [
-        { value: 'usual', label: 'Usual' },
-        { value: 'hard', label: 'Hard' },
-      ],
-      default: 'usual',
-    },
-  ]
-
-  it('carries a version-8 state forward with no settings', () => {
-    const g = fixture()
-    const { settings: _settings, audio: _audio, ...now } = startingState(g)
-    expect(unwrap(loadState({ ...now, version: 8 }, g))).toEqual({
-      ...now,
-      version: SAVE_VERSION,
-      settings: {},
-      audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} },
-    })
-  })
-
-  it('loads a version-8 save with every play setting at its default', async () => {
-    const g = { ...fixture(), settings }
-    const store = saves(g, memoryDriver())
-    const { settings: _settings, ...old } = { ...startingState(g), version: 8 }
-    const file = {
-      ifloom: 1,
-      meta: { game: g.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: 0, when: null, player: null, packs: [], plugins: {}, version: 8 },
-      state: old,
-    }
-    const loaded = store.importText(JSON.stringify(file))
-    expect(loaded.ok && loaded.value.state.settings).toEqual({ hints: true, difficulty: 'usual' })
-  })
-
-  it('gives a play setting added since the save its default, and keeps the ones it had', async () => {
-    const before = { ...fixture(), settings: settings.slice(0, 1) }
-    const store = saves(before, memoryDriver())
-    await store.write('1', startingState(before, { settings: { hints: false } }))
-    const after = saves({ ...before, settings }, store.driver)
-    const loaded = await after.read('1')
-    expect(loaded.ok && loaded.value?.state.settings).toEqual({ hints: false, difficulty: 'usual' })
   })
 })

@@ -3,7 +3,6 @@ import {
   SCHEMA,
   commandOf,
   apply,
-  applyEffects,
   checkGame,
   heldCount,
   holds,
@@ -547,27 +546,5 @@ describe('places', () => {
       })()
       expect(view(startingState(told), told).scene.body).toBe('A Town house: House.')
     })
-  })
-
-  it('carries an older pack’s locations forward into entities, art as the image and tag as the description', () => {
-    const old = {
-      id: 'mod:old',
-      schema: 23,
-      prose: { 'place.shed': 'The {{v:places/tag}} shed.' },
-      data: { places: { locations: [{ id: 'shed', name: 'Shed', tag: 'Garden', art: 'place/shed', exits: ['house'], body: [{ prose: 'place.shed' }] }] } },
-    } as unknown as Pack
-    const { game: g, problems } = loadGame([town], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] }, { packs: [old] })
-    expect(problems).toEqual([])
-    expect(g.entities?.find((entity) => entity.id === 'shed')).toEqual({
-      of: 'location',
-      id: 'shed',
-      name: 'Shed',
-      description: 'Garden',
-      image: 'place/shed',
-      traits: { 'places/location': { exits: ['house'], body: [{ prose: 'place.shed' }] } },
-    })
-    expect(g.data?.places).toBeUndefined()
-    const shed = applyEffects(startingState(g), g, [places.move('shed')])
-    expect(view(shed, g).scene.body).toBe('The Garden shed.')
   })
 })

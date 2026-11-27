@@ -80,14 +80,14 @@ Run [`ifloom snapshot`](/docs/reference/cli#ifloom-snapshot) and [`ifloom playte
 A pack written for a newer schema than the engine reads is skipped whole, with a problem like this one:
 
 ```text
-mod:night-market · pack · written for schema 31, this engine reads 30
+mod:night-market · pack · written for schema 2, this engine reads 1
 ```
 
-A player sees it when they load a mod made for a newer build of your game than the one they have. A pack from before schema 4 is too old to upgrade, and is skipped with `written for schema <n>, too old for this engine to read (it reads 30)`.
+A player sees it when they load a mod made for a newer build of your game than the one they have. A pack from before the engine's oldest step is too old to upgrade, and is skipped with `written for schema <n>, too old for this engine to read (it reads 1)`.
 
 ## Check players' saves
 
-A player's saves need nothing from you for the engine's own changes. [`loadState`](/docs/reference/saves#loadstate) carries a save from any older engine forward when it loads, and [Older saves](/docs/upgrading/old-saves) lists each step. A plugin carries its own state the same way.
+A player's saves need nothing from you for the engine's own changes. [`loadState`](/docs/reference/saves#loadstate) carries a save from any older engine forward when it loads, and [Older saves](/docs/upgrading/old-saves) says how. A plugin carries its own state the same way.
 
 Your game's changes are yours to carry. When the update renames a kv key, reshapes the game's own state or adds a stat that starts above 0, give the game a new `version` and a migration step, as [Migrate your players' saves](/docs/upgrading/migrate-your-saves) shows. Load a save from the old release in a test before you ship.
 

@@ -6,8 +6,6 @@ import { begin, fixture } from '../fixtures/town.ts'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { GameState } from '../../src/types.ts'
-import { loadState } from '../../src/intake.ts'
-import { unwrap } from '../fixtures/result.ts'
 
 describe('data scenes', () => {
   it('load with no runtime written by hand: prose, tokens and a drawn line', () => {
@@ -78,13 +76,5 @@ describe('the first and last time', () => {
     // Never picked fails every range, `lt` included.
     expect(holds(state, game, { since: 'rosa.hello#stay', last: true, lt: 99 })).toBe(false)
     expect(explain(state, game, { since: 'rosa.hello', last: true, gte: 2 }).why).toContain('scene rosa.hello last seen 1 turns ago')
-  })
-
-  it('reads the first time when a save from before kept no latest one', () => {
-    const game = fixture()
-    const old = { ...begin(game), version: 17, turn: 9, seen: { 'rosa.hello': 1 }, seenOn: { 'rosa.hello': 4 }, lastSeenOn: {} }
-    const loaded = unwrap(loadState(old, game))
-    expect(loaded.seen['rosa.hello']).toEqual({ n: 1, first: 4, last: 4 })
-    expect(holds(loaded, game, { since: 'rosa.hello', last: true, gte: 5 })).toBe(true)
   })
 })

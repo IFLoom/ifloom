@@ -9,8 +9,6 @@ import {
   loadState,
   replay,
   startingState,
-  translatableFields,
-  upgradePack,
   view,
   whyNot,
   type Game,
@@ -318,19 +316,6 @@ describe('the shop’s stock, held by the vendor', () => {
     expect(state.stats.coins).toBe(17)
     expect(heldCount(state, g, 'hat:bowler', shop.vendorRef('milliner'))).toBe(1)
   })
-
-  it('carries an older save’s sold counts into what the vendor holds', () => {
-    const g = game()
-    const old = { ...fresh(g), plugins: { shop: { version: 1, state: { sold: { counter: { biscuit: { n: 2, at: 0 }, gone: { n: 1, at: 0 } } } } } } }
-    const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
-    if (!loaded.ok) throw new Error(loaded.reason)
-    expect(loaded.value.plugins.shop).toEqual({ version: 2, state: { stocked: { counter: { 'food:biscuit': { at: 0, left: 1 } } } } })
-    expect(goods(loaded.value, g).find((good) => good.entity === 'food:biscuit')!.stock).toBe(1)
-    // The next command writes it to what the vendor holds.
-    const next = play(loaded.value, g, shop.buy('counter', 'food:coffee'))
-    expect(heldCount(next, g, 'food:biscuit', shop.vendorRef('counter'))).toBe(1)
-    expect(next.plugins.shop.state).toEqual({ stocked: { counter: { 'food:biscuit': { at: 0 } } } })
-  })
 })
 
 describe('a vendor is an entity with the vendor trait', () => {
@@ -407,33 +392,6 @@ describe('a vendor is an entity with the vendor trait', () => {
       'trait shop/vendor on vendor:van: blocked: unknown entity "location:moon"',
     ])
   })
-
-  it('carries an older pack’s vendors forward into entities', () => {
-    const old = {
-      id: 'mod:old',
-      schema: 23,
-      data: { shop: { vendors: [{ id: 'kiosk', name: 'Kiosk', hours: ['morning'], goods: [{ entity: 'food:coffee', price: { coins: 2 } }] }] } },
-    }
-    const loaded = loadGame(
-      [{ name: 'town', ...things, stats: [{ id: 'coins', label: 'Coins', spendable: true }] }],
-      { id: 'g', title: 'g', plugins: [shop()] },
-      { packs: [old] },
-    )
-    expect(loaded.problems).toEqual([])
-    expect(loaded.game.entities?.find((entity) => entity.id === 'kiosk')).toEqual({
-      of: 'vendor',
-      id: 'kiosk',
-      name: 'Kiosk',
-      // Its hours are a blocked entry since schema 27, closed outside them in the plugin's words.
-      traits: {
-        'shop/vendor': {
-          goods: [{ entity: 'food:coffee', price: { coins: 2 } }],
-          blocked: [{ when: { 'shop/outside': { period: ['morning'] } }, reason: { string: 'shop/closed' } }],
-        },
-      },
-    })
-    expect(loaded.game.data?.shop).toBeUndefined()
-  })
 })
 
 describe('the shop with content written for items', () => {
@@ -498,24 +456,6 @@ describe('the shop’s opening hours', () => {
     const evening = clock.write(fresh(g), { day: 0, period: 'evening' })
     expect(whyNot(evening, g, shop.buy('kiosk', 'food:coffee'))).toBe('Shut.')
     expect(holds(evening, g, shop.vendorOpen('kiosk'))).toBe(false)
-  })
-
-  it('carry a translation of an older vendor’s closed line to its blocked entries', () => {
-    const v26 = {
-      id: 'mod:old',
-      schema: 26,
-      entities: [{ of: 'vendor', id: 'kiosk', name: 'Kiosk', traits: { 'shop/vendor': { hours: ['morning'], closed: 'Back at nine.', goods: [] } } }],
-      words: { 'entity.vendor:kiosk.traits.shop/vendor.closed': 'Retour à neuf heures.' },
-    }
-    const out = upgradePack(v26, [shop()])
-    if (!out.ok) throw new Error(out.reason)
-    const { game: g } = loadGame(
-      [{ name: 'town', ...things, stats: [{ id: 'coins', label: 'Coins', spendable: true }] }],
-      { id: 'g', title: 'g', plugins: [calendar(), shop()] },
-      { packs: [{ ...out.value, words: {} }] },
-    )
-    const keys = translatableFields(g).map((field) => field.key)
-    expect(keys).toContain(Object.keys(out.value.words!)[0])
   })
 })
 

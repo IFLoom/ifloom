@@ -3,7 +3,6 @@ import { holds } from '../../src/condition.ts'
 import { loadGame } from '../../src/loader.ts'
 import { apply, applyEffects } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
-import { SAVE_VERSION } from '../../src/types.ts'
 import { explain } from '../../src/explain.ts'
 import { proseStore } from '../../src/prose.ts'
 import { view } from '../../src/view.ts'
@@ -102,71 +101,6 @@ describe('a new game', () => {
     expect(words.line('hello', { ...startingState(game), kv: { playerName: '{{nothing}}' } })).toBe('Hello, {{nothing}}.')
   })
 
-  it('carries a version-1 save’s name into the kv store', () => {
-    const game = fixture()
-    const { chosen: _chosen, kv: _kv, ...now } = startingState(game)
-    const old = { ...now, version: 1, playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', flags: { tidy: true } }
-    expect(unwrap(loadState(old, game))).toMatchObject({
-      version: SAVE_VERSION,
-      chosen: {},
-      kv: { playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', tidy: true },
-    })
-    expect(unwrap(loadState(old, game))).not.toHaveProperty('playerName')
-  })
-
-  it('carries a version-2 save onto turns: the day is the turn, and day stamps become turn stamps', () => {
-    const game = fixture()
-    const { turn: _turn, kv: _kv, ...now } = startingState(game)
-    const old = {
-      ...now,
-      version: 2,
-      time: { day: 4, period: 'evening' },
-      flags: { 'day:cafe.counter.chat': 4, tidy: true },
-      storylines: { rosa: { standing: 5, rapport: 0, closedUntilDay: 6, flags: {} } },
-      collections: { gallery: [{ id: 'house', day: 2 }] },
-      notices: [{ id: 'n', title: 'Rent', day: 3, seen: false }],
-    }
-    expect(unwrap(loadState(old, game))).toMatchObject({
-      version: SAVE_VERSION,
-      turn: 4,
-      kv: { 'turn:cafe.counter.chat': 4, tidy: true },
-      storylines: { rosa: { closedUntil: 6, kv: {} } },
-      // The gallery's entries are the photos you hold since version 16.
-      entities: { photo: { house: {} } },
-      held: { player: { 'photo:house': 1 } },
-      notices: [{ id: 'n', title: 'Rent', turn: 3, seen: false }],
-    })
-  })
-
-  it('carries a version-4 save’s clock to the calendar, the small hours called late', () => {
-    const game = fixture()
-    const now = startingState(game)
-    const old = { ...now, version: 4, time: { day: 3, period: 'sleep' } }
-    const moved = unwrap(loadState(old, game))
-    expect(moved).not.toHaveProperty('time')
-    expect(moved.plugins.calendar).toEqual({ version: 1, state: { day: 3, period: 'late' } })
-    expect(unwrap(loadState({ ...now, version: 4, time: { day: 1, period: 'morning' } }, game)).plugins.calendar).toEqual({
-      version: 1,
-      state: { day: 1, period: 'morning' },
-    })
-  })
-
-  it('carries a version-5 save’s place to the places plugin', () => {
-    const game = fixture()
-    const now = startingState(game)
-    const moved = unwrap(loadState({ ...now, version: 5, locationId: 'shop' }, game))
-    expect(moved).not.toHaveProperty('locationId')
-    expect(moved.plugins.places).toEqual({ version: 1, state: { at: 'shop' } })
-    expect(unwrap(loadState({ ...now, version: 5, locationId: null }, game)).plugins.places).toBeUndefined()
-  })
-
-  it('carries a version-7 save’s storylines on without standing or rapport', () => {
-    const game = fixture()
-    const now = startingState(game)
-    const moved = unwrap(loadState({ ...now, version: 7, storylines: { rosa: { standing: 40, rapport: 3, closedUntil: null, flags: { met: true } } } }, game))
-    expect(moved.storylines.rosa).toEqual({ closedUntil: null, kv: { met: true } })
-  })
-
   it('saves and loads without a player name', () => {
     const game = fixture()
     const state = startingState(game)
@@ -214,35 +148,4 @@ describe('a choice once a turn', () => {
     expect(apply(after, game, { type: 'choose', id: 'chat' }).ok).toBe(false)
     expect(chat({ ...after, turn: after.turn + 1 }, game)?.disabled).toBeUndefined()
   })
-
-  it('keeps the cap an older save set this turn, under its own key or under once.key', () => {
-    const { game } = withCafe()
-    const { seen: _seen, chosen: _chosen, ...now } = { ...begin(game), sceneId: 'cafe.counter', turn: 5 }
-    const old = { ...now, version: 17, seen: {}, seenOn: {}, lastSeenOn: {}, chosen: {}, chosenOn: {}, lastChosenOn: {} }
-    const capped = unwrap(loadState({ ...old, kv: { 'turn:cafe.counter#chat': 5, tidy: true } }, game))
-    expect(capped.kv).toEqual({ tidy: true })
-    expect(capped.chosen['cafe.counter#chat']).toEqual({ n: 0, first: 5, last: 5 })
-    expect(chat(capped, game)?.disabled).toBe('She has heard enough from you today.')
-    // A cap from an earlier turn has run out: it goes, and caps nothing.
-    const stale = unwrap(loadState({ ...old, kv: { 'turn:cafe.counter#chat': 4 } }, game))
-    expect(stale.kv).toEqual({})
-    expect(stale.chosen).toEqual({})
-    // A choice that kept its cap under a key of its own.
-    const keyed = withKey(game, 'counter.chat')
-    const moved = unwrap(loadState({ ...old, kv: { 'turn:counter.chat': 5 } }, keyed))
-    expect(moved.kv).toEqual({})
-    expect(chat(moved, keyed)?.disabled).toBe('She has heard enough from you today.')
-  })
 })
-
-/** The cafe game with its chat's cap kept under `key`, as a game renaming the choice would. */
-function withKey(game: Game, key: string): Game {
-  return {
-    ...game,
-    scenes: game.scenes.map((scene) =>
-      scene.id === 'cafe.counter' && 'choices' in scene && Array.isArray(scene.choices)
-        ? { ...scene, choices: scene.choices.map((choice) => (choice.id === 'chat' && choice.once ? { ...choice, once: { ...choice.once, key } } : choice)) }
-        : scene,
-    ),
-  }
-}

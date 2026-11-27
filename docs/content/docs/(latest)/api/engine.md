@@ -775,7 +775,7 @@ type Choice = {
   cost?: ActionCost
   effects?: EffectRef[]
   command?: CommandRef
-  once?: (Once & { key?: string; })
+  once?: Once
   tags?: string[]
   irreversible?: string
   ui?: Ui<ChoiceUi>
@@ -792,7 +792,7 @@ type Choice = {
 | `cost` | [`ActionCost`](#actioncost) | yes |  | The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. |
 | `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. |
 | `command` | [`CommandRef`](#commandref) | yes |  | The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never `choose`. The button is refused with that command's reason while the command would be. An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends. |
-| `once` | `(`[`Once`](#once) `& { key?: string; })` | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. The choice's limit of once a game or once a turn. See `Once`. |
+| `once` | [`Once`](#once) | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. The choice's limit of once a game or once a turn. See `Once`. |
 | `tags` | `string[]` | yes |  | The tags a UI can style or filter it by. The engine gives them no meaning. |
 | `irreversible` | `string` | yes |  | The warning that it can't be undone, which a UI shows on the button. |
 | `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The ui hints carried to its button in the view. See `ChoiceUi`. |
@@ -1908,7 +1908,7 @@ type FlowChoice = {
   cost?: ActionCost
   effects?: EffectRef[]
   command?: CommandRef
-  once?: (Once & { key?: string; })
+  once?: Once
   tags?: string[]
   irreversible?: string
   ui?: Ui<ChoiceUi>
@@ -1926,7 +1926,7 @@ type FlowChoice = {
 | `cost` | [`ActionCost`](#actioncost) | yes |  | The stats it spends. The engine checks them before it runs, lists them on the button and pays them after its command. |
 | `effects` | [`EffectRef[]`](#effectref) | yes |  | The effects it applies after its cost, in order. A plugin's or the game's effect in the short form does computed work. |
 | `command` | [`CommandRef`](#commandref) | yes |  | The command the choice or action sends first, a plugin's in the short form or one of the engine's, but never `choose`. The button is refused with that command's reason while the command would be. An example is `{ 'devices/open': { id: 'messages' } }`. The button's price includes what the command spends. |
-| `once` | `(`[`Once`](#once) `& { key?: string; })` | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. The choice's limit of once a game or once a turn. See `Once`. |
+| `once` | [`Once`](#once) | yes |  | The limit of once a game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), counted in `state.chosen`. Once spent, a choice stays on screen and pays nothing more, and an action is refused, both with `reason`. The choice's limit of once a game or once a turn. See `Once`. |
 | `tags` | `string[]` | yes |  | The tags a UI can style or filter it by. The engine gives them no meaning. |
 | `irreversible` | `string` | yes |  | The warning that it can't be undone, which a UI shows on the button. |
 | `ui` | [`Ui`](#ui)`<`[`ChoiceUi`](#choiceui)`>` | yes |  | The ui hints carried to its button in the view. See `ChoiceUi`. |
@@ -4443,7 +4443,7 @@ older save gets that default when it loads.
 
 ```ts shape
 import { SAVE_VERSION } from '@ifloom/engine'
-const SAVE_VERSION: 24
+const SAVE_VERSION: 1
 ```
 
 ## SaveDriver
@@ -4764,7 +4764,7 @@ The content schema this engine reads. `PACK_STEPS` upgrade a pack of an older sc
 
 ```ts shape
 import { SCHEMA } from '@ifloom/engine'
-const SCHEMA: 30
+const SCHEMA: 1
 ```
 
 ## Screen
@@ -5908,11 +5908,10 @@ Returns the pack upgraded to `SCHEMA` and to each plugin's content version. Retu
 was written for a newer engine or plugin, or for a schema older than any step.
 
 Pass the game's plugins (`game.plugins`, or the base's), so each one's content is carried forward too. The engine's
-step from each schema runs after every plugin step keyed by that schema or below, so a first-party plugin's step
-meets the pack as the engine had it then. Each plugin's later steps run after.
+step from each schema runs after every plugin step keyed by that schema or below. Each plugin's later steps run
+after.
 
-A pack that records no version for a plugin is read as written for its schema, or for the plugin's own version if
-that is lower. The result records every plugin's version in `plugins`, and a pack with nothing to upgrade comes back
+A pack that records no version for a plugin is read as written for the plugin's current version. The result records every plugin's version in `plugins`, and a pack with nothing to upgrade comes back
 unchanged. `loadGame` passes `context` (see `PackContext`).
 
 ```ts shape

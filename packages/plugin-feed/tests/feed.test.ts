@@ -1,18 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SCHEMA,
-  apply,
-  holds,
-  loadGame,
-  loadState,
-  translatableFields,
-  upgradePack,
-  view,
-  type Game,
-  type GameState,
-  type Content,
-  type GameRules,
-} from '@ifloom/engine'
+import { SCHEMA, apply, holds, loadGame, translatableFields, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
 import { freshState, loadChecked } from '@ifloom/engine/testing'
 import { feed, type FeedsView } from '../src/index.ts'
 import { calendar } from '@ifloom/plugin-calendar'
@@ -98,36 +85,6 @@ describe('feeds', () => {
     let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
     state = apply(state, g, { type: 'action', id: 'cheer' }).state
     expect(shown(state, g).feeds[0].posts[0]).toMatchObject({ likes: 5, comments: [{ from: 'Sam', name: 'Sam', text: 'Save me a slice' }] })
-  })
-})
-
-describe('words written as prose keys', () => {
-  it('are their words in a schema 24 pack, and in a save from version 2 of the feed', () => {
-    const old = {
-      id: 'mod:posts',
-      schema: 24,
-      prose: { 'own.pier': 'The pier at dusk.' },
-      actions: [{ id: 'snap', effects: [feed.post('social', 'pier', { text: 'own.pier' }), feed.react('pier', { from: 'Ava', text: 'Lovely' })] }],
-    }
-    const upgraded = upgradePack(old, [feed()])
-    expect(upgraded.ok && upgraded.value.actions?.[0].effects).toEqual([
-      feed.post('social', 'pier', { text: 'The pier at dusk.' }),
-      feed.react('pier', { from: 'Ava', text: 'Lovely' }),
-    ])
-
-    const g = game()
-    const saved = {
-      ...JSON.parse(JSON.stringify(begin(g))),
-      plugins: {
-        ...JSON.parse(JSON.stringify(begin(g).plugins)),
-        feed: {
-          version: 2,
-          state: { appeared: {}, own: [{ id: 'cake', feed: 'social', turn: 0, text: 'post.cake', likes: 0, comments: [] }], reactions: {}, seen: {} },
-        },
-      },
-    }
-    const loaded = loadState(saved, g)
-    expect(loaded.ok && shown(loaded.value, g).feeds[0].posts[0].text).toBe('Baked a cake!')
   })
 })
 

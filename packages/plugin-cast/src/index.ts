@@ -55,7 +55,6 @@ import {
   type Reference,
   type TraitDef,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A way a conversation with a person can open, one entry of a person's `talk`. The first entry whose `when` holds opens. */
 export type TalkOption = {
@@ -410,10 +409,6 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     id: ID,
     version: 1,
     calls: CALLS,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     // Where the player is comes from places; a schedule may ask the calendar.
     cooperates: ['places', 'calendar'],
     traits: [personTrait],

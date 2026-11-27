@@ -24,7 +24,6 @@ import {
   type Placement,
 } from '@ifloom/engine'
 import { arg, defineCalls, defineData, definePlugin, list, type DefinedPlugin, type EffectsOf, type PluginProblem, type Reference } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /** An entry of a pool, a value or a value with a weight. A bare value, or a weight left out, weighs 1. */
 export type PoolEntry = KvValue | { value: KvValue; weight?: number }
@@ -252,8 +251,6 @@ function generatorsPlugin(): DefinedPlugin<null> {
     version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
     effects: {
       /** `{ 'generators/generate': { template, count? } }`: make `count` (1 if left out) entities from the template. */
       generate: (state, args, { game, apply }) => {

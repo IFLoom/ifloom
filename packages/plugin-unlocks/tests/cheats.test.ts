@@ -139,15 +139,6 @@ describe('cheats', () => {
     expect(unlocks().read(play(loaded.value, g, unlocks.cheat('coins')), g).cheated).toHaveLength(1)
   })
 
-  it('gives a save from before cheats were part of unlocks an empty log, keeping its unlocks', () => {
-    const g = game()
-    const old = { ...freshState(g), plugins: { unlocks: { version: 1, state: { unlocked: ['supporter'] } } } }
-    const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
-    if (!loaded.ok) throw new Error(loaded.reason)
-    expect(unlocks().read(loaded.value, g)).toEqual({ unlocked: ['supporter'], cheated: [] })
-    expect(shown(g, loaded.value).cheats.map((cheat) => cheat.id)).toContain('secret')
-  })
-
   it('lets content react to a cheat being used', () => {
     const g = game({ pack: { actions: [{ id: 'honest', blocked: [{ when: unlocks.cheated(), reason: 'You cheated.' }], effects: [] }] } })
     expect(apply(freshState(g), g, { type: 'action', id: 'honest' }).reason).toBeUndefined()

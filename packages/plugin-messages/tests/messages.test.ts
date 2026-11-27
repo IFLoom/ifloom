@@ -1,30 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import {
-  apply,
-  createRunner,
-  holds,
-  loadGame,
-  loadState,
-  replay,
-  startingState,
-  upgradePack,
-  view,
-  whyNot,
-  type Game,
-  type GameState,
-  type Content,
-} from '@ifloom/engine'
+import { apply, createRunner, holds, loadGame, replay, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
 import { loadChecked } from '@ifloom/engine/testing'
 import { cast } from '@ifloom/plugin-cast'
 import { messages, type MessagesView } from '../src/index.ts'
 import { calendar } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
-
-const unwrap = <T>(result: { ok: true; value: T } | { ok: false; reason: string }): T => {
-  if (!result.ok) throw new Error(result.reason)
-  return result.value
-}
 
 const plugin = messages()
 /** The channels, as the base game's content. */
@@ -188,19 +169,6 @@ describe('messages', () => {
     expect(shown(state, g).channels[1].threads[0].read).toBeNull()
   })
 
-  it('give a schema 24 reply the words of its prose `<message>#<reply>` as its label', () => {
-    const old = {
-      id: 'mod:texts',
-      schema: 24,
-      prose: { 'm#yes': 'Yes!' },
-      data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'ava', body: [{ text: 'm' }], replies: [{ id: 'yes' }, { id: 'no' }] }] } },
-    }
-    const upgraded = unwrap(upgradePack(old, [plugin]))
-    expect(upgraded.data?.messages?.messages).toEqual([
-      { id: 'm', channel: 'texts', from: 'ava', body: [{ prose: 'm' }], replies: [{ id: 'yes', label: 'Yes!' }, { id: 'no' }] },
-    ])
-  })
-
   it('report messages with no channel, no prose, or a bad condition', () => {
     const loaded = loadGame(
       [
@@ -342,30 +310,6 @@ describe('pools', () => {
     expect(whyNot(state, g, messages.reply('chat.rain', 'ok'))).toBeUndefined()
     expect(holds(state, g, messages.replied('chat.rain', 'ok'))).toBe(true)
     expect(shown(state, g).unread).toBe(3)
-  })
-
-  it('load an old save, with one arrival per message by id, as arrivals', () => {
-    const g = game()
-    const old = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
-    const saved = {
-      ...old,
-      plugins: { ...old.plugins, messages: { version: 1, state: { arrived: { 'msg.hey': 3 }, replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } } } },
-    }
-    const loaded = loadState(JSON.parse(JSON.stringify(saved)), g)
-    if (!loaded.ok) throw new Error(loaded.reason)
-    expect(loaded.value.plugins.messages).toEqual({
-      version: 4,
-      state: {
-        arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }],
-        replied: { 'msg.hey': 'yes' },
-        // The reply's day is its arrival's: the old save didn't keep it.
-        repliedOn: { 'msg.hey': 3 },
-        read: { 'msg.hey': true },
-        due: null,
-      },
-    })
-    expect(holds(loaded.value, g, messages.replied('msg.hey', 'yes'))).toBe(true)
-    expect(shown(loaded.value, g).channels[0].threads[0].messages[0]).toMatchObject({ key: 'msg.hey', replied: 'Yes!', read: true })
   })
 
   it('report a draw from a pool no message is in, and a weight below 0', () => {

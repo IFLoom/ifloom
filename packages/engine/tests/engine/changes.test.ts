@@ -2,12 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { apply } from '../../src/reduce.ts'
 import { view } from '../../src/view.ts'
 import { loadGame, type Content } from '../../src/loader.ts'
-import { loadState, startingState } from '../../src/intake.ts'
+import { startingState } from '../../src/intake.ts'
 import { replay } from '../../src/runner.ts'
 import { checkGame } from '../../src/check.ts'
 import { SCHEMA } from '../../src/upgrade.ts'
 import type { Command, GameState } from '../../src/types.ts'
-import { OLD_SAVES, oldSavesGame } from '../fixtures/old-saves.ts'
 
 const cafe: Content = {
   name: 'cafe',
@@ -129,12 +128,5 @@ describe('view.changes', () => {
     const played = play(start, ...commands)
     const replayed = replay(game, { game: game.id, start, commands })
     expect(replayed.ok && replayed.value.changes).toEqual(played.changes)
-  })
-
-  it('loads an older save with none', () => {
-    const loaded = loadState(OLD_SAVES[23], oldSavesGame())
-    expect(loaded.ok && loaded.value.changes).toEqual([])
-    const kept = loadState(OLD_SAVES[24], oldSavesGame())
-    expect(kept.ok && kept.value.changes).toEqual(OLD_SAVES[24].changes)
   })
 })

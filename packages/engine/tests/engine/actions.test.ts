@@ -4,7 +4,6 @@ import { whyNot, effectsOf } from '../../src/availability.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { view } from '../../src/view.ts'
 import { checkGame } from '../../src/check.ts'
-import { upgradePack, commandUpgrade } from '../../src/upgrade.ts'
 import { actionBlocked } from '../../src/action.ts'
 import type { ActionDef, Game } from '../../src/game.ts'
 import { activities, begin, fixture } from '../fixtures/town.ts'
@@ -138,41 +137,5 @@ describe('one kind of button', () => {
     const closed = { ...begin(game), kv: { ...begin(game).kv, closed: true } }
     expect(whyNot(closed, game, { type: 'action', id: 'stall/bun' })).toBe('The stall is shut.')
     expect(whyNot(begin(game), game, { type: 'action', id: 'stall/bun' })).toBeUndefined()
-  })
-})
-
-describe('activities, from before schema 20', () => {
-  it('are actions with no label, and an action that ran one takes it in', () => {
-    const v19 = {
-      id: 'mod:cafe',
-      schema: 19,
-      activities: [
-        {
-          id: 'coffee',
-          cost: { stats: { coins: 3 } },
-          blocked: [{ when: { kv: 'hadCoffee' }, reason: 'Enough.' }],
-          effects: [{ kv: 'hadCoffee', to: true }],
-        },
-        { id: 'nap', effects: [{ turn: true }] },
-      ],
-      actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
-      locks: [{ when: { kv: 'tired' }, deny: ['activity'], reason: 'Too tired.' }],
-      scenes: [{ id: 'bed', body: [], choices: [{ id: 'sleep', command: { type: 'activity', id: 'nap' }, effects: [] }] }],
-    }
-    const upgraded = upgradePack(v19, [])
-    expect(upgraded.ok && upgraded.value).toMatchObject({
-      actions: [
-        { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, blocked: [{ when: { kv: 'hadCoffee' }, reason: 'Enough.' }] },
-        { id: 'nap', effects: [{ turn: true }] },
-      ],
-      locks: [{ when: { kv: 'tired' }, deny: ['action'], reason: 'Too tired.' }],
-      scenes: [{ id: 'bed', body: [], choices: [{ id: 'sleep', command: { type: 'action', id: 'nap' }, effects: [] }] }],
-    })
-    expect(upgraded.ok && 'activities' in upgraded.value).toBe(false)
-  })
-
-  it('are done by the action command when an old log replays', () => {
-    const upgrade = commandUpgrade([], { schema: 19, plugins: {} })
-    expect(upgrade.ok && upgrade.value({ type: 'activity', id: 'wait' })).toEqual({ type: 'action', id: 'wait' })
   })
 })

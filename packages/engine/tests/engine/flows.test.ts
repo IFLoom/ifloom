@@ -2,14 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { apply } from '../../src/reduce.ts'
 import { view } from '../../src/view.ts'
 import { loadGame, type Content } from '../../src/loader.ts'
-import { loadState, startingState } from '../../src/intake.ts'
+import { startingState } from '../../src/intake.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import { describeProblem } from '../../src/check.ts'
 import { choice, decide, fold, jump, minigame, panel, point, say, text, when } from '../../src/flow.ts'
 import type { Command, GameState } from '../../src/types.ts'
 import type { SceneBeat } from '../../src/sceneBody.ts'
 import type { DataScene } from '../../src/scene.ts'
-import { OLD_SAVES } from '../fixtures/old-saves.ts'
 
 /**
  * Ava at the counter, a flowing scene: she greets you, you ask about the
@@ -234,14 +233,6 @@ describe('flowing scenes', () => {
       'Tea 2, coffee 3, cake 4.',
       'You sit by the window.',
     ])
-  })
-
-  it('load an old save with no flow: an open scene starts at the top', () => {
-    const { game } = load()
-    const old = OLD_SAVES[19]
-    const loaded = loadState({ ...old, sceneId: 'cafe.counter' }, game)
-    expect(loaded.ok && loaded.value.flow).toBeNull()
-    if (loaded.ok) expect(view(loaded.value, game).scene.choices.map((entry) => entry.id)).toEqual(['tea', 'coffee'])
   })
 })
 

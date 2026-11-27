@@ -788,7 +788,6 @@ With `pages` on, the game opens on a title screen, and the shell with the story 
 
 | Field | Meaning |
 |---|---|
-| `credits` | The credits page's lines, each a [`Credit`](/docs/api/react#credit): a string, or `{ label, href }` for a link. Without it there's no Credits button. |
 | `gate` | The [`GateOptions`](/docs/api/react#gateoptions) of a notice shown before the title screen, rendered by [`GatePage`](#gatepage). |
 | `pages` | The game's own pages by id, each a [`PageDef`](/docs/api/react#pagedef). Each gets a title-screen button labelled `label` unless `showOnTitle` is `false`, and its `component` renders as the whole page. One with a plugin UI's page id replaces it. |
 
@@ -809,7 +808,6 @@ function Postcards() {
 mountGame(module.build(), {
   pages: {
     subtitle: 'A new flat, a new town',
-    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
     pages: { postcards: { label: 'Postcards', component: Postcards } },
   },
 })
@@ -831,7 +829,7 @@ mountGame(module.build(), {
 - **Load** (`ui.load`) when the runner has `saves`.
 - **Settings** (`ui.settings`) when the game has a setting, a plugin UI's settings or mods.
 - A button for each added page whose `showOnTitle` isn't `false`.
-- **Credits** (`ui.credits`) when `credits` are given.
+- **Credits** (`ui.credits`) when the game's [`credits`](/docs/reference/credits) name someone.
 
 The first button is the main one. Parts: `title-page` (with `data-page="title"`), `title-art`, `title-name`, `title-subtitle`, `title-buttons` and `title-button`.
 
@@ -851,9 +849,9 @@ Parts: `load-page`, `page-heading`, `saves`, `save-slot`, `save-name`, `save-det
 
 ### CreditsPage
 
-`CreditsPage` renders the `credits` from `PagesOptions`, one per line, with a Back button. Its props are in [`CreditsPage`](/docs/api/react#creditspage). Links open in a new tab.
+`CreditsPage` renders the game's [credits](/docs/reference/credits) from [`creditsOf`](/docs/reference/credits#creditsof), with a Back button. Its props are in [`CreditsPage`](/docs/api/react#creditspage). Each group has its title and description, and each credit shows its picture, its name, its role, then its description and licence. A credit with an `href` shows its name as a link, which opens in a new tab.
 
-Parts: `credits-page`, `page-heading`, `credits`, `credit`, `credit-link` and `page-back`.
+Parts: `credits-page`, `page-heading`, `credits`, `credit-group` (with `data-credit-group`), `credit-group-title`, `credit-group-description`, `credit-list`, `credit`, `credit-art`, `credit-name`, `credit-link`, `credit-role`, `credit-meta` and `page-back`.
 
 ### GatePage
 

@@ -36,6 +36,7 @@ import { phrases, type PhrasesShape } from './phrases.ts'
 import { changes, type ChangesShape } from './changes.ts'
 import { ending, type EndingShape } from './ending.ts'
 import { player, type PlayerShape } from './player.ts'
+import { credits, type CreditsShape } from './credits.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
 type Shapes =
@@ -65,6 +66,7 @@ type Shapes =
   | PhrasesShape
   | ChangesShape
   | EndingShape
+  | CreditsShape
 
 /**
  * The core features, in the order their after-command steps, views, checks, fills and runner hooks run. The order
@@ -79,7 +81,7 @@ type Shapes =
  * - Settings come before audio, which requires them.
  * - Stats come before entities, so a loaded save's entities are filled after their stats.
  * - Panels run after the plugins' hooks, so a turn or scene a hook moves on closes the panel the command found open.
- * - The player, holdings, saving, ui and phrases can go anywhere, since they only apply, render, merge or check. Holdings sits
+ * - The player, holdings, saving, ui, phrases and credits can go anywhere, since they only apply, render, merge or check. Holdings sits
  *   beside entities, whose kinds it reads.
  * - Rolls run after the plugins' hooks, so the rolls a command keeps for the view include any a hook or a trigger made.
  * - Changes run after every other step, so the stats it compares are those the command left once everything had run.
@@ -110,6 +112,7 @@ export const FEATURES = [
   saving,
   rolls,
   phrases,
+  credits,
   changes,
   ending,
 ] as const

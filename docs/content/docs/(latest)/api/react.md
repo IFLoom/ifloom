@@ -7,7 +7,7 @@ Generated from the source of `@ifloom/react` and its TSDoc by `npm run api-docs`
 - Components: [`DefaultLayout`](#defaultlayout), [`GameProvider`](#gameprovider), [`GameShell`](#gameshell), [`InlineImage`](#inlineimage), [`InlineMail`](#inlinemail), [`InlineModal`](#inlinemodal), [`InlineMono`](#inlinemono), [`InlineProp`](#inlineprop), [`InlineTrigger`](#inlinetrigger), [`KeepPicturesOn`](#keeppictureson), [`Plugins`](#plugins), [`StatGauge`](#statgauge), [`UiProvider`](#uiprovider), [`WithPages`](#withpages)
 - Functions: [`assetUrl`](#asseturl), [`checkUiHints`](#checkuihints), [`mountGame`](#mountgame), [`TextSize`](#textsize), [`useAudio`](#useaudio), [`useBacklog`](#usebacklog), [`useClock`](#useclock), [`useGame`](#usegame), [`useHolds`](#useholds), [`useMinigame`](#useminigame), [`useMods`](#usemods), [`useMotion`](#usemotion), [`usePage`](#usepage), [`usePart`](#usepart), [`usePicturesShown`](#usepicturesshown), [`usePluginUis`](#usepluginuis), [`useProfile`](#useprofile), [`useReducedMotion`](#usereducedmotion), [`useSaves`](#usesaves), [`useScene`](#usescene), [`useSetting`](#usesetting), [`useTimer`](#usetimer), [`useTimers`](#usetimers), [`useWords`](#usewords)
 - Constants: [`Backlog`](#backlog), [`Beat`](#beat), [`BeatGroup`](#beatgroup), [`ChangeItem`](#changeitem), [`Changes`](#changes), [`ChoiceButton`](#choicebutton), [`ChoiceList`](#choicelist), [`Clock`](#clock), [`Countdown`](#countdown), [`CreditsPage`](#creditspage), [`DiceOverlay`](#diceoverlay), [`DiceRoll`](#diceroll), [`EntityTable`](#entitytable), [`Fold`](#fold), [`Game`](#game), [`GameMenu`](#gamemenu), [`GatePage`](#gatepage), [`Hotspot`](#hotspot), [`InlineAction`](#inlineaction), [`InputField`](#inputfield), [`InputFields`](#inputfields), [`Inventory`](#inventory), [`LayeredPicture`](#layeredpicture), [`LoadPage`](#loadpage), [`MediaViewer`](#mediaviewer), [`MinigameCard`](#minigamecard), [`ModManager`](#modmanager), [`Notice`](#notice), [`Notices`](#notices), [`NoticeStrip`](#noticestrip), [`Overlay`](#overlay), [`PanelHost`](#panelhost), [`Picture`](#picture), [`PriceTag`](#pricetag), [`RoomActions`](#roomactions), [`SavesMenu`](#savesmenu), [`Scene`](#scene), [`SceneHeader`](#sceneheader), [`Section`](#section), [`SettingsPage`](#settingspage), [`Sidebar`](#sidebar), [`StatList`](#statlist), [`Story`](#story), [`TEXT_SIZES`](#text_sizes), [`Timers`](#timers), [`Tip`](#tip), [`Title`](#title), [`TitlePage`](#titlepage), [`TRANSITIONS`](#transitions), [`Video`](#video), [`When`](#when)
-- Types: [`BehaviourOptions`](#behaviouroptions), [`CheckUiOptions`](#checkuioptions), [`Classes`](#classes), [`ClockState`](#clockstate), [`Components`](#components), [`CountdownProps`](#countdownprops), [`Credit`](#credit), [`DiceRollProps`](#dicerollprops), [`GameContextValue`](#gamecontextvalue), [`GameProps`](#gameprops), [`GameProviderProps`](#gameproviderprops), [`GameShellProps`](#gameshellprops), [`GateOptions`](#gateoptions), [`InlineComponent`](#inlinecomponent), [`InlineComponents`](#inlinecomponents), [`InlineProps`](#inlineprops), [`InventoryProps`](#inventoryprops), [`KeyOptions`](#keyoptions), [`MediaViewerProps`](#mediaviewerprops), [`MinigameControls`](#minigamecontrols), [`ModsOption`](#modsoption), [`ModsState`](#modsstate), [`MountOptions`](#mountoptions), [`OverridableComponents`](#overridablecomponents), [`Page`](#page), [`PageDef`](#pagedef), [`PagesOptions`](#pagesoptions), [`PageState`](#pagestate), [`PanelComponent`](#panelcomponent), [`PartKey`](#partkey), [`PartNames`](#partnames), [`PluginSectionComponent`](#pluginsectioncomponent), [`PluginSpot`](#pluginspot), [`Reveal`](#reveal), [`RevealBeat`](#revealbeat), [`RevealGroup`](#revealgroup), [`RevealPoint`](#revealpoint), [`SavesState`](#savesstate), [`Say`](#say), [`SceneRolls`](#scenerolls), [`SceneTiming`](#scenetiming), [`ScreenTransition`](#screentransition), [`SectionProps`](#sectionprops), [`SidebarProps`](#sidebarprops), [`StatDisplay`](#statdisplay), [`StoryProps`](#storyprops), [`StyleOptions`](#styleoptions), [`Transition`](#transition), [`TransitionName`](#transitionname), [`UiOptions`](#uioptions), [`UiStringKey`](#uistringkey), [`VideoProps`](#videoprops), [`ViewerMedia`](#viewermedia), [`Words`](#words)
+- Types: [`BehaviourOptions`](#behaviouroptions), [`CheckUiOptions`](#checkuioptions), [`Classes`](#classes), [`ClockState`](#clockstate), [`Components`](#components), [`CountdownProps`](#countdownprops), [`DiceRollProps`](#dicerollprops), [`GameContextValue`](#gamecontextvalue), [`GameProps`](#gameprops), [`GameProviderProps`](#gameproviderprops), [`GameShellProps`](#gameshellprops), [`GateOptions`](#gateoptions), [`InlineComponent`](#inlinecomponent), [`InlineComponents`](#inlinecomponents), [`InlineProps`](#inlineprops), [`InventoryProps`](#inventoryprops), [`KeyOptions`](#keyoptions), [`MediaViewerProps`](#mediaviewerprops), [`MinigameControls`](#minigamecontrols), [`ModsOption`](#modsoption), [`ModsState`](#modsstate), [`MountOptions`](#mountoptions), [`OverridableComponents`](#overridablecomponents), [`Page`](#page), [`PageDef`](#pagedef), [`PagesOptions`](#pagesoptions), [`PageState`](#pagestate), [`PanelComponent`](#panelcomponent), [`PartKey`](#partkey), [`PartNames`](#partnames), [`PluginSectionComponent`](#pluginsectioncomponent), [`PluginSpot`](#pluginspot), [`Reveal`](#reveal), [`RevealBeat`](#revealbeat), [`RevealGroup`](#revealgroup), [`RevealPoint`](#revealpoint), [`SavesState`](#savesstate), [`Say`](#say), [`SceneRolls`](#scenerolls), [`SceneTiming`](#scenetiming), [`ScreenTransition`](#screentransition), [`SectionProps`](#sectionprops), [`SidebarProps`](#sidebarprops), [`StatDisplay`](#statdisplay), [`StoryProps`](#storyprops), [`StyleOptions`](#styleoptions), [`Transition`](#transition), [`TransitionName`](#transitionname), [`UiOptions`](#uioptions), [`UiStringKey`](#uistringkey), [`VideoProps`](#videoprops), [`ViewerMedia`](#viewermedia), [`Words`](#words)
 
 ## assetUrl
 
@@ -257,6 +257,7 @@ type Classes = {
   wardrobe?: string | ((defaults: string) => string)
   debug?: string | ((defaults: string) => string)
   inventory?: string | ((defaults: string) => string)
+  credits?: string | ((defaults: string) => string)
   title?: string | ((defaults: string) => string)
   viewer?: string | ((defaults: string) => string)
   mods?: string | ((defaults: string) => string)
@@ -419,9 +420,16 @@ type Classes = {
   'mods-hint'?: string | ((defaults: string) => string)
   'load-page'?: string | ((defaults: string) => string)
   'credits-page'?: string | ((defaults: string) => string)
-  credits?: string | ((defaults: string) => string)
+  'credit-group'?: string | ((defaults: string) => string)
+  'credit-group-title'?: string | ((defaults: string) => string)
+  'credit-group-description'?: string | ((defaults: string) => string)
+  'credit-list'?: string | ((defaults: string) => string)
   credit?: string | ((defaults: string) => string)
+  'credit-art'?: string | ((defaults: string) => string)
+  'credit-name'?: string | ((defaults: string) => string)
   'credit-link'?: string | ((defaults: string) => string)
+  'credit-role'?: string | ((defaults: string) => string)
+  'credit-meta'?: string | ((defaults: string) => string)
   'gate-page'?: string | ((defaults: string) => string)
   'gate-title'?: string | ((defaults: string) => string)
   'gate-text'?: string | ((defaults: string) => string)
@@ -751,22 +759,12 @@ type CountdownProps = {
 | `label` | `boolean` | yes |  | True to show the timer's `label` above the bar. True if left out. |
 | `className` | `string` | yes |  | Classes added to the `timer` part's own. |
 
-## Credit
-
-Type.
-
-One line of the credits page, as text or as a link with its label.
-
-```ts shape
-import type { Credit } from '@ifloom/react'
-type Credit = string | { label: string; href: string }
-```
-
 ## CreditsPage
 
 Const. Explained in [Components](/docs/reference/react/components#creditspage).
 
-Renders the credits page from `PagesOptions.credits`, a line each. Its links open in a new tab.
+Renders the credits page from the game's `credits`, a heading for each group and a line for each credit with its
+role, description, licence and picture. Its links open in a new tab.
 
 ```ts shape
 import { CreditsPage } from '@ifloom/react'
@@ -1858,7 +1856,6 @@ import type { PagesOptions } from '@ifloom/react'
 type PagesOptions = {
   subtitle?: string
   art?: string
-  credits?: Credit[]
   gate?: GateOptions
   pages?: Record<string, PageDef>
 }
@@ -1868,7 +1865,6 @@ type PagesOptions = {
 |---|---|---|---|---|
 | `subtitle` | `string` | yes |  | The line under the title on the title screen. |
 | `art` | `string` | yes |  | The path of the title screen's picture. |
-| `credits` | [`Credit[]`](#credit) | yes |  | The credits page's lines and links. The title screen has no Credits button without them. |
 | `gate` | [`GateOptions`](#gateoptions) | yes |  | The notice shown before the title screen until the player confirms it. |
 | `pages` | `Record<string,` [`PageDef`](#pagedef)`>` | yes |  | The pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, replaces it. |
 
@@ -1957,6 +1953,7 @@ type PartKey =
   | 'dice'
   | 'bold'
   | 'inventory'
+  | 'credits'
   | 'title'
   | 'viewer'
   | 'mods'
@@ -2119,9 +2116,16 @@ type PartKey =
   | 'mods-hint'
   | 'load-page'
   | 'credits-page'
-  | 'credits'
+  | 'credit-group'
+  | 'credit-group-title'
+  | 'credit-group-description'
+  | 'credit-list'
   | 'credit'
+  | 'credit-art'
+  | 'credit-name'
   | 'credit-link'
+  | 'credit-role'
+  | 'credit-meta'
   | 'gate-page'
   | 'gate-title'
   | 'gate-text'
@@ -2910,12 +2914,12 @@ type UiStringKey =
   | 'newGame'
   | 'dismiss'
   | 'noSaves'
+  | 'credits'
   | 'mods'
   | 'notices'
   | 'menu'
   | 'saves'
   | 'backlog'
-  | 'credits'
   | 'zoom'
   | 'load'
   | 'statLevel'

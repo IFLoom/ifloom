@@ -36,7 +36,6 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
 
 const pages: PagesOptions = {
   subtitle: 'A new flat, a new town, and a cat with no name.',
-  credits: ['Small Town is the IFLoom showcase.', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
 }
 
 createRoot(document.getElementById('root')!).render(

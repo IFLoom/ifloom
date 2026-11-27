@@ -26,6 +26,7 @@ Content has no id and no schema, because the engine it is compiled with reads it
 | `traits` | Trait data by trait id and then entity. See [traits](#traits). |
 | `locks`, `saveable` | [Locks](/docs/reference/locks) and save refusals, each file's added after the ones before. A lock with an `id` is declared once. |
 | `phrases` | [Phrases](/docs/reference/phrases), merged by full name such as `outfit.verdict`, so two files can add to one group. |
+| `credits` | [Credit groups](/docs/reference/credits#creditgroup), merged by `id`. A file that names a group already declared adds its credits after that group's. |
 | `changes` | The stats whose [changes](/docs/reference/changes) the view lists, every file's added together, each once. |
 | `strings` | The engine's and plugins' [own lines](/docs/reference/strings), reworded, merged by key. |
 | `prose` | Lines read by [prose key](/docs/reference/prose), merged by key. |

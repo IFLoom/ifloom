@@ -143,6 +143,8 @@ export type { SavingView } from './features/saving.ts'
 export type { Dice, Roll, RollsState } from './features/rolls.ts'
 export type { Change, ChangesDef, ChangeView } from './features/changes.ts'
 export type { Phrase, PhraseRow, PhraseWithArgs, Phrases } from './features/phrases.ts'
+export type { Credit, CreditGroup } from './features/credits.ts'
+export { creditsOf } from './features/credits.ts'
 
 // Storylines
 export { storylineOpen } from './storylines.ts'

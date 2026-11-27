@@ -4,7 +4,7 @@ import { startingState } from '../../src/intake.ts'
 import { fillTokens } from '../../src/prose.ts'
 import { amountOf } from '../../src/amount.ts'
 import { translatableFields } from '../../src/words.ts'
-import { SCHEMA, upgradePack } from '../../src/upgrade.ts'
+import { SCHEMA } from '../../src/upgrade.ts'
 import { checkGame } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import type { GameRules } from '../../src/game.ts'
@@ -116,7 +116,7 @@ describe('phrases and bare tokens', () => {
   })
 
   it('are replaced whole by a later pack, which can add to a group', () => {
-    const pack: Pack = { id: 'mod', schema: 30, phrases: { outfit: { verdict: 'smashing', hat: 'a cap' } } }
+    const pack: Pack = { id: 'mod', schema: SCHEMA, phrases: { outfit: { verdict: 'smashing', hat: 'a cap' } } }
     const { game, problems } = load([flat], [pack])
     expect(problems).toEqual([])
     const state = startingState(game, { kv: { outfit: 'suit' } })
@@ -134,7 +134,7 @@ describe('phrases and bare tokens', () => {
       'phrase.weather.0',
       'phrase.greeting.0',
     ])
-    const { game: french } = load([flat], [{ id: 'fr', schema: 30, words: { 'phrase.outfit.verdict.1': 'bien, sans doute' } }])
+    const { game: french } = load([flat], [{ id: 'fr', schema: SCHEMA, words: { 'phrase.outfit.verdict.1': 'bien, sans doute' } }])
     expect(fillTokens(startingState(french), french, '{{outfit.verdict}}')).toBe('bien, sans doute')
   })
 
@@ -186,26 +186,6 @@ describe('phrases and bare tokens', () => {
       },
     ])
     expect(problems).toEqual([])
-  })
-})
-
-describe('schema 30', () => {
-  it('writes {{v:…}} as a bare token in every string of a pack', () => {
-    const pack = {
-      id: 'old',
-      schema: 29,
-      prose: { due: 'Rent: {{v:game/rentDue}}, {{v:messages/unread channel=texts}} texts, {{v:game/9lives}}.' },
-      scenes: [{ id: 'hall', body: [{ text: 'Hi {{v:game/name}}.' }], choices: [{ id: 'go', label: '{{v:game/name weeks=2}}' }] }],
-      words: { 'scene.hall.title': '{{v:places/name}}' },
-    }
-    const up = upgradePack(pack, [])
-    expect(up.ok && up.value).toEqual({
-      id: 'old',
-      schema: 30,
-      prose: { due: 'Rent: {{rentDue}}, {{messages/unread channel=texts}} texts, {{v:game/9lives}}.' },
-      scenes: [{ id: 'hall', body: [{ text: 'Hi {{name}}.' }], choices: [{ id: 'go', label: '{{name weeks=2}}' }] }],
-      words: { 'scene.hall.title': '{{places/name}}' },
-    })
   })
 })
 

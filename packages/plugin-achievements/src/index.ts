@@ -21,7 +21,6 @@ import {
   type EffectsOf,
   type PluginProblem,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**
  * A count towards an achievement, an achievement's `progress`. The player's progress is `value` out of `target`.
@@ -220,8 +219,6 @@ function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView
     version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {

@@ -61,7 +61,6 @@ import {
   type Reference,
   type TraitDef,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /**
  * The data of the `places/location` trait, which makes an entity a location the player can be at. The location's
@@ -373,10 +372,6 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     id: ID,
     calls: CALLS,
     version: 1,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     traits: [locationTrait],
     strings: {
       noSuchPlace: 'There is no such place.',

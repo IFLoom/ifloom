@@ -152,7 +152,7 @@ A mod file is JSON in the shape of [`ModFile`](/docs/reference/mods#modfile), wi
   "game": "small-town",
   "pack": {
     "id": "naps",
-    "schema": 30,
+    "schema": 1,
     "scenes": [{ "id": "flat.nap", "title": "A nap", "body": [{ "text": "You doze off on the sofa." }], "choices": [{ "id": "wake", "label": "Wake up", "effects": [{ "scene": null }] }] }]
   }
 }

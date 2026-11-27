@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apply, commandOf, holds, loadGame, loadState, replay, upgradePack, view, whyNot, type Game, type GameState } from '@ifloom/engine'
+import { apply, holds, loadGame, view, whyNot, type Game, type GameState } from '@ifloom/engine'
 import { freshState, loadChecked } from '@ifloom/engine/testing'
 import { devices, type AppDef, type DevicesView } from '../src/index.ts'
 
@@ -92,27 +92,6 @@ describe('devices', () => {
     expect(holds(away, g, { 'devices/open': { device: 'laptop' } })).toBe(false)
     // Opening an app brings its device out on it.
     expect(laptop(apply(start, g, devices.open('notes')).state, g)).toMatchObject({ shown: true, open: { id: 'notes' } })
-  })
-
-  it('load an older save put away, and play an older log’s close as going home', () => {
-    const g = game()
-    const old = { ...freshState(g), plugins: { ...freshState(g).plugins, devices: { version: 1, state: { open: { laptop: 'notes' } } } } }
-    const loaded = loadState(old, g)
-    expect(loaded.ok && loaded.value.plugins.devices.state).toEqual({ shown: {} })
-    const log = {
-      game: g.id,
-      start: freshState(g),
-      commands: [commandOf(devices.open('notes')), commandOf({ 'devices/close': { id: 'laptop' } })],
-      plugins: { devices: 6 },
-    }
-    const played = replay(g, log)
-    expect(played.ok && played.value.plugins.devices.state).toEqual({ shown: { laptop: null } })
-  })
-
-  it('carry an older pack’s close, which went home, to devices/home', () => {
-    const pack = { id: 'mod:back', schema: 28, actions: [{ id: 'back', label: 'Back', command: { 'devices/close': { id: 'laptop' } } }] }
-    const up = upgradePack(pack, [devices()])
-    expect(up.ok && up.value.actions).toEqual([{ id: 'back', label: 'Back', command: { 'devices/home': { id: 'laptop' } } }])
   })
 
   it('close an app that stops being installed', () => {

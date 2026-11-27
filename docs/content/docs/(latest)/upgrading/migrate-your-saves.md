@@ -82,7 +82,7 @@ Fill every new stat whose `start` isn't 0. A stat the save lacks reads as its `s
 },
 ```
 
-A declared [entity](/docs/reference/entities) never needs filling. An entity an update adds is in every old save, held where its `at` says, because a save keeps only what play changed. [Older saves](/docs/upgrading/old-saves#entities-in-old-saves) says more.
+A declared [entity](/docs/reference/entities) never needs filling. An entity an update adds is in every old save, held where its `at` says, because a save keeps only what play changed. [Entities](/docs/reference/entities) says more.
 
 ## Keep every old step
 

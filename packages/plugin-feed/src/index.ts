@@ -39,7 +39,6 @@ import {
   type EffectsOf,
   type Reference,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A feed the game declares in `data.feed.feeds`, such as a social app, a notice board or a paper. Posts name it in their `feed`. */
 export type FeedDef = {
@@ -273,35 +272,11 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
 
   return definePlugin<FeedState, FeedsView, typeof CALLS>({
     id: ID,
-    version: 3,
+    version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     // Posters are the cast's characters when the game has the cast: a name and a face.
     cooperates: ['cast'],
-    migrations: {
-      // 1 → 2: the player's posts are stamped with the turn, not the day (they were the same).
-      1: (state) => {
-        const old = state as { own: (Omit<OwnPost, 'turn'> & { day: number })[] }
-        return { ...old, own: (old.own ?? []).map(({ day, ...post }) => ({ ...post, turn: day })) }
-      },
-      // 2 → 3: a post's and a comment's `text` is its words, as content writes them now, not a prose key:
-      // a key the game's prose has becomes those words.
-      2: (state, { game }) => {
-        const old = state as FeedState
-        const words = <T extends { text?: string }>(entry: T): T =>
-          entry.text === undefined ? entry : { ...entry, text: game.prose?.line(entry.text) ?? entry.text }
-        const comments = (list: Comment[] | undefined) => (list ?? []).map(words)
-        return {
-          ...old,
-          own: (old.own ?? []).map((post) => ({ ...words(post), comments: comments(post.comments) })),
-          reactions: Object.fromEntries(Object.entries(old.reactions ?? {}).map(([id, entry]) => [id, { ...entry, comments: comments(entry.comments) }])),
-        }
-      },
-    },
     strings: {
       /** The name on the player's own posts when the game has no `playerName` key in its kv store. */
       you: 'You',

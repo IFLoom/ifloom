@@ -10,7 +10,6 @@
  */
 import {
   declaredTrait,
-  declaredWithTrait,
   entityName,
   entityOf,
   heldBy,
@@ -43,7 +42,6 @@ import {
   type PluginProblem,
   type TraitDef,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** The data of the `wardrobe/wearable` trait, which makes a thing wearable in one slot. */
 export type Wearable = {
@@ -170,24 +168,6 @@ const closetTrait: TraitDef<'wardrobe/closet'> = {
       : [],
 }
 
-/** Version 1 kept item ids in the slots; an item's id is the id of the wearable entity that took its place. */
-function fromItems(old: unknown, game: Game): { worn: Record<string, EntityRef | null> } {
-  const worn = ((old as { worn?: Record<string, string | null> } | undefined)?.worn ?? {}) as Record<string, string | null>
-  const wearables = declaredWithTrait(game, WEARABLE)
-  const refOf = (item: string | null): EntityRef | null => {
-    if (item === null) return null
-    if (wearables.includes(item as EntityRef)) return item as EntityRef
-    return wearables.find((ref) => parseRef(ref)?.id === item) ?? null
-  }
-  return { worn: Object.fromEntries(Object.entries(worn).map(([slot, item]) => [slot, refOf(item)])) }
-}
-
-/** Version 2 kept one set of slots, worn by whoever was played: now it is theirs, among each body's own. */
-function perBody(old: unknown, you: string): WardrobeState {
-  const worn = (old as { worn?: Record<string, EntityRef | null> } | undefined)?.worn ?? {}
-  return { worn: { [you]: worn } }
-}
-
 /** What one body has on, slot by slot: nothing in a slot it never filled. */
 function wornBy(slice: WardrobeState, holder: string): Record<string, EntityRef | null> {
   return slice.worn[holder] ?? {}
@@ -205,18 +185,9 @@ function dressed(slice: WardrobeState, holder: string, slots: Record<string, Ent
 function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
   return definePlugin<WardrobeState, WardrobeView, typeof CALLS>({
     id: ID,
-    version: 3,
+    version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
-    migrations: {
-      1: (old, { game }) => fromItems(old, game),
-      // Whoever was played when the save was made was the one wearing it.
-      2: (old, { fill }) => perBody(old, protagonist(fill([]))),
-    },
     traits: [wearableTrait, closetTrait],
     // A closet is a place: where the player is comes from the places plugin, when the game has it.
     cooperates: ['places'],

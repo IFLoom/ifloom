@@ -18,7 +18,6 @@ import {
   heldCount,
   holds,
   inlineChoices,
-  loadState,
   startingState,
   statValue,
   view,
@@ -466,25 +465,6 @@ describe('Small Town', () => {
     expect(apply(on(state, 2, 'morning'), game, shop.buy('counter', 'item:flapjack')).reason).toBeUndefined()
     // Closed in the evening, with the café.
     expect(apply(on(state, 1, 'evening'), game, shop.buy('counter', 'item:sandwich')).reason).toBe('Closed.')
-  })
-
-  it('carries a save from before things were entities: the counter’s flapjacks and the raincoat on', () => {
-    const now = on(run(startingState(game), { type: 'choose', id: 'unpack' }), 1, 'morning')
-    const old = {
-      ...now,
-      plugins: {
-        ...now.plugins,
-        shop: { version: 1, state: { sold: { counter: { flapjack: { n: 1, at: 1 } } } } },
-        wardrobe: { version: 1, state: { worn: { coat: 'raincoat', neck: null } } },
-      },
-    }
-    const loaded = loadState(JSON.parse(JSON.stringify(old)), game)
-    if (!loaded.ok) throw new Error(loaded.reason)
-    expect(loaded.value.plugins.shop.state).toEqual({ stocked: { counter: { 'item:flapjack': { at: 1, left: 1 } } } })
-    expect(loaded.value.plugins.wardrobe.state).toEqual({ worn: { player: { coat: 'clothing:raincoat', neck: null } } })
-    expect(holds(loaded.value, game, wardrobe.wearing('clothing:raincoat'))).toBe(true)
-    const flapjack = (view(loaded.value, game).plugins.shop as ShopView).vendors[0].goods.find((good) => good.entity === 'item:flapjack')!
-    expect(flapjack.stock).toBe(1)
   })
 
   it('takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift', () => {

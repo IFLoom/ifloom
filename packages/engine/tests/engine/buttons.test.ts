@@ -4,8 +4,6 @@ import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import { describeProblem } from '../../src/check.ts'
-import { upgradePack } from '../../src/upgrade.ts'
-import { unwrap } from '../fixtures/result.ts'
 
 /** A café counter: a choice with a cost, and actions with the fields a choice has. */
 const cafe: Content = {
@@ -84,21 +82,5 @@ describe('buttons', () => {
       'cafe · scene counter · label "counter.usual" names the prose "counter.usual", but a label is words written in place now (schema 25): write the words',
       'cafe · scene counter · no label: its words are no longer read from the prose "counter#leave" (schema 25), so give it label: "Leave"',
     ])
-  })
-
-  it('call a minigame’s numbers its kv, from schema 22', () => {
-    const old = { id: 'mod', schema: 21, minigames: [{ id: 'darts', start: 'throw', vars: { score: 0 }, states: { throw: { final: {} } } }] }
-    expect(unwrap(upgradePack(old, [])).minigames).toEqual([{ id: 'darts', start: 'throw', kv: { score: 0 }, states: { throw: { final: {} } } }])
-  })
-
-  it('name a labels entry’s words label, from schema 22', () => {
-    const old = {
-      id: 'mod',
-      schema: 21,
-      scenes: [{ id: 'counter', body: [], choices: [{ id: 'usual', labels: [{ when: { kv: 'regular' }, key: 'counter#usual' }] }] }],
-    }
-    expect(unwrap(upgradePack(old, [])).scenes?.[0]).toMatchObject({
-      choices: [{ id: 'usual', labels: [{ when: { kv: 'regular' }, label: 'counter#usual' }] }],
-    })
   })
 })

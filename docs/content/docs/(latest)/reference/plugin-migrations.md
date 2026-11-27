@@ -65,7 +65,7 @@ export const loyalty = definePlugin<{ stamps: number }>({
 })
 ```
 
-A pack records the content version of each plugin it was written for in its [`plugins`](/docs/reference/content#pack), beside its `schema`, and any pack with content for a plugin writes it. [`upgradePack`](/docs/reference/content#upgradepack) runs the plugin's steps from that version up to the plugin's own and records where it got to. A pack that records no version for a plugin is read as written for its `schema`, or for the plugin's own version if that's lower, and at least version 1, so for a pack written today nothing runs. The first-party plugins number their content versions by the engine's schema: each one's content version is the schema at which its content last changed.
+A pack records the content version of each plugin it was written for in its [`plugins`](/docs/reference/content#pack), beside its `schema`, and any pack with content for a plugin writes it. [`upgradePack`](/docs/reference/content#upgradepack) runs the plugin's steps from that version up to the plugin's own and records where it got to. A pack that records no version for a plugin is read as written for the plugin's current version, so nothing runs. The first-party plugins are all at content version 1.
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -96,7 +96,7 @@ export const step: ContentStep = (pack, tools) =>
 A pack as it came in, in some version's shape, so its fields are `unknown` until a step checks them, apart from its `schema`. Its type is in [`RawPack`](/docs/api/engine#rawpack), from `@ifloom/engine`.
 
 ```ts fragment
-{ schema: 30, data: { loyalty: { cards: [{ id: 'cafe', stamps: 5 }] } } }
+{ schema: 1, data: { loyalty: { cards: [{ id: 'cafe', stamps: 5 }] } } }
 ```
 
 ## ContentTools
@@ -109,7 +109,6 @@ The functions a [`ContentStep`](#contentstep) gets to rewrite a pack, each retur
 | `calls` | The function that rewrites every call by name, however it's written, as a [`RawCall`](#rawcall). The rewrite gets every key with a `/` in it, so it checks the name, and a call given back as it came stays as it was. It skips the same keys as `objects`. A value, `{ value: 'loyalty/stamps', with }`, isn't a call, so `objects` reaches it. |
 | `words` | The function that rewrites every line of the pack's `prose` and `strings`, with its key, for a token such as `{{loyalty/stamps}}` that changed. |
 | `prose` | The function that returns a line of prose by key as written, the pack's own or else the game's under it, or `undefined` if neither has it. It serves a step that writes in place words that were a prose key. |
-| `effects` | The function that rewrites every effect the pack holds, in plugin `data` and traits too, into the keyed form, so one written with `kind` becomes `{ stat, by }` and the rest. |
 | `wordKeys` | The function that renames every key of the pack's [`words` table](/docs/reference/words), keeping the words, for a step that renames a field the table names. |
 | `entries` | The function that rewrites each entry of one list of the plugin's `data`, named `<plugin>/<list>`, so `'loyalty/cards'` is `data.loyalty.cards`. A pack without the list comes back as it is. |
 

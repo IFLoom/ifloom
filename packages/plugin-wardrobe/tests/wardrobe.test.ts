@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apply, give, heldCount, holds, loadGame, loadState, move, take, view, whyNot, type Content, type Game, type GameState } from '@ifloom/engine'
+import { apply, give, heldCount, holds, loadGame, move, take, view, whyNot, type Content, type Game, type GameState } from '@ifloom/engine'
 import { freshState, loadChecked } from '@ifloom/engine/testing'
 import { places } from '@ifloom/plugin-places'
 import { wardrobe, type WardrobeView } from '../src/index.ts'
@@ -138,14 +138,6 @@ describe('the wardrobe, on its own', () => {
     expect(holds(apply(sewn, g, wardrobe.wear('clothing:cape')).state, g, wardrobe.wearing('clothing:cape', 'coat'))).toBe(true)
   })
 
-  it('carries an older save’s item ids into references', () => {
-    const g = game()
-    const old = { ...freshState(g), plugins: { wardrobe: { version: 1, state: { worn: { coat: 'raincoat', feet: null, hat: 'beret' } } } } }
-    const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
-    if (!loaded.ok) throw new Error(loaded.reason)
-    expect(loaded.value.plugins.wardrobe).toEqual({ version: 3, state: { worn: { player: { coat: 'clothing:raincoat', feet: null, hat: null } } } })
-  })
-
   it('reports wearables in a slot the game does not have, and slots that start with the wrong thing', () => {
     const loaded = loadGame(
       [
@@ -229,14 +221,6 @@ describe('the wardrobe with a protagonist', () => {
     expect(shown(me, g).slots.map((slot) => slot.entity)).toEqual([null, 'clothing:boots'])
     expect(holds(me, g, wardrobe.wearing('clothing:raincoat'))).toBe(false)
     expect(holds(me, g, { 'wardrobe/wearing': { entity: 'clothing:raincoat', at: 'friend:kim' } })).toBe(true)
-  })
-
-  it('carries a version 2 save’s slots over to whoever was played', () => {
-    const g = game()
-    const old = { ...freshState(g), you: 'friend:kim', plugins: { wardrobe: { version: 2, state: { worn: { coat: null, feet: 'clothing:boots' } } } } }
-    const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
-    if (!loaded.ok) throw new Error(loaded.reason)
-    expect(loaded.value.plugins.wardrobe).toEqual({ version: 3, state: { worn: { 'friend:kim': { coat: null, feet: 'clothing:boots' } } } })
   })
 })
 

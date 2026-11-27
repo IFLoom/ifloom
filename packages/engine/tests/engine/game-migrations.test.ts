@@ -86,9 +86,9 @@ describe('the game’s own migrations', () => {
         },
       },
     })
-    // A version-10 save, from before media, with the clock at its version 1.
+    // A save without its media, which the load default fills, with the clock at its version 1.
     const { media: _media, ...old } = startingState(before)
-    const state = { ...old, version: 10, plugins: { clock: { version: 1, state: { h: 7 } } } } as unknown as GameState
+    const state = { ...old, plugins: { clock: { version: 1, state: { h: 7 } } } } as unknown as GameState
     const loaded = unwrap(saves(game, memoryDriver()).importText(fileOf(game, state)))
     expect(ran).toEqual(['1:media:{"version":2,"state":{"hour":7}}', '2:true'])
     expect(loaded.state.gameVersion).toBe(3)

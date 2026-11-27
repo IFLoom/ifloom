@@ -26,7 +26,6 @@ import {
   holds,
   isUnique,
   lackingLine,
-  parseRef,
   pluginQuery,
   reasonOf,
   statOf,
@@ -61,7 +60,6 @@ import {
   type Reference,
   type TraitDef,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** The data of the `shop/sellable` trait, a thing's price wherever a vendor sells it without a price of its own. */
 export type Sellable = {
@@ -544,24 +542,6 @@ function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView {
   return { vendors, panel: vendors.find((vendor) => vendor.id === named || vendor.ref === named) ?? null }
 }
 
-/** Version 1 kept how many of each item had gone; version 2 keeps when each thing's stock was topped up, the stock being what the vendor holds. */
-function fromSold(old: unknown, game: Game): ShopState {
-  const sold = ((old as { sold?: Record<string, Record<string, { n: number; at: number }>> } | undefined)?.sold ?? {}) as Record<
-    string,
-    Record<string, { n: number; at: number }>
-  >
-  const stocked: ShopState['stocked'] = {}
-  for (const one of everyVendor(undefined, game)) {
-    for (const [item, record] of Object.entries(sold[one.id] ?? {})) {
-      // An item's id is the id of the entity that took its place.
-      const good = one.vendor.goods.find((entry) => entry.entity === item || parseRef(entry.entity)?.id === item)
-      if (good?.stock === undefined || typeof record?.n !== 'number') continue
-      stocked[one.id] = { ...stocked[one.id], [good.entity]: { at: record.at, left: Math.max(0, good.stock - record.n) } }
-    }
-  }
-  return { stocked }
-}
-
 const sellableTrait: TraitDef<'shop/sellable'> = {
   id: SELLABLE,
   check: (data) => {
@@ -623,14 +603,9 @@ const vendorTrait: TraitDef<'shop/vendor'> = {
 function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
   return definePlugin<ShopState, ShopView, typeof CALLS>({
     id: ID,
-    version: 2,
+    version: 1,
     calls: CALLS,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     start: emptyState,
-    migrations: { 1: (old, { game }) => fromSold(old, game) },
     cooperates: ['calendar', 'places'],
     content: { kinds: [{ id: KIND, label: 'Vendor', plural: 'Vendors', unique: true, listed: false }] },
     traits: [sellableTrait, vendorTrait],

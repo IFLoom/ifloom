@@ -28,7 +28,6 @@ import {
   type KvValue,
 } from '@ifloom/engine'
 import { arg, defineCalls, definePlugin, type CommandsOf, type DefinedPlugin, type PluginCommand } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** The debug readout as the developer sees it, in `view.plugins.debug`. It lists the locks that are on, the triggers that have fired and the seed. */
 export type DebugView = {
@@ -86,10 +85,6 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
     id: 'debug',
     version: 1,
     calls: CALLS,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     // The clock is the calendar's and the map is the places plugin's: debug/time and debug/go set them when the game has them.
     cooperates: ['calendar', 'places'],
     strings: {

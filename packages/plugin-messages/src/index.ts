@@ -45,7 +45,6 @@ import {
   type PluginProblem,
   type Reference,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A channel the game declares in `data.messages.channels`, such as texts, email or the doormat. */
 export type Channel = {
@@ -388,38 +387,12 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
 
   const plugin = definePlugin<MessagesState, MessagesView, typeof CALLS>({
     id: ID,
-    version: 4,
+    version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     // Senders are the cast's characters when the game has the cast: a name and a face.
     // An arrival's day is the calendar's when the game has it.
     cooperates: ['cast', 'calendar'],
-    migrations: {
-      // 1 → 2: arrivals became a list, so a message drawn from a pool can come again.
-      // Replies and reads were by message id, which is each one's first arrival's key.
-      // An old arrival's day is its turn: the save didn't keep the day.
-      1: (state) => {
-        const old = state as { arrived?: Record<string, number>; replied?: Record<string, string>; read?: Record<string, true> }
-        const arrived = Object.entries(old.arrived ?? {})
-          .sort(([, a], [, b]) => a - b)
-          .map(([message, turn]): Arrival => ({ key: message, message, turn, day: turn }))
-        return { arrived, replied: old.replied ?? {}, read: old.read ?? {} }
-      },
-      // 2 → 3: a message can wait to arrive (`after`); nothing waits in an old save.
-      2: (state) => ({ ...(state as object), due: null }),
-      // 3 → 4: the day of each reply is kept, for `messages/replied` with a range. An old reply's
-      // day is its arrival's: the save didn't keep when it was sent.
-      3: (state) => {
-        const old = state as Omit<MessagesState, 'repliedOn'>
-        const dayOfKey = new Map(old.arrived.map((arrival) => [arrival.key, arrival.day]))
-        const repliedOn = Object.fromEntries(Object.keys(old.replied).map((key) => [key, dayOfKey.get(key) ?? 0]))
-        return { ...old, repliedOn }
-      },
-    },
     // The timer a waiting message runs down. Its length is set each time it starts, from the message's `after`.
     content: { timers: [{ id: DUE, ms: 1000, effects: [CALLS.effects.due()] }] },
     strings: {

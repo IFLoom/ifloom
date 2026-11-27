@@ -45,7 +45,6 @@ import {
   type PluginProblem,
   type Reference,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A job's shift, which the game declares in a {@link JobDef}'s `shift`. It sets what one shift costs, takes and does. */
 export type ShiftDef = {
@@ -440,10 +439,6 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
     version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     start: emptyState,
     // A shift's `blocked` can ask places where the player is.
     cooperates: ['calendar', 'places'],

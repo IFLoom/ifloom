@@ -48,7 +48,6 @@ import {
   type PluginProblem,
 } from '@ifloom/engine/plugin'
 import { ITERATIONS, fromHex, hashOfProof, normaliseCode, proofOf, saltOf, seal, toHex, unseal } from './crypto.ts'
-import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 export { ITERATIONS, normaliseCode } from './crypto.ts'
 
@@ -559,11 +558,8 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
     id: ID,
     calls: CALLS,
     data: DATA,
-    version: 2,
+    version: 1,
     // 1 → 2: the plugin keeps the log of cheat uses too.
-    migrations: { 1: (old) => ({ ...(old as Omit<UnlocksState, 'cheated'>), cheated: [] }) },
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
     start: () => ({ unlocked: [], cheated: [] }),
     strings: {
       wrong: 'That code doesn’t unlock anything.',

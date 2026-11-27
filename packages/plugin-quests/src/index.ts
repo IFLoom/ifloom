@@ -20,7 +20,6 @@ import {
   type EffectsOf,
   type PluginProblem,
 } from '@ifloom/engine/plugin'
-import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A stage the game declares in a {@link QuestDef}'s `stages`. The stage is done the first time its `done` holds after the stages before it. */
 export type QuestStage = {
@@ -290,10 +289,6 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
     version: 1,
     calls: CALLS,
     data: DATA,
-    contentVersion: CONTENT_VERSION,
-    contentMigrations,
-    commandVersion: COMMAND_VERSION,
-    commandMigrations,
     start: emptyState,
     strings: {
       notDoing: 'You are not doing that.',

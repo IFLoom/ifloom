@@ -97,13 +97,7 @@ export type Block =
  */
 export type Choice = ButtonDef & {
   /** The choice's limit of once a game or once a turn. See `Once`. */
-  once?: Once & {
-    /**
-     * The kv key, without its `turn:` prefix, that a save from before version 18 kept this limit under when it wasn't
-     * `scene#choice`. Loading such a save carries a limit it set this turn over to the choice.
-     */
-    key?: string
-  }
+  once?: Once
 }
 
 /** A choice at a decision, a `Choice` with the blocks the flow shows once the player chooses it. */

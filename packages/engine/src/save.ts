@@ -167,9 +167,7 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginOf(game, id))
     // A save from before game versions says nothing of one: it was version 1.
     const recorded = (data.state as { gameVersion?: number }).gameVersion
-    // A save from before version 18 called the player's name `player`, and one from before 24 repeated `state.version` as `version`.
-    const { player: oldName, version: _version, ...given } = data.meta as SaveMeta & { player?: string | null; version?: number }
-    const meta: SaveMeta = { ...given, playerName: given.playerName ?? oldName ?? null, gameVersion: given.gameVersion ?? recorded ?? 1 }
+    const meta: SaveMeta = { ...data.meta, gameVersion: data.meta.gameVersion ?? recorded ?? 1 }
     return ok({ meta, state, missingPacks, missingPlugins })
   }
 

@@ -7,7 +7,7 @@
   "description": "The start of a French translation: moving day, the flat and the quest to settle in.",
   "pack": {
     "id": "french",
-    "schema": 26,
+    "schema": 1,
     "words": {
       "scene.intro.title": "Le jour du déménagement",
       "scene.intro.text.arrival": "La camionnette repart et vous laisse sur le trottoir avec trois cartons, une clé et *un chat dans un panier*. L'appartement est au-dessus d'une [[tip:intro.launderette|laverie]] ; ça sent **le coton chaud**.",

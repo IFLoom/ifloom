@@ -49,6 +49,8 @@ export const UI_STRINGS = {
   settings: 'Settings',
   noSettings: 'There are no settings.',
   credits: 'Credits',
+  poweredBy: 'Powered by IFLoom',
+  skipSplash: 'Skip',
   titlePage: 'Title screen',
   replayVoice: 'Hear it again',
   zoom: 'Enlarge',

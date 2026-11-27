@@ -306,14 +306,14 @@ describe('the achievements', () => {
   })
 
   it('is a page with pages on, with a button on the title screen, unless turned off', () => {
-    play({ pages: true })
+    play({ pages: { splash: false } })
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Achievements' })))
     expect(document.querySelector('[data-page="achievements"]')).not.toBeNull()
     expect(screen.getByText('Nest egg')).toBeTruthy()
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Back' })))
     expect(document.querySelector('[data-page="title"]')).not.toBeNull()
     cleanup()
-    play({ pages: {}, plugins: [...UIS.filter((ui) => ui !== achievementsUi), { ...achievementsUi, pages: undefined }] })
+    play({ pages: { splash: false }, plugins: [...UIS.filter((ui) => ui !== achievementsUi), { ...achievementsUi, pages: undefined }] })
     expect(screen.queryByRole('button', { name: 'Achievements' })).toBeNull()
   })
 })

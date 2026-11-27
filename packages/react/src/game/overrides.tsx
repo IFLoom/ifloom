@@ -28,7 +28,7 @@ import type { SavesMenu } from './saves.tsx'
 import type { GameMenu } from './menu.tsx'
 import type { ModManager } from './mods.tsx'
 import type { Icon } from './icon.tsx'
-import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
+import type { CreditsPage, GatePage, LoadPage, SettingsPage, SplashPage, TitlePage } from './pages.tsx'
 import type { MinigameCard } from './minigame.tsx'
 import type { DiceOverlay, DiceRoll } from './dice.tsx'
 import type { Countdown, Timers } from './timers.tsx'
@@ -253,6 +253,12 @@ export const PART_KEYS = [
   'gate-buttons',
   'gate-confirm',
   'gate-decline',
+  'splash-page',
+  'splash-card',
+  'splash-art',
+  'splash-title',
+  'splash-text',
+  'splash-skip',
 ] as const
 
 /**
@@ -392,6 +398,8 @@ export interface OverridableComponents {
   CreditsPage: Override<PropsOf<typeof CreditsPage>>
   /** The replacement for `GatePage`. */
   GatePage: Override<PropsOf<typeof GatePage>>
+  /** The replacement for `SplashPage`. */
+  SplashPage: Override<PropsOf<typeof SplashPage>>
 }
 
 /** Replacements for any of the {@link OverridableComponents}, by name. */

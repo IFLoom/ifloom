@@ -5,9 +5,9 @@ description: "Every export of @ifloom/react, the React UI: its signature and its
 Generated from the source of `@ifloom/react` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
 - Components: [`DefaultLayout`](#defaultlayout), [`GameProvider`](#gameprovider), [`GameShell`](#gameshell), [`InlineImage`](#inlineimage), [`InlineMail`](#inlinemail), [`InlineModal`](#inlinemodal), [`InlineMono`](#inlinemono), [`InlineProp`](#inlineprop), [`InlineTrigger`](#inlinetrigger), [`KeepPicturesOn`](#keeppictureson), [`Plugins`](#plugins), [`StatGauge`](#statgauge), [`UiProvider`](#uiprovider), [`WithPages`](#withpages)
-- Functions: [`assetUrl`](#asseturl), [`checkUiHints`](#checkuihints), [`mountGame`](#mountgame), [`TextSize`](#textsize), [`useAudio`](#useaudio), [`useBacklog`](#usebacklog), [`useClock`](#useclock), [`useGame`](#usegame), [`useHolds`](#useholds), [`useMinigame`](#useminigame), [`useMods`](#usemods), [`useMotion`](#usemotion), [`usePage`](#usepage), [`usePart`](#usepart), [`usePicturesShown`](#usepicturesshown), [`usePluginUis`](#usepluginuis), [`useProfile`](#useprofile), [`useReducedMotion`](#usereducedmotion), [`useSaves`](#usesaves), [`useScene`](#usescene), [`useSetting`](#usesetting), [`useTimer`](#usetimer), [`useTimers`](#usetimers), [`useWords`](#usewords)
-- Constants: [`Backlog`](#backlog), [`Beat`](#beat), [`BeatGroup`](#beatgroup), [`ChangeItem`](#changeitem), [`Changes`](#changes), [`ChoiceButton`](#choicebutton), [`ChoiceList`](#choicelist), [`Clock`](#clock), [`Countdown`](#countdown), [`CreditsPage`](#creditspage), [`DiceOverlay`](#diceoverlay), [`DiceRoll`](#diceroll), [`EntityTable`](#entitytable), [`Fold`](#fold), [`Game`](#game), [`GameMenu`](#gamemenu), [`GatePage`](#gatepage), [`Hotspot`](#hotspot), [`InlineAction`](#inlineaction), [`InputField`](#inputfield), [`InputFields`](#inputfields), [`Inventory`](#inventory), [`LayeredPicture`](#layeredpicture), [`LoadPage`](#loadpage), [`MediaViewer`](#mediaviewer), [`MinigameCard`](#minigamecard), [`ModManager`](#modmanager), [`Notice`](#notice), [`Notices`](#notices), [`NoticeStrip`](#noticestrip), [`Overlay`](#overlay), [`PanelHost`](#panelhost), [`Picture`](#picture), [`PriceTag`](#pricetag), [`RoomActions`](#roomactions), [`SavesMenu`](#savesmenu), [`Scene`](#scene), [`SceneHeader`](#sceneheader), [`Section`](#section), [`SettingsPage`](#settingspage), [`Sidebar`](#sidebar), [`StatList`](#statlist), [`Story`](#story), [`TEXT_SIZES`](#text_sizes), [`Timers`](#timers), [`Tip`](#tip), [`Title`](#title), [`TitlePage`](#titlepage), [`TRANSITIONS`](#transitions), [`Video`](#video), [`When`](#when)
-- Types: [`BehaviourOptions`](#behaviouroptions), [`CheckUiOptions`](#checkuioptions), [`Classes`](#classes), [`ClockState`](#clockstate), [`Components`](#components), [`CountdownProps`](#countdownprops), [`DiceRollProps`](#dicerollprops), [`GameContextValue`](#gamecontextvalue), [`GameProps`](#gameprops), [`GameProviderProps`](#gameproviderprops), [`GameShellProps`](#gameshellprops), [`GateOptions`](#gateoptions), [`InlineComponent`](#inlinecomponent), [`InlineComponents`](#inlinecomponents), [`InlineProps`](#inlineprops), [`InventoryProps`](#inventoryprops), [`KeyOptions`](#keyoptions), [`MediaViewerProps`](#mediaviewerprops), [`MinigameControls`](#minigamecontrols), [`ModsOption`](#modsoption), [`ModsState`](#modsstate), [`MountOptions`](#mountoptions), [`OverridableComponents`](#overridablecomponents), [`Page`](#page), [`PageDef`](#pagedef), [`PagesOptions`](#pagesoptions), [`PageState`](#pagestate), [`PanelComponent`](#panelcomponent), [`PartKey`](#partkey), [`PartNames`](#partnames), [`PluginSectionComponent`](#pluginsectioncomponent), [`PluginSpot`](#pluginspot), [`Reveal`](#reveal), [`RevealBeat`](#revealbeat), [`RevealGroup`](#revealgroup), [`RevealPoint`](#revealpoint), [`SavesState`](#savesstate), [`Say`](#say), [`SceneRolls`](#scenerolls), [`SceneTiming`](#scenetiming), [`ScreenTransition`](#screentransition), [`SectionProps`](#sectionprops), [`SidebarProps`](#sidebarprops), [`StatDisplay`](#statdisplay), [`StoryProps`](#storyprops), [`StyleOptions`](#styleoptions), [`Transition`](#transition), [`TransitionName`](#transitionname), [`UiOptions`](#uioptions), [`UiStringKey`](#uistringkey), [`VideoProps`](#videoprops), [`ViewerMedia`](#viewermedia), [`Words`](#words)
+- Functions: [`assetUrl`](#asseturl), [`checkUiHints`](#checkuihints), [`mountGame`](#mountgame), [`poweredByIFLoom`](#poweredbyifloom), [`TextSize`](#textsize), [`useAudio`](#useaudio), [`useBacklog`](#usebacklog), [`useClock`](#useclock), [`useGame`](#usegame), [`useHolds`](#useholds), [`useMinigame`](#useminigame), [`useMods`](#usemods), [`useMotion`](#usemotion), [`usePage`](#usepage), [`usePart`](#usepart), [`usePicturesShown`](#usepicturesshown), [`usePluginUis`](#usepluginuis), [`useProfile`](#useprofile), [`useReducedMotion`](#usereducedmotion), [`useSaves`](#usesaves), [`useScene`](#usescene), [`useSetting`](#usesetting), [`useTimer`](#usetimer), [`useTimers`](#usetimers), [`useWords`](#usewords)
+- Constants: [`Backlog`](#backlog), [`Beat`](#beat), [`BeatGroup`](#beatgroup), [`ChangeItem`](#changeitem), [`Changes`](#changes), [`ChoiceButton`](#choicebutton), [`ChoiceList`](#choicelist), [`Clock`](#clock), [`Countdown`](#countdown), [`CreditsPage`](#creditspage), [`DiceOverlay`](#diceoverlay), [`DiceRoll`](#diceroll), [`EntityTable`](#entitytable), [`Fold`](#fold), [`Game`](#game), [`GameMenu`](#gamemenu), [`GatePage`](#gatepage), [`Hotspot`](#hotspot), [`InlineAction`](#inlineaction), [`InputField`](#inputfield), [`InputFields`](#inputfields), [`Inventory`](#inventory), [`LayeredPicture`](#layeredpicture), [`LoadPage`](#loadpage), [`MediaViewer`](#mediaviewer), [`MinigameCard`](#minigamecard), [`ModManager`](#modmanager), [`Notice`](#notice), [`Notices`](#notices), [`NoticeStrip`](#noticestrip), [`Overlay`](#overlay), [`PanelHost`](#panelhost), [`Picture`](#picture), [`PriceTag`](#pricetag), [`RoomActions`](#roomactions), [`SavesMenu`](#savesmenu), [`Scene`](#scene), [`SceneHeader`](#sceneheader), [`Section`](#section), [`SettingsPage`](#settingspage), [`Sidebar`](#sidebar), [`SplashPage`](#splashpage), [`StatList`](#statlist), [`Story`](#story), [`TEXT_SIZES`](#text_sizes), [`Timers`](#timers), [`Tip`](#tip), [`Title`](#title), [`TitlePage`](#titlepage), [`TRANSITIONS`](#transitions), [`Video`](#video), [`When`](#when)
+- Types: [`BehaviourOptions`](#behaviouroptions), [`CheckUiOptions`](#checkuioptions), [`Classes`](#classes), [`ClockState`](#clockstate), [`Components`](#components), [`CountdownProps`](#countdownprops), [`DiceRollProps`](#dicerollprops), [`GameContextValue`](#gamecontextvalue), [`GameProps`](#gameprops), [`GameProviderProps`](#gameproviderprops), [`GameShellProps`](#gameshellprops), [`GateOptions`](#gateoptions), [`InlineComponent`](#inlinecomponent), [`InlineComponents`](#inlinecomponents), [`InlineProps`](#inlineprops), [`InventoryProps`](#inventoryprops), [`KeyOptions`](#keyoptions), [`MediaViewerProps`](#mediaviewerprops), [`MinigameControls`](#minigamecontrols), [`ModsOption`](#modsoption), [`ModsState`](#modsstate), [`MountOptions`](#mountoptions), [`OverridableComponents`](#overridablecomponents), [`Page`](#page), [`PageDef`](#pagedef), [`PagesOptions`](#pagesoptions), [`PageState`](#pagestate), [`PanelComponent`](#panelcomponent), [`PartKey`](#partkey), [`PartNames`](#partnames), [`PluginSectionComponent`](#pluginsectioncomponent), [`PluginSpot`](#pluginspot), [`Reveal`](#reveal), [`RevealBeat`](#revealbeat), [`RevealGroup`](#revealgroup), [`RevealPoint`](#revealpoint), [`SavesState`](#savesstate), [`Say`](#say), [`SceneRolls`](#scenerolls), [`SceneTiming`](#scenetiming), [`ScreenTransition`](#screentransition), [`SectionProps`](#sectionprops), [`SidebarProps`](#sidebarprops), [`SplashCard`](#splashcard), [`SplashOptions`](#splashoptions), [`StatDisplay`](#statdisplay), [`StoryProps`](#storyprops), [`StyleOptions`](#styleoptions), [`Transition`](#transition), [`TransitionName`](#transitionname), [`UiOptions`](#uioptions), [`UiStringKey`](#uistringkey), [`VideoProps`](#videoprops), [`ViewerMedia`](#viewermedia), [`Words`](#words)
 
 ## assetUrl
 
@@ -436,6 +436,12 @@ type Classes = {
   'gate-buttons'?: string | ((defaults: string) => string)
   'gate-confirm'?: string | ((defaults: string) => string)
   'gate-decline'?: string | ((defaults: string) => string)
+  'splash-page'?: string | ((defaults: string) => string)
+  'splash-card'?: string | ((defaults: string) => string)
+  'splash-art'?: string | ((defaults: string) => string)
+  'splash-title'?: string | ((defaults: string) => string)
+  'splash-text'?: string | ((defaults: string) => string)
+  'splash-skip'?: string | ((defaults: string) => string)
   'achievement-earned'?: string | ((defaults: string) => string)
   'achievement-image'?: string | ((defaults: string) => string)
   'achievement-progress'?: string | ((defaults: string) => string)
@@ -662,6 +668,7 @@ type Components = {
   LoadPage?: Override<{ className?: string; }> | undefined
   CreditsPage?: Override<{ className?: string; }> | undefined
   GatePage?: Override<{ className?: string; }> | undefined
+  SplashPage?: Override<{ className?: string; }> | undefined
   // …
 }
 ```
@@ -720,6 +727,7 @@ Plugins add fields of their own to it, which their pages list.
 | `LoadPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `LoadPage`. |
 | `CreditsPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `CreditsPage`. |
 | `GatePage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `GatePage`. |
+| `SplashPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `SplashPage`. |
 
 ## Countdown
 
@@ -1754,6 +1762,7 @@ type OverridableComponents = {
   LoadPage: Override<{ className?: string; }>
   CreditsPage: Override<{ className?: string; }>
   GatePage: Override<{ className?: string; }>
+  SplashPage: Override<{ className?: string; }>
   // …
 }
 ```
@@ -1812,6 +1821,7 @@ Plugins add fields of their own to it, which their pages list.
 | `LoadPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `LoadPage`. |
 | `CreditsPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `CreditsPage`. |
 | `GatePage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `GatePage`. |
+| `SplashPage` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `SplashPage`. |
 
 ## Page
 
@@ -1821,7 +1831,7 @@ The name of a page, either a built-in one or the id of one a game or a plugin UI
 
 ```ts shape
 import type { Page } from '@ifloom/react'
-type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
+type Page = 'splash' | 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 ```
 
 ## PageDef
@@ -1857,6 +1867,7 @@ type PagesOptions = {
   subtitle?: string
   art?: string
   gate?: GateOptions
+  splash?: false | SplashOptions
   pages?: Record<string, PageDef>
 }
 ```
@@ -1866,6 +1877,7 @@ type PagesOptions = {
 | `subtitle` | `string` | yes |  | The line under the title on the title screen. |
 | `art` | `string` | yes |  | The path of the title screen's picture. |
 | `gate` | [`GateOptions`](#gateoptions) | yes |  | The notice shown before the title screen until the player confirms it. |
+| `splash` | `false \|` [`SplashOptions`](#splashoptions) | yes |  | The splash cards shown one after another as the game opens, before the gate and the title screen. The "Powered by IFLoom" card alone if left out, and none for `false`. |
 | `pages` | `Record<string,` [`PageDef`](#pagedef)`>` | yes |  | The pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, replaces it. |
 
 ## PageState
@@ -1882,6 +1894,7 @@ type PageState = {
   from: Page | null
   go: (page: Page) => void
   back: () => void
+  endSplash: () => void
   options: PagesOptions
   added: Readonly<Record<string, PageDef>>
 }
@@ -1894,6 +1907,7 @@ type PageState = {
 | `from` | [`Page`](#page) `\| null` |  |  | The page under this one, which `back` returns to. It's null at the title screen, the gate and the game. |
 | `go` | `(page:` [`Page`](#page)`) => void` |  |  | Shows a page. `title`, `game` and `gate` start afresh, and any other goes on top of the one showing. |
 | `back` | `() => void` |  |  | Returns to the page under this one, or to the title screen when there is none. |
+| `endSplash` | `() => void` |  |  | Ends the splash cards and shows the gate or the title screen. The splash page calls it after the last card. |
 | `options` | [`PagesOptions`](#pagesoptions) |  |  | The options the pages were set up with. |
 | `added` | `Readonly<Record<string,` [`PageDef`](#pagedef)`>>` |  |  | Every page added to the built-in ones, by id, the plugin UIs' (such as `achievements`) with the game's own `pages` over them. |
 
@@ -2132,6 +2146,12 @@ type PartKey =
   | 'gate-buttons'
   | 'gate-confirm'
   | 'gate-decline'
+  | 'splash-page'
+  | 'splash-card'
+  | 'splash-art'
+  | 'splash-title'
+  | 'splash-text'
+  | 'splash-skip'
   | Extract<keyof PartNames, string>
 ```
 
@@ -2218,6 +2238,22 @@ is one of these:
 import type { PluginSpot } from '@ifloom/react'
 type PluginSpot = 'stats' | 'sidebar' | 'room' | 'story' | 'strip'
 ```
+
+## poweredByIFLoom
+
+Function. Explained in [Components](/docs/reference/react/components#poweredbyifloom).
+
+Returns the "Powered by IFLoom" card, with the IFLoom mark and the words `ui.poweredBy`.
+
+A game that lists its own cards puts it among them where it should show, and `overrides` change its timing or
+transition.
+
+```ts shape
+import { poweredByIFLoom } from '@ifloom/react'
+function poweredByIFLoom(overrides?: Partial<Omit<SplashCard, 'id'>>): SplashCard
+```
+
+Uses: [`SplashCard`](#splashcard).
 
 ## PriceTag
 
@@ -2628,6 +2664,69 @@ type SidebarProps = {
 | `className` | `string` | yes |  | Classes added to the `sidebar` part's own. |
 | `children` | `ReactNode` | yes |  | The side column's contents, such as sections, the stats and plugin spots. |
 
+## SplashCard
+
+Type.
+
+One splash card, shown for `ms` between its transitions in and out. It shows `art`, `title` and `text`, or its own `component`.
+
+```ts shape
+import type { SplashCard } from '@ifloom/react'
+type SplashCard = {
+  id: string
+  art?: string
+  title?: string
+  text?: string
+  component?: ComponentType
+  ms?: number
+  transition?: Transition | TransitionName
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The card's id, which its element carries as `data-splash-card`. |
+| `art` | `string` | yes |  | The path of the card's picture, such as a logo. |
+| `title` | `string` | yes |  | The card's heading, such as the studio's name. |
+| `text` | `string` | yes |  | A line under the heading. |
+| `component` | `ComponentType` | yes |  | A component that renders the whole card in place of `art`, `title` and `text`, such as an animated logo. |
+| `ms` | `number` | yes |  | The card's hold, in milliseconds between coming in and going out. 2000 if left out. |
+| `transition` | [`Transition`](#transition) `\|` [`TransitionName`](#transitionname) | yes |  | The card's transitions in and out, a name or `{ in, out, ms }`. A fade of 600 milliseconds each way if left out. |
+
+## SplashOptions
+
+Type.
+
+The splash cards a game shows as it opens, in `PagesOptions.splash`.
+
+```ts shape
+import type { SplashOptions } from '@ifloom/react'
+type SplashOptions = {
+  cards: SplashCard[]
+  skippable?: boolean
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `cards` | [`SplashCard[]`](#splashcard) |  |  | The cards, in the order they show. Leave out `poweredByIFLoom()` to leave out its card. |
+| `skippable` | `boolean` | yes |  | False to make the player watch every card. A click, Enter or Space skips one, and Escape skips them all, if left out. |
+
+## SplashPage
+
+Const. Explained in [Components](/docs/reference/react/components#splashpage).
+
+Renders the splash cards from `PagesOptions.splash` one after another, then calls `usePage().endSplash()`.
+
+Each card comes in, holds for its `ms` and goes out by its transition. While they're skippable, a click, Enter or
+Space skips a card, and Escape or the Skip button skips them all. With reduced motion the cards hold without
+transitions.
+
+```ts shape
+import { SplashPage } from '@ifloom/react'
+const SplashPage: ComponentType<{ className?: string; }>
+```
+
 ## StatDisplay
 
 Type. Explained in [Presentation hints](/docs/reference/react/hints#statdisplay).
@@ -2948,6 +3047,8 @@ type UiStringKey =
   | 'continue'
   | 'newGamePlus'
   | 'noSettings'
+  | 'poweredBy'
+  | 'skipSplash'
   | 'titlePage'
   | 'replayVoice'
   | 'closeViewer'

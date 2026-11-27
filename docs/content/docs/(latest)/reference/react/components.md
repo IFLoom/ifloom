@@ -780,7 +780,7 @@ Parts: `mods` (with `data-mods`), `mod` (with `data-mod`), `mod-name`, `mod-vers
 
 ## Pages
 
-With `pages` on, the game opens on a title screen, and the shell with the story is the `game` page. The other pages are `gate`, `title`, `load`, `settings` and `credits`, any a plugin UI adds, such as `achievements`, and any in `PagesOptions.pages`. [Add a title screen](/docs/how-to/add-a-title-screen) and [Add pages around the game](/docs/how-to/add-pages-around-the-game) set them up.
+With `pages` on, the game opens on its splash cards and then a title screen, and the shell with the story is the `game` page. The other pages are `splash`, `gate`, `title`, `load`, `settings` and `credits`, any a plugin UI adds, such as `achievements`, and any in `PagesOptions.pages`. [Add a title screen](/docs/how-to/add-a-title-screen) and [Add pages around the game](/docs/how-to/add-pages-around-the-game) set them up.
 
 ### PagesOptions
 
@@ -789,6 +789,7 @@ With `pages` on, the game opens on a title screen, and the shell with the story 
 | Field | Meaning |
 |---|---|
 | `gate` | The [`GateOptions`](/docs/api/react#gateoptions) of a notice shown before the title screen, rendered by [`GatePage`](#gatepage). |
+| `splash` | The [`SplashOptions`](/docs/api/react#splashoptions) of the cards shown as the game opens, rendered by [`SplashPage`](#splashpage). Left out, the game shows the [`poweredByIFLoom`](#poweredbyifloom) card alone, and `false` shows none. |
 | `pages` | The game's own pages by id, each a [`PageDef`](/docs/api/react#pagedef). Each gets a title-screen button labelled `label` unless `showOnTitle` is `false`, and its `component` renders as the whole page. One with a plugin UI's page id replaces it. |
 
 ```tsx
@@ -817,7 +818,7 @@ mountGame(module.build(), {
 
 `usePage` returns the [`Page`](/docs/api/react#page) on show and the functions that move between pages. The fields are in [`PageState`](/docs/api/react#pagestate).
 
-`go(page)` shows a page: `title`, `game` and `gate` start afresh, and any other goes on top. `back()` returns to the page under this one, or the title screen. `enabled` is `false` without `pages`, and then `page` is always `'game'`. `go('game')` only switches page, so start a game with [`runner.newGame`](/docs/reference/runner#newgame) or a load first.
+`go(page)` shows a page: `splash`, `title`, `game` and `gate` start afresh, and any other goes on top. `endSplash()` ends the splash cards and shows the gate or the title screen. `back()` returns to the page under this one, or the title screen. `enabled` is `false` without `pages`, and then `page` is always `'game'`. `go('game')` only switches page, so start a game with [`runner.newGame`](/docs/reference/runner#newgame) or a load first.
 
 ### TitlePage
 
@@ -876,6 +877,41 @@ mountGame(module.build(), {
 Confirming stores `{ confirmedAt }` in the profile's `ui:gate` and goes to the title screen, so the gate shows once per device. Declining follows `href`, or does nothing without one. Without a profile the gate shows every time, and [`mountGame`](/docs/reference/react#mountgame) always has one.
 
 Parts: `gate-page`, `gate-title`, `gate-text`, `gate-buttons`, `gate-confirm` and `gate-decline`.
+
+### SplashPage
+
+`SplashPage` renders the cards from `PagesOptions.splash` one after another as the game opens, before the gate and the title screen. Its props are in [`SplashPage`](/docs/api/react#splashpage). Each card is a [`SplashCard`](/docs/api/react#splashcard) that shows its `art`, `title` and `text`, or its own `component`. [Add splash cards](/docs/how-to/react/add-splash-cards) sets them up.
+
+| Field | Meaning |
+|---|---|
+| `ms` | How long the card holds between coming in and going out, 2000 milliseconds if left out. |
+| `transition` | A [`TransitionName`](/docs/api/react#transitionname), or `{ in, out, ms }`, the same as a scene's. A fade of 600 milliseconds each way if left out. |
+| `skippable` | On `SplashOptions`, `false` to make the player watch every card. Otherwise a click, Enter or Space skips one card, and Escape or the Skip button (`ui.skipSplash`) skips them all. |
+
+The cards play on every launch. With reduced motion, from the player's system or the `motion` option, each card holds for its `ms` with no transitions. After the last card, `SplashPage` calls `usePage().endSplash()`, which shows the gate or the title screen.
+
+```tsx
+import { mountGame, poweredByIFLoom } from '@ifloom/react'
+import module from './game.ts'
+
+mountGame(module.build(), {
+  pages: {
+    splash: {
+      cards: [
+        { id: 'studio', art: 'art/studio-logo.png', title: 'Harbour Games', ms: 1500 },
+        poweredByIFLoom(),
+        { id: 'logo', art: 'art/logo.png', transition: { in: 'zoom', out: 'fade', ms: 800 } },
+      ],
+    },
+  },
+})
+```
+
+Parts: `splash-page` (with `data-page="splash"`), `splash-card` (with `data-splash-card` and the card's id), `splash-art`, `splash-title`, `splash-text` and `splash-skip`.
+
+### poweredByIFLoom
+
+`poweredByIFLoom` returns the "Powered by IFLoom" card, with the IFLoom mark and the words `ui.poweredBy`. Its signature is in [`poweredByIFLoom`](/docs/api/react#poweredbyifloom). A game with no `splash` option shows this card alone. A game that lists its own cards puts it among them where it should show, or leaves it out. Its argument changes the card's `ms` or `transition`, such as `poweredByIFLoom({ ms: 1000 })`.
 
 ### useSetting
 

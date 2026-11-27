@@ -127,11 +127,11 @@ describe('plugin UIs', () => {
   })
 
   it('add pages, with a title-screen button, and settings on the settings page', () => {
-    play({ pages: {} })
+    play({ pages: { splash: false } })
     press('Garden')
     expect(screen.getByText('The garden page')).toBeTruthy()
     cleanup()
-    play({ pages: {} })
+    play({ pages: { splash: false } })
     press('Settings')
     expect(document.querySelector('[data-garden-settings]')).not.toBeNull()
   })
@@ -143,10 +143,10 @@ describe('plugin UIs', () => {
   })
 
   it('leave out what the game leaves out of a module, such as its pages', () => {
-    play({ pages: {} })
+    play({ pages: { splash: false } })
     expect(screen.getByRole('button', { name: 'Garden' })).toBeTruthy()
     cleanup()
-    play({ pages: {}, plugins: [{ ...gardenUi, pages: undefined }] })
+    play({ pages: { splash: false }, plugins: [{ ...gardenUi, pages: undefined }] })
     expect(screen.queryByRole('button', { name: 'Garden' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy()
   })
@@ -157,7 +157,7 @@ describe('plugin UIs', () => {
       added = Object.keys(usePage().added)
       return null
     }
-    play({ pages: { pages: { almanac: { label: 'Almanac', component: Added } } } })
+    play({ pages: { splash: false, pages: { almanac: { label: 'Almanac', component: Added } } } })
     press('Almanac')
     expect(added.sort()).toEqual(['almanac', 'garden'])
   })

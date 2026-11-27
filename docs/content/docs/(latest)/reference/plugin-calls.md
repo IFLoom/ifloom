@@ -174,7 +174,7 @@ The interfaces in `@ifloom/engine` that a plugin, or the game, adds to so that c
 | `ConditionRegistry` | Each condition by full name, with what content writes as its value, from [`ConditionsOf`](#conditionsof-effectsof-and-commandsof). |
 | `EffectRegistry` | Each effect the same way, from `EffectsOf`. |
 | `CommandRegistry` | Each command the same way, from `CommandsOf`. |
-| `QueryRegistry` | Each query by full name, as a function from its arguments to its answer, such as `'loyalty/stampsLeft': () => number`. It extends [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries). |
+| `QueryRegistry` | Each query by full name, as a function from its arguments to its answer, such as `'loyalty/stampsLeft': () => number`. Each plugin declares its own. |
 | `ViewRegistry` | Each plugin's entry in [`view.plugins`](/docs/reference/view#view), keyed by plugin id, such as `loyalty: LoyaltyView`. The game's own `rules.view` is `game`. |
 
 The engine declares them empty, apart from `QueryRegistry`'s partner queries. A name nobody declares stays loose and takes any arguments, as a [`PluginCall`](/docs/reference/custom#plugincall), so a plugin that declares nothing still compiles. A plugin sees only the declarations of the packages it imports, so its calls to a partner it doesn't import stay loose in its own code and are checked in a game that has both. Every first-party plugin declares all its calls, its queries and its view.
@@ -368,4 +368,4 @@ A command sent with an argument of the wrong shape is refused before it runs, wi
 ## Caveats
 
 - The registries type content written in TypeScript only. A pack loaded from JSON, or a mod, isn't compiled, so the content checker reports its bad calls from the declarations.
-- A plugin's calls to a partner are loose in the plugin's own code, since it never imports the partner. The queries first-party plugins ask each other are typed everywhere through [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries).
+- A plugin's calls to a partner are loose in the plugin's own code, since it never imports the partner. A query of a partner's is asked with the answer's type given, `query<number>('loyalty/stampsLeft')`.

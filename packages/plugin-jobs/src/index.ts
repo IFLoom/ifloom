@@ -257,7 +257,7 @@ export function jobOf(game: Game, id: string): JobDef | undefined {
 
 /** The day: the calendar's, asked by name, or the turn without one. */
 function dayOf(state: GameState, game: Game): number {
-  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
+  return pluginQuery<{ day: number }>(game, 'calendar/now')?.(state).day ?? state.turn
 }
 
 function hasCalendar(game: Game): boolean {
@@ -304,7 +304,7 @@ function cantWork(state: GameState, { id }: { id: string }, context: PluginConte
   if (held.lastWorked === today) return stringOf(game, 'jobs/workedToday')
   if (!shiftDay(job, today, state, context)) return stringOf(game, 'jobs/noShiftToday')
   if (job.hours) {
-    const period = context.query('calendar/now')?.period
+    const period = context.query<{ period: string }>('calendar/now')?.period
     if (period !== undefined && !job.hours.includes(period)) return stringOf(game, 'jobs/notNow')
   }
   for (const [stat, amount] of Object.entries(job.shift.cost ?? {})) {

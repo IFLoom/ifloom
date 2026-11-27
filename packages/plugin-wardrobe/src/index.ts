@@ -275,7 +275,7 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
     },
     // A place with the closet trait offers a button that opens the wardrobe panel.
     actions: (state, { game }) => {
-      const place = pluginQuery(game, 'places/holder')?.(state)
+      const place = pluginQuery<EntityRef | null>(game, 'places/holder')?.(state)
       const closet = place ? traitOf(state, game, place, CLOSET) : undefined
       if (!closet) return undefined
       return [{ id: 'open', label: closet.label ?? stringOf(game, `${ID}/open`), effects: [{ panel: ID }] }]

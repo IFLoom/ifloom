@@ -163,7 +163,7 @@ A lock names the command `calendar/sleep`, or `calendar/*`.
 
 ## Queries
 
-Other plugins ask these through their context's [`query`](/docs/reference/plugin-queries#query), and content can't. The engine declares all three in [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries), so they're typed in any plugin's code without importing the calendar.
+Other plugins ask these through their context's [`query`](/docs/reference/plugin-queries#query), and content can't. The calendar declares all three in its `QueryRegistry`, so they're typed in a game that imports it. A plugin that doesn't import it gives the answer's type, as in [Queries and partners](/docs/reference/plugin-queries#queries).
 
 | Key | Meaning |
 |---|---|
@@ -182,7 +182,7 @@ export const stall = definePlugin<{ stock: number }>({
   start: () => ({ stock: 5 }),
   conditions: {
     open: (_state, _args, { query }) => {
-      const now = query('calendar/now')
+      const now = query<{ day: number; period: string }>('calendar/now')
       return now ? now.period !== 'night' && now.period !== 'late' : true
     },
   },

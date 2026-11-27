@@ -13,7 +13,7 @@ import { definePlugin, type Asked, type DefinedPlugin, type Plugin, type PluginA
 These pages document the rest of `@ifloom/engine/plugin`:
 
 - [Declaring a plugin's calls](/docs/reference/plugin-calls) covers `defineCalls`, `arg`, `defineData` and the registries that type content.
-- [Queries and partners](/docs/reference/plugin-queries) covers `queries`, `cooperates` and `PartnerQueries`.
+- [Queries and partners](/docs/reference/plugin-queries) covers `queries`, `cooperates` and asking a partner's answer by name.
 - [A plugin's view, scene and actions](/docs/reference/plugin-views) covers `view`, `scene`, `actions`, `audio`, `content` and `traits`.
 - [Plugin migrations](/docs/reference/plugin-migrations) covers `migrations`, `contentMigrations` and `commandMigrations`.
 - [A plugin's content checks](/docs/reference/plugin-checks) covers `references` and `check`.
@@ -153,7 +153,7 @@ export const visits = definePlugin<{ places: string[] }>({
   version: 1,
   start: () => ({ places: [] }),
   onCommand: (_before, after, { slice, set, query }) => {
-    const here = query('places/here') ?? null
+    const here = query<string | null>('places/here') ?? null
     return here === null || slice.places.includes(here) ? after : set({ places: [...slice.places, here] })
   },
 })
@@ -323,7 +323,7 @@ export const loyalty = definePlugin<{ stamps: number; free: number }>({
     redeem: {
       whyNot: (_state, _args, { slice, game, query }) => {
         if (slice.free === 0) return stringOf(game, 'loyalty/notFull')
-        if (query('places/here') !== 'cafe') return stringOf(game, 'loyalty/onlyAtCafe')
+        if (query<string | null>('places/here') !== 'cafe') return stringOf(game, 'loyalty/onlyAtCafe')
         return undefined
       },
       run: (_state, _args, { slice, set, apply }) => set({ ...slice, free: slice.free - 1 }, apply([{ stat: 'energy', by: 15 }])),

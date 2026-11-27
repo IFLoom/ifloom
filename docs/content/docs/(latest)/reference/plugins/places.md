@@ -203,7 +203,7 @@ The plugin refuses it with `Finish this first.` while a scene is open, `There is
 
 ## Queries
 
-Other plugins ask these through their context's [`query`](/docs/reference/plugin-queries#query), and content can't. The engine declares `places/here`, `places/holder` and `places/known` in [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries), so those three are typed in any plugin's code without importing places.
+Other plugins ask these through their context's [`query`](/docs/reference/plugin-queries#query), and content can't. Places declares them all in its `QueryRegistry`, so they're typed in a game that imports it. A plugin that doesn't import it gives the answer's type, as in [Queries and partners](/docs/reference/plugin-queries#queries).
 
 | Key | Meaning |
 |---|---|
@@ -224,7 +224,7 @@ export const parcels = definePlugin<{ waiting: number }>({
   start: () => ({ waiting: 0 }),
   conditions: {
     canCollect: (_state, _args, { slice, query }) => {
-      const here = query('places/here')
+      const here = query<string | null>('places/here')
       return slice.waiting > 0 && (here === undefined || here === 'flat')
     },
   },

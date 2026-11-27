@@ -1262,7 +1262,7 @@ type CustomContext = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `game` | [`Game`](#game) |  |  | The context's loaded game. |
-| `query` | [`Query`](#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('places/here')`). |
+| `query` | [`Query`](#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('loyalty/stampsLeft')`). |
 | `value` | `(name: string, args?:` [`PluginArgs`](/docs/api/engine-plugin#pluginargs)`) => string \| number \| undefined` |  |  | The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's, asked with `args`. It returns undefined when no plugin or game has that value. |
 | `roll` | `(max: number, name: string) => number` |  |  | The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`. The same save and turn always draw the same number. |
 
@@ -4070,37 +4070,18 @@ Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#con
 The registry of queries plugins and the game answer, by full name, each typed as a function from its arguments to
 its answer (`'loyalty/stampsLeft': () => number`). `context.query` and `pluginQuery` read it.
 
-It extends `PartnerQueries`, the queries first-party plugins ask each other, so those are typed in every program.
+A plugin declares its own queries here. Code that doesn't import the answering plugin gives the answer's type,
+`query<number>('loyalty/stampsLeft')`.
 
 ```ts shape
 import type { QueryRegistry } from '@ifloom/engine'
 type QueryRegistry = {
-  'calendar/now': () => { day: number; period: string }
-  'calendar/periods': () => string[]
-  'calendar/bedtime': () => boolean
-  'places/here': () => string | null
-  'places/holder': () => EntityRef | null
-  'places/known': (args: { location: string }) => boolean
-  'cast/portrait': (args: { character: string }) => string | undefined
-  'cast/contacts': () => CastContact[]
-  'cast/sender': (args: { from: string }) => SenderView
+
   // …
 }
 ```
 
 Plugins add fields of their own to it, which their pages list.
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `calendar/now` | `() => { day: number; period: string }` |  |  | Returns the calendar's day, from 0, and its period. |
-| `calendar/periods` | `() => string[]` |  |  | Returns the calendar's periods, in order. |
-| `calendar/bedtime` | `() => boolean` |  |  | Returns true at a time the player could go to bed. |
-| `places/here` | `() => string \| null` |  |  | Returns the id of the location the player is at, or null when they are at none. |
-| `places/holder` | `() =>` [`EntityRef`](#entityref) `\| null` |  |  | Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. |
-| `places/known` | `(args: { location: string }) => boolean` |  |  | Returns true when the game has the location. |
-| `cast/portrait` | `(args: { character: string }) => string \| undefined` |  |  | Returns a character's face, their person's `portrait`, or undefined for none. |
-| `cast/contacts` | `() =>` [`CastContact[]`](/docs/api/engine-plugin#castcontact) |  |  | Returns the characters the player has met who can be called. |
-| `cast/sender` | `(args: { from: string }) =>` [`SenderView`](/docs/api/engine-plugin#senderview) |  |  | Returns the `SenderView` of the entity a message or a post is from, with a person's `portrait` as the face. |
 
 ## Range
 

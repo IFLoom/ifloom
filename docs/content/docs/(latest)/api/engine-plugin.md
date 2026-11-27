@@ -6,7 +6,7 @@ Generated from the source of `@ifloom/engine/plugin` and its TSDoc by `npm run a
 
 - Functions: [`actionReferences`](#actionreferences), [`anyOf`](#anyof), [`bindCurrent`](#bindcurrent), [`defineCalls`](#definecalls), [`defineData`](#definedata), [`definePlugin`](#defineplugin), [`defineRules`](#definerules), [`defineTraitKind`](#definetraitkind), [`entityUi`](#entityui), [`list`](#list), [`lockedOut`](#lockedout), [`lockOn`](#lockon), [`panelOf`](#panelof), [`parseBeats`](#parsebeats), [`pictureView`](#pictureview), [`priceView`](#priceview), [`renderAction`](#renderaction), [`setTraitState`](#settraitstate), [`speakerOf`](#speakerof), [`styledBeats`](#styledbeats), [`traitState`](#traitstate)
 - Constants: [`arg`](#arg-1)
-- Types: [`AnyCalls`](#anycalls), [`Arg`](#arg), [`ArgIn`](#argin), [`ArgOut`](#argout), [`ArgShape`](#argshape), [`ArgsIn`](#argsin), [`ArgsOut`](#argsout), [`Asked`](#asked), [`CallArgs`](#callargs), [`CallForm`](#callform), [`CallIn`](#callin), [`CallShapes`](#callshapes), [`CallTable`](#calltable), [`CallWriter`](#callwriter), [`CastContact`](#castcontact), [`CheckTools`](#checktools), [`CommandsOf`](#commandsof), [`CommandStep`](#commandstep), [`ConditionsOf`](#conditionsof), [`ContentReferences`](#contentreferences), [`ContentStep`](#contentstep), [`ContentTools`](#contenttools), [`DataList`](#datalist), [`DefinedPlugin`](#definedplugin), [`EffectsOf`](#effectsof), [`ListSpec`](#listspec), [`Lock`](#lock), [`LockTarget`](#locktarget), [`Macro`](#macro), [`PackContext`](#packcontext), [`PartnerQueries`](#partnerqueries), [`Plugin`](#plugin), [`PluginArgs`](#pluginargs), [`PluginCalls`](#plugincalls), [`PluginCommand`](#plugincommand), [`PluginContext`](#plugincontext), [`PluginData`](#plugindata), [`PluginDef`](#plugindef), [`PluginEntry`](#pluginentry), [`PluginProblem`](#pluginproblem), [`PluginReferences`](#pluginreferences), [`PluginSlice`](#pluginslice), [`QueryAnswer`](#queryanswer), [`QueryArgs`](#queryargs), [`RawCall`](#rawcall), [`RawCommand`](#rawcommand), [`Reference`](#reference), [`Refusal`](#refusal), [`RoomScene`](#roomscene), [`RulesDef`](#rulesdef), [`SenderView`](#senderview), [`SpeakerFinder`](#speakerfinder), [`StatModifier`](#statmodifier), [`TraitDef`](#traitdef), [`TraitEntityDef`](#traitentitydef), [`TraitKind`](#traitkind), [`TraitKindSpec`](#traitkindspec), [`TraitTools`](#traittools), [`TurnContext`](#turncontext), [`WrittenAs`](#writtenas)
+- Types: [`AnyCalls`](#anycalls), [`Arg`](#arg), [`ArgIn`](#argin), [`ArgOut`](#argout), [`ArgShape`](#argshape), [`ArgsIn`](#argsin), [`ArgsOut`](#argsout), [`Asked`](#asked), [`CallArgs`](#callargs), [`CallForm`](#callform), [`CallIn`](#callin), [`CallShapes`](#callshapes), [`CallTable`](#calltable), [`CallWriter`](#callwriter), [`CheckTools`](#checktools), [`CommandsOf`](#commandsof), [`CommandStep`](#commandstep), [`ConditionsOf`](#conditionsof), [`ContentReferences`](#contentreferences), [`ContentStep`](#contentstep), [`ContentTools`](#contenttools), [`DataList`](#datalist), [`DefinedPlugin`](#definedplugin), [`EffectsOf`](#effectsof), [`ListSpec`](#listspec), [`Lock`](#lock), [`LockTarget`](#locktarget), [`Macro`](#macro), [`PackContext`](#packcontext), [`Plugin`](#plugin), [`PluginArgs`](#pluginargs), [`PluginCalls`](#plugincalls), [`PluginCommand`](#plugincommand), [`PluginContext`](#plugincontext), [`PluginData`](#plugindata), [`PluginDef`](#plugindef), [`PluginEntry`](#pluginentry), [`PluginProblem`](#pluginproblem), [`PluginReferences`](#pluginreferences), [`PluginSlice`](#pluginslice), [`QueryAnswer`](#queryanswer), [`QueryArgs`](#queryargs), [`RawCall`](#rawcall), [`RawCommand`](#rawcommand), [`Reference`](#reference), [`Refusal`](#refusal), [`RoomScene`](#roomscene), [`RulesDef`](#rulesdef), [`SpeakerFinder`](#speakerfinder), [`StatModifier`](#statmodifier), [`TraitDef`](#traitdef), [`TraitEntityDef`](#traitentitydef), [`TraitKind`](#traitkind), [`TraitKindSpec`](#traitkindspec), [`TraitTools`](#traittools), [`TurnContext`](#turncontext), [`WrittenAs`](#writtenas)
 
 ## actionReferences
 
@@ -328,35 +328,6 @@ type CallWriter<Name extends string, S extends ArgShape> = ([RequiredKeys<S>] ex
 ```
 
 Uses: [`ArgIn`](#argin), [`WrittenAs`](#writtenas), [`ArgOut`](#argout).
-
-## CastContact
-
-Type. Explained in [Queries and partners](/docs/reference/plugin-queries#castcontact-and-senderview).
-
-A character the player can call, as the cast's `cast/contacts` query answers.
-
-```ts shape
-import type { CastContact } from '@ifloom/engine/plugin'
-type CastContact = {
-  id: string
-  name: string
-  description: string | null
-  image: string | null
-  portrait: string | null
-  command: CommandRef
-  disabled: string | undefined
-}
-```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `id` | `string` |  |  | The character's id, as the cast names them, such as `'ava'`. |
-| `name` | `string` |  |  | The character's name. |
-| `description` | `string \| null` |  |  | The character's description, a line about them, or null. |
-| `image` | `string \| null` |  |  | The character's picture, through `artSrc`, or null. |
-| `portrait` | `string \| null` |  |  | The character's face for a small avatar, or null. |
-| `command` | [`CommandRef`](/docs/api/engine#commandref) |  |  | The cast's `cast/call` command for the character, in the short form. |
-| `disabled` | `string \| undefined` |  |  | The reason the call can't go through now, or undefined when it can. |
 
 ## CheckTools
 
@@ -934,42 +905,6 @@ function parseBeats(body: string, find?: SpeakerFinder): SceneBeat[]
 
 Uses: [`SpeakerFinder`](#speakerfinder), [`SceneBeat`](/docs/api/engine#scenebeat).
 
-## PartnerQueries
-
-Type. Explained in [Queries and partners](/docs/reference/plugin-queries#partnerqueries).
-
-The queries first-party plugins answer for other plugins, by full name. `QueryRegistry` includes them, so they are
-typed wherever a query is asked.
-
-A plugin's own registry block declares the rest of its queries.
-
-```ts shape
-import type { PartnerQueries } from '@ifloom/engine/plugin'
-type PartnerQueries = {
-  'calendar/now': () => { day: number; period: string }
-  'calendar/periods': () => string[]
-  'calendar/bedtime': () => boolean
-  'places/here': () => string | null
-  'places/holder': () => EntityRef | null
-  'places/known': (args: { location: string }) => boolean
-  'cast/portrait': (args: { character: string }) => string | undefined
-  'cast/contacts': () => CastContact[]
-  'cast/sender': (args: { from: string }) => SenderView
-}
-```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `calendar/now` | `() => { day: number; period: string }` |  |  | Returns the calendar's day, from 0, and its period. |
-| `calendar/periods` | `() => string[]` |  |  | Returns the calendar's periods, in order. |
-| `calendar/bedtime` | `() => boolean` |  |  | Returns true at a time the player could go to bed. |
-| `places/here` | `() => string \| null` |  |  | Returns the id of the location the player is at, or null when they are at none. |
-| `places/holder` | `() =>` [`EntityRef`](/docs/api/engine#entityref) `\| null` |  |  | Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. |
-| `places/known` | `(args: { location: string }) => boolean` |  |  | Returns true when the game has the location. |
-| `cast/portrait` | `(args: { character: string }) => string \| undefined` |  |  | Returns a character's face, their person's `portrait`, or undefined for none. |
-| `cast/contacts` | `() =>` [`CastContact[]`](#castcontact) |  |  | Returns the characters the player has met who can be called. |
-| `cast/sender` | `(args: { from: string }) =>` [`SenderView`](#senderview) |  |  | Returns the `SenderView` of the entity a message or a post is from, with a person's `portrait` as the face. |
-
 ## pictureView
 
 Function. Explained in [The view](/docs/reference/view#pictureview).
@@ -1178,7 +1113,7 @@ type PluginContext<S> = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `game` | [`Game`](/docs/api/engine#game) |  |  | The context's loaded game. |
-| `query` | [`Query`](/docs/api/engine#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('places/here')`). |
+| `query` | [`Query`](/docs/api/engine#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('loyalty/stampsLeft')`). |
 | `value` | `(name: string, args?:` [`PluginArgs`](#pluginargs)`) => string \| number \| undefined` |  |  | The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's, asked with `args`. It returns undefined when no plugin or game has that value. |
 | `roll` | `(max: number, name: string) => number` |  |  | The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`. The same save and turn always draw the same number. |
 | `slice` | `S` |  |  | The plugin's state in the game state the function was given, the same as `get()`. |
@@ -1643,27 +1578,6 @@ type RulesDef<S, C extends AnyCalls> = {
 | `commands` | `Record<string,` [`PluginCommand`](#plugincommand)`<S,` [`PluginArgs`](#pluginargs)`>> \| { [K in keyof` [`CallArgs`](#callargs)`<C, 'commands'>]:…` | yes |  | The plugin's commands a choice or action can send, by name without the prefix. |
 | `macros` | `Record<string,` [`Macro`](#macro)`<S,` [`PluginArgs`](#pluginargs)`>> \| { [K in keyof` [`CallArgs`](#callargs)`<C, 'effects'>]?:` [`Macro`](#macro)`<S,…` | yes |  | The plugin's macros, effects that stand for other effects, by name without the prefix. A name is an effect's or a macro's, never both. Content calls one as any effect. It returns the effects it stands for, worked out from the state, so a button's price and the guards see what it would do. See `Macro`. |
 
-## SenderView
-
-Type. Explained in [Queries and partners](/docs/reference/plugin-queries#castcontact-and-senderview).
-
-The sender of a message or a post, as the cast's `cast/sender` query answers.
-
-```ts shape
-import type { SenderView } from '@ifloom/engine/plugin'
-type SenderView = {
-  name: string
-  image: string | null
-  portrait: string | null
-}
-```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `name` | `string` |  |  | The sender's name. |
-| `image` | `string \| null` |  |  | The sender's picture, or null. |
-| `portrait` | `string \| null` |  |  | The sender's face for a small avatar, a person's `portrait`, or null. |
-
 ## setTraitState
 
 Function. Explained in [Entities](/docs/reference/entities#settraitstate).
@@ -1920,7 +1834,7 @@ type TurnContext<S = any> = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `game` | [`Game`](/docs/api/engine#game) |  |  | The context's loaded game. |
-| `query` | [`Query`](/docs/api/engine#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('places/here')`). |
+| `query` | [`Query`](/docs/api/engine#query) |  |  | The context's query function, which asks a plugin or the game by full name (`query('loyalty/stampsLeft')`). |
 | `value` | `(name: string, args?:` [`PluginArgs`](#pluginargs)`) => string \| number \| undefined` |  |  | The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's, asked with `args`. It returns undefined when no plugin or game has that value. |
 | `roll` | `(max: number, name: string) => number` |  |  | The context's roll function, which returns a whole number from 0 to `max - 1`, drawn from the save's seed, the turn and `name`. The same save and turn always draw the same number. |
 | `slice` | `S` |  |  | The plugin's state in the game state the function was given, the same as `get()`. |

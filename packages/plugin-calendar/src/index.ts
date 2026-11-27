@@ -96,6 +96,14 @@ declare module '@ifloom/engine' {
   interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
   interface EffectRegistry extends EffectsOf<typeof CALLS> {}
   interface CommandRegistry extends CommandsOf<typeof CALLS> {}
+  interface QueryRegistry {
+    /** Returns the calendar's day, from 0, and its period. */
+    'calendar/now': () => { day: number; period: string }
+    /** Returns the calendar's periods, in order. */
+    'calendar/periods': () => string[]
+    /** Returns true at a time the player could go to bed. */
+    'calendar/bedtime': () => boolean
+  }
   interface ViewRegistry {
     calendar: CalendarView
   }

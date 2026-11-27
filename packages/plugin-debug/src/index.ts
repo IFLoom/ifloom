@@ -153,7 +153,7 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
        */
       time: free({
         whyNot: (_state, { day, period }, { game, query }) => {
-          const periods = query('calendar/periods')
+          const periods = query<string[]>('calendar/periods')
           if (!periods) return sayDebug(game, 'noCalendar')
           const ok = (day === undefined || (isNumber(day) && Number.isInteger(day) && day >= 0)) && (period === undefined || periods.includes(period))
           return ok ? undefined : sayDebug(game, 'badTime', undefined, periods.join(', '))
@@ -172,7 +172,7 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
        */
       go: free({
         whyNot: (_state, { id }, { game, query }) => {
-          const known = query('places/known', { location: id })
+          const known = query<boolean>('places/known', { location: id })
           if (known === undefined) return sayDebug(game, 'noPlaces')
           return known ? undefined : sayDebug(game, 'noSuchPlace', id)
         },

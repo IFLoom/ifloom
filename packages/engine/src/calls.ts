@@ -3,7 +3,6 @@
  * imports only types, so a core feature can read a call without loading the core.
  */
 import type { PluginArgs } from './plugin.ts'
-import type { PartnerQueries } from './partners.ts'
 import type { Command, Effect } from './types.ts'
 
 /**
@@ -53,9 +52,10 @@ export interface CommandRegistry {}
  * The registry of queries plugins and the game answer, by full name, each typed as a function from its arguments to
  * its answer (`'loyalty/stampsLeft': () => number`). `context.query` and `pluginQuery` read it.
  *
- * It extends `PartnerQueries`, the queries first-party plugins ask each other, so those are typed in every program.
+ * A plugin declares its own queries here. Code that doesn't import the answering plugin gives the answer's type,
+ * `query<number>('loyalty/stampsLeft')`.
  */
-export interface QueryRegistry extends PartnerQueries {}
+export interface QueryRegistry {}
 
 /**
  * The registry of each plugin's view by plugin id (`shop: ShopView`), which types `view.plugins`. The game's own

@@ -331,7 +331,7 @@ function goodOf(state: GameState, game: Game, one: One, entity: string): GoodDef
 
 /** The day: the calendar's, asked by name, or the turn without one. */
 function dayOf(state: GameState, game: Game): number {
-  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
+  return pluginQuery<{ day: number }>(game, 'calendar/now')?.(state).day ?? state.turn
 }
 
 /** What the stock is topped up against: the turn or the day it restocks on, or 0 for once only. */
@@ -650,7 +650,7 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
        * calendar. What `shop.hours()` closes a vendor by.
        */
       outside: (_state, { period: periods }, { query }) => {
-        const period = query('calendar/now')?.period
+        const period = query<{ period: string }>('calendar/now')?.period
         return period !== undefined && !periods.includes(period)
       },
       /** `{ 'shop/open': { vendor } }`: open now. Where the player is doesn't matter. */

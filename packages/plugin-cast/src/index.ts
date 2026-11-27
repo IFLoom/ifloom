@@ -169,6 +169,34 @@ export type CastView = {
   people: PersonView[]
 }
 
+/** The sender of a message or a post, as the `cast/sender` query answers. */
+export type SenderView = {
+  /** The sender's name. */
+  name: string
+  /** The sender's picture, or null. */
+  image: string | null
+  /** The sender's face for a small avatar, a person's `portrait`, or null. */
+  portrait: string | null
+}
+
+/** A character the player can call, as the `cast/contacts` query answers. */
+export type CastContact = {
+  /** The character's id, as the cast names them, such as `'ava'`. */
+  id: string
+  /** The character's name. */
+  name: string
+  /** The character's description, a line about them, or null. */
+  description: string | null
+  /** The character's picture, through `artSrc`, or null. */
+  image: string | null
+  /** The character's face for a small avatar, or null. */
+  portrait: string | null
+  /** The cast's `cast/call` command for the character, in the short form. */
+  command: CommandRef
+  /** The reason the call can't go through now, or undefined when it can. */
+  disabled: string | undefined
+}
+
 /**
  * What content writes for each of the plugin's calls (from `CALLS`), its
  * queries' answers and its view, so a call with a misspelled argument fails
@@ -177,8 +205,13 @@ export type CastView = {
 declare module '@ifloom/engine' {
   interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
   interface CommandRegistry extends CommandsOf<typeof CALLS> {}
-  // `cast/portrait` and `cast/contacts`, which other plugins ask, are the engine's `PartnerQueries`.
   interface QueryRegistry {
+    /** Returns a character's face, their person's `portrait`, or undefined for none. */
+    'cast/portrait': (args: { character: string }) => string | undefined
+    /** Returns the characters the player has met who can be called. */
+    'cast/contacts': () => CastContact[]
+    /** Returns the {@link SenderView} of the entity a message or a post is from, with a person's `portrait` as the face. */
+    'cast/sender': (args: { from: string }) => SenderView
     'cast/present': () => string[]
     'cast/where': (args: { character: string }) => string | undefined
   }
@@ -273,7 +306,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     for (const block of them.person.schedule ?? []) if (holdsFor(state, game, them, block.when)) return block.location
     return them.person.home ?? AWAY
   }
-  const playerAt = (context: PluginContext<null>) => context.query('places/here') ?? null
+  const playerAt = (context: PluginContext<null>) => context.query<string | null>('places/here') ?? null
   const isHere = (state: GameState, context: PluginContext<null>, them: One) => {
     const at = playerAt(context)
     return at !== null && placeOf(state, context.game, them) === at
@@ -349,7 +382,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       if (data?.call && !data.call.scene && !talkOptions(data).length)
         problems.push('can be called, but a call opens no scene: give call a scene, or them a talk')
       // Places are the places plugin's, asked by name; without it there is no map to check against.
-      const askPlaces = pluginQuery(game, 'places/known')
+      const askPlaces = pluginQuery<boolean>(game, 'places/known')
       if (askPlaces) {
         const blank = startingState(game)
         for (const place of [data?.home, ...(data?.schedule ?? []).map((block) => block.location)]) {

@@ -39,6 +39,9 @@
     "./themes/*.min.css": "./dist/themes/*.min.css",
     "./themes/*": "./src/themes/*"
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "files": [
     "dist",
     "src"

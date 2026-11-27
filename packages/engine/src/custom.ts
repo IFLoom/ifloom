@@ -27,7 +27,7 @@ import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type Quer
 export type CustomContext = {
   /** The context's loaded game. */
   game: Game
-  /** The context's query function, which asks a plugin or the game by full name (`query('places/here')`). */
+  /** The context's query function, which asks a plugin or the game by full name (`query('loyalty/stampsLeft')`). */
   query: Query
   /**
    * The context's value function, which returns a value by full name, a plugin's (`messages/unread`) or the game's,

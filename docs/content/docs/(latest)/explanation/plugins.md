@@ -47,7 +47,7 @@ The rule follows from [Content, packs and the base](/docs/explanation/content-an
 
 No first-party plugin imports another, and none requires another. That's what lets a game take any combination. The cast, for example, wants to know where the player is, so it can say who is here. It asks with a query, `places/here`, which the places plugin answers. Without places, the query has no answer, and the cast says nobody is here.
 
-The engine's `PartnerQueries` declares each answer's type once, as types only, so the asking plugin reads it typed without importing the plugin that answers. Nothing there runs. The answer comes from the owning plugin, and the fallback when there's no answer comes from the plugin that asked.
+The engine declares no plugin's answers. The answering plugin declares its own, and the asking plugin, which never imports it, gives the type of the answer it reads, such as `query<{ day: number }>('calendar/now')`. The answer comes from the owning plugin, and the fallback when there's no answer comes from the plugin that asked.
 
 Content can name another plugin too. A plugin lists the plugins it `cooperates` with, and content written for it may then use their conditions and effects in a game that leaves them out. The shop cooperates with the calendar, so a vendor's opening hours can use `calendar/period`. In a game without the calendar, that condition is false, an effect from it does nothing, and a command from it is refused. The content checker lets those names pass rather than reporting them.
 

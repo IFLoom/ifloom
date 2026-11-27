@@ -67,7 +67,7 @@ Every condition, macro, effect and value of the game's gets the state, its argum
 
 | Field | Meaning |
 |---|---|
-| `query` | The function that asks a plugin's query by its full name, `undefined` when the game lacks that plugin. `query('calendar/now')` answers a `{ day, period }`, since the engine declares the queries first-party plugins ask each other in [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries). |
+| `query` | The function that asks a plugin's query by its full name, `undefined` when the game lacks that plugin. A query the plugin's `QueryRegistry` declares answers its type, and any other name answers the type you give it, as in `query<{ period: string }>('calendar/now')`. |
 | `value` | The function that reads a [value](#values) by its full name, a plugin's (`messages/unread`) or the game's (`game/breadPrice`), or `undefined` when nobody has one. |
 | `roll` | The function that draws a whole number from 0 to `max - 1` from the save's seed, the turn and `name`, so a replay draws the same. Each draw takes its own `name`. |
 
@@ -77,7 +77,7 @@ This macro reads the calendar's clock through `query`:
 import type { Macro } from '@ifloom/engine/plugin'
 
 export const tips: Macro = (_state, _args, { query }) => {
-  const evening = query('calendar/now')?.period === 'evening'
+  const evening = query<{ period: string }>('calendar/now')?.period === 'evening'
   return [{ stat: 'coins', by: evening ? 4 : 2 }]
 }
 ```

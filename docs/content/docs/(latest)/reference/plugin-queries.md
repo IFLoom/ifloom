@@ -8,7 +8,7 @@ In the showcase: `examples/showcase/src/game.ts` lists the calendar, places and 
 
 ```ts
 import { pluginQuery, type Query, type QueryRegistry } from '@ifloom/engine'
-import type { CastContact, PartnerQueries, QueryAnswer, QueryArgs, SenderView } from '@ifloom/engine/plugin'
+import type { QueryAnswer, QueryArgs } from '@ifloom/engine/plugin'
 ```
 
 ## queries
@@ -27,7 +27,13 @@ queries: {
 view: (_state, { query }) => ({ footer: query('loyalty/stampsLeft') ?? null }),
 ```
 
-A query's answer is typed for code that imports the answering plugin, through its [`QueryRegistry`](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry) entry. An asker that doesn't import it names the answer's type, `query<number>('loyalty/stampsLeft')`, unless the query is one of the [`PartnerQueries`](#partnerqueries).
+A query's answer is typed for code that imports the answering plugin, through its [`QueryRegistry`](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry) entry. An asker that doesn't import it names the answer's type, `query<number>('loyalty/stampsLeft')`. The first-party plugins ask each other this way too, as the shop does to count days without a calendar:
+
+```ts fragment
+const day = query<{ day: number }>('calendar/now')?.day ?? state.turn
+```
+
+The engine declares no plugin's answers. A plugin declares its own, and a game that imports it reads them typed. A query answers `undefined` in a game without its plugin.
 
 ## cooperates
 
@@ -60,7 +66,7 @@ import type { Query } from '@ifloom/engine'
 
 declare const query: Query
 
-const here = query('places/here') ?? null // string | null
+const here = query<string | null>('places/here') ?? null
 const left = query<number>('bakery/loaves') ?? 0
 ```
 
@@ -76,37 +82,6 @@ import type { QueryAnswer, QueryArgs } from '@ifloom/engine/plugin'
 
 export const ask = <K extends keyof QueryRegistry>(game: Game, state: GameState, name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined =>
   pluginQuery(game, name)?.(state, ...args)
-```
-
-## PartnerQueries
-
-The answers the first-party plugins ask each other for, declared in the engine as types only, which `QueryRegistry` extends. Its entries are in [`PartnerQueries`](/docs/api/engine-plugin#partnerqueries).
-
-A plugin never imports its partner, so the partner's own declarations aren't in its program. The engine declares these answers instead, so `query('places/here')` is a `string | null | undefined` in any plugin, the game's own code or a tool. Nothing in `PartnerQueries` runs. Each answer comes from the owning plugin's query, and an asker writes its own fallback after `??`, as the shop does to count days without a calendar:
-
-```ts fragment
-const day = query('calendar/now')?.day ?? state.turn
-```
-
-| Key | Meaning |
-|---|---|
-| `calendar/now`, `calendar/periods`, `calendar/bedtime` | The [calendar](/docs/reference/plugins/calendar#queries)'s day and period, its periods in order, and whether it's late enough for bed. |
-| `places/here`, `places/holder`, `places/known` | The [places plugin](/docs/reference/plugins/places#queries)'s location the player is at, the holder a dropped thing goes to, and whether the player knows a location. |
-| `cast/portrait`, `cast/contacts`, `cast/sender` | The [cast](/docs/reference/plugins/cast#queries)'s face for a character, the people the player can call, and who a message or post is from. |
-
-A plugin's other queries, such as `places/all`, are declared in its own package. A query answers `undefined` in a game without its plugin.
-
-## CastContact and SenderView
-
-`CastContact` is one person the player can call, as `cast/contacts` answers, and `SenderView` is who a message or a post is from, as `cast/sender` answers. Their fields are in [`CastContact`](/docs/api/engine-plugin#castcontact) and [`SenderView`](/docs/api/engine-plugin#senderview).
-
-A contact's `command` is the cast's `cast/call` for them in the short form, ready for an action's `command`, and its `disabled` says why the call can't go through now, or is `undefined` when it can. A phone's contacts app lists them. The [messages](/docs/reference/plugins/messages) and [feed](/docs/reference/plugins/feed) plugins ask `cast/sender` for a sender's name and face, and fall back to [`speakerOf`](/docs/reference/plugin-views#speakerof) in a game without the cast.
-
-```ts given
-import { pluginQuery } from '@ifloom/engine'
-
-const contacts = pluginQuery(game, 'cast/contacts')?.(state) ?? []
-const names = contacts.filter((contact) => !contact.disabled).map((contact) => contact.name)
 ```
 
 ## Functions

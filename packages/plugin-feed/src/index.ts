@@ -38,7 +38,6 @@ import {
   type DefinedPlugin,
   type EffectsOf,
   type Reference,
-  type SenderView,
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -232,9 +231,12 @@ export function postsOf(game: Game): PostDef[] {
   return DATA.posts.all(game)
 }
 
+/** Who a post is from, as the cast's `cast/sender` query answers it, asked by name. */
+type Sender = { name: string; image: string | null; portrait: string | null }
+
 /** Who a post is from: the cast's answer when the game has the cast, else their entity's name and picture, or the name as written. */
-function senderOf(state: GameState, game: Game, from: string): SenderView {
-  const asked = pluginQuery(game, 'cast/sender')?.(state, { from })
+function senderOf(state: GameState, game: Game, from: string): Sender {
+  const asked = pluginQuery<Sender>(game, 'cast/sender')?.(state, { from })
   if (asked) return asked
   const known = from ? speakerOf(state, game, from) : null
   return known ? { name: known.name, image: known.image, portrait: known.image } : { name: from, image: null, portrait: null }

@@ -41,13 +41,13 @@ export const menu = definePlugin<null>({
   start: () => null,
   view: (state, { query }) => ({
     // The calendar's day, or the turn in a game without one.
-    day: query('calendar/now')?.day ?? state.turn,
-    open: (query('places/here') ?? 'cafe') === 'cafe',
+    day: query<{ day: number }>('calendar/now')?.day ?? state.turn,
+    open: (query<string | null>('places/here') ?? 'cafe') === 'cafe',
   }),
 })
 ```
 
-The queries first-party plugins answer each other, such as `calendar/now` and `places/here`, are typed in every program by the engine's [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries), so you name no type. Code outside a plugin, such as a test or a tool, asks one with [`pluginQuery`](/docs/reference/plugin-queries#pluginquery).
+Your plugin doesn't import its partner, so it gives each answer's type, `query<{ day: number }>('calendar/now')`, naming only the fields it reads. A game that imports the partner reads the same query typed by the partner's own declaration. Code outside a plugin, such as a test or a tool, asks one with [`pluginQuery`](/docs/reference/plugin-queries#pluginquery).
 
 ## Answer a query of your own
 
@@ -118,6 +118,6 @@ That makes `the loyalty card, alone` and `the loyalty card, with places`. Give w
 
 For more, see:
 
-- [Plugin queries](/docs/reference/plugin-queries), with [`queries`](/docs/reference/plugin-queries#queries), [`cooperates`](/docs/reference/plugin-queries#cooperates) and [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries).
+- [Plugin queries](/docs/reference/plugin-queries), with [`queries`](/docs/reference/plugin-queries#queries) and [`cooperates`](/docs/reference/plugin-queries#cooperates).
 - [Testing helpers](/docs/reference/testing), with [`partnerCases`](/docs/reference/testing#partnercases).
 - [Plugins](/docs/explanation/plugins#plugins-cooperate-by-name), on why plugins cooperate by name.

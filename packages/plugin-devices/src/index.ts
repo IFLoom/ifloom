@@ -55,6 +55,8 @@ import {
 } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
+/** A contact as the cast's `cast/contacts` query answers it, asked by name: the fields the contacts list reads. */
+type Contact = { id: string; name: string; description: string | null; portrait: string | null; command: CommandRef }
 /** A device the game declares in `data.devices.devices`, such as a phone or a laptop. Its apps name it in their `on`. */
 export type DeviceDef = {
   /** The device's id, unique among the game's devices. */
@@ -305,7 +307,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
       return {
         type: 'list',
         // The cast's, asked by name: everyone met who can be called. None without the cast.
-        entries: (pluginQuery(game, 'cast/contacts')?.(state) ?? []).map((contact) => ({
+        entries: (pluginQuery<Contact[]>(game, 'cast/contacts')?.(state) ?? []).map((contact) => ({
           id: contact.id,
           title: contact.name,
           text: contact.description ?? '',

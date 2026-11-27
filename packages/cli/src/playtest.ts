@@ -118,7 +118,7 @@ function placesIn(game: Game, state: GameState): Place[] {
 
 /** Where the player is, asked of the places plugin by name: nowhere without it. */
 function here(game: Game, state: GameState): string | null {
-  return pluginQuery(game, 'places/here')?.(state) ?? null
+  return pluginQuery<string | null>(game, 'places/here')?.(state) ?? null
 }
 
 /** Who is on screen, with their buttons: the cast plugin's, read by shape. Nobody without it. */
@@ -197,7 +197,7 @@ export function explorer(): Policy {
       return fresh?.command ?? waitFor(screen) ?? { type: 'leave' }
     }
     // When the calendar says it is late enough for bed, go, walking home if need be.
-    if (pluginQuery(game, 'calendar/bedtime')?.(state)) {
+    if (pluginQuery<boolean>(game, 'calendar/bedtime')?.(state)) {
       const bed = screen.actions.find((entry) => isBed(entry.command) && !entry.disabled)
       if (bed) return bed.command
       const all = placesIn(game, state)

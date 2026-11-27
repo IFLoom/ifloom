@@ -193,7 +193,7 @@ The plugin refuses it, in this order:
 
 ## Queries
 
-Other plugins ask these through their context's [`query`](/docs/reference/plugin-queries#query), and content can't. A character is given as `{ character }`, an id or a reference, and lists follow [`peopleOf`](#peopleof). The engine declares `cast/portrait`, `cast/contacts` and `cast/sender` in [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries), with the answers [`CastContact` and `SenderView`](/docs/reference/plugin-queries#castcontact-and-senderview).
+Other plugins ask these through their context's [`query`](/docs/reference/plugin-queries#query), and content can't. A character is given as `{ character }`, an id or a reference, and lists follow [`peopleOf`](#peopleof). The cast declares them all in its `QueryRegistry`, with the answers [`CastContact` and `SenderView`](#castcontact-and-senderview), so they're typed in a game that imports it. A plugin that doesn't import it gives the answer's type, naming only the fields it reads.
 
 | Key | Meaning |
 |---|---|
@@ -203,16 +203,32 @@ Other plugins ask these through their context's [`query`](/docs/reference/plugin
 | `cast/contacts` | Everyone met who has a `call`, each a `CastContact` whose `command` is `cast.call(id)` and whose `disabled` is the refusal the call would get now. |
 | `cast/sender` | The name, image and portrait of the entity a message or post is from, given as `{ from }`. An id that names no entity answers `{ name: from, image: null, portrait: null }`. |
 
-A contacts plugin lists them in its view, typed without importing the cast:
+A contacts plugin lists them in its view without importing the cast, giving the fields it reads:
 
 ```ts
 import { definePlugin } from '@ifloom/engine/plugin'
 
+type Contact = { id: string; name: string; disabled: string | undefined }
+
 export const contacts = definePlugin<null>({
   id: 'contacts',
   version: 1,
-  view: (_state, { query }) => ({ people: (query('cast/contacts') ?? []).map(({ id, name, disabled }) => ({ id, name, disabled })) }),
+  view: (_state, { query }) => ({ people: (query<Contact[]>('cast/contacts') ?? []).map(({ id, name, disabled }) => ({ id, name, disabled })) }),
 })
+```
+
+### CastContact and SenderView
+
+`CastContact` is one person the player can call, as `cast/contacts` answers, and `SenderView` is who a message or a post is from, as `cast/sender` answers. Their fields are in [`CastContact`](/docs/api/plugin-cast#castcontact) and [`SenderView`](/docs/api/plugin-cast#senderview).
+
+A contact's `command` is [`cast.call(id)`](#castcall) in the short form, ready for an action's `command`, and its `disabled` says why the call can't go through now, or is `undefined` when it can. A phone's contacts app lists them. The [messages](/docs/reference/plugins/messages) and [feed](/docs/reference/plugins/feed) plugins ask `cast/sender` for a sender's name and face, and fall back to [`speakerOf`](/docs/reference/plugin-views#speakerof) in a game without the cast.
+
+```ts given
+import { pluginQuery } from '@ifloom/engine'
+import '@ifloom/plugin-cast'
+
+const contacts = pluginQuery(game, 'cast/contacts')?.(state) ?? []
+const names = contacts.filter((contact) => !contact.disabled).map((contact) => contact.name)
 ```
 
 ## Values

@@ -67,7 +67,6 @@ export { defineTraitKind } from './traitKinds.ts'
 export type { TraitDef, TraitTools } from './entities.ts'
 
 // Cooperating with other plugins by name
-export type { CastContact, PartnerQueries, SenderView } from './partners.ts'
 export type { CallIn, QueryAnswer, QueryArgs } from './calls.ts'
 
 // Building its view

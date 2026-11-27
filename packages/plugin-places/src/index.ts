@@ -257,8 +257,13 @@ declare module '@ifloom/engine' {
   interface ConditionRegistry extends ConditionsOf<typeof CALLS> {}
   interface EffectRegistry extends EffectsOf<typeof CALLS> {}
   interface CommandRegistry extends CommandsOf<typeof CALLS> {}
-  // `places/here`, `places/holder` and `places/known`, which other plugins ask, are the engine's `PartnerQueries`.
   interface QueryRegistry {
+    /** Returns the id of the location the player is at, or null when they are at none. */
+    'places/here': () => string | null
+    /** Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. */
+    'places/holder': () => EntityRef | null
+    /** Returns true when the game has the location. */
+    'places/known': (args: { location: string }) => boolean
     'places/all': () => (Place & { id: string; ref: EntityRef })[]
     'places/exits': () => string[]
   }

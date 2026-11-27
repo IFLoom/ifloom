@@ -8,7 +8,7 @@ Generated from the source of `@ifloom/plugin-cast` and `@ifloom/plugin-cast/reac
 
 - Functions: [`cast`](#cast), [`peopleOf`](#peopleof), [`personOf`](#personof)
 - Constants: [`AWAY`](#away)
-- Types: [`CastOptions`](#castoptions), [`CastView`](#castview), [`Person`](#person), [`PersonDef`](#persondef), [`PersonView`](#personview), [`TalkOption`](#talkoption)
+- Types: [`CastContact`](#castcontact), [`CastOptions`](#castoptions), [`CastView`](#castview), [`Person`](#person), [`PersonDef`](#persondef), [`PersonView`](#personview), [`SenderView`](#senderview), [`TalkOption`](#talkoption)
 
 ### AWAY
 
@@ -46,6 +46,35 @@ Uses: [`CastOptions`](#castoptions), [`DefinedPlugin`](/docs/api/engine-plugin#d
 | `cast.here` | `(...who: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `cast/here` condition, which holds while any of the people named is at the player's location. |
 | `cast.at` | `(who: string, ...places: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `cast/at` condition, which holds while the person is at any of the locations named. |
 | `cast.met` | `(...who: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `cast/met` condition, which holds once the player has met any of the people named. |
+
+### CastContact
+
+Type. Explained in [Cast](/docs/reference/plugins/cast#castcontact-and-senderview).
+
+A character the player can call, as the `cast/contacts` query answers.
+
+```ts shape
+import type { CastContact } from '@ifloom/plugin-cast'
+type CastContact = {
+  id: string
+  name: string
+  description: string | null
+  image: string | null
+  portrait: string | null
+  command: CommandRef
+  disabled: string | undefined
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The character's id, as the cast names them, such as `'ava'`. |
+| `name` | `string` |  |  | The character's name. |
+| `description` | `string \| null` |  |  | The character's description, a line about them, or null. |
+| `image` | `string \| null` |  |  | The character's picture, through `artSrc`, or null. |
+| `portrait` | `string \| null` |  |  | The character's face for a small avatar, or null. |
+| `command` | [`CommandRef`](/docs/api/engine#commandref) |  |  | The cast's `cast/call` command for the character, in the short form. |
+| `disabled` | `string \| undefined` |  |  | The reason the call can't go through now, or undefined when it can. |
 
 ### CastOptions
 
@@ -225,6 +254,27 @@ type PersonView = {
 | `closed` | `boolean` |  |  | True while the person's storyline is closed. |
 | `met` | `boolean` |  |  | True when the player has met the person, by their `met` condition, else by having seen one of their talk or call scenes. |
 | `actions` | [`RenderedChoice[]`](/docs/api/engine#renderedchoice) |  |  | The person's talk action, refused with its reason when it can't run. Empty when the person has no `talk`. |
+
+### SenderView
+
+Type. Explained in [Cast](/docs/reference/plugins/cast#castcontact-and-senderview).
+
+The sender of a message or a post, as the `cast/sender` query answers.
+
+```ts shape
+import type { SenderView } from '@ifloom/plugin-cast'
+type SenderView = {
+  name: string
+  image: string | null
+  portrait: string | null
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `name` | `string` |  |  | The sender's name. |
+| `image` | `string \| null` |  |  | The sender's picture, or null. |
+| `portrait` | `string \| null` |  |  | The sender's face for a small avatar, a person's `portrait`, or null. |
 
 ### TalkOption
 

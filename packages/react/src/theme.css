@@ -175,6 +175,24 @@
   75% { transform: rotate(14deg) translateY(-3px); }
   100% { transform: rotate(0deg) translateY(0); }
 }
+/* The "Powered by IFLoom" splash card: the mark pops in, glows and catches the light, then its words rise in turn. */
+@keyframes ifloom-mark-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-12deg); }
+  60% { opacity: 1; transform: scale(1.08) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes ifloom-halo {
+  0%, 100% { opacity: 0.45; transform: scale(0.9); }
+  50% { opacity: 0.9; transform: scale(1.2); }
+}
+@keyframes ifloom-shine {
+  from { transform: translateX(-150%) skewX(-20deg); }
+  to { transform: translateX(250%) skewX(-20deg); }
+}
+@keyframes ifloom-rise {
+  from { opacity: 0; transform: translateY(0.75rem); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
 /* What waits for a reveal and can be pressed (the choices) is hidden until it comes, not only faded. */
 @keyframes ifloom-fade-in-hidden {
   from { opacity: 0; visibility: hidden; }
@@ -254,10 +272,24 @@
     animation: none;
   }
 
+  [data-ifloom-splash="motion"] [data-ifloom-mark] {
+    animation: ifloom-mark-pop 900ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+  [data-ifloom-splash="motion"] [data-ifloom-halo] {
+    animation: ifloom-halo 2400ms ease-in-out 500ms infinite both;
+  }
+  [data-ifloom-splash="motion"] [data-ifloom-shine] {
+    animation: ifloom-shine 1000ms ease-in-out 800ms both;
+  }
+  [data-ifloom-splash="motion"] [data-ifloom-rise] {
+    animation: ifloom-rise 650ms ease-out var(--ifloom-rise-at, 0ms) both;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     [data-transition-in],
     [data-reveal],
-    [data-part^="dice"] {
+    [data-part^="dice"],
+    [data-ifloom-splash] * {
       animation: none !important;
     }
     [data-part="timer-bar"] > span {

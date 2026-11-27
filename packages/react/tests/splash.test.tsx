@@ -54,10 +54,10 @@ describe('splash cards', () => {
     play()
     expect(page()).toBe('splash')
     expect(card()?.getAttribute('data-splash-card')).toBe('ifloom')
-    expect(screen.getByText('Powered by IFLoom')).toBeTruthy()
-    expect(screen.getByRole('img', { name: 'IFLoom' })).toBeTruthy()
-    // 600 ms in, 2000 ms held, then it goes out over 600 ms.
-    await wait(2600)
+    expect(screen.getByText('Powered by')).toBeTruthy()
+    expect(screen.getByText('IFLoom')).toBeTruthy()
+    // 600 ms in, 3000 ms held, then it goes out over 600 ms.
+    await wait(3600)
     expect(card()?.hasAttribute('data-leaving')).toBe(true)
     expect(card()?.getAttribute('data-transition-out')).toBe('fade')
     await wait(600)
@@ -92,6 +92,18 @@ describe('splash cards', () => {
     await wait(600 + 500)
     await wait(600)
     expect(page()).toBe('title')
+  })
+
+  it('link to ifloom.dev from the IFLoom card, without skipping it', () => {
+    reducedMotion(false)
+    play()
+    const link = screen.getByRole('link', { name: /Visit ifloom\.dev/ })
+    expect(link.getAttribute('href')).toBe('https://ifloom.dev/?utm_source=ifloom-game&utm_medium=splash&utm_campaign=powered-by-ifloom&utm_content=letter')
+    expect(link.getAttribute('target')).toBe('_blank')
+    link.addEventListener('click', (event) => event.preventDefault())
+    fireEvent.click(link)
+    fireEvent.keyDown(link, { key: 'Enter' })
+    expect(card()?.getAttribute('data-splash-card')).toBe('ifloom')
   })
 
   it('skip a card on a click, Enter or Space, and all of them on Escape or the Skip button', async () => {

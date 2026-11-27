@@ -907,11 +907,11 @@ mountGame(module.build(), {
 })
 ```
 
-Parts: `splash-page` (with `data-page="splash"`), `splash-card` (with `data-splash-card` and the card's id), `splash-art`, `splash-title`, `splash-text` and `splash-skip`.
+Parts: `splash-page` (with `data-page="splash"`), `splash-card` (with `data-splash-card` and the card's id), `splash-art`, `splash-title`, `splash-text`, `splash-link` and `splash-skip`.
 
 ### poweredByIFLoom
 
-`poweredByIFLoom` returns the "Powered by IFLoom" card, with the IFLoom mark and the words `ui.poweredBy`. Its signature is in [`poweredByIFLoom`](/docs/api/react#poweredbyifloom). A game with no `splash` option shows this card alone. A game that lists its own cards puts it among them where it should show, or leaves it out. Its argument changes the card's `ms` or `transition`, such as `poweredByIFLoom({ ms: 1000 })`.
+`poweredByIFLoom` returns the "Powered by IFLoom" card. Its signature is in [`poweredByIFLoom`](/docs/api/react#poweredbyifloom). The IFLoom mark pops in with a glow and a shine, then `ui.poweredBy`, the IFLoom name and a `Visit ifloom.dev` link (`ui.visitIfloom`) rise in turn. The link opens the site in a new tab without skipping the card. It carries UTM parameters so the site can count visits from splash cards: `utm_source=ifloom-game`, `utm_medium=splash`, `utm_campaign=powered-by-ifloom`, and the game's `id` as `utm_content`. Nothing about the player is sent. The card holds for 3000 milliseconds, and with reduced motion it shows everything at once. A game with no `splash` option shows this card alone. A game that lists its own cards puts it among them where it should show, or leaves it out. Its argument changes the card's `ms` or `transition`, such as `poweredByIFLoom({ ms: 1000 })`.
 
 ### useSetting
 

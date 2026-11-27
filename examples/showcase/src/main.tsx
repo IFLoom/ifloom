@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
 import { createRunner, describeProblem, mods, profile, saves, startingState } from '@ifloom/engine'
-import { GameShell, type PagesOptions } from '@ifloom/react'
+import { GameShell, poweredByIFLoom, type PagesOptions } from '@ifloom/react'
 import { unlockedPacks } from '@ifloom/plugin-unlocks'
 import { smallTown } from './game.ts'
 import { Layout } from './layout.tsx'
@@ -36,6 +36,15 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
 
 const pages: PagesOptions = {
   subtitle: 'A new flat, a new town, and a cat with no name.',
+  // The cards shown as the game opens, in order: a studio's, the engine's, then the game's own.
+  // A click, Enter or Space skips one; Escape skips them all.
+  splash: {
+    cards: [
+      { id: 'studio', title: 'Corner Shop Games', text: 'presents', ms: 1800 },
+      poweredByIFLoom(),
+      { id: 'logo', title: 'Small Town', text: 'A new flat, a new town, and a cat with no name.', ms: 2500, transition: { in: 'zoom', out: 'fade', ms: 800 } },
+    ],
+  },
 }
 
 createRoot(document.getElementById('root')!).render(

@@ -259,6 +259,7 @@ export const PART_KEYS = [
   'splash-title',
   'splash-text',
   'splash-skip',
+  'splash-link',
 ] as const
 
 /**

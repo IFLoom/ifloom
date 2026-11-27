@@ -669,6 +669,8 @@ function SplashPageImpl({ className }: { className?: string }) {
   useEffect(() => {
     if (!skippable) return
     const onKey = (event: KeyboardEvent) => {
+      // A focused link or button, such as Skip or a card's own, takes Enter and Space itself.
+      if (event.key !== 'Escape' && event.target instanceof Element && event.target.closest('a, button, input')) return
       if (event.key === 'Escape') endSplash()
       else if (event.key === 'Enter' || event.key === ' ') next()
       else return

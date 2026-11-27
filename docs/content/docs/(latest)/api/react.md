@@ -442,6 +442,7 @@ type Classes = {
   'splash-title'?: string | ((defaults: string) => string)
   'splash-text'?: string | ((defaults: string) => string)
   'splash-skip'?: string | ((defaults: string) => string)
+  'splash-link'?: string | ((defaults: string) => string)
   'achievement-earned'?: string | ((defaults: string) => string)
   'achievement-image'?: string | ((defaults: string) => string)
   'achievement-progress'?: string | ((defaults: string) => string)
@@ -2152,6 +2153,7 @@ type PartKey =
   | 'splash-title'
   | 'splash-text'
   | 'splash-skip'
+  | 'splash-link'
   | Extract<keyof PartNames, string>
 ```
 
@@ -2243,7 +2245,8 @@ type PluginSpot = 'stats' | 'sidebar' | 'room' | 'story' | 'strip'
 
 Function. Explained in [Components](/docs/reference/react/components#poweredbyifloom).
 
-Returns the "Powered by IFLoom" card, with the IFLoom mark and the words `ui.poweredBy`.
+Returns the "Powered by IFLoom" card, with the IFLoom mark, the words `ui.poweredBy`, the IFLoom name and a link to
+ifloom.dev labelled `ui.visitIfloom`. It holds for 3000 milliseconds.
 
 A game that lists its own cards puts it among them where it should show, and `overrides` change its timing or
 transition.
@@ -3048,6 +3051,7 @@ type UiStringKey =
   | 'newGamePlus'
   | 'noSettings'
   | 'poweredBy'
+  | 'visitIfloom'
   | 'skipSplash'
   | 'titlePage'
   | 'replayVoice'

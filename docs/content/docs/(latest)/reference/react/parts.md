@@ -592,7 +592,8 @@ These are rendered only when `pages` is on. See [Pages](/docs/reference/react/co
 | `splash-card` | The card on show. Carries `data-splash-card` with its id, and the transition attributes while it comes in and goes out. |
 | `splash-art` | A card's picture, or the IFLoom mark. |
 | `splash-title` | A card's heading. |
-| `splash-text` | The line under it, or `Powered by IFLoom`. |
+| `splash-text` | The line under it, or `Powered by` on the IFLoom card. |
+| `splash-link` | The IFLoom card's link to ifloom.dev. |
 | `splash-skip` | The button that skips every card. |
 
 Each of the four presets gives the title screen its own look: a centred column with a large title, and buttons in the preset's style.

@@ -1401,6 +1401,7 @@ type Reference =
   | { media: SceneMedia; }
   | { ui: unknown; on: UiTarget; id?: string; }
   | { entity: string; carrying?: string; }
+  | { value: string; }
   | { storyline: string; }
   | { setting: string; is?: KvValue; }
   | { stat: string; of?: string; writes?: boolean; }
@@ -1413,7 +1414,6 @@ type Reference =
   | { outdated: string; }
   | { problem: string; }
   | { variants: string; }
-  | { value: string; }
   | { amount: unknown; }
   | { call: CallTable; name: string; with?: PluginArgs; }
   | { entry: string; plugin: string; list: string; noun: string; }
@@ -1426,9 +1426,10 @@ type Reference =
   | { within: string; refs: readonly Reference[]; }
   | { kind: string; }
   | { speaker: string; }
-  | { holder: string; holds?: string; protagonist?: boolean; }
   | { like: string; of?: string; }
   | { trait: string; }
+  | { protagonist: string; }
+  | { holder: string; holds?: string; }
   | { action: string; }
   | { input: string; }
   | { choice: string; }

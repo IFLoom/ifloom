@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/react",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "The React UI for IFLoom games: components that draw the view, for authors to use, restyle and extend. Other frameworks use the engine directly.",
   "keywords": [
@@ -57,9 +57,9 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.1.2",
-    "@ifloom/audio": "^0.1.2",
-    "@ifloom/browser": "^0.1.2",
+    "@ifloom/engine": "^0.2.0",
+    "@ifloom/audio": "^0.2.0",
+    "@ifloom/browser": "^0.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0",
@@ -79,8 +79,8 @@
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@ifloom/audio": "^0.1.2",
-    "@ifloom/browser": "^0.1.2",
+    "@ifloom/audio": "^0.2.0",
+    "@ifloom/browser": "^0.2.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0"
   }

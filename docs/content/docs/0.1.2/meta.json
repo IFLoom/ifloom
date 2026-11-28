@@ -1,0 +1,12 @@
+{
+  "title": "0.1.2",
+  "root": "version",
+  "pages": [
+    "tutorial",
+    "how-to",
+    "explanation",
+    "reference",
+    "upgrading",
+    "api"
+  ]
+}

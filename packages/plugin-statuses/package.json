@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/plugin-statuses",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "Timed statuses for IFLoom: a boost or a cold that lasts some turns, changes what stats read, and runs effects as it starts, each turn and as it ends.",
   "keywords": [
@@ -49,8 +49,8 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.1.2",
-    "@ifloom/react": "^0.1.2",
+    "@ifloom/engine": "^0.2.0",
+    "@ifloom/react": "^0.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@types/react": "^19.0.0"
@@ -70,7 +70,7 @@
     }
   },
   "devDependencies": {
-    "@ifloom/react": "^0.1.2",
+    "@ifloom/react": "^0.2.0",
     "@types/react": "^19.3.0"
   }
 }

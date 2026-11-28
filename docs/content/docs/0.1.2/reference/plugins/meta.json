@@ -1,0 +1,23 @@
+{
+  "title": "First-party plugins",
+  "pages": [
+    "index",
+    "calendar",
+    "places",
+    "cast",
+    "quests",
+    "statuses",
+    "achievements",
+    "inventory",
+    "shop",
+    "jobs",
+    "generators",
+    "wardrobe",
+    "messages",
+    "feed",
+    "devices",
+    "unlocks",
+    "debug",
+    "community"
+  ]
+}

@@ -12,16 +12,16 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
-    "@ifloom/audio": "^0.1.2",
-    "@ifloom/browser": "^0.1.2",
-    "@ifloom/engine": "^0.1.2",
-    "@ifloom/react": "^0.1.2",
+    "@ifloom/audio": "^0.2.0",
+    "@ifloom/browser": "^0.2.0",
+    "@ifloom/engine": "^0.2.0",
+    "@ifloom/react": "^0.2.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.1.2",
+    "@ifloom/cli": "^0.2.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",

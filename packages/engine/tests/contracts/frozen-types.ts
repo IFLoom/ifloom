@@ -180,6 +180,11 @@ export type FrozenCondition =
    */
   | ({ kv: string; is?: KvValue | readonly KvValue[]; of?: string } & FrozenRange)
   /**
+   * A plugin's or the game's value by name, asked `with` its arguments, and
+   * compared as a kv key is: `{ value: 'inventory/count', with: { entity: 'food:coffee' }, gte: 1 }`.
+   */
+  | ({ value: string; with?: Record<string, unknown>; is?: KvValue | readonly KvValue[] } & FrozenRange)
+  /**
    * A `play` setting, read as a kv key is: bare, whether it is truthy
    * (`{ setting: 'hints' }`); with `is`, whether it equals that; with a range,
    * whether its number is in it.
@@ -655,10 +660,11 @@ export type FrozenReference =
   | { entity: string; carrying?: string }
   /**
    * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
-   * thing given to it, which can't be the holder itself; `protagonist` for a
-   * `you` effect, which names the one to play.
+   * thing given to it, which can't be the holder itself.
    */
-  | { holder: string; holds?: string; protagonist?: boolean }
+  | { holder: string; holds?: string }
+  /** Whom a `you` effect makes the player play: `'player'` or a unique entity. */
+  | { protagonist: string }
   /** The entity a `create` makes a thing like, and the kind it makes, if it says. */
   | { like: string; of?: string }
   /** Who a spoken line is under, by id: `@ava: "…"` in prose, or a `say` block's `speaker`. `'you'` and `'player'` pass. */

@@ -233,6 +233,10 @@ export type EntitiesShape = {
     entity: { entity: string; carrying?: string }
     /** A reference to the speaker of a spoken line by id, from `@ava: "…"` in prose or a `say` block's `speaker`. `'you'` and `'player'` pass. */
     speaker: { speaker: string }
+    /** A reference to the entity a `create` makes a thing like, with the kind it makes when it names one. */
+    like: { like: string; of?: string }
+    /** A reference to a trait by id. */
+    trait: { trait: string }
   }
 }
 
@@ -627,6 +631,20 @@ export const entities = defineFeature<EntitiesShape>({
         if (named.length === 1) return []
         if (named.length > 1) return [`a spoken line is under "${id}", which more than one kind has: name it as "kind:${id}"`]
         return [`a spoken line is under "${id}", which names no entity`]
+      },
+      like: (ref) => {
+        const parts = parseRef(ref.like)
+        if (!parts) return ref.like === CURRENT ? [] : [`unknown entity "${ref.like}" to be like`]
+        if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
+        if (ref.of !== undefined && parts.kind !== ref.of) return [`like names a ${parts.kind}, not a ${ref.of}`]
+        if (parts.id !== '*' && !entityDef(game, ref.like)) return [`unknown entity "${ref.like}" to be like: name one the game declares`]
+        return []
+      },
+      trait: (ref) => {
+        const at = ref.trait.indexOf('/')
+        if (at <= 0) return []
+        const plugin = game.plugins?.find((entry) => entry.id === ref.trait.slice(0, at))
+        return plugin && !traitDef(game, ref.trait) ? [`plugin "${plugin.id}" has no trait "${ref.trait}"`] : []
       },
     }
   },

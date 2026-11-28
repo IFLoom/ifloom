@@ -133,7 +133,7 @@ describe('the registry', () => {
     }
     expect(featureKinds).toEqual({
       turns: { conditions: ['turn'], effects: ['turn'], commands: [] },
-      kv: { conditions: ['kv'], effects: ['kv'], commands: [] },
+      kv: { conditions: ['kv', 'value'], effects: ['kv'], commands: [] },
       storylines: { conditions: ['storyline'], effects: ['closeStoryline'], commands: [] },
       notices: { conditions: [], effects: ['notify'], commands: ['dismiss'] },
       triggers: { conditions: [], effects: [], commands: [] },
@@ -150,13 +150,13 @@ describe('the registry', () => {
       ui: { conditions: [], effects: [], commands: [] },
       panels: { conditions: [], effects: ['panel'], commands: ['closePanel'] },
       entities: { conditions: ['count', 'entity'], effects: ['create', 'remove', 'each'], commands: [] },
-      holdings: { conditions: [], effects: ['entity', 'move', 'you'], commands: [] },
+      holdings: { conditions: [], effects: ['entity', 'move'], commands: [] },
       locks: { conditions: [], effects: [], commands: [] },
       saving: { conditions: [], effects: [], commands: [] },
       rolls: { conditions: ['roll'], effects: ['roll'], commands: [] },
       phrases: { conditions: [], effects: [], commands: [] },
       credits: { conditions: [], effects: [], commands: [] },
-      player: { conditions: [], effects: [], commands: [] },
+      player: { conditions: [], effects: ['you'], commands: [] },
       changes: { conditions: [], effects: [], commands: [] },
       ending: { conditions: [], effects: [], commands: [] },
     })

@@ -92,6 +92,18 @@ The stretch of the game the player is in is the kv key [`phase`](/docs/reference
 { kv: 'phase', is: ['arrival', 'first-day'] }
 ```
 
+### value
+
+Tests a [value](/docs/reference/custom#values) by its full name, a plugin's (`'inventory/count'`) or the game's (`'game/breadPrice'`), asked `with` its arguments. It uses the same three tests as [`kv`](#kv), so content reads a plugin's data the way it reads a variable, while only the plugin's own effects change it:
+
+```ts fragment
+{ value: 'messages/unread', with: { channel: 'texts' } }   // a number other than 0, or text other than ''
+{ value: 'game/weather', is: ['rain', 'fog'] }              // one of these values
+{ value: 'inventory/count', with: { entity: 'food:coffee' }, gte: 1 }
+```
+
+Text counts as 0 in a range. A value nobody declares fails every test, `is` and `lt` included, and the checker reports its name.
+
 ### setting
 
 Tests a `play` [setting](/docs/reference/settings), the value in [`state.settings`](/docs/reference/state#settings), with the same three tests as [`kv`](#kv). A `ui` setting isn't in the state, so the checker reports a condition that names one, an unknown setting, and an `is` the setting can't take.

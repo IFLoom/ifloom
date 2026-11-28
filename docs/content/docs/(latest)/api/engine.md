@@ -973,6 +973,7 @@ type Condition =
   | { count: string | Select; where?: Condition; units?: true; } & Range
   | { entity: string; at?: string; } & Range
   | { turn: Range; }
+  | { value: string; with?: PluginArgs; is?: KvValue | readonly KvValue[]; } & Range
   | { storyline: string; open?: boolean; }
   | { setting: string; is?: KvValue; } & Range
   | { stat: string; of?: string; } & Range
@@ -986,7 +987,7 @@ type Condition =
   | ConditionCall
 ```
 
-Uses: [`KvValue`](#kvvalue), [`Range`](#range), [`Select`](#select), [`ConditionCall`](#conditioncall).
+Uses: [`KvValue`](#kvvalue), [`Range`](#range), [`Select`](#select), [`PluginArgs`](/docs/api/engine-plugin#pluginargs), [`ConditionCall`](#conditioncall).
 
 ## ConditionCall
 
@@ -2254,8 +2255,8 @@ type GameState = {
   entities: Record<string, Record<string, EntityState>>
   created: Record<string, number>
   removed: string[]
-  held: Record<string, Record<string, number>>
   you: EntityRef | null
+  held: Record<string, Record<string, number>>
   turn: number
   kv: Record<string, KvValue>
   storylines: Record<string, StorylineState>
@@ -2286,8 +2287,8 @@ type GameState = {
 | `entities` | `Record<string, Record<string,` [`EntityState`](#entitystate)`>>` |  |  | The changes play has made to the game's entities, by kind and id, such as `entities.staff.ana`. A declared entity has no record until something changes it. An entity created in play has a record from the start. |
 | `created` | `Record<string, number>` |  |  | The number of entities of each kind created in play, for the next one's id. |
 | `removed` | `string[]` |  |  | The references of declared entities removed in play. A `create` with the same id brings one back. |
-| `held` | `Record<string, Record<string, number>>` |  |  | The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once written, 0 included. For a count play hasn't changed, the engine reads the entity's `at` in content. |
 | `you` | [`EntityRef`](#entityref) `\| null` |  |  | The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. |
+| `held` | `Record<string, Record<string, number>>` |  |  | The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once written, 0 included. For a count play hasn't changed, the engine reads the entity's `at` in content. |
 | `turn` | `number` |  |  | The number of turns that have passed, the engine's one clock. It starts at 0. The game decides how long a turn is (a day, an hour, a week or a chapter). The engine dates `seen`, `fired` and notices in turns. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The player's kv store, keys with a true/false, number or text value. |
 | `storylines` | `Record<string,` [`StorylineState`](#storylinestate)`>` |  |  | The storylines a save keeps, by id, each with its kv store and the turn it stays closed until. |

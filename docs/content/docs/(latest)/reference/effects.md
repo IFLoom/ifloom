@@ -193,7 +193,7 @@ It does nothing when `to` can't hold things, when `from` and `to` are the same, 
 
 ### you
 
-Sets who [`'you'`](/docs/reference/glossary#you) is, a unique entity kept in [`state.you`](/docs/reference/state#you). `null` or `'player'` goes back to the player. It does nothing for an entity that isn't there or can't hold things.
+Sets who [`'you'`](/docs/reference/glossary#you) is, a unique entity kept in [`state.you`](/docs/reference/state#you). `null` or `'player'` goes back to the player. It does nothing for an entity that isn't there or isn't of a unique kind.
 
 ```ts fragment
 { you: 'character:sam' }

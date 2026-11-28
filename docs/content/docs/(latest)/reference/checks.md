@@ -64,7 +64,8 @@ A plugin builds these in its `references`, a trait's `references`, an argument's
 | `{ stat, of, writes }` | A stat read, or written with `writes`, on the player or on `of`. |
 | `{ stat, starts }` | A stat an entity of the kind `starts` is given a value for. |
 | `{ storyline }`, `{ kind }`, `{ trait }`, `{ action }`, `{ input }`, `{ minigame }`, `{ timer }` | An id the game has to declare. A plugin's action, with a `/`, isn't checked. A timer's `to` and `by` have to be milliseconds. |
-| `{ holder, holds, protagonist }` | Something that can hold things, checked as [holders](#checks) are. |
+| `{ holder, holds }` | Something that can hold things, checked as [holders](#checks) are. |
+| `{ protagonist }` | Whom a `you` effect makes the player play, checked as [protagonists](#checks) are. |
 | `{ like, of }` | An entity a `create` makes a thing like, of the kind it makes. |
 | `{ minigameKv }` | A key some minigame declares in its `kv`. |
 | `{ entity }` | An entity by reference, such as `'food:apple'`, that content or a plugin's `entities` declares. `'$'` and `'food:*'` pass once the kind exists. |
@@ -192,7 +193,15 @@ A [holder](/docs/reference/glossary#holder) that content names has to be one tha
 | `unknown kind "…"` | The entity is of a kind nobody declares. |
 | `"…" can't hold things: its kind "…" isn't unique` | The entity's kind stacks, such as `'food:apple'`. |
 | `"…" can't hold itself` | A `move`'s `to` is the thing it moves. |
-| `"you" is already whoever is played: …` | A `you` effect's `to` is `'you'`. |
+
+The entity a `you` effect makes the player play has to be `'player'`, `'$'` or an entity of a [unique](/docs/reference/entities#unique) kind:
+
+| Problem | Cause |
+|---|---|
+| `"you" is already whoever is played: …` | A `you` effect names `'you'`. |
+| `unknown protagonist "…": a protagonist is "player" or a unique entity` | The name is no entity reference, such as `'pal'`. |
+| `unknown kind "…"` | The entity is of a kind nobody declares. |
+| `"…" can't be played: its kind "…" isn't unique` | The entity's kind stacks, such as `'food:apple'`. |
 
 A [`Reason`](/docs/reference/actions#reason) written by key, `{ string: 'shop/closed' }`, in a `blocked` entry or a `once`, has to name a line in the game's strings, a plugin's or the engine's, or the checker reports `no string named "…"` where it's written.
 
@@ -251,7 +260,7 @@ A call to a plugin's condition is also checked for what the plugin's [references
 | `a timer’s to must be a number of milliseconds above 0, or null to stop it`, `a timer’s by must be a number of milliseconds` | A `timer` effect's `to` or `by` is out of range. |
 | `jumps to point "…", but a jump only works as a choice's effect in the scene that has that point` | A [`point`](/docs/reference/effects#point) effect sits anywhere but a data scene's choice. In a choice, the scene's [flow checks](/docs/reference/flows#checks) read it. |
 
-The checker also lists a `notify`'s `image` in [`files`](#fileref), checks an `audio` or `sound` effect as [audio](/docs/reference/audio#checks), a `panel` effect's `with` as each plugin's references say, and a call to a plugin's effect for what its references name. Stat owners and holders are checked as [the tables above](#checks) list, for an `entity` effect's `at`, a `move`'s `from` and `to`, a `create`'s `at`, an `each`'s `at` and the entity a `you` effect names.
+The checker also lists a `notify`'s `image` in [`files`](#fileref), checks an `audio` or `sound` effect as [audio](/docs/reference/audio#checks), a `panel` effect's `with` as each plugin's references say, and a call to a plugin's effect for what its references name. Stat owners and holders are checked as [the tables above](#checks) list, for an `entity` effect's `at`, a `move`'s `from` and `to`, a `create`'s `at` and an `each`'s `at`, and protagonists for the entity a `you` effect names.
 
 Inside an `each`, the checker reads `where` as a condition and `effects` as effects, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
 

@@ -2,6 +2,10 @@
  * The kv store: keys with a true/false, number or text value. A key is the
  * player's, or with `of`, someone else's: an entity's (`'staff:ana'`), a
  * storyline's (`'storyline:baker'`), or the running minigame's (`'minigame'`).
+ *
+ * It also has the `value` condition, which compares a plugin's or the game's
+ * value the way `kv` compares a key, so content reads a plugin's data like a
+ * variable while only the plugin writes it.
  */
 import { entityKv, entityOf, hasEntity, ofKind, ownerOf, writeEntity } from '../entities.ts'
 import { storylineOf } from '../storylines.ts'
@@ -10,6 +14,7 @@ import type { Reference } from '../references.ts'
 import type { Amount, GameState, KvValue, Range } from '../types.ts'
 import { byKey, defineFeature, mergedByKey, type FeatureContext } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
+import type { PluginArgs } from '../plugin.ts'
 
 /** The prefix of an `of` that names a storyline's kv store, as in `'storyline:baker'`. */
 export const STORYLINE_KV = 'storyline:'
@@ -34,6 +39,15 @@ export type KvShape = {
      * (`of: 'minigame'`). It never holds for an owner that isn't there.
      */
     kv: { kv: string; is?: KvValue | readonly KvValue[]; of?: string } & Range
+    /**
+     * A condition on a value by full name, a plugin's (`'inventory/count'`) or the game's (`'game/…'`), asked `with`
+     * its arguments, such as `{ value: 'inventory/count', with: { entity: 'food:coffee' }, gte: 1 }`.
+     *
+     * It compares as `kv` does. With `is`, it holds while the value equals that value or one of a list. With a range,
+     * it holds while the value's number is in it, and text counts as 0. With neither, it holds while the value is a
+     * number other than 0 or text other than `''`. It never holds for a value nobody declares.
+     */
+    value: { value: string; with?: PluginArgs; is?: KvValue | readonly KvValue[] } & Range
   }
   effects: {
     /**
@@ -122,6 +136,22 @@ function drawn(state: GameState, of: string | undefined, key: string, ends: [num
   return low + cx.draw(high - low + 1, 'kv', of ?? '', key, state.seed, state.turn)
 }
 
+/** Returns true when a key's or a value's `read` matches what a condition asks: `is`, a range, or else truthiness. */
+function compares(read: KvValue, condition: { is?: KvValue | readonly KvValue[] } & Range): boolean {
+  if (condition.is !== undefined) return Array.isArray(condition.is) ? (condition.is as KvValue[]).includes(read) : read === condition.is
+  if (bounded(condition)) return inRange(asCount(read), condition)
+  return Boolean(read)
+}
+
+/** What a condition with `is`, a range or neither wants, for `explain`. */
+function wants(condition: { is?: KvValue | readonly KvValue[] } & Range): string {
+  if (condition.is !== undefined)
+    return Array.isArray(condition.is)
+      ? `one of ${(condition.is as KvValue[]).map((entry) => JSON.stringify(entry)).join(', ')}`
+      : `= ${JSON.stringify(condition.is)}`
+  return bounded(condition) ? wanted(condition) : 'set'
+}
+
 /** Whose key a line about it names: nothing for the player's. */
 const whose = (of: string | undefined) => (of === undefined || of === 'player' ? '' : `${of} `)
 
@@ -138,29 +168,28 @@ export const kv = defineFeature<KvShape>({
         const store = storeOf(state, game, condition.of)
         if (!store) return false
         const value = store.read[condition.kv]
-        if (condition.is !== undefined) {
-          // A key nobody has set counts as 0, as it does in a range and for `by`; it equals no other value.
-          const compared = value === undefined ? 0 : value
-          return Array.isArray(condition.is) ? (condition.is as KvValue[]).includes(compared) : compared === condition.is
-        }
-        if (bounded(condition)) return inRange(asCount(value), condition)
-        return Boolean(value)
+        // A key nobody has set counts as 0 for `is`, as it does in a range and for `by`; it equals no other value.
+        if (condition.is !== undefined) return compares(value === undefined ? 0 : value, condition)
+        return compares(value as KvValue, condition)
       },
       explain: (state, condition, game) => {
         const store = storeOf(state, game, condition.of)
         if (!store) return `${condition.of} is not there; wants it there`
         const value = store.read[condition.kv]
-        const want =
-          condition.is !== undefined
-            ? Array.isArray(condition.is)
-              ? `one of ${(condition.is as KvValue[]).map((entry) => JSON.stringify(entry)).join(', ')}`
-              : `= ${JSON.stringify(condition.is)}`
-            : bounded(condition)
-              ? wanted(condition)
-              : 'set'
-        return `${whose(condition.of)}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
+        return `${whose(condition.of)}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${wants(condition)}`
       },
       references: (condition) => ownerReferences(condition.of, condition.kv),
+    },
+    value: {
+      holds: (state, condition, game, cx) => {
+        const read = cx.customValue(game, condition.value)?.(state, condition.with ?? {})
+        return read !== undefined && compares(read, condition)
+      },
+      explain: (state, condition, game, cx) => {
+        const read = cx.customValue(game, condition.value)?.(state, condition.with ?? {})
+        return `value ${condition.value} is ${read === undefined ? 'not declared' : JSON.stringify(read)}; wants ${wants(condition)}`
+      },
+      references: (condition) => [{ value: condition.value }],
     },
   },
   effects: {

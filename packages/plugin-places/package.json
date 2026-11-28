@@ -33,6 +33,7 @@
       "default": "./dist/react/index.js"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist",
     "src"

@@ -2,19 +2,37 @@
 title: "Wardrobe"
 description: "The wardrobe plugin keeps track of what the player and each protagonist has on, in slots the game declares."
 ---
-`@ifloom/plugin-wardrobe` keeps track of what the player has on. The game declares the slots, such as a coat and a scarf, and anything the player can wear is a [thing](/docs/reference/glossary#thing) with the `wardrobe/wearable` [trait](/docs/reference/glossary#trait), which names its slot. The player wears only what they hold, and wearing a thing leaves the count held as it was. The plugin keeps what's worn for each body, the player's and each protagonist's the [`you`](/docs/reference/effects#you) effect switches to. The wardrobe needs no other plugin, and it cooperates with [places](/docs/reference/plugins/places) for a location where the player changes. [Entities, things and traits](/docs/explanation/entities-and-traits#traits-give-entities-meaning) explains traits, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Let the player get dressed](/docs/how-to/dress-the-player) builds a wardrobe with it.
+`@ifloom/plugin-wardrobe` keeps track of what the player has on. The game declares the slots, such as a coat and a scarf, and anything the player can wear is a [thing](/docs/reference/glossary#thing) with the `wardrobe/wearable` [trait](/docs/reference/glossary#trait), which names its slot. The plugin keeps each body's clothes and what each has on, the player's and each protagonist's the [`you`](/docs/reference/effects#you) effect switches to.
+
+The wardrobe is an optional shortcut. A game in the Twine style keeps an outfit in [kv keys](/docs/reference/state#kv) and gates scenes on them, and the wardrobe saves writing that: slots, wear and take-off buttons, a body that can wear only what it owns, and effects when a thing goes on or comes off.
+
+It's a [receiver](/docs/reference/glossary#receiver): it claims the wearable things a [`receive`](/docs/reference/effects#receive) gives, so a shirt bought from the [shop](/docs/reference/plugins/shop) goes straight into the wardrobe. A game where clothes are carried home first sets `claims: false`, and wearables fall through to the next receiver, such as the [inventory](/docs/reference/plugins/inventory). The wardrobe names no other plugin to do either. It needs no other plugin, and it cooperates with [places](/docs/reference/plugins/places) for a location where the player changes. [Entities, things and traits](/docs/explanation/entities-and-traits#traits-give-entities-meaning) explains traits, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Let the player get dressed](/docs/how-to/dress-the-player) builds a wardrobe with it.
 
 In the showcase: `examples/showcase/src/world/things.ts`, which declares the raincoat, the scarf and the coat and neck slots. The flat in `examples/showcase/src/story/flat.ts` is a closet, and the café's body in `examples/showcase/src/story/cafe.ts` reads `wardrobe.wearing('clothing:raincoat')`.
 
 ```ts
-import { wardrobe, slotsOf, wearableOf, type Closet, type Wearable, type WardrobeSlot, type WardrobeState, type WardrobeView } from '@ifloom/plugin-wardrobe'
+import {
+  wardrobe,
+  slotsOf,
+  wearableOf,
+  ownedHere,
+  type Closet,
+  type Owners,
+  type Wearable,
+  type WardrobeOptions,
+  type WardrobeSlot,
+  type WardrobeState,
+  type WardrobeView,
+} from '@ifloom/plugin-wardrobe'
 ```
 
 ## wardrobe
 
-The plugin's factory, which returns the plugin with the id `wardrobe`. It takes no options, because the slots and the wearable things are content a mod can change. Every field of its result is in [`wardrobe`](/docs/api/plugin-wardrobe#wardrobe), and its helpers are listed under [Functions](#functions).
+The plugin's factory, which returns the plugin with the id `wardrobe`. It takes [`WardrobeOptions`](#wardrobeoptions). The slots and the wearable things are content a mod can change. Every field of its result is in [`wardrobe`](/docs/api/plugin-wardrobe#wardrobe), and its helpers are listed under [Functions](#functions).
 
-A new game dresses the player from each slot's `start`. Putting a thing on takes off whatever was in its slot, and the thing taken off stays held. After each command that goes through, the plugin's [`onCommand`](/docs/reference/plugin-api#oncommand) hook takes off each thing a body no longer holds, whether it was sold, used up, given away or taken by an effect.
+A new game dresses the player from each slot's `start`. Putting a thing on takes off whatever was in its slot, and the thing taken off stays owned. A body wears what it owns in any receiver, its wardrobe or, with `claims: false`, what it carries. After each command that goes through, the plugin's [`onCommand`](/docs/reference/plugin-api#oncommand) hook takes off each thing a body no longer owns anywhere, whether it was sold, used up, given away or taken by an effect, and runs its `onTakeOff`.
+
+In a game with the inventory too, list the wardrobe first in the game's [`receivers`](/docs/reference/content#gamebase), `receivers: ['wardrobe', 'inventory']`, so clothes go to the wardrobe and the rest to the inventory.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -26,13 +44,23 @@ declare const town: Content
 export const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [places({ start: 'flat' }), wardrobe()] })
 ```
 
+### WardrobeOptions
+
+The plugin's settings. Every field is in [`WardrobeOptions`](/docs/api/plugin-wardrobe#wardrobeoptions).
+
+`claims: false` makes the wardrobe claim nothing a `receive` gives, so wearables go to the next receiver and the player carries them, and [`wardrobe/store`](#wardrobestore) puts them away by name. `onWear` and `onTakeOff` run when a body puts on or takes off anything, after the thing's own.
+
+```ts fragment
+wardrobe({ claims: false, onWear: [{ kv: 'outfitChanged', to: true }] })
+```
+
 ## Content
 
 ### WardrobeSlot
 
 A slot the game declares in `data.wardrobe.slots`, a part of the body where a thing is worn. Every field is in [`WardrobeSlot`](/docs/api/plugin-wardrobe#wardrobeslot).
 
-The loader merges slots by id, so a mod adds a slot, and the view lists them in order. `label` is the word the player reads. `start` is the thing the player wears in the slot in a new game, and the slot starts empty if it's left out. The player must start holding that thing, so it needs `at: 'player'` or a count for the player.
+The loader merges slots by id, so a mod adds a slot, and the view lists them in order. `label` is the word the player reads. `start` is the thing the player wears in the slot in a new game, and the slot starts empty if it's left out. The player must start owning that thing, so it needs `wardrobe.owned('player')`.
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -41,7 +69,7 @@ import { wardrobe } from '@ifloom/plugin-wardrobe'
 export const town: Content = {
   kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', description: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', description: 'Yellow, a size too big.', traits: { ...wardrobe.wearable('coat'), ...wardrobe.owned('player') } },
     { id: 'scarf', of: 'clothing', name: 'scarf', description: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
   ],
   data: {
@@ -63,13 +91,31 @@ The clothing kind is [`unique`](/docs/reference/entities#unique) because each co
 
 The data of the `wardrobe/wearable` trait, which makes a thing wearable in one slot. Every field is in [`Wearable`](/docs/api/plugin-wardrobe#wearable).
 
-`wardrobe.wearable(slot)` writes the trait, to spread into `traits` beside other plugins' traits, such as the [shop](/docs/reference/plugins/shop)'s `sellable`. The trait goes on a kind as a default, on an entity, or in content's [`traits`](/docs/reference/content#traits) table, where a mod can move a thing to another slot. A thing made in play `like` a wearable one is wearable too.
+`slot` is the slot it goes in. `onWear` runs when a body puts the thing on and `onTakeOff` when it comes off, before the game-wide ones, such as a uniform that sets a kv key while it's on:
+
+```ts
+import type { EntityDef } from '@ifloom/engine'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+
+export const uniform: EntityDef = {
+  id: 'uniform',
+  of: 'clothing',
+  name: 'uniform',
+  traits: { ...wardrobe.wearable('body', { onWear: [{ kv: 'onDuty', to: true }], onTakeOff: [{ kv: 'onDuty', to: false }] }) },
+}
+```
+
+`wardrobe.wearable(slot, { onWear, onTakeOff }?)` writes the trait, to spread into `traits` beside other plugins' traits, such as the [shop](/docs/reference/plugins/shop)'s `sellable`. The trait goes on a kind as a default, on an entity, or in content's [`traits`](/docs/reference/content#traits) table, where a mod can move a thing to another slot. A thing made in play `like` a wearable one is wearable too.
+
+### Owners
+
+The data of the `wardrobe/owned` trait, whose wardrobe a thing starts in: one body, `'player'` or a protagonist, or a count for each body. `wardrobe.owned(owners)` writes it. Its type is in [`Owners`](/docs/api/plugin-wardrobe#owners).
 
 ### Closet
 
 The data of the `wardrobe/closet` trait, which makes a location somewhere the player changes clothes. Every field is in [`Closet`](/docs/api/plugin-wardrobe#closet).
 
-While the player is at a location with the trait, the plugin's [`actions`](/docs/reference/plugin-views#actions) provider offers a button with the id `open` and the command `{ type: 'action', id: 'wardrobe/open' }`, which opens the `wardrobe` [panel](/docs/reference/panels) with `{ panel: 'wardrobe' }`. The button's label is the trait's `label`, or the `wardrobe/open` string (`Wardrobe`) if left out. Any choice or action can open the same panel with `{ panel: 'wardrobe' }`. The plugin finds the location through the `places/holder` query, so the trait does nothing in a game without places.
+While the player is at a location with the trait, the plugin's [`actions`](/docs/reference/plugin-views#actions) provider offers a button with the id `open` and the command `{ type: 'action', id: 'wardrobe/open' }`, which opens the `wardrobe` [panel](/docs/reference/panels) with `{ panel: 'wardrobe' }`. The button's label is the trait's `label`, or the `wardrobe/open` string (`Wardrobe`) if left out. Any choice or action can open the same panel with `{ panel: 'wardrobe' }`. The plugin finds the location through the `places/here` query, so the trait does nothing in a game without places.
 
 ```ts
 import { places } from '@ifloom/plugin-places'
@@ -98,11 +144,51 @@ Holds while a thing is on, or while a slot has something in it. It's a [plugin c
 | `{ slot }` | Holds while something is in that slot. `wardrobe.slotFilled(slot)` writes it. |
 | `{ entity, at }` | Holds while the thing is on `at`'s body, `'player'` or a protagonist such as `'character:sam'`, whoever is played. It has no helper. |
 
-Without `at`, it asks about whoever the player is playing now, [`'you'`](/docs/reference/glossary#you). With neither `entity` nor `slot` it's false, and so is an unknown thing or a slot the save has nothing in. To ask whether the player holds a thing, worn or not, use the engine's [`holding`](/docs/reference/entities#give-take-move-and-holding).
+Without `at`, it asks about whoever the player is playing now, [`'you'`](/docs/reference/glossary#you). With neither `entity` nor `slot` it's false, and so is an unknown thing or a slot the save has nothing in. To ask whether the player owns a thing, worn or not, use the engine's [`owned`](/docs/reference/conditions#owned) condition.
 
 ```ts fragment
 { 'wardrobe/wearing': { entity: 'clothing:scarf' } } // wardrobe.wearing('clothing:scarf')
 ```
+
+## Receiving
+
+As a receiver, the wardrobe claims things with the `wardrobe/wearable` trait, unless `claims` is `false`. `receive` adds the count to `to`'s wardrobe, `owned` counts what `of` has there, and `release` takes from `from`'s. Each left out is whoever the player is playing now.
+
+## Effects
+
+Content uses [`receive`](/docs/reference/effects#receive) and [`release`](/docs/reference/effects#release) to give and take clothes whichever plugin keeps them. These effects target the wardrobe by name. `at` is whose wardrobe, whoever is played if left out, and `by` is how many, 1 if left out.
+
+### wardrobe/add
+
+Puts `by` of the thing `entity` in the wardrobe of `at`.
+
+```ts fragment
+{ 'wardrobe/add': { entity: 'clothing:scarf' } }
+```
+
+### wardrobe/remove
+
+Takes `by` of the thing `entity` out of the wardrobe of `at`.
+
+### wardrobe/store
+
+Puts a thing away: it takes `by` of it from the game's other receivers in order, or the one `via` names, with [`release`](/docs/reference/effects#release), and adds what it took to the wardrobe of `at`. A game with `claims: false` uses it for putting carried clothes away.
+
+```ts fragment
+{ 'wardrobe/store': { entity: 'clothing:scarf' } } // wardrobe.store('clothing:scarf')
+```
+
+### wardrobe/takeOut
+
+Takes `by` of the thing out of the wardrobe of `at` and gives it to the first other receiver that claims it, or the one `via` names, with [`receive`](/docs/reference/effects#receive).
+
+```ts fragment
+{ 'wardrobe/takeOut': { entity: 'clothing:scarf' } } // wardrobe.takeOut('clothing:scarf')
+```
+
+## Values
+
+`wardrobe/owns` is how many of a thing someone has in their wardrobe, `at` them (whoever is played if left out), so 0 or 1 for a unique thing. The [`value`](/docs/reference/conditions#value) condition reads it.
 
 ## Commands
 
@@ -115,7 +201,7 @@ Puts the thing `id` on, in its slot, in place of whatever was there. The plugin 
 1. With `There is no such thing.` ([`noSuchThing`](/docs/reference/strings#refusals)) when the thing isn't in the game.
 2. With `The <name> is not something you wear.` (`wardrobe/notClothing`) when it has no `wardrobe/wearable` trait.
 3. With `You are already wearing the <name>.` (`wardrobe/alreadyWearing`).
-4. With `You have no <name>.` (`wardrobe/haveNone`) when the player doesn't hold it.
+4. With `You have no <name>.` (`wardrobe/haveNone`) when the player owns none, in any receiver.
 
 ```ts fragment
 { 'wardrobe/wear': { id: 'clothing:scarf' } } // wardrobe.wear('clothing:scarf')
@@ -133,7 +219,7 @@ Empties the slot `id`. The plugin refuses it with `There is nothing to take off.
 
 ### WardrobeState
 
-The clothes a save keeps at `state.plugins.wardrobe`: for each body that has worn something, `'player'` or a protagonist's reference, the thing in each slot or `null`. Every field is in [`WardrobeState`](/docs/api/plugin-wardrobe#wardrobestate).
+The clothes a save keeps at `state.plugins.wardrobe`. `worn` holds, for each body that has worn something, `'player'` or a protagonist's reference, the thing in each slot or `null`. `owned` holds the counts in each body's wardrobe that play changed, 0 included, and the plugin reads the rest from each thing's `wardrobe/owned` trait. Every field is in [`WardrobeState`](/docs/api/plugin-wardrobe#wardrobestate).
 
 Each body keeps its own slots, and the view and `wardrobe/wearing` read the slots of whoever is played. A protagonist starts with nothing on until they put something on, whatever the slots' `start`, which is the player's. The `onCommand` hook checks every body, so giving the player's scarf to Sam takes it off the player even while Sam is played. A UI reads [`WardrobeView`](#wardrobeview) instead.
 
@@ -142,7 +228,7 @@ import { apply, applyEffects, holds, type Game, type GameState } from '@ifloom/e
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 declare const game: Game
-declare const state: GameState // the player in the raincoat, and Sam holding a scarf
+declare const state: GameState // the player in the raincoat, and Sam owning a scarf
 
 const asSam = applyEffects(state, game, [{ you: 'character:sam' }])
 const dressed = apply(asSam, game, wardrobe.wear('clothing:scarf')).state
@@ -158,7 +244,7 @@ holds(back, game, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'charact
 
 The wardrobe of whoever the player is playing, in `view.plugins.wardrobe`. Every field is in [`WardrobeView`](/docs/api/plugin-wardrobe#wardrobeview).
 
-`slots` lists every slot the game declares, in order, with the thing in it and its name, both `null` for an empty slot. Each slot's `takeOff` is a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `wardrobe/takeOff` string, or `null` for an empty slot. `spare` lists the wearable things the player holds and isn't wearing, in the game's order of its entities, each with its `slot` and a `wear` button labelled with the `wardrobe/wear` string. Each button carries the engine's refusal in `disabled` when it can't be pressed now, such as a lock's.
+`slots` lists every slot the game declares, in order, with the thing in it and its name, both `null` for an empty slot. Each slot's `takeOff` is a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `wardrobe/takeOff` string, or `null` for an empty slot. `spare` lists the wearable things the player owns and isn't wearing, in the game's order of its entities, each with its `slot` and a `wear` button labelled with the `wardrobe/wear` string. Each button carries the engine's refusal in `disabled` when it can't be pressed now, such as a lock's.
 
 ```ts fragment
 {
@@ -167,7 +253,7 @@ The wardrobe of whoever the player is playing, in `view.plugins.wardrobe`. Every
 }
 ```
 
-The things worn are in the engine's [`view.held`](/docs/reference/view#heldview) too, since the player still holds them. A UI that lists the bag without the clothes leaves out the references in `slots`.
+With `claims: false`, the things worn are in the inventory's view too, since the player still carries them. A UI that lists the bag without the clothes leaves out the references in `slots`.
 
 [Render what the player wears](/docs/how-to/render/things-plugins#render-what-the-player-wears) renders this view in Plain JS, React and Vue.
 
@@ -218,8 +304,9 @@ One slot as `useWardrobe` returns it: the view's slot with `wear`, the `wear` bu
 
 The helpers are properties of `wardrobe` and write its traits and calls, typed:
 
-- **`wardrobe.wearable(slot)`** returns the [`wardrobe/wearable`](#wearable) trait, and **`wardrobe.closet(options?)`** the [`wardrobe/closet`](#closet) trait, to spread into `traits`.
+- **`wardrobe.wearable(slot, { onWear, onTakeOff }?)`** returns the [`wardrobe/wearable`](#wearable) trait, **`wardrobe.owned(owners)`** the [`wardrobe/owned`](#owners) trait, and **`wardrobe.closet(options?)`** the [`wardrobe/closet`](#closet) trait, to spread into `traits`.
 - **`wardrobe.wearing(entity, slot?)`** and **`wardrobe.slotFilled(slot)`** return the [`wardrobe/wearing`](#wardrobewearing) condition.
+- **`wardrobe.store(entity, { at, by, via }?)`** and **`wardrobe.takeOut(entity, { at, by, via }?)`** return the [effects](#effects).
 - **`wardrobe.wear(entity)`** and **`wardrobe.takeOff(slot)`** return the [commands](#commands) as a [`CommandRef`](/docs/reference/custom#commandref).
 
 The bench by the river is too cold without a scarf:
@@ -239,6 +326,10 @@ export const bench: ActionDef = {
 ### slotsOf
 
 Returns the game's slots from `data.wardrobe.slots`, merged from its content and packs, in order. Its signature is in [`slotsOf`](/docs/api/plugin-wardrobe#slotsof).
+
+### ownedHere
+
+Returns how many of a thing a body (`'you'` if left out) has in its wardrobe, its starts read from `wardrobe/owned`. It counts the wardrobe only; the engine's [`owned`](/docs/reference/conditions#owned) condition counts every receiver. Its signature is in [`ownedHere`](/docs/api/plugin-wardrobe#ownedhere).
 
 ### wearableOf
 
@@ -261,13 +352,16 @@ When the game loads, the plugin reports problems with each slot and each trait a
 | `a closet’s label must be words: { label: "Wardrobe" }` | A `wardrobe/closet` trait isn't an object, or its `label` isn't a string. |
 | `slots coat · unknown entity "clothing:anorak"` | A slot's `start` names a thing the game doesn't have. |
 | `starts with "clothing:scarf", which is not worn in this slot` | A slot's `start` names a thing whose trait names another slot. |
-| `starts with "clothing:raincoat", which the player does not start holding` | A slot's `start` names a thing without `at: 'player'` or a count for the player. |
+| `starts with "clothing:raincoat", which the player does not own at the start: …` | A slot's `start` names a thing without `wardrobe.owned('player')`. Not checked with `claims: false`. |
+| `wardrobe/owned can't be "you" where a thing starts: …` | A `wardrobe/owned` names `'you'`. |
+| `wardrobe/owned gives "…" 2.5: a count is a whole number above 0` | A start count isn't a whole number above 0. |
+| `a unique thing starts in one place, one of it` | A unique thing starts in more than one wardrobe, or more than one of it. |
 
 A `wardrobe/wearing` condition or a `wardrobe/wear` command naming a thing the game doesn't have gives `unknown entity "…"` where it's written.
 
 ```text
 mod:winter · trait wardrobe/wearable on clothing:gloves · unknown slot "hands"
-town · slots coat · starts with "clothing:raincoat", which the player does not start holding
+town · slots coat · starts with "clothing:raincoat", which the player does not own at the start: give it wardrobe.owned('player')
 ```
 
 ## Strings
@@ -278,7 +372,7 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 |---|---|
 | `wardrobe/notClothing` | `The {thing} is not something you wear.`, the refusal of a thing with no `wardrobe/wearable` trait. |
 | `wardrobe/alreadyWearing` | `You are already wearing the {thing}.` |
-| `wardrobe/haveNone` | `You have no {thing}.`, the refusal of a thing the player doesn't hold. |
+| `wardrobe/haveNone` | `You have no {thing}.`, the refusal of a thing the player doesn't own. |
 | `wardrobe/nothingToTakeOff` | `There is nothing to take off.`, the refusal of an empty slot. |
 | `wardrobe/takeOff` | `Take off`, the label of a slot's `takeOff` button. |
 | `wardrobe/wear` | `Wear {thing}`, the label of a spare thing's `wear` button. |
@@ -286,7 +380,7 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 
 ## Caveats
 
-- Within the command that loses a thing, `wardrobe/wearing` still holds, because the plugin takes the thing off after the command. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer holds.
-- A worn thing is still held, so `holding('clothing:raincoat')` holds while the raincoat is on.
+- Within the command that loses a thing, `wardrobe/wearing` still holds, because the plugin takes the thing off after the command. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer owns.
+- A worn thing is still owned, so `{ owned: 'clothing:raincoat' }` holds while the raincoat is on.
 - The wardrobe marks one thing as on, never a count. A player with two of a stackable thing wears one, and selling one leaves it on.
 - A save made while the game had a slot it has since dropped keeps that slot. `wardrobe.wearing(entity)` and the view read only the slots the game declares now, but `wardrobe.slotFilled` reads the save, so it still holds for the dropped slot, and `wardrobe.takeOff` empties it.

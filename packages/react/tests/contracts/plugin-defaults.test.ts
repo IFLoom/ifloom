@@ -38,6 +38,8 @@ const NO_UI: Record<string, string> = {
 }
 
 const SOURCES = import.meta.glob('../../../plugin-*/src/index.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+/** Every plugin's own modules, for an id declared beside its index, as the inventory's is in `held.ts`. */
+const MODULES = import.meta.glob('../../../plugin-*/src/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const UIS = import.meta.glob('../../../plugin-*/src/react/index.tsx', { eager: true }) as Record<string, Record<string, unknown>>
 const UI_SOURCES = import.meta.glob('../../../plugin-*/src/react/**/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const MANIFESTS = import.meta.glob('../../../plugin-*/package.json', { import: 'default', eager: true }) as Record<string, Manifest>
@@ -52,7 +54,11 @@ type Manifest = {
 /** Each first-party plugin: its id, its folder, whether it gives the view a slice, and its React UI's exports if it has one. */
 const PLUGINS = Object.entries(SOURCES).map(([path, source]) => {
   const dir = path.replace(/\/src\/index\.ts$/, '')
-  const id = /const ID = '([^']+)'/.exec(source)?.[1] ?? /definePlugin[^]*?\bid: '([^']+)'/.exec(source)?.[1]
+  const own = Object.entries(MODULES)
+    .filter(([file]) => file.startsWith(`${dir}/src/`))
+    .map(([, text]) => text)
+    .join('\n')
+  const id = /const ID = '([^']+)'/.exec(source)?.[1] ?? /const ID = '([^']+)'/.exec(own)?.[1] ?? /definePlugin[^]*?\bid: '([^']+)'/.exec(source)?.[1]
   return { dir, id: id ?? '', source, hasView: /^\s+view: /m.test(source), ui: UIS[`${dir}/src/react/index.tsx`], manifest: MANIFESTS[`${dir}/package.json`] }
 })
 

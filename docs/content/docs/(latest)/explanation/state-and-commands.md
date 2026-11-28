@@ -6,7 +6,7 @@ The engine keeps a game in progress as one plain state. The player changes it on
 
 ## One plain state
 
-A game in progress is one [`GameState`](/docs/reference/state). It holds the turn, the scene on screen, the player's stats and [kv store](/docs/reference/glossary#kv), what each holder holds, the entities' numbers, the storylines, and each plugin's own part, such as the calendar's day. It holds no functions and no class instances, so it turns into JSON as it is. The state is the save.
+A game in progress is one [`GameState`](/docs/reference/state). It holds the turn, the scene on screen, the player's stats and [kv store](/docs/reference/glossary#kv), the entities' numbers, the storylines, and each plugin's own part, such as the calendar's day or what the inventory keeps. It holds no functions and no class instances, so it turns into JSON as it is. The state is the save.
 
 The engine never changes a state in place. Every command returns a new state and leaves the old one as it was. So undo needs nothing more than the previous state, and a test can keep two states side by side and compare them.
 

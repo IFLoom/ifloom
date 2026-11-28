@@ -8,7 +8,7 @@
  *
  * An app is built from sections, each one a thing the engine already has:
  * prose, actions (the same buttons a room has, with prices and reasons), a list
- * (the things of a kind you hold, or the people the player can call), another plugin's view (a
+ * (the things of a kind, such as those the player owns, or the people the player can call), another plugin's view (a
  * messages channel, a feed), or a panel the UI draws by name.
  */
 import {
@@ -18,14 +18,13 @@ import {
   entityDescription,
   entityImage,
   entityName,
-  heldBy,
+  entitiesOf,
   holds,
   parseRef,
   pluginQuery,
   reasonOf,
   stringOf,
   whyNot,
-  YOU,
   type ActionDef,
   type Amount,
   type Block,
@@ -40,7 +39,9 @@ import {
 } from '@ifloom/engine'
 import {
   actionReferences,
+  anyOf,
   arg,
+  bindCurrent,
   defineCalls,
   defineData,
   definePlugin,
@@ -80,12 +81,12 @@ export type Section =
    */
   | { actions: ActionDef[] }
   /**
-   * The things of a kind a holder holds, such as `{ things: { of: 'photo' } }` for your photos. `at` is `'you'` if left
-   * out.
+   * The things of a kind, such as `{ things: { of: 'photo', where: { owned: '$' } } }` for the photos the player has.
+   * `where` narrows them with `'$'` as each; every one of the kind in the game if left out.
    *
    * The things come in reverse entity order, so the newest made in play come first.
    */
-  | { things: { of: string; at?: string } }
+  | { things: { of: string; where?: Condition } }
   /** The people the player has met and can call (the cast's `cast/contacts`), each with a Call button. Empty without the cast. */
   | { contacts: true }
   /** Another plugin's view, such as a messages channel or a feed, which a UI renders with that plugin's components. */
@@ -284,13 +285,13 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
       }
     }
     if ('things' in section) {
-      const { of, at = YOU } = section.things
+      const { of, where } = section.things
       return {
         type: 'list',
-        entries: heldBy(state, game, at)
-          .filter(({ ref }) => parseRef(ref)?.kind === of)
+        entries: entitiesOf(state, game, of)
+          .filter((ref) => parseRef(ref)?.kind === of && (where === undefined || holds(state, game, bindCurrent(where, ref))))
           .reverse()
-          .map(({ ref }) => {
+          .map((ref) => {
             const image = entityImage(state, game, ref)
             return {
               id: ref,
@@ -434,7 +435,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
           ...(app.badge !== undefined && !(typeof app.badge === 'object' && 'when' in app.badge) ? [{ amount: app.badge }] : []),
           ...(typeof app.badge === 'object' && 'when' in app.badge ? [{ when: app.badge.when }] : []),
           ...app.sections.flatMap((section): Reference[] => {
-            if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
+            if ('things' in section) return [{ kind: section.things.of }, { when: bindCurrent(section.things.where, anyOf(section.things.of)) }]
             if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]
             if ('blocks' in section) return [{ blocks: section.blocks }]
             if ('actions' in section) return section.actions.map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) }))

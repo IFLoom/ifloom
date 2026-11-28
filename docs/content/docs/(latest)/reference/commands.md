@@ -204,7 +204,6 @@ Every other state, such as a save, comes in through [`loadState`](/docs/referenc
 - Each plugin's state is its `start`, such as the places plugin's starting location.
 - The kv store holds the content's `kv`, with the `kv` option over it.
 - Each declared stat is at its `start`, and each storyline is open and empty.
-- Nothing is in [`held`](/docs/reference/state#held), so each entity's `at` says where it starts.
 - Each `play` setting is at the value in `settings`, or its default.
 
 `apply(null, game, { type: 'start', seed, kv })` gives the same state.

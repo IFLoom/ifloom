@@ -7,7 +7,7 @@ Generated from the source of `@ifloom/plugin-shop` and `@ifloom/plugin-shop/reac
 ## @ifloom/plugin-shop
 
 - Functions: [`sellableOf`](#sellableof), [`shop`](#shop), [`vendorOf`](#vendorof), [`vendorsOf`](#vendorsof)
-- Types: [`DiscountDef`](#discountdef), [`GoodDef`](#gooddef), [`GoodView`](#goodview), [`Restock`](#restock), [`Sellable`](#sellable), [`ShopState`](#shopstate), [`ShopView`](#shopview), [`StockRecord`](#stockrecord), [`Vendor`](#vendor), [`VendorDef`](#vendordef), [`VendorView`](#vendorview)
+- Types: [`DiscountDef`](#discountdef), [`GoodDef`](#gooddef), [`GoodView`](#goodview), [`Restock`](#restock), [`Sellable`](#sellable), [`ShopOptions`](#shopoptions), [`ShopState`](#shopstate), [`ShopView`](#shopview), [`Stock`](#stock), [`StockRecord`](#stockrecord), [`Vendor`](#vendor), [`VendorDef`](#vendordef), [`VendorView`](#vendorview)
 
 ### DiscountDef
 
@@ -39,19 +39,25 @@ import type { GoodDef } from '@ifloom/plugin-shop'
 type GoodDef = {
   entity: EntityRef
   price?: Record<string, number>
-  stock?: number
+  stock?: Stock
   restock?: Restock
   when?: Condition
+  deliver?: false | string
+  onBuy?: EffectRef[]
+  onSell?: EffectRef[]
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `entity` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The reference of the thing sold, such as `'food:apple'`. |
+| `entity` | [`EntityRef`](/docs/api/engine#entityref) |  |  | The reference of the thing sold, such as `'food:apple'`. A game that keeps things in kv keys declares a light entity, a name and no traits. |
 | `price` | `Record<string, number>` | yes |  | The price of one, by stat, such as `{ coins: 4 }`, each stat spendable. The thing's `shop/sellable` price if left out. |
-| `stock` | `number` | yes |  | The number the vendor starts with and `restock` tops it back up to. The good never runs out if left out, and each one bought is new. The vendor always sells a unique thing from its stock, so give one `stock: 1` or start it with the vendor. |
-| `restock` | [`Restock`](#restock) | yes |  | The interval the stock is topped back up to `stock` at. Never if left out. |
+| `stock` | [`Stock`](#stock) | yes |  | The number the vendor has, which `restock` tops back up to, or `'unlimited'`, or `'once'` for one sale only. `'once'` suits upgrades and unique things. `'unlimited'` if left out, or `'once'` for a unique thing. |
+| `restock` | [`Restock`](#restock) | yes |  | The interval a number `stock` is topped back up at. Never if left out. |
 | `when` | [`Condition`](/docs/api/engine#condition) | yes |  | The condition that must hold for the good to be on offer. |
+| `deliver` | `false \| string` | yes |  | The plugin a purchase goes to, or `false` to give nothing, so the purchase is only its `onBuy`, such as a kv flag. A plugin's id gives it to that plugin's receiver, as a `receive`'s `via` does. To whichever plugin that keeps things claims it first if left out. |
+| `onBuy` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one bought, after it's given, with `'$'` as the thing, such as `[{ kv: 'kitchen.coffeeMachine', to: true }]`. |
+| `onSell` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one sold back, after it's taken, with `'$'` as the thing. |
 
 ### GoodView
 
@@ -83,7 +89,7 @@ type GoodView = {
 | `description` | `string \| null` |  |  | The thing's description, or null when it has none. |
 | `image` | `string \| null` |  |  | The path of the thing's picture through `artSrc`, or null when it has none. |
 | `stock` | `number \| null` |  |  | The number the vendor has left, or null when the good never runs out. |
-| `owned` | `number` |  |  | The number of this thing the player holds. |
+| `owned` | `number` |  |  | The number of this thing the player owns, across the plugins that keep things. |
 | `off` | `number` |  |  | The fraction off today, or 0. |
 | `fullPrice` | [`Price`](/docs/api/engine#price) `\| null` |  |  | The price before today's discount, or null when there is no discount. |
 | `buy` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that buys one, with its price and any reason it's disabled. Its `command` is the one to send. |
@@ -140,10 +146,10 @@ content calls helpers such as `shop.vendor({ ... })` and `shop.buy('counter', 'f
 
 ```ts shape
 import { shop } from '@ifloom/plugin-shop'
-function shop(): DefinedPlugin<ShopState, ShopView>
+function shop(options?: ShopOptions): DefinedPlugin<ShopState, ShopView>
 ```
 
-Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`ShopState`](#shopstate), [`ShopView`](#shopview).
+Uses: [`ShopOptions`](#shopoptions), [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`ShopState`](#shopstate), [`ShopView`](#shopview).
 
 | Helper | Signature | Description |
 |---|---|---|
@@ -158,22 +164,41 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`ShopState`](#s
 | `shop.outside` | `(...periods: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `shop/outside` condition, which holds while the calendar's period is none of these. |
 | `shop.hours` | `(periods: readonly string[], reason?:` [`Reason`](/docs/api/engine#reason)`):` [`Blocked`](/docs/api/engine#blocked) | Returns a `blocked` entry for a vendor's opening hours, which closes it outside these calendar periods. |
 
-### ShopState
+### ShopOptions
 
-Type. Explained in [Shop](/docs/reference/plugins/shop#shopstate).
+Type. Explained in [Shop](/docs/reference/plugins/shop#shopoptions).
 
-The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and the plugin reads goods from content.
+The shop plugin's settings, which the game passes to `shop()`.
 
 ```ts shape
-import type { ShopState } from '@ifloom/plugin-shop'
-type ShopState = {
-  stocked: Record<string, Record<EntityRef, StockRecord>>
+import type { ShopOptions } from '@ifloom/plugin-shop'
+type ShopOptions = {
+  onBuy?: EffectRef[]
+  onSell?: EffectRef[]
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `stocked` | `Record<string, Record<`[`EntityRef`](/docs/api/engine#entityref)`,` [`StockRecord`](#stockrecord)`>>` |  |  | The last restock of each good, by vendor and then by thing. |
+| `onBuy` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one of anything bought from any vendor, after the good's and the vendor's, with `'$'` as the thing. |
+| `onSell` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one of anything sold back to any vendor, after the good's and the vendor's, with `'$'` as the thing. |
+
+### ShopState
+
+Type. Explained in [Shop](/docs/reference/plugins/shop#shopstate).
+
+The stock a save keeps for the vendors, only the goods play changed. The plugin reads the goods from content.
+
+```ts shape
+import type { ShopState } from '@ifloom/plugin-shop'
+type ShopState = {
+  stock: Record<string, Record<EntityRef, StockRecord>>
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `stock` | `Record<string, Record<`[`EntityRef`](/docs/api/engine#entityref)`,` [`StockRecord`](#stockrecord)`>>` |  |  | The number of each limited good each vendor has left, by vendor and then by thing. |
 
 ### ShopView
 
@@ -194,24 +219,35 @@ type ShopView = {
 | `vendors` | [`VendorView[]`](#vendorview) |  |  | The game's vendors, in the order the game declares them. |
 | `panel` | [`VendorView`](#vendorview) `\| null` |  |  | The vendor the open `shop` panel shows, named by its `with.vendor`, or null while no `shop` panel is open. A UI renders it in the panel as it is. |
 
+### Stock
+
+Type. Explained in [Shop](/docs/reference/plugins/shop#stock).
+
+The number of a good a vendor has, which `restock` tops back up, or `'unlimited'`, or `'once'` for a single sale.
+
+```ts shape
+import type { Stock } from '@ifloom/plugin-shop'
+type Stock = number | 'unlimited' | 'once'
+```
+
 ### StockRecord
 
 Type. Explained in [Shop](/docs/reference/plugins/shop#stockrecord).
 
-The record a save keeps of a vendor's last restock of a good, in `ShopState`'s `stocked`.
+The record a save keeps of one good's stock once play changed it, in `ShopState`'s `stock`.
 
 ```ts shape
 import type { StockRecord } from '@ifloom/plugin-shop'
 type StockRecord = {
+  left: number
   at: number
-  left?: number
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `at` | `number` |  |  | The turn or day of the last restock, or 0 for a good that never restocks. |
-| `left` | `number` | yes |  | A count an older save carried in that the vendor doesn't hold yet. |
+| `left` | `number` |  |  | The number the vendor had left then. |
+| `at` | `number` |  |  | The turn or day it was written on, which a `restock` compares with now, or 0 for a good that never restocks. |
 
 ### Vendor
 
@@ -226,6 +262,8 @@ type Vendor = {
   goods: GoodDef[]
   buysBack?: number
   discounts?: DiscountDef
+  onBuy?: EffectRef[]
+  onSell?: EffectRef[]
 }
 ```
 
@@ -235,6 +273,8 @@ type Vendor = {
 | `goods` | [`GoodDef[]`](#gooddef) |  |  | The vendor's goods, in the order shown. |
 | `buysBack` | `number` | yes |  | The fraction of a good's full price the vendor pays to buy one back. It buys nothing back if left out. |
 | `discounts` | [`DiscountDef`](#discountdef) | yes |  | The vendor's daily discounts. None if left out. |
+| `onBuy` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one of any good bought from the vendor, after the good's own, with `'$'` as the thing. |
+| `onSell` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one of any good sold back to the vendor, after the good's own, with `'$'` as the thing. |
 
 ### VendorDef
 
@@ -249,6 +289,8 @@ type VendorDef = {
   goods: GoodDef[]
   buysBack?: number
   discounts?: DiscountDef
+  onBuy?: EffectRef[]
+  onSell?: EffectRef[]
   of?: string
   // …
 }
@@ -262,6 +304,8 @@ Plugins add fields of their own to it, which their pages list.
 | `goods` | [`GoodDef[]`](#gooddef) |  |  | The vendor's goods, in the order shown. |
 | `buysBack` | `number` | yes |  | The fraction of a good's full price the vendor pays to buy one back. It buys nothing back if left out. |
 | `discounts` | [`DiscountDef`](#discountdef) | yes |  | The vendor's daily discounts. None if left out. |
+| `onBuy` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one of any good bought from the vendor, after the good's own, with `'$'` as the thing. |
+| `onSell` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run for each one of any good sold back to the vendor, after the good's own, with `'$'` as the thing. |
 | `of` | `string` | yes |  | The vendor's kind. The plugin's own kind, `vendor`, if left out. |
 
 ### vendorOf

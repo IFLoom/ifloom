@@ -206,6 +206,8 @@ export type GameRules<S = any> = Omit<
   | 'content'
   | 'strings'
   | 'data'
+  | 'receiver'
+  | 'carry'
 > & {
   /**
    * The game's save migrations, keyed by the game `version` each upgrades from, so step 1 takes a version-1 save to
@@ -216,17 +218,12 @@ export type GameRules<S = any> = Omit<
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
 }
 
-/** The stats, kv keys and things a New Game+ carries over from the game before, declared in `carryOver`. */
+/** The stats and kv keys a New Game+ carries over from the game before, declared in `carryOver`. A plugin carries its own state with its `carry`. */
 export type CarryOver = {
   /** The player's stats to carry, by id. */
   stats?: string[]
   /** The player's kv keys to carry, by key. */
   kv?: string[]
-  /**
-   * The things the player holds to carry, by reference (`'food:apple'`), or `'all'` for every thing the player holds.
-   * A thing made in play is carried too.
-   */
-  held?: string[] | 'all'
 }
 
 /** The fields of a game the core reads itself. The features declare the rest, such as settings, stats and audio. */
@@ -256,6 +253,12 @@ type CoreGame = {
   strings?: Record<string, string>
   /** The plugins the game is built with, in the order their hooks run. */
   plugins?: readonly Plugin<any>[]
+  /**
+   * The order the `receive` effect asks the plugins that keep things, by plugin id. The order of `plugins` if left out.
+   *
+   * `['wardrobe', 'inventory']` sends clothes to the wardrobe and the rest to the inventory.
+   */
+  receivers?: readonly string[]
   /**
    * The plugins' content, by plugin id and then list, such as `data.quests.quests`. `loadGame` merges packs' entries by
    * id, as it does scenes.

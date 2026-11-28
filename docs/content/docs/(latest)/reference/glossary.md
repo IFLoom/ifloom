@@ -14,7 +14,7 @@ A number content names that the engine works out when it reads it, such as a sta
 
 ## base
 
-The second argument of [`loadGame`](/docs/reference/content#loadgame), which holds the game's `id`, `title`, `version`, `plugins` and `rules`, and nothing a mod could change. See [`GameBase`](/docs/reference/content#gamebase) and [Content, packs and the base](/docs/explanation/content-and-packs).
+The second argument of [`loadGame`](/docs/reference/content#loadgame), which holds the game's `id`, `title`, `version`, `plugins`, `receivers` and `rules`, and nothing a mod could change. See [`GameBase`](/docs/reference/content#gamebase) and [Content, packs and the base](/docs/explanation/content-and-packs).
 
 ## beat
 
@@ -122,7 +122,7 @@ The location the player is at now, read with the places plugin's `places/here`. 
 
 ## holder
 
-The one who has things, `'player'`, a unique entity or `'you'`. A holder holds things, and `state.held` records the counts play changed. Only unique entities hold, and other kinds stack. See [`Holder`](/docs/reference/entities#holder-and-placement) and [Entities, things and traits](/docs/explanation/entities-and-traits).
+The [inventory plugin](/docs/reference/plugins/inventory)'s word for who carries things, `'player'`, a unique entity or `'you'`. The engine has no holders: it names [someone](#someone), and the plugins that keep things are [receivers](#receiver).
 
 ## hook
 
@@ -220,9 +220,17 @@ A `{ point }` block, written `point()`, a place in a [flow](#flow) that a [jump]
 
 A line kept in content's `prose` table and read by key, for a line several scenes share, a set drawn at random, or a line a mod rewrites by key. See [Prose](/docs/reference/prose).
 
+## protagonist
+
+A unique entity the player plays, chosen with the `you` effect, such as one of two siblings taking turns. See [you](#you) and [Someone and Played](/docs/reference/entities#someone-and-played).
+
 ## provider
 
 A plugin member that answers a question and changes nothing, named by its noun, such as `guard`, `label`, `scene` or `view`. See [Plugin API](/docs/reference/plugin-api) and [How plugins work](/docs/explanation/plugins).
+
+## receiver
+
+A plugin that keeps things, such as the inventory or the wardrobe, which the `receive` and `release` effects and the `owned` condition ask. The engine keeps no record of who has what itself. See [Receivers](/docs/reference/entities#receivers).
 
 ## references
 
@@ -280,6 +288,10 @@ The example game in `examples/showcase`, titled Small Town, which uses every fea
 
 The runner's [`RunnerSnapshot`](/docs/reference/runner#runnersnapshot), every value a UI renders (the view, settings, backlog, undo and redo, saves and helpers' reports) in one value.
 
+## someone
+
+Who content gives a thing to, takes it from or asks about: `'player'`, `'you'` or a unique entity. See [Someone and Played](/docs/reference/entities#someone-and-played).
+
 ## speech
 
 A spoken line written under who says it by id, `@ava: "…"` in prose or `say('ava', words)` in a flow. The view shows the speaker's name from the entity. See [Prose](/docs/reference/prose).
@@ -322,7 +334,7 @@ A word on an entity or a kind that content selects by, such as `fruit`. See [Ent
 
 ## thing
 
-An entity the player can hold or collect, such as a sandwich, a note or a photo. See [Entities, things and traits](/docs/explanation/entities-and-traits).
+An entity the player can have or collect, such as a sandwich, a note or a photo, kept by a [receiver](#receiver) or in kv keys. See [Entities, things and traits](/docs/explanation/entities-and-traits).
 
 ## timer
 

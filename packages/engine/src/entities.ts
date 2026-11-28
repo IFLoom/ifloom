@@ -133,11 +133,6 @@ export type EntityDef = {
   /** The entity's starting kv keys. */
   kv?: Record<string, KvValue>
   /**
-   * The entity's starting holder, such as `'player'` or a unique entity like `'character:ava'`, or a count for each
-   * holder (`{ player: 2, 'place:larder': 6 }`). Held by no one if left out.
-   */
-  at?: Placement
-  /**
    * The entity's traits, by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. They go over its kind's and
    * under a content `traits` row for the entity, and an object merges with its kind's field by field.
    */
@@ -184,18 +179,18 @@ export type EntityState = {
 export type EntityRef = `${string}:${string}`
 
 /**
- * A holder of things, `'player'`, a unique entity (`'character:ava'`) or `'you'`. `'you'` is whoever the player is
- * playing now, the player unless a `you` effect switched to a protagonist.
+ * Someone, `'player'`, a unique entity (`'character:ava'`) or `'you'`. `'you'` is whoever the player is playing now,
+ * the player unless a `you` effect switched to a protagonist. It's who a `receive` gives a thing to.
  */
-export type Holder = EntityRef | typeof PLAYER | typeof YOU
+export type Someone = EntityRef | typeof PLAYER | typeof YOU
 
-/** A thing's placement, one holder for one of it or a count for each holder. */
-export type Placement = Holder | Partial<Record<Holder, number>>
+/** The one the player is playing, a protagonist or `'player'`. */
+export type Played = EntityRef | typeof PLAYER
 
-/** The holder id of the player, whose things stay theirs whoever they are playing. */
+/** The id of the player themselves, whoever they are playing. */
 export const PLAYER = 'player'
 
-/** The holder id of whoever the player is playing now, the protagonist the `you` effect last chose or else the player. */
+/** The id of whoever the player is playing now, the protagonist the `you` effect last chose or else the player. */
 export const YOU = 'you'
 
 /** The reference content writes for the current entity inside an `each` or a `count`'s `where`. */
@@ -236,20 +231,20 @@ export function kindOf(game: Pick<Game, 'kinds' | 'plugins'>, id: string): KindD
   return game?.kinds?.find((kind) => kind.id === id) ?? game?.plugins?.flatMap((plugin) => plugin.content?.kinds ?? []).find((kind) => kind.id === id)
 }
 
-/** Returns true when the entity's kind is `unique`, so each entity is one particular thing that can hold others. */
+/** Returns true when the entity's kind is `unique`, so each entity is one particular someone or something. */
 export function isUnique(game: Pick<Game, 'kinds' | 'plugins'>, ref: string): boolean {
   const kind = parseRef(ref)?.kind
   return kind !== undefined && kindOf(game, kind)?.unique === true
 }
 
-/** Returns the holder `'you'` stands for now, the protagonist the `you` effect chose or else `'player'`. */
-export function protagonist(state: GameState): Holder {
+/** Returns whom `'you'` stands for now, the protagonist the `you` effect chose or else `'player'`. */
+export function protagonist(state: GameState): Played {
   return state.you ?? PLAYER
 }
 
-/** Returns the holder a holder id stands for now, so `'you'` becomes the protagonist or the player. Any other id is returned unchanged. */
-export function resolveHolder(state: GameState, holder: string): string {
-  return holder === YOU ? protagonist(state) : holder
+/** Returns whom an id stands for now, so `'you'` becomes the protagonist or the player. Any other id is returned unchanged. */
+export function resolveYou(state: GameState, who: string): string {
+  return who === YOU ? protagonist(state) : who
 }
 
 /**
@@ -507,9 +502,9 @@ export function anyOf(kind: string): EntityRef {
   return `${kind}:*`
 }
 
-/** An `each` effect or a `count` condition: it binds `'$'` for what it holds. */
+/** An `each` effect, a `count` condition or a `create`'s effects: each binds `'$'` for itself. */
 function ownsCurrent(node: object): boolean {
-  return 'count' in node || 'each' in node
+  return 'count' in node || 'each' in node || 'create' in node
 }
 
 /** Where a call's arguments are: a short call's `{ 'cast/met': { … } }`, or a long call's or a value's `with`. */
@@ -517,18 +512,19 @@ function holdsArgs(key: string): boolean {
   return key === 'with' || key.includes('/')
 }
 
-/** The fields that name an entity or a holder, where `'$'` is bound: `of`, `entity`, `at` and `like`, the `remove`, `move` and `you` effects' own, and a `move`'s `from` and `to`. */
+/** The fields that name an entity or someone, where `'$'` is bound: `of`, `entity` and `like`, the `remove`, `you`, `receive`, `release` and `owned` calls' own, and their `to` and `from`. */
 function namesOne(node: object, key: string): boolean {
-  if (key === 'of' || key === 'entity' || key === 'at' || key === 'like' || key === 'remove' || key === 'move' || key === 'you') return true
-  return (key === 'from' || key === 'to') && 'move' in node
+  if (key === 'of' || key === 'entity' || key === 'like' || key === 'remove' || key === 'you') return true
+  if (key === 'receive' || key === 'release' || key === 'owned') return true
+  return (key === 'from' || key === 'to') && ('receive' in node || 'release' in node)
 }
 
 /**
  * Returns a condition or effects with `ref` in place of each `'$'`. A nested `each`'s effects and a nested `count`'s
  * `where` keep their own `'$'`.
  *
- * It replaces `'$'` in every `of`, `entity`, `at` and `like`, in a `remove`, `move` or `you` effect's target, in a
- * `move`'s `from` and `to`, and anywhere in a call's arguments or a `create`'s `with`
+ * It replaces `'$'` in every `of`, `entity` and `like`, in a `remove`, `you`, `receive`, `release` or `owned`'s
+ * target, in a `receive`'s `to` and a `release`'s `from`, and anywhere in a call's arguments or a `create`'s `with`
  * (`{ 'cast/met': { character: '$' } }`).
  */
 export function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | undefined>(value: T, ref: EntityRef): T {

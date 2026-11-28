@@ -80,7 +80,7 @@ export type StartOptions = {
  *
  * An amount is a number, a stat of the player's by id, a stat with `{ stat, of? }`, a kv key's number with
  * `{ kv, of? }` (a value that is not a number counts as 0), a value by name with `{ value, with? }`, or a count of
- * entities with `{ count, where?, units? }`, counted as the `count` condition counts. Amounts combine as a `Formula`
+ * entities with `{ count, where? }`, counted as the `count` condition counts. Amounts combine as a `Formula`
  * does (`sum`, `product`, `min`, `max`, `scale`, `clamp`), with any amount as a part, and `of` names the owner as it
  * does in conditions.
  *
@@ -93,7 +93,7 @@ export type Amount =
   | { stat: StatKey; of?: string }
   | { kv: string; of?: string }
   | ValueRef
-  | { count: string | Select; where?: Condition; units?: true }
+  | { count: string | Select; where?: Condition }
   | { sum: Amount[] }
   | { product: Amount[] }
   | { min: Amount[] }

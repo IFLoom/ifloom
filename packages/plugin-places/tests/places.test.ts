@@ -4,7 +4,6 @@ import {
   commandOf,
   apply,
   checkGame,
-  heldCount,
   holds,
   pluginQuery,
   loadGame,
@@ -17,8 +16,9 @@ import {
   type Pack,
 } from '@ifloom/engine'
 import { loadChecked, play } from '@ifloom/engine/testing'
+import { definePlugin } from '@ifloom/engine/plugin'
 import { calendar } from '@ifloom/plugin-calendar'
-import { locationOf, locationsOf, places, type PlaceDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
+import { locationOf, locationsOf, lyingCount, places, type PlaceDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
 const place = (id: string, exits: string[], extra: Partial<PlaceDef> = {}) =>
   places.location({
@@ -429,33 +429,60 @@ describe('places', () => {
   })
 
   describe('things lying in a place', () => {
-    const lying = (): { g: Game } => {
+    /** A pocket for these tests: a receiver that keeps counts of what the player picks up. */
+    const pocket = definePlugin<Record<string, number>>({
+      id: 'pocket',
+      version: 1,
+      start: () => ({}),
+      receiver: {
+        receive: (_state, ref, count, _to, { slice, set }) => set({ ...slice, [ref]: (slice[ref] ?? 0) + count }),
+        owned: (_state, ref, _of, { slice }) => slice[ref] ?? 0,
+        release: (_state, ref, count, _from, { slice, set }) => set({ ...slice, [ref]: (slice[ref] ?? 0) - count }),
+      },
+    })
+    const lying = (withPocket = true, options: PlacesOptions = {}): { g: Game } => {
       const withThings: Content = {
         ...town,
         kinds: [{ id: 'item', label: 'Thing' }],
         entities: [
           ...town.entities!,
-          { id: 'paper', of: 'item', name: 'Newspaper', at: { 'location:street': 2 } },
-          { id: 'coin', of: 'item', name: 'Coin', at: 'location:house', visible: { kv: 'lookedClosely' } },
+          { id: 'paper', of: 'item', name: 'Newspaper', traits: { ...places.lies('street', { count: 2 }) } },
+          { id: 'coin', of: 'item', name: 'Coin', traits: { ...places.lies('house') }, visible: { kv: 'lookedClosely' } },
+          {
+            id: 'key',
+            of: 'item',
+            name: 'Key',
+            traits: {
+              ...places.lies('house', { when: { kv: 'perception', gte: 5 }, onFind: [{ kv: 'foundKey', by: 1 }], onPickUp: [{ kv: 'hasKey', to: true }] }),
+            },
+          },
         ],
-        actions: [...(town.actions ?? []), { id: 'drop', effects: [{ move: 'item:paper', from: 'you', to: 'location:park' }] }],
+        actions: [
+          ...(town.actions ?? []),
+          { id: 'drop', effects: [places.put('item:paper')] },
+          { id: 'look', effects: [{ kv: 'perception', to: 5 }] },
+          { id: 'blink', effects: [{ kv: 'perception', to: 0 }] },
+        ],
       }
-      const { game: g, problems } = loadGame([withThings], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
+      const plugins = [calendar(), places({ start: 'house', ...options }), ...(withPocket ? [pocket] : [])]
+      const { game: g, problems } = loadGame([withThings], { id: 'town', title: 'Town', plugins })
       expect(problems).toEqual([])
       return { g }
     }
+    const pocketOf = (state: GameState) => state.plugins.pocket?.state as Record<string, number>
 
-    it('are what the place’s entity holds: each location is a unique entity of the kind location', () => {
+    it('start where their places/lies trait says, kept in the places plugin, the locations holding nothing', () => {
       const { g } = lying()
       expect(g.kinds?.find((kind) => kind.id === 'location')).toMatchObject({ unique: true, listed: false })
       expect(g.entities?.find((entity) => entity.of === 'location' && entity.id === 'cafe')).toMatchObject({ name: 'Cafe', description: 'Town' })
       const state = startingState(g)
       expect(view(state, g).entities.find((kind) => kind.id === 'location')).toBeUndefined()
-      expect(pluginQuery(g, 'places/holder')!(state)).toBe(places.locationRef('house'))
-      expect(holds(state, g, { entity: 'item:paper', at: 'location:street', gte: 2 })).toBe(true)
+      expect(lyingCount(state, g, 'item:paper', 'street')).toBe(2)
+      expect(lyingCount(state, g, 'item:paper', 'location:street')).toBe(2)
+      expect(pluginQuery(g, 'places/holder')).toBeUndefined()
     })
 
-    it('are shown in the place, but those not visible, with a button that picks one up', () => {
+    it('are shown in the place, but those not visible, with a button that picks one up for whoever keeps things', () => {
       const { g } = lying()
       const house = startingState(g)
       expect(shown(house, g).things).toEqual([])
@@ -472,10 +499,71 @@ describe('places', () => {
       ])
       const took = apply(street, g, places.pickUp('item:paper'))
       expect(took.reason).toBeUndefined()
-      expect([heldCount(took.state, g, 'item:paper', 'player'), heldCount(took.state, g, 'item:paper', places.locationRef('street'))]).toEqual([1, 1])
+      expect(pocketOf(took.state)).toEqual({ 'item:paper': 1 })
+      expect(lyingCount(took.state, g, 'item:paper', 'street')).toBe(1)
       expect(whyNot(house, g, places.pickUp('item:paper'))).toBe('There is no Newspaper here.')
       expect(whyNot({ ...street, sceneId: 'x' }, g, places.pickUp('item:paper'))).toBe('Finish this first.')
       expect(shown({ ...street, sceneId: 'x' }, g).things).toEqual([])
+    })
+
+    it('are picked up into kv keys alone when no plugin keeps things, by onPickUp', () => {
+      const { g } = lying(false, { onPickUp: [{ kv: 'pickedUp', by: 1 }] })
+      const street = walk(g, startingState(g), 'street')
+      const took = apply(street, g, places.pickUp('item:paper')).state
+      expect(lyingCount(took, g, 'item:paper', 'street')).toBe(1)
+      expect(took.kv.pickedUp).toBe(1)
+    })
+
+    it('lie hidden until their when holds, are found once with onFind, and stay found', () => {
+      const { g } = lying()
+      const house = startingState(g)
+      expect(shown(house, g).things).toEqual([])
+      expect(whyNot(house, g, places.pickUp('item:key'))).toBe('There is no Key here.')
+      const looked = apply(house, g, { type: 'action', id: 'look' }).state
+      expect(looked.kv.foundKey).toBe(1)
+      expect(shown(looked, g).things.map((thing) => thing.ref)).toEqual(['item:key'])
+      // Found once: the condition failing later hides it no more, and onFind doesn't run again.
+      const blinked = apply(apply(looked, g, { type: 'action', id: 'blink' }).state, g, { type: 'action', id: 'look' }).state
+      expect(blinked.kv.foundKey).toBe(1)
+      expect(shown(blinked, g).things.map((thing) => thing.ref)).toEqual(['item:key'])
+      const took = apply(blinked, g, places.pickUp('item:key')).state
+      expect(took.kv.hasKey).toBe(true)
+      expect(pocketOf(took)).toEqual({ 'item:key': 1 })
+    })
+
+    it('are not found from another place', () => {
+      const { g } = lying()
+      const street = walk(g, startingState(g), 'street')
+      const looked = apply(street, g, { type: 'action', id: 'look' }).state
+      expect(looked.kv.foundKey).toBeUndefined()
+    })
+
+    it('are put down where the player is by places/put, or nowhere when the player is nowhere', () => {
+      const { g } = lying()
+      const house = startingState(g)
+      const dropped = apply(house, g, { type: 'action', id: 'drop' }).state
+      expect(lyingCount(dropped, g, 'item:paper', 'house')).toBe(1)
+      expect(shown(dropped, g).things.map((thing) => [thing.ref, thing.count])).toEqual([['item:paper', 1]])
+      const nowhere = { ...house, plugins: { ...house.plugins, places: { version: 1, state: { at: null, floor: {}, found: [] } } } }
+      expect(apply(nowhere, g, { type: 'action', id: 'drop' }).state.plugins.places.state).toEqual({ at: null, floor: {}, found: [] })
+    })
+
+    it('are checked: an unknown location, a bad count, and onFind with no when', () => {
+      const bad: Content = {
+        ...town,
+        kinds: [{ id: 'item', label: 'Thing' }],
+        entities: [
+          ...town.entities!,
+          { id: 'a', of: 'item', name: 'A', traits: { ...places.lies('moon') } },
+          { id: 'b', of: 'item', name: 'B', traits: { ...places.lies('house', { count: 0 }) } },
+          { id: 'c', of: 'item', name: 'C', traits: { ...places.lies('house', { onFind: [] }) } },
+        ],
+      }
+      const { problems } = loadGame([bad], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
+      const lines = problems.map((problem) => problem.what)
+      expect(lines).toContain('lies in unknown location "moon"')
+      expect(lines).toContain('lies 0 of it: a count is a whole number above 0')
+      expect(lines).toContain('onFind runs when a hidden thing is found: give it a when')
     })
   })
 
@@ -518,7 +606,6 @@ describe('places', () => {
       const aboard = walk(g, startingState(g), 'vessel:ferry')
       expect(places.where(aboard, g)).toBe('vessel:ferry')
       expect(shown(aboard, g).location).toMatchObject({ id: 'vessel:ferry', ref: 'vessel:ferry', name: 'The ferry' })
-      expect(pluginQuery(g, 'places/holder')!(aboard)).toBe('vessel:ferry')
     })
 
     it('is changed by a mod with a traits row, or replaced by its entity', () => {

@@ -6,8 +6,86 @@ Generated from the source of `@ifloom/plugin-inventory` and `@ifloom/plugin-inve
 
 ## @ifloom/plugin-inventory
 
-- Functions: [`inventory`](#inventory), [`inventoryKindsOf`](#inventorykindsof), [`usableOf`](#usableof)
-- Types: [`InventoryData`](#inventorydata), [`InventoryThing`](#inventorything), [`InventoryView`](#inventoryview), [`Usable`](#usable)
+- Functions: [`canHold`](#canhold), [`heldBy`](#heldby), [`heldCount`](#heldcount), [`holderOf`](#holderof), [`holdersOf`](#holdersof), [`inventory`](#inventory), [`inventoryKindsOf`](#inventorykindsof), [`usableOf`](#usableof)
+- Types: [`Holder`](#holder), [`InventoryData`](#inventorydata), [`InventoryOptions`](#inventoryoptions), [`InventoryState`](#inventorystate), [`InventoryThing`](#inventorything), [`InventoryView`](#inventoryview), [`Placement`](#placement), [`Usable`](#usable)
+
+### canHold
+
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#canhold).
+
+Returns true when `holder` can hold things now. The player always can, and a unique entity can while it is in the game.
+
+```ts shape
+import { canHold } from '@ifloom/plugin-inventory'
+function canHold(state: GameState, game: Game, holder: string): boolean
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game).
+
+### heldBy
+
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#heldby).
+
+Returns the things a holder holds, `'you'` if left out, each with its count, in the game's order of its entities.
+
+```ts shape
+import { heldBy } from '@ifloom/plugin-inventory'
+function heldBy(state: GameState, game: Game, at?: string): { ref: EntityRef; count: number }[]
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref).
+
+### heldCount
+
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#heldcount).
+
+Returns the count of a thing a holder holds, `'you'` if left out. Returns 0 for a thing not held there or not in the game.
+
+```ts shape
+import { heldCount } from '@ifloom/plugin-inventory'
+function heldCount(state: GameState, game: Game, ref: string, at?: string): number
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game).
+
+### Holder
+
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#holder).
+
+A holder of things, `'player'`, a unique entity (`'character:ava'`) or `'you'`, whoever the player is playing now.
+
+```ts shape
+import type { Holder } from '@ifloom/plugin-inventory'
+type Holder = EntityRef | typeof PLAYER | typeof YOU
+```
+
+Uses: [`EntityRef`](/docs/api/engine#entityref).
+
+### holderOf
+
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#holderof).
+
+Returns the holder of a thing when one holder has it, as always for a unique thing. Undefined when no one holds it.
+
+```ts shape
+import { holderOf } from '@ifloom/plugin-inventory'
+function holderOf(state: GameState, game: Game, ref: string): Holder | undefined
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`Holder`](#holder).
+
+### holdersOf
+
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#holdersof).
+
+Returns each holder of a thing with its count, in no set order.
+
+```ts shape
+import { holdersOf } from '@ifloom/plugin-inventory'
+function holdersOf(state: GameState, game: Game, ref: string): { holder: Holder; count: number }[]
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`Holder`](#holder).
 
 ### inventory
 
@@ -18,17 +96,20 @@ The inventory plugin's factory, with its helpers as properties. `inventory()` re
 
 ```ts shape
 import { inventory } from '@ifloom/plugin-inventory'
-function inventory(): DefinedPlugin<null, InventoryView>
+function inventory(options?: InventoryOptions): DefinedPlugin<InventoryState, InventoryView>
 ```
 
-Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`InventoryView`](#inventoryview).
+Uses: [`InventoryOptions`](#inventoryoptions), [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`InventoryState`](#inventorystate), [`InventoryView`](#inventoryview).
 
 | Helper | Signature | Description |
 |---|---|---|
 | `inventory.usable` | `(label: string, effects:` [`EffectRef[]`](/docs/api/engine#effectref)`, options?: { keep?: boolean }): { 'inventory/usable':` [`Usable`](#usable) `}` | Returns the `inventory/usable` trait, to spread into an entity's or a kind's `traits`. Using the thing spends one unless `keep` is true. |
+| `inventory.at` | `(placement:` [`Placement`](#placement)`): { 'inventory/at':` [`Placement`](#placement) `}` | Returns the `inventory/at` trait, to spread into an entity's `traits`, naming who holds it at the start. |
 | `inventory.use` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `inventory/use` command, which uses one of a thing the player holds. |
 | `inventory.drop` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `inventory/drop` command, which drops one of a thing the player holds. |
-| `inventory.give` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](/docs/api/engine#holder)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `inventory/give` command, which gives one of a thing the player holds to another holder. |
+| `inventory.give` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](#holder)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `inventory/give` command, which gives one of a thing the player holds to someone. |
+| `inventory.move` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](#holder)`, options?: { from?:` [`Holder`](#holder)`; by?: number }):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `inventory/move` effect, which moves a thing from one holder to another, from `'you'` if `from` is left out. |
+| `inventory.set` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, to: number, holder?:` [`Holder`](#holder)`):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `inventory/set` effect, which sets how many of a thing a holder (`'you'` if left out) holds. |
 
 ### InventoryData
 
@@ -60,11 +141,45 @@ function inventoryKindsOf(game: Game): { id: string }[] | undefined
 
 Uses: [`Game`](/docs/api/engine#game).
 
+### InventoryOptions
+
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventoryoptions).
+
+The inventory plugin's settings, which the game passes to `inventory()`.
+
+```ts shape
+import type { InventoryOptions } from '@ifloom/plugin-inventory'
+type InventoryOptions = {
+  carryOver?: readonly string[] | 'all'
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `carryOver` | `readonly string[] \| 'all'` | yes |  | The things a New Game+ keeps in the player's own inventory, by reference (`'food:apple'`), or `'all'` for everything the player holds, things made in play included. Nothing if left out. |
+
+### InventoryState
+
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventorystate).
+
+The inventory's state, the counts play changed.
+
+```ts shape
+import type { InventoryState } from '@ifloom/plugin-inventory'
+type InventoryState = {
+  held: Record<string, Record<string, number>>
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `held` | `Record<string, Record<string, number>>` |  |  | The counts play changed, by holder and then thing. A count stays once written, 0 included. |
+
 ### InventoryThing
 
 Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventorything).
 
-A thing the player holds as the player sees it, in `view.plugins.inventory.things`.
+A thing someone holds as the player sees it, in `view.plugins.inventory.things`.
 
 ```ts shape
 import type { InventoryThing } from '@ifloom/plugin-inventory'
@@ -87,7 +202,7 @@ type InventoryThing = {
 | `description` | `string \| null` |  |  | The thing's `description`, with its tokens filled, or null when it has none. |
 | `image` | `string \| null` |  |  | The path of the thing's picture through `artSrc`, or null when it has none. |
 | `count` | `number` |  |  | The number of this thing the holder holds. |
-| `at` | [`Holder`](/docs/api/engine#holder) |  |  | The thing's holder, the protagonist being played or `'player'`. |
+| `at` | [`Holder`](#holder) |  |  | The thing's holder, the protagonist being played or `'player'`. |
 | `use` | [`RenderedChoice`](/docs/api/engine#renderedchoice) `\| null` |  |  | The button that uses one, labelled by its trait, or null for a thing with no use. Its `command` is the one to send. |
 | `drop` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The button that drops one. |
 
@@ -107,6 +222,19 @@ type InventoryView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `things` | [`InventoryThing[]`](#inventorything) |  |  | The things the inventory shows, the played protagonist's first and then the player's. |
+
+### Placement
+
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#placement).
+
+A thing's starting place, one holder for one of it or a count for each holder (`{ player: 2, 'place:larder': 6 }`).
+
+```ts shape
+import type { Placement } from '@ifloom/plugin-inventory'
+type Placement = Holder | Partial<Record<Holder, number>>
+```
+
+Uses: [`Holder`](#holder).
 
 ### Usable
 
@@ -144,9 +272,10 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## @ifloom/plugin-inventory/react
 
+- Components: [`InventorySection`](#inventorysection)
 - Functions: [`useInventory`](#useinventory)
 - Constants: [`INVENTORY_WORDS`](#inventory_words), [`InventoryCard`](#inventorycard), [`inventoryUi`](#inventoryui)
-- Types: [`InventoryControls`](#inventorycontrols)
+- Types: [`InventoryControls`](#inventorycontrols), [`InventoryProps`](#inventoryprops)
 
 ### INVENTORY_WORDS
 
@@ -156,17 +285,25 @@ The inventory plugin's UI words, in English. A game rewords any of them with `ui
 
 ```ts shape
 import { INVENTORY_WORDS } from '@ifloom/plugin-inventory/react'
-const INVENTORY_WORDS: { readonly drop: 'Drop'; }
+const INVENTORY_WORDS: {
+  inventory: 'Carrying'
+  heldCount: '×{n}'
+  drop: 'Drop'
+}
 ```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `inventory` | `'Carrying'` |  |  | The heading over the things the player carries. |
+| `heldCount` | `'×{n}'` |  |  | The count beside a thing held more than once, with `{n}` for the number. |
+| `drop` | `'Drop'` |  |  | The label of the button that drops one. |
 
 ### InventoryCard
 
 Const. Explained in [Inventory](/docs/reference/plugins/inventory#inventorycard).
 
-Renders the things the player holds from `view.plugins.inventory`, each usable one with a button. It replaces the
-core `Inventory`, and falls back to `view.held` without the plugin.
-
-It takes the core `Inventory`'s props.
+Renders the things the player holds from `view.plugins.inventory`, each usable one with a button. It renders nothing
+while they hold nothing, or in a game without the plugin.
 
 A button that can't be used now is disabled with the engine's reason, and the `drop` prop adds a button that drops
 one. A preset can style the parts `inventory`, `inventory-title`, `thing`, `thing-name`, `thing-count`, `thing-text`
@@ -177,7 +314,7 @@ import { InventoryCard } from '@ifloom/plugin-inventory/react'
 const InventoryCard: ComponentType<InventoryProps>
 ```
 
-Uses: [`InventoryProps`](/docs/api/react#inventoryprops).
+Uses: [`InventoryProps`](#inventoryprops).
 
 ### InventoryControls
 
@@ -200,14 +337,46 @@ type InventoryControls = {
 | `things` | [`InventoryThing[]`](#inventorything) |  |  | The things the inventory shows, the played protagonist's first and then the player's. |
 | `use` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `inventory/use` for one of a thing the player holds. A refusal carries the same reason the button shows. |
 | `drop` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `inventory/drop` for one of a thing the player holds. |
-| `give` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](/docs/api/engine#holder)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `inventory/give`, which gives one of a thing the player holds to another holder. |
+| `give` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`, to:` [`Holder`](#holder)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `inventory/give`, which gives one of a thing the player holds to someone. |
+
+### InventoryProps
+
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventoryprops).
+
+The props of `InventoryCard`.
+
+```ts shape
+import type { InventoryProps } from '@ifloom/plugin-inventory/react'
+type InventoryProps = {
+  className?: string
+  title?: string | false
+  drop?: boolean
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `className` | `string` | yes |  | Classes added to the `inventory` part's own. |
+| `title` | `string \| false` | yes |  | The heading, the `inventory` word if left out. `false` leaves it out, as under a section's title. |
+| `drop` | `boolean` | yes |  | True to give each thing a button that drops one. |
+
+### InventorySection
+
+Component. Explained in [Inventory](/docs/reference/plugins/inventory#inventorysection).
+
+Renders `InventoryCard` in a folding sidebar section titled with the `inventory` word. It hides itself while nothing is held.
+
+```ts shape
+import { InventorySection } from '@ifloom/plugin-inventory/react'
+function InventorySection(): JSX.Element
+```
 
 ### inventoryUi
 
 Const. Explained in [Inventory](/docs/reference/plugins/inventory#inventoryui).
 
-The inventory plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders `InventoryCard` wherever
-the core `Inventory` goes, in the sidebar and the `inventory` panel, and adds the plugin's words.
+The inventory plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds `InventorySection` to the
+sidebar and an `inventory` panel, and the plugin's words.
 
 ```ts shape
 import { inventoryUi } from '@ifloom/plugin-inventory/react'

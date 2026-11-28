@@ -1,5 +1,5 @@
 /** Moving day: the arrival, the cat's name, the note under the door and settling in. */
-import { give, text, type Content } from '@ifloom/engine'
+import { text, type Content } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
 /** Sam's note under the door: the notice's words, and the note's, kept in the phone's Notes app. */
@@ -46,7 +46,7 @@ export const movingDay: Content = {
     {
       id: 'welcome',
       when: places.at('high-street'),
-      effects: [{ notify: 'A note under your door', text: WELCOME, tag: 'post' }, give('note:welcome')],
+      effects: [{ notify: 'A note under your door', text: WELCOME, tag: 'post' }, { receive: 'note:welcome' }],
     },
   ],
   data: {

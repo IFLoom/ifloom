@@ -7,7 +7,7 @@ A plugin adds one system to the engine, such as a loyalty card, a quest list or 
 None of the examples writes a plugin of its own. The showcase's `examples/showcase/src/game.ts` lists the first-party plugins in the order they need, and [Examples](/docs/reference/examples) maps the rest.
 
 ```ts
-import { definePlugin, type Asked, type DefinedPlugin, type Plugin, type PluginArgs, type PluginCommand, type PluginContext, type PluginDef, type Refusal, type StatModifier } from '@ifloom/engine/plugin'
+import { definePlugin, type Asked, type DefinedPlugin, type Plugin, type PluginArgs, type PluginCommand, type PluginContext, type PluginDef, type Receiver, type Refusal, type StatModifier } from '@ifloom/engine/plugin'
 ```
 
 These pages document the rest of `@ifloom/engine/plugin`:
@@ -18,7 +18,7 @@ These pages document the rest of `@ifloom/engine/plugin`:
 - [Plugin migrations](/docs/reference/plugin-migrations) covers `migrations`, `contentMigrations` and `commandMigrations`.
 - [A plugin's content checks](/docs/reference/plugin-checks) covers `references` and `check`.
 
-The game's own `rules` takes the same hooks and providers as a plugin, and the engine runs it first. A plugin is the right choice when the system needs saved state of its own that is carried forward when its shape changes, or when more than one game should use it.
+The game's own `rules` takes the same hooks and providers as a plugin, and the engine runs it first. Only a plugin keeps things for others, with a [`receiver`](#receiver), or carries its state into a New Game+, with [`carry`](#carry). A plugin is the right choice when the system needs saved state of its own that is carried forward when its shape changes, or when more than one game should use it.
 
 ## Plugin
 
@@ -30,6 +30,7 @@ Every field but `id` and `version` is optional, and nothing is nested. The field
 - **Providers** answer a question and change nothing: [`guard`](#guard), [`price`](#price), [`label`](#label), [`saveName`](#savename), [`statModifiers`](#statmodifiers), [`profile`](#profile), and [`scene`](/docs/reference/plugin-views#scene), [`actions`](/docs/reference/plugin-views#actions), [`action`](/docs/reference/plugin-views#action), [`audio`](/docs/reference/plugin-views#audio) and [`view`](/docs/reference/plugin-views#view).
 - **Tables** of functions content calls by name: `conditions`, [`effects`](#effects), [`macros`](/docs/reference/custom#macros), [`commands`](#plugincommand), [`queries`](/docs/reference/plugin-queries#queries) and [`values`](/docs/reference/custom#values).
 - **Data**: [`calls` and `data`](/docs/reference/plugin-calls), [`content`](/docs/reference/plugin-views#content), [`traits`](/docs/reference/plugin-views#traits), [`strings`](#strings), [`cooperates`](/docs/reference/plugin-queries#cooperates), [`references`](/docs/reference/plugin-checks#pluginreferences-calltable-and-contentreferences) and [`check`](/docs/reference/plugin-checks#check).
+- **Keeping** things for content to give, take and ask about: [`receiver`](#receiver), and [`carry`](#carry) for what a New Game+ keeps.
 - **Versions** and their steps: [`version` and `migrations`](/docs/reference/plugin-migrations#migrations), [`contentVersion` and `contentMigrations`](/docs/reference/plugin-migrations#contentversion-and-contentmigrations), and [`commandVersion` and `commandMigrations`](/docs/reference/plugin-migrations#commandversion-and-commandmigrations).
 
 Each hook and provider runs over one list: the game's own `rules` first, then the plugins in the order `game.plugins` lists them, each given the state the one before it returned. Every function gets the state, what content passed it, and a [`PluginContext`](#plugincontext).
@@ -256,6 +257,52 @@ export const endings = definePlugin({
 ```
 
 The plugin's `view` reads the namespace as `context.profile`, so a UI gets everything from the view. Conditions, effects, commands, hooks and the `profile` provider's own context never see `context.profile`, because a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story branches on belongs in the plugin's state.
+
+### receiver
+
+What the plugin does when content gives someone a thing, takes one back or asks how many they have: the [`receive`](/docs/reference/effects#receive) and [`release`](/docs/reference/effects#release) effects and the [`owned`](/docs/reference/conditions#owned) condition. A plugin that keeps things, such as an inventory, a wardrobe or a garage, declares one, and is then a [receiver](/docs/reference/entities#receivers). Every field is in [`Receiver`](#receiver-1).
+
+### carry
+
+Returns a New Game+'s state with what the plugin carries from the game before laid over it. It gets the new game's state so far, the state the old game ended on, and the context of the new state: `context.get(from)` reads the old slice and `context.set` writes the new one. A plugin that carries a thing made in play copies its record with [`writeEntity`](/docs/reference/entities#writeentity) too. A plugin with no `carry` starts fresh, as the inventory does unless its `carryOver` option lists things. [`CarryOver`](/docs/reference/state#carryover) covers the stats and kv keys the content carries.
+
+## Receiver
+
+A plugin's answers to `receive`, `release` and `owned`. Every field is in [`Receiver`](/docs/api/engine-plugin#receiver).
+
+- **`claims`** returns whether the plugin takes a thing, such as a wardrobe for things that are worn. It claims everything if left out. A `receive` goes to the first receiver in the game's [`receivers`](/docs/reference/content#gamebase) order that claims the thing, and one with `via` goes to that plugin whatever it claims.
+- **`receive`** returns the state with a count of the thing given to `to`.
+- **`owned`** returns how many of the thing `of` has here. The engine adds up every receiver's answer for `owned`.
+- **`release`** returns the state with a count taken from `from`. The engine asks each receiver in order, and never asks one for more than its `owned` said.
+
+`to`, `from` and `of` are [someone](/docs/reference/entities#someone-and-played), `'player'`, `'you'` or a unique entity, or `undefined` when content left it out and the plugin chooses. The engine passes them on without reading them. This garage keeps cars, one count each, for whoever is played:
+
+```ts
+import { protagonist, type GameState } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
+
+type Garage = Record<string, Record<string, number>>
+
+const whose = (state: GameState, who: string | undefined) => (who === undefined || who === 'you' ? protagonist(state) : who)
+
+export const garage = definePlugin<Garage>({
+  id: 'garage',
+  version: 1,
+  start: () => ({}),
+  receiver: {
+    claims: (_state, ref) => ref.startsWith('car:'),
+    receive: (state, ref, count, to, { slice, set }) => {
+      const at = whose(state, to)
+      return set({ ...slice, [at]: { ...slice[at], [ref]: (slice[at]?.[ref] ?? 0) + count } })
+    },
+    owned: (state, ref, of, { slice }) => slice[whose(state, of)]?.[ref] ?? 0,
+    release: (state, ref, count, from, { slice, set }) => {
+      const at = whose(state, from)
+      return set({ ...slice, [at]: { ...slice[at], [ref]: (slice[at]?.[ref] ?? 0) - count } })
+    },
+  },
+})
+```
 
 ## PluginContext
 

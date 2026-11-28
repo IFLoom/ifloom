@@ -6,13 +6,13 @@ A plugin adds one system to the engine, such as a calendar, locations or quests.
 
 ## The core and the plugins a game chooses
 
-The core is the same in every game. It's made of built-in features, such as scenes, stats, entities, holdings and triggers, each keeping its own piece of the state and its own conditions, effects and commands. A plugin is a part the game chooses. It brings conditions, effects and commands of its own, its own part of the state and the view, and its own checks of its content. It plugs into the core through the plugin API, and reaches other plugins only by name:
+The core is the same in every game. It's made of built-in features, such as scenes, stats, entities, receivers and triggers, each keeping its own piece of the state and its own conditions, effects and commands. A plugin is a part the game chooses. It brings conditions, effects and commands of its own, its own part of the state and the view, and its own checks of its content. It plugs into the core through the plugin API, and reaches other plugins only by name:
 
 ```mermaid
 flowchart TD
   game["your game<br/>content, packs, the plugins it lists"]
   subgraph core["the core: apply, view, loadState, checkGame"]
-    parts["built-in features<br/>scenes, stats, entities, holdings,<br/>triggers, audio, minigames…"]
+    parts["built-in features<br/>scenes, stats, entities, receivers,<br/>triggers, audio, minigames…"]
   end
   subgraph chosen["plugins the game lists"]
     places["places"]
@@ -51,7 +51,7 @@ The engine declares no plugin's answers. The answering plugin declares its own, 
 
 Content can name another plugin too. A plugin lists the plugins it `cooperates` with, and content written for it may then use their conditions and effects in a game that leaves them out. The shop cooperates with the calendar, so a vendor's opening hours can use `calendar/period`. In a game without the calendar, that condition is false, an effect from it does nothing, and a command from it is refused. The content checker lets those names pass rather than reporting them.
 
-Plugins also share the world without asking each other anything. The shop, the wardrobe and the inventory never cooperate. Each reads who holds what from the engine and its own trait on each thing, so one scarf can be sold, worn and dropped. [Entities, things and traits](/docs/explanation/entities-and-traits) explains how.
+Plugins also share the world without asking each other anything. The shop, the wardrobe and the inventory never cooperate. Each reads its own trait on each thing, so one scarf can be sold, worn and dropped, and the shop hands what it sells over with a `receive` that names no plugin. The core passes it to the first plugin that keeps things and claims it, a [receiver](/docs/reference/glossary#receiver), and keeps nothing itself. [Entities, things and traits](/docs/explanation/entities-and-traits#who-has-what) explains why.
 
 ## Each plugin is its own package
 

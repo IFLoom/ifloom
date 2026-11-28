@@ -19,12 +19,12 @@ The state keeps only what play changed. The engine reads every definition (a sce
 A UI reads the [view](/docs/reference/view#view) rather than the state. A test or the game's own [`rules`](/docs/reference/rules) read the state through the engine's lookups, which fall back to content:
 
 ```ts given
-import { heldCount, statValue } from '@ifloom/engine'
+import { ownedCount, statValue } from '@ifloom/engine'
 
 state.turn                                  // 3
 state.kv.phase                              // 'open'
 statValue(state, game, 'coins')             // 12
-heldCount(state, game, 'item:sandwich', 'player') // 1
+ownedCount(state, game, 'item:sandwich')    // 1, with a plugin that keeps things
 ```
 
 ### version
@@ -73,15 +73,9 @@ The changes play has made to the game's [entities](/docs/reference/entities), by
 
 A declared entity has no record until something changes it, so a new game starts with `{}`. An entity [created](/docs/reference/effects#create) in play keeps what it was given (its name, the entity it was made `like`, tags and trait data). A trait's data is content and never kept here. Read entities with [`entitiesOf`](/docs/reference/entities#entitiesof), [`statValue`](/docs/reference/stats#statvalue) and [`entityKv`](/docs/reference/entities#entitykv), which fall back to content.
 
-### held
-
-The changes play has made to who [holds](/docs/reference/glossary#holder) what, by holder and then thing, as in `state.held.player['item:sandwich']`. A holder here is `'player'` or a unique entity's reference, never `'you'`, which the engine resolves before writing.
-
-A new game starts with `{}`, and each entity's `at` in content says where it starts until play changes it. Once a count is written it's kept, 0 included, so a thing placed and then used up stays used up. Read it with [`heldCount`](/docs/reference/entities#heldcount), [`heldBy`](/docs/reference/entities#heldby) and [`holderOf`](/docs/reference/entities#holderof), which fall back to content.
-
 ### you
 
-The [protagonist](/docs/reference/glossary#you) the player is playing, a unique entity's reference, or `null` for the player. The [`you`](/docs/reference/effects#you) effect sets it, and `'you'` as a holder or an `of` reads it. A new game starts with `null`, and a game with one protagonist never changes it.
+The [protagonist](/docs/reference/glossary#you) the player is playing, a unique entity's reference, or `null` for the player. The [`you`](/docs/reference/effects#you) effect sets it, and `'you'` in an `of`, a `to` or a `from` reads it. A new game starts with `null`, and a game with one protagonist never changes it.
 
 ### created
 
@@ -122,7 +116,7 @@ The [turn](#turn) each [trigger](/docs/reference/triggers) last fired, by trigge
 
 ### plugins
 
-Each [plugin](/docs/reference/plugins)'s own state, by plugin id, as a [`PluginSlice`](/docs/reference/plugin-migrations) of the state and the version of its shape. `startingState` fills it from each plugin's `start`, and a plugin with no state has no entry. The calendar's day and the places plugin's location (`{ at: 'flat' }`) are here, not in the core's fields.
+Each [plugin](/docs/reference/plugins)'s own state, by plugin id, as a [`PluginSlice`](/docs/reference/plugin-migrations) of the state and the version of its shape. `startingState` fills it from each plugin's `start`, and a plugin with no state has no entry. The calendar's day, the places plugin's location (`{ at: 'flat' }`) and who has what in the inventory or the wardrobe are here, not in the core's fields.
 
 A plugin reads and writes its own entry through its context's `slice` and `set`, and other code through [`definePlugin`](/docs/reference/plugin-api#defineplugin)'s `read` and `write`. A save keeps the entry of a plugin the game no longer has, untouched.
 
@@ -168,25 +162,25 @@ The number of times something happened, as `n`, and the [turn](#turn) of the fir
 
 ## CarryOver
 
-The list of what the content's `carryOver` copies from a finished game into a New Game+: player stats, kv keys and the things the player holds. Every field is in [`CarryOver`](/docs/api/engine#carryover).
+The list of what the content's `carryOver` copies from a finished game into a New Game+: player stats and kv keys. Every field is in [`CarryOver`](/docs/api/engine#carryover).
 
-`startingState(game, { carry })` builds a new game, then copies from `carry` each player stat in `stats`, held to its range, and each kv key in `kv` that is set. It copies how many the player held of each thing in `held`, or of everything with `held: 'all'`. A thing made in play comes with its record. With `'all'`, a thing the new game would start the player with that they no longer had is 0. Keys passed to `startingState` in `kv` are written after the carried ones, so they win.
+`startingState(game, { carry })` builds a new game, then copies from `carry` each player stat in `stats`, held to its range, and each kv key in `kv` that is set. Then each plugin with a [`carry`](/docs/reference/plugin-api#carry) carries what it keeps, such as the things the inventory's `carryOver` option lists. Keys passed to `startingState` in `kv` are written after the carried ones, so they win.
 
-The turn, the scenes seen, the storylines, other entities, what other holders hold and the plugins' states all start fresh. A game with no `carryOver` carries nothing.
+The turn, the scenes seen, the storylines, the entities and the state of every plugin without a `carry` all start fresh. A game with no `carryOver` carries no stats or kv keys.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
 export const ending: Content = {
   finished: { all: [{ kv: 'readTheLetter' }, { seen: 'ava.river' }] },
-  carryOver: { stats: ['coins'], kv: ['readTheLetter'], held: ['clothing:umbrella'] },
+  carryOver: { stats: ['coins'], kv: ['readTheLetter'] },
 }
 ```
 
-The [content checker](/docs/reference/checks) reports a stat the game doesn't declare or that belongs to a kind, and a thing in `held` not written `kind:id` or of an undeclared kind. [Offer New Game+](/docs/how-to/offer-new-game-plus) shows the title screen's side.
+The [content checker](/docs/reference/checks) reports a stat the game doesn't declare or that belongs to a kind. [Offer New Game+](/docs/how-to/offer-new-game-plus) shows the title screen's side.
 
 ## Caveats
 
 - A New Game+ carries from the state the player finished on. The [profile](/docs/reference/profile) records only when the game was finished, so a title screen that starts one after a reload loads the save first.
-- Most entity and holding values aren't in the state until play changes them. Reading `state.entities` or `state.held` directly misses what content declares.
+- Most entity values aren't in the state until play changes them. Reading `state.entities` directly misses what content declares, and so does reading a receiver's state for what content starts someone with.
 - Time of day, the player's location and characters' whereabouts aren't core fields. The plugins that add them keep them in [`plugins`](#plugins).

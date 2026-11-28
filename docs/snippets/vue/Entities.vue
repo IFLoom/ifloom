@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { view } from './runner.ts'
 
-// What you hold, then each listed kind with its entities and the stats the player can see on each.
+// Each listed kind with its entities and the stats the player can see on each.
 // A kind's flags, such as { met: true }, become classes to split or style the list by.
 const flagged = (flags: Record<string, boolean>) => Object.keys(flags).filter((flag) => flags[flag])
 </script>
 
 <template>
-  <ul class="held">
-    <li v-for="thing in view.held" :key="`${thing.at}/${thing.ref}`" :title="thing.description ?? ''">
-      {{ thing.name }}<template v-if="thing.count > 1"> ×{{ thing.count }}</template>
-    </li>
-  </ul>
   <template v-for="kind in view.entities" :key="kind.id">
     <template v-if="kind.entries.length">
       <h3>{{ kind.plural }}</h3>

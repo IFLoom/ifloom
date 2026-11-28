@@ -20,7 +20,6 @@ import type { MediaViewer } from './viewer.tsx'
 import type { ChoiceButton, ChoiceList, PriceTag } from './choices.tsx'
 import type { Notice, Notices } from './notices.tsx'
 import type { Picture } from './picture.tsx'
-import type { Inventory } from './inventory.tsx'
 import type { EntityTable } from './entities.tsx'
 import type { InputField, InputFields } from './inputs.tsx'
 import type { Backlog } from './backlog.tsx'
@@ -190,13 +189,7 @@ export const PART_KEYS = [
   'mods-empty',
   'mods-restart',
   'mods-changed',
-  // What you carry, and the entities' tables
-  'inventory',
-  'inventory-title',
-  'thing',
-  'thing-name',
-  'thing-count',
-  'thing-text',
+  // The entities' tables
   'entities',
   'entity-table',
   'entity-heading',
@@ -367,8 +360,6 @@ export interface OverridableComponents {
   Backlog: Override<PropsOf<typeof Backlog>>
   /** The replacement for `ModManager`. */
   ModManager: Override<PropsOf<typeof ModManager>>
-  /** The replacement for `Inventory`. */
-  Inventory: Override<PropsOf<typeof Inventory>>
   /** The replacement for `PanelHost`. */
   PanelHost: Override<PropsOf<typeof PanelHost>>
   /** The replacement for `EntityTable`. */

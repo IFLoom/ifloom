@@ -3,9 +3,22 @@ import { startingState, view, whyNot, type Game } from '@ifloom/engine'
 import { play } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
+import { definePlugin } from '@ifloom/engine/plugin'
 import { debug, type DebugView } from '../src/index.ts'
 
 const clock = calendar()
+
+/** A pocket for these tests: a plugin that keeps counts of things, which debug/held sets through. */
+const pocket = definePlugin<Record<string, number>>({
+  id: 'pocket',
+  version: 1,
+  start: () => ({}),
+  receiver: {
+    receive: (_state, ref, count, _to, { slice, set }) => set({ ...slice, [ref]: (slice[ref] ?? 0) + count }),
+    owned: (_state, ref, _of, { slice }) => slice[ref] ?? 0,
+    release: (_state, ref, count, _from, { slice, set }) => set({ ...slice, [ref]: (slice[ref] ?? 0) - count }),
+  },
+})
 
 function game(): Game {
   return {
@@ -25,7 +38,7 @@ function game(): Game {
     ],
     storylines: [{ id: 'ava', name: 'Ava' }],
     stats: [{ id: 'luck', label: 'Luck', max: 10 }],
-    plugins: [clock, places({ start: 'house' }), debug()],
+    plugins: [clock, places({ start: 'house' }), pocket, debug()],
     // An intro that stops everything: the debugger still works.
     locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }],
   }
@@ -48,13 +61,15 @@ describe('the debugger', () => {
     expect(state).toMatchObject({
       stats: { luck: 10 },
       kv: { metAva: true },
-      held: { player: { 'thing:key': 2 } },
+      plugins: { pocket: { state: { 'thing:key': 2 } } },
       turn: 9,
       sceneId: 'ending',
     })
     expect(clock.read(state, g)).toEqual({ day: 6, period: 'evening' })
     expect(places.where(state, g)).toBe('island')
     expect(play(state, g, debug.scene()).sceneId).toBeNull()
+    // Down by the difference, released as the game would.
+    expect(play(state, g, debug.held('thing:key', 1)).plugins.pocket.state).toEqual({ 'thing:key': 1 })
   })
 
   it('refuses what the game does not have', () => {
@@ -81,7 +96,8 @@ describe('the debugger', () => {
     expect(whyNot(withAva, g, debug.stat('luck', 1, 'character:ava'))).toBe('That is not whose luck it is.')
     expect(whyNot(state, g, debug.held('thing:key', NaN))).toBe('That needs a number.')
     expect(whyNot(state, g, debug.held('thing:lock', 1))).toBe('There is nobody and nothing called thing:lock.')
-    expect(whyNot(state, g, debug.held('thing:key', 1, 'thing:key'))).toBe('thing:key can’t hold things.')
+    const keepsNothing = { ...g, plugins: [clock, debug()] }
+    expect(whyNot(startingState(keepsNothing), keepsNothing, debug.held('thing:key', 1))).toBe('No plugin of this game keeps things.')
   })
 
   it('shows the locks that are on, and the seed', () => {
@@ -89,6 +105,7 @@ describe('the debugger', () => {
     const shown = view(startingState(g), g).plugins.debug as DebugView
     expect(shown.locks).toEqual([{ reason: 'Finish the intro.', deny: ['*'] }])
     expect(typeof shown.seed).toBe('number')
+    expect(shown.receivers).toEqual(['pocket'])
   })
 
   it('is simply absent from a game built without it', () => {

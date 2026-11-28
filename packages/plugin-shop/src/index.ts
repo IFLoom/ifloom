@@ -2,12 +2,14 @@
  * The shop plugin, which adds vendors the player buys things from and sells them back to.
  *
  * A vendor is an entity with the `shop/vendor` trait, written with `shop.vendor({ ... })` in content's `entities`, of
- * the plugin's `vendor` kind unless it says otherwise. It holds its stock as any holder holds things, and a mod changes
- * it as it changes any entity.
+ * the plugin's `vendor` kind unless it says otherwise, and a mod changes it as it changes any entity. A vendor holds
+ * nothing: the shop keeps how many of each good it has left in its own state.
  *
- * A good with no `stock` never runs out, so buying one makes a new thing. A good with a `stock` starts that many with
- * the vendor and, with `restock`, is topped up each turn or day, and buying moves one to the player. A vendor can buy
- * things back for part of their price and mark goods down each day, drawn from the save's seed.
+ * Buying pays, then gives the player the good with a `receive` (ADR 0016), so whichever plugin keeps things takes it,
+ * then runs the `onBuy` effects of the good, the vendor and the game. A good with `deliver: false` is only its `onBuy`,
+ * such as a kv flag, which works in a game with no plugin that keeps things at all. A good's `stock` is a number, which
+ * `restock` tops up each turn or day, `'unlimited'` or `'once'`. Selling back needs the player to own one (`owned`),
+ * and runs a `release` and the `onSell` effects. A vendor can mark goods down each day, drawn from the save's seed.
  *
  * A good's price is its own, else its thing's `shop/sellable` trait's. A vendor refuses trade while one of its
  * `blocked` entries holds. An entry such as `shop.hours(['morning'])` closes it, and an entry with `hide`, such as
@@ -15,29 +17,29 @@
  */
 import {
   artSrc,
+  buildEffects,
   declaredTrait,
   entityDescription,
   entityImage,
   entityName,
   entityOf,
   hash,
-  heldCount,
-  holderOf,
   holds,
   isUnique,
   lackingLine,
+  ownedCount,
   pluginQuery,
   reasonOf,
   statOf,
   statValue,
   stringOf,
   traitOf,
-  YOU,
   type Blocked,
   type CommandRef,
   type Condition,
   type Effect,
   type EntityDef,
+  type EffectRef,
   type EntityRef,
   type Game,
   type GameState,
@@ -47,6 +49,7 @@ import {
 } from '@ifloom/engine'
 import {
   arg,
+  bindCurrent,
   defineCalls,
   definePlugin,
   defineTraitKind,
@@ -70,23 +73,36 @@ export type Sellable = {
 /** The interval a good's stock is topped up at, every turn or every calendar day. `'day'` means every turn in a game without the calendar. */
 export type Restock = 'turn' | 'day'
 
+/** The number of a good a vendor has, which `restock` tops back up, or `'unlimited'`, or `'once'` for a single sale. */
+export type Stock = number | 'unlimited' | 'once'
+
 /** A good the game declares in a vendor's `goods`, a thing the vendor sells with its price and stock. */
 export type GoodDef = {
-  /** The reference of the thing sold, such as `'food:apple'`. */
+  /** The reference of the thing sold, such as `'food:apple'`. A game that keeps things in kv keys declares a light entity, a name and no traits. */
   entity: EntityRef
   /** The price of one, by stat, such as `{ coins: 4 }`, each stat spendable. The thing's `shop/sellable` price if left out. */
   price?: Record<string, number>
   /**
-   * The number the vendor starts with and `restock` tops it back up to. The good never runs out if left out, and each
-   * one bought is new.
+   * The number the vendor has, which `restock` tops back up to, or `'unlimited'`, or `'once'` for one sale only.
    *
-   * The vendor always sells a unique thing from its stock, so give one `stock: 1` or start it with the vendor.
+   * `'once'` suits upgrades and unique things. `'unlimited'` if left out, or `'once'` for a unique thing.
    */
-  stock?: number
-  /** The interval the stock is topped back up to `stock` at. Never if left out. */
+  stock?: Stock
+  /** The interval a number `stock` is topped back up at. Never if left out. */
   restock?: Restock
   /** The condition that must hold for the good to be on offer. */
   when?: Condition
+  /**
+   * The plugin a purchase goes to, or `false` to give nothing, so the purchase is only its `onBuy`, such as a kv flag.
+   *
+   * A plugin's id gives it to that plugin's receiver, as a `receive`'s `via` does. To whichever plugin that keeps
+   * things claims it first if left out.
+   */
+  deliver?: false | string
+  /** Effects that run for each one bought, after it's given, with `'$'` as the thing, such as `[{ kv: 'kitchen.coffeeMachine', to: true }]`. */
+  onBuy?: EffectRef[]
+  /** Effects that run for each one sold back, after it's taken, with `'$'` as the thing. */
+  onSell?: EffectRef[]
 }
 
 /** A vendor's daily discounts, which the game declares in its `discounts`. The vendor marks `count` goods down each day, drawn from the save's seed. */
@@ -114,6 +130,18 @@ export type Vendor = {
   buysBack?: number
   /** The vendor's daily discounts. None if left out. */
   discounts?: DiscountDef
+  /** Effects that run for each one of any good bought from the vendor, after the good's own, with `'$'` as the thing. */
+  onBuy?: EffectRef[]
+  /** Effects that run for each one of any good sold back to the vendor, after the good's own, with `'$'` as the thing. */
+  onSell?: EffectRef[]
+}
+
+/** The shop plugin's settings, which the game passes to `shop()`. */
+export type ShopOptions = {
+  /** Effects that run for each one of anything bought from any vendor, after the good's and the vendor's, with `'$'` as the thing. */
+  onBuy?: EffectRef[]
+  /** Effects that run for each one of anything sold back to any vendor, after the good's and the vendor's, with `'$'` as the thing. */
+  onSell?: EffectRef[]
 }
 
 declare module '@ifloom/engine' {
@@ -130,18 +158,18 @@ export type VendorDef = Omit<EntityDef, 'of'> &
     of?: string
   }
 
-/** The record a save keeps of a vendor's last restock of a good, in {@link ShopState}'s `stocked`. */
+/** The record a save keeps of one good's stock once play changed it, in {@link ShopState}'s `stock`. */
 export type StockRecord = {
-  /** The turn or day of the last restock, or 0 for a good that never restocks. */
+  /** The number the vendor had left then. */
+  left: number
+  /** The turn or day it was written on, which a `restock` compares with now, or 0 for a good that never restocks. */
   at: number
-  /** A count an older save carried in that the vendor doesn't hold yet. */
-  left?: number
 }
 
-/** The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and the plugin reads goods from content. */
+/** The stock a save keeps for the vendors, only the goods play changed. The plugin reads the goods from content. */
 export type ShopState = {
-  /** The last restock of each good, by vendor and then by thing. */
-  stocked: Record<string, Record<EntityRef, StockRecord>>
+  /** The number of each limited good each vendor has left, by vendor and then by thing. */
+  stock: Record<string, Record<EntityRef, StockRecord>>
 }
 
 /** A good as the player sees it, in a {@link VendorView}'s `goods`. */
@@ -156,7 +184,7 @@ export type GoodView = {
   image: string | null
   /** The number the vendor has left, or null when the good never runs out. */
   stock: number | null
-  /** The number of this thing the player holds. */
+  /** The number of this thing the player owns, across the plugins that keep things. */
   owned: number
   /** The fraction off today, or 0. */
   off: number
@@ -216,7 +244,11 @@ const ID = 'shop'
 /** The kind of entity vendors are, unless one says otherwise. */
 const KIND = 'vendor'
 /** The vendors: entities carrying the `shop/vendor` trait, a bare id naming one of the `vendor` kind. */
-const VENDORS = defineTraitKind({ kind: KIND, trait: 'shop/vendor', fields: { blocked: true, goods: true, buysBack: true, discounts: true } })
+const VENDORS = defineTraitKind({
+  kind: KIND,
+  trait: 'shop/vendor',
+  fields: { blocked: true, goods: true, buysBack: true, discounts: true, onBuy: true, onSell: true },
+})
 const VENDOR = VENDORS.trait
 const SELLABLE = 'shop/sellable'
 /** The panel a UI draws a vendor's counter in. */
@@ -253,11 +285,11 @@ const CALLS = defineCalls(ID, {
 type Trade = { vendor: string; entity: EntityRef; count: number }
 
 function emptyState(): ShopState {
-  return { stocked: {} }
+  return { stock: {} }
 }
 
 /**
- * Returns the entity reference of a vendor, which holds its stock. `shop.vendorRef('counter')` is `'vendor:counter'`,
+ * Returns the entity reference of a vendor. `shop.vendorRef('counter')` is `'vendor:counter'`,
  * and a full reference comes back unchanged.
  */
 function vendorRef(vendor: string): EntityRef {
@@ -332,34 +364,43 @@ function dayOf(state: GameState, game: Game): number {
   return pluginQuery<{ day: number }>(game, 'calendar/now')?.(state).day ?? state.turn
 }
 
-/** What the stock is topped up against: the turn or the day it restocks on, or 0 for once only. */
+/** What the stock is topped up against: the turn or the day it restocks on, or 0 for never. */
 function restockKey(state: GameState, good: GoodDef, cx: Pick<Ctx, 'game'>): number {
   if (good.restock === 'turn') return state.turn
   if (good.restock === 'day') return dayOf(state, cx.game)
   return 0
 }
 
-/** Whether the vendor holds this good's stock: it has a `stock`, or it is a unique thing. */
-function limited(game: Game, good: GoodDef): boolean {
-  return good.stock !== undefined || isUnique(game, good.entity)
+/** A good's stock as written, its default filled in: `'once'` for a unique thing, else `'unlimited'`. */
+function stockOf(game: Game, good: GoodDef): Stock {
+  return good.stock ?? (isUnique(game, good.entity) ? 'once' : 'unlimited')
 }
 
-/**
- * How many the vendor has now, or null for a good that never runs out: what
- * it holds, topped up to the good's `stock` when a restock is due. A unique
- * thing someone else holds isn't taken back to restock it.
- */
+/** How many a limited good starts with, and a restock tops back up to; null for one that never runs out. */
+function fullStock(game: Game, good: GoodDef): number | null {
+  const stock = stockOf(game, good)
+  return stock === 'unlimited' ? null : stock === 'once' ? 1 : Math.max(0, stock)
+}
+
+/** How many the vendor has left now, or null for a good that never runs out: what play left, topped up when a restock is due. */
 function stockLeft(state: GameState, slice: ShopState, one: One, good: GoodDef, cx: Ctx): number | null {
-  const { game } = cx
-  if (!limited(game, good)) return null
-  const held = heldCount(state, game, good.entity, one.ref)
-  const record = slice.stocked[one.id]?.[good.entity]
-  if (record && record.at === restockKey(state, good, cx)) return record.left ?? held
-  if (isUnique(game, good.entity)) {
-    const owner = holderOf(state, game, good.entity)
-    return owner === undefined || owner === one.ref ? Math.max(held, Math.min(1, good.stock ?? 0)) : held
-  }
-  return Math.max(held, good.stock ?? 0)
+  const full = fullStock(cx.game, good)
+  if (full === null) return null
+  // A unique thing the player has is not on the shelf, whatever a restock says.
+  if (isUnique(cx.game, good.entity) && ownedCount(state, cx.game, good.entity) > 0) return 0
+  const record = slice.stock[one.id]?.[good.entity]
+  if (!record) return full
+  if (good.restock === undefined || record.at === restockKey(state, good, cx)) return record.left
+  return Math.max(record.left, full)
+}
+
+/** The state with what's left of a limited good written, `by` more or fewer than now. */
+function stockBy(state: GameState, one: One, good: GoodDef, by: number, context: PluginContext<ShopState>): GameState {
+  const left = stockLeft(state, context.get(state), one, good, context)
+  if (left === null) return state
+  const slice = context.get(state)
+  const record: StockRecord = { left: Math.max(0, left + by), at: restockKey(state, good, context) }
+  return context.set({ stock: { ...slice.stock, [one.id]: { ...slice.stock[one.id], [good.entity]: record } } }, state)
 }
 
 /** The fraction off this good today: one of the day's marked-down goods, drawn from the save's seed. */
@@ -447,17 +488,23 @@ function cantSell(state: GameState, args: Trade, cx: Ctx): string | undefined {
   if (one.vendor.buysBack === undefined) return stringOf(game, 'shop/noBuyBack')
   const refused = refusedReason(state, one, cx)
   if (refused) return refused
-  if (heldCount(state, game, good.entity, YOU) < countOf(args)) return stringOf(game, 'shop/notOwned')
+  if (ownedCount(state, game, good.entity) < countOf(args)) return stringOf(game, 'shop/notOwned')
   return undefined
 }
 
-/** The vendor's stock of a good written as it reads now, so a restock that was due is held. */
-function topUp(state: GameState, slice: ShopState, one: One, good: GoodDef, cx: Ctx): Effect[] {
-  const left = stockLeft(state, slice, one, good, cx)
-  return left === null ? [] : [{ entity: good.entity, at: one.ref, to: left }]
+/** The effects a trade's hooks run, once for each one traded: the good's, the vendor's, then the game's, with `'$'` as the thing. */
+function hookEffects(game: Game, good: GoodDef, hooks: (EffectRef[] | undefined)[], count: number): Effect[] {
+  const once = buildEffects(
+    game,
+    bindCurrent(
+      hooks.flatMap((hook) => hook ?? []),
+      good.entity,
+    ),
+  )
+  return Array.from({ length: count }, () => once).flat()
 }
 
-function buyEffects(state: GameState, args: Trade, slice: ShopState, cx: Ctx): Effect[] {
+function buyEffects(state: GameState, args: Trade, cx: Ctx, options: ShopOptions): Effect[] {
   const one = oneOf(state, cx.game, args.vendor)
   const good = one && goodOf(state, cx.game, one, args.entity)
   if (!one || !good) return []
@@ -465,13 +512,12 @@ function buyEffects(state: GameState, args: Trade, slice: ShopState, cx: Ctx): E
   const paid: Effect[] = Object.entries(times(priceToday(state, one, good, cx), count))
     .filter(([, amount]) => amount > 0)
     .map(([stat, amount]) => ({ stat, by: -amount }))
-  const handed: Effect[] = limited(cx.game, good)
-    ? [...topUp(state, slice, one, good, cx), { move: good.entity, from: one.ref, to: YOU, by: count }]
-    : [{ entity: good.entity, at: YOU, by: count }]
-  return [...paid, ...handed]
+  const handed: Effect[] =
+    good.deliver === false ? [] : [{ receive: good.entity, by: count, ...(typeof good.deliver === 'string' ? { via: good.deliver } : {}) }]
+  return [...paid, ...handed, ...hookEffects(cx.game, good, [good.onBuy, one.vendor.onBuy, options.onBuy], count)]
 }
 
-function sellEffects(state: GameState, args: Trade, slice: ShopState, cx: Ctx): Effect[] {
+function sellEffects(state: GameState, args: Trade, cx: Ctx, options: ShopOptions): Effect[] {
   const one = oneOf(state, cx.game, args.vendor)
   const good = one && goodOf(state, cx.game, one, args.entity)
   if (!one || !good) return []
@@ -479,33 +525,7 @@ function sellEffects(state: GameState, args: Trade, slice: ShopState, cx: Ctx): 
   const paid: Effect[] = Object.entries(times(sellPrice(state, cx.game, one, good), count))
     .filter(([, amount]) => amount > 0)
     .map(([stat, amount]) => ({ stat, by: amount }))
-  const handed: Effect[] = limited(cx.game, good)
-    ? [...topUp(state, slice, one, good, cx), { move: good.entity, from: YOU, to: one.ref, by: count }]
-    : [{ entity: good.entity, at: YOU, by: -count }]
-  return [...handed, ...paid]
-}
-
-/** The state with the good's stock marked as topped up for now, once what the vendor holds is written. */
-function recordStocked(state: GameState, one: One, good: GoodDef, context: PluginContext<ShopState>): GameState {
-  if (!limited(context.game, good)) return state
-  const slice = context.get(state)
-  const record: StockRecord = { at: restockKey(state, good, context) }
-  return context.set({ stocked: { ...slice.stocked, [one.id]: { ...slice.stocked[one.id], [good.entity]: record } } }, state)
-}
-
-/** Every vendor's stock written as it reads now: a restock that came due, or a count an older save carried in. */
-function settleStock(state: GameState, context: PluginContext<ShopState>): GameState {
-  let next = state
-  for (const one of everyVendor(state, context.game)) {
-    for (const good of one.vendor.goods) {
-      if (!limited(context.game, good) || !entityOf(next, context.game, good.entity)) continue
-      const slice = context.get(next)
-      const record = slice.stocked[one.id]?.[good.entity]
-      if (record && record.at === restockKey(next, good, context) && record.left === undefined) continue
-      next = recordStocked(context.apply(topUp(next, slice, one, good, context), next), one, good, context)
-    }
-  }
-  return next
+  return [{ release: good.entity, by: count }, ...paid, ...hookEffects(cx.game, good, [good.onSell, one.vendor.onSell, options.onSell], count)]
 }
 
 /** Everything the UI needs to draw the vendors and their goods. */
@@ -526,7 +546,7 @@ function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView {
           description: entityDescription(state, game, good.entity) ?? null,
           image: image === undefined ? null : artSrc(image),
           stock: stockLeft(state, slice, one, good, cx),
-          owned: heldCount(state, game, good.entity, YOU),
+          owned: ownedCount(state, game, good.entity),
           off,
           fullPrice: off > 0 ? priceView(game, fullPrice(state, game, good)) : null,
           buy: renderAction(state, game, { id: `buy.${one.id}.${good.entity}`, label: name, command: buy(one.id, good.entity) }),
@@ -567,9 +587,14 @@ function vendorProblems(vendor: Vendor | undefined, game: Game): string[] {
     const where = `good ${good.entity}`
     if (sold.has(good.entity)) problems.push(`sells "${good.entity}" twice`)
     sold.add(good.entity)
-    if (good.stock !== undefined && !(good.stock >= 0)) problems.push(`${where}: stock must be 0 or more`)
-    if (good.stock !== undefined && good.stock > 1 && isUnique(game, good.entity)) problems.push(`${where}: a unique thing has a stock of 1 at most`)
-    if (good.restock !== undefined && good.stock === undefined) problems.push(`${where}: restock needs a stock`)
+    const stock = good.stock
+    if (typeof stock === 'number' && !(Number.isInteger(stock) && stock >= 0)) problems.push(`${where}: stock must be a whole number, 0 or more`)
+    else if (stock !== undefined && typeof stock !== 'number' && stock !== 'unlimited' && stock !== 'once')
+      problems.push(`${where}: stock is a number, "unlimited" or "once"`)
+    if ((typeof stock === 'number' ? stock > 1 : stock === 'unlimited') && isUnique(game, good.entity))
+      problems.push(`${where}: a unique thing has a stock of 1 at most`)
+    if (good.restock !== undefined && typeof stock !== 'number') problems.push(`${where}: restock needs a number stock`)
+    if (good.deliver !== undefined && good.deliver !== false && typeof good.deliver !== 'string') problems.push(`${where}: deliver is false or a plugin's id`)
     if (good.price === undefined && !declaredTrait(game, good.entity, SELLABLE))
       problems.push(`${where}: no price: give the good a price, or the thing a ${SELLABLE} trait`)
     for (const [stat, amount] of Object.entries(good.price ?? {})) {
@@ -584,7 +609,7 @@ function vendorProblems(vendor: Vendor | undefined, game: Game): string[] {
 
 const vendorTrait: TraitDef<'shop/vendor'> = {
   id: VENDOR,
-  words: { blocked: [{ reason: true }] },
+  words: { blocked: [{ reason: true }], goods: [{ onBuy: 'effects', onSell: 'effects' }], onBuy: 'effects', onSell: 'effects' },
   check: (data, { game }) => vendorProblems(data, game),
   references: (vendor) => {
     return [
@@ -593,14 +618,27 @@ const vendorTrait: TraitDef<'shop/vendor'> = {
         .filter((good) => typeof good?.entity === 'string')
         .map((good): Reference => ({
           within: `good ${good.entity}`,
-          refs: [{ entity: good.entity }, ...Object.keys(good.price ?? {}).map((stat) => ({ stat })), { when: good.when }],
+          refs: [
+            { entity: good.entity },
+            ...Object.keys(good.price ?? {}).map((stat) => ({ stat })),
+            { when: good.when },
+            // A good that's given needs a plugin that keeps things, the one `deliver` names if it names one.
+            ...(good.deliver === false ? [] : [{ receiver: typeof good.deliver === 'string' ? good.deliver : undefined }]),
+            { effects: bindCurrent(good.onBuy, good.entity) },
+            { effects: bindCurrent(good.onSell, good.entity) },
+          ],
         })),
+      { within: 'onBuy', refs: [{ effects: vendor?.onBuy }] },
+      { within: 'onSell', refs: [{ effects: vendor?.onSell }] },
     ]
   },
 }
 
-/** Returns the shop plugin for the game's `plugins`. The game declares its vendors in `entities` with `shop.vendor({ ... })`. */
-function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
+/**
+ * Returns the shop plugin for the game's `plugins`. The game declares its vendors in `entities` with
+ * `shop.vendor({ ... })`, and `options` its game-wide `onBuy` and `onSell` effects.
+ */
+function shopPlugin(options: ShopOptions = {}): DefinedPlugin<ShopState, ShopView> {
   return definePlugin<ShopState, ShopView, typeof CALLS>({
     id: ID,
     version: 1,
@@ -646,7 +684,7 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
       /** `{ 'shop/buy': { vendor, entity, count? } }`. */
       buy: {
         whyNot: (state, args, context) => cantBuy(state, args, context.slice, context),
-        effectsOf: (state, args, context) => buyEffects(state, args, context.slice, context),
+        effectsOf: (state, args, context) => buyEffects(state, args, context, options),
         spends: (state, args, context) => {
           const one = oneOf(state, context.game, args.vendor)
           const good = one && goodOf(state, context.game, one, args.entity)
@@ -655,22 +693,20 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
         run: (state, args, context) => {
           const one = oneOf(state, context.game, args.vendor)!
           const good = goodOf(state, context.game, one, args.entity)!
-          return recordStocked(context.apply(buyEffects(state, args, context.slice, context)), one, good, context)
+          return context.apply(buyEffects(state, args, context, options), stockBy(state, one, good, -countOf(args), context))
         },
       },
       /** `{ 'shop/sell': { vendor, entity, count? } }`. */
       sell: {
         whyNot: (state, args, context) => cantSell(state, args, context),
-        effectsOf: (state, args, context) => sellEffects(state, args, context.slice, context),
+        effectsOf: (state, args, context) => sellEffects(state, args, context, options),
         run: (state, args, context) => {
           const one = oneOf(state, context.game, args.vendor)!
           const good = goodOf(state, context.game, one, args.entity)!
-          return recordStocked(context.apply(sellEffects(state, args, context.slice, context)), one, good, context)
+          return context.apply(sellEffects(state, args, context, options), stockBy(state, one, good, countOf(args), context))
         },
       },
     },
-    // After each command, a restock that came due is written to what each vendor holds.
-    onCommand: (_before, after, context) => settleStock(after, context),
     view: (state, context) => shopView(state, context.slice, context),
     references: {
       // The `shop` panel draws one vendor's counter, so it needs a vendor the game has.

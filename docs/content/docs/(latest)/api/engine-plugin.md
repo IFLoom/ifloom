@@ -4,9 +4,9 @@ description: "Every export of @ifloom/engine/plugin, the entry for writing a plu
 ---
 Generated from the source of `@ifloom/engine/plugin` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
-- Functions: [`actionReferences`](#actionreferences), [`anyOf`](#anyof), [`bindCurrent`](#bindcurrent), [`defineCalls`](#definecalls), [`defineData`](#definedata), [`definePlugin`](#defineplugin), [`defineRules`](#definerules), [`defineTraitKind`](#definetraitkind), [`entityUi`](#entityui), [`list`](#list), [`lockedOut`](#lockedout), [`lockOn`](#lockon), [`panelOf`](#panelof), [`parseBeats`](#parsebeats), [`pictureView`](#pictureview), [`priceView`](#priceview), [`renderAction`](#renderaction), [`setTraitState`](#settraitstate), [`speakerOf`](#speakerof), [`styledBeats`](#styledbeats), [`traitState`](#traitstate)
+- Functions: [`actionReferences`](#actionreferences), [`anyOf`](#anyof), [`bindCurrent`](#bindcurrent), [`defineCalls`](#definecalls), [`defineData`](#definedata), [`definePlugin`](#defineplugin), [`defineRules`](#definerules), [`defineTraitKind`](#definetraitkind), [`entityUi`](#entityui), [`everyEntity`](#everyentity), [`hasEntity`](#hasentity), [`list`](#list), [`lockedOut`](#lockedout), [`lockOn`](#lockon), [`panelOf`](#panelof), [`parseBeats`](#parsebeats), [`pictureView`](#pictureview), [`priceView`](#priceview), [`renderAction`](#renderaction), [`setTraitState`](#settraitstate), [`speakerOf`](#speakerof), [`styledBeats`](#styledbeats), [`traitState`](#traitstate)
 - Constants: [`arg`](#arg-1)
-- Types: [`AnyCalls`](#anycalls), [`Arg`](#arg), [`ArgIn`](#argin), [`ArgOut`](#argout), [`ArgShape`](#argshape), [`ArgsIn`](#argsin), [`ArgsOut`](#argsout), [`Asked`](#asked), [`CallArgs`](#callargs), [`CallForm`](#callform), [`CallIn`](#callin), [`CallShapes`](#callshapes), [`CallTable`](#calltable), [`CallWriter`](#callwriter), [`CheckTools`](#checktools), [`CommandsOf`](#commandsof), [`CommandStep`](#commandstep), [`ConditionsOf`](#conditionsof), [`ContentReferences`](#contentreferences), [`ContentStep`](#contentstep), [`ContentTools`](#contenttools), [`DataList`](#datalist), [`DefinedPlugin`](#definedplugin), [`EffectsOf`](#effectsof), [`ListSpec`](#listspec), [`Lock`](#lock), [`LockTarget`](#locktarget), [`Macro`](#macro), [`PackContext`](#packcontext), [`Plugin`](#plugin), [`PluginArgs`](#pluginargs), [`PluginCalls`](#plugincalls), [`PluginCommand`](#plugincommand), [`PluginContext`](#plugincontext), [`PluginData`](#plugindata), [`PluginDef`](#plugindef), [`PluginEntry`](#pluginentry), [`PluginProblem`](#pluginproblem), [`PluginReferences`](#pluginreferences), [`PluginSlice`](#pluginslice), [`QueryAnswer`](#queryanswer), [`QueryArgs`](#queryargs), [`RawCall`](#rawcall), [`RawCommand`](#rawcommand), [`Reference`](#reference), [`Refusal`](#refusal), [`RoomScene`](#roomscene), [`RulesDef`](#rulesdef), [`SpeakerFinder`](#speakerfinder), [`StatModifier`](#statmodifier), [`TraitDef`](#traitdef), [`TraitEntityDef`](#traitentitydef), [`TraitKind`](#traitkind), [`TraitKindSpec`](#traitkindspec), [`TraitTools`](#traittools), [`TurnContext`](#turncontext), [`WrittenAs`](#writtenas)
+- Types: [`AnyCalls`](#anycalls), [`Arg`](#arg), [`ArgIn`](#argin), [`ArgOut`](#argout), [`ArgShape`](#argshape), [`ArgsIn`](#argsin), [`ArgsOut`](#argsout), [`Asked`](#asked), [`CallArgs`](#callargs), [`CallForm`](#callform), [`CallIn`](#callin), [`CallShapes`](#callshapes), [`CallTable`](#calltable), [`CallWriter`](#callwriter), [`CheckTools`](#checktools), [`CommandsOf`](#commandsof), [`CommandStep`](#commandstep), [`ConditionsOf`](#conditionsof), [`ContentReferences`](#contentreferences), [`ContentStep`](#contentstep), [`ContentTools`](#contenttools), [`DataList`](#datalist), [`DefinedPlugin`](#definedplugin), [`EffectsOf`](#effectsof), [`ListSpec`](#listspec), [`Lock`](#lock), [`LockTarget`](#locktarget), [`Macro`](#macro), [`PackContext`](#packcontext), [`Plugin`](#plugin), [`PluginArgs`](#pluginargs), [`PluginCalls`](#plugincalls), [`PluginCommand`](#plugincommand), [`PluginContext`](#plugincontext), [`PluginData`](#plugindata), [`PluginDef`](#plugindef), [`PluginEntry`](#pluginentry), [`PluginProblem`](#pluginproblem), [`PluginReferences`](#pluginreferences), [`PluginSlice`](#pluginslice), [`QueryAnswer`](#queryanswer), [`QueryArgs`](#queryargs), [`RawCall`](#rawcall), [`RawCommand`](#rawcommand), [`Receiver`](#receiver), [`Reference`](#reference), [`Refusal`](#refusal), [`RoomScene`](#roomscene), [`RulesDef`](#rulesdef), [`SpeakerFinder`](#speakerfinder), [`StatModifier`](#statmodifier), [`TraitDef`](#traitdef), [`TraitEntityDef`](#traitentitydef), [`TraitKind`](#traitkind), [`TraitKindSpec`](#traitkindspec), [`TraitTools`](#traittools), [`TurnContext`](#turncontext), [`WrittenAs`](#writtenas)
 
 ## actionReferences
 
@@ -119,7 +119,7 @@ const arg: {
   strings: () => Arg<string | readonly string[], string[], false>
   numbers: () => Arg<number | readonly number[], number[], false>
   entity: (trait?: string | undefined) => Arg<`${string}:${string}`, `${string}:${string}`, false>
-  holder: () => Arg<Holder, Holder, false>
+  someone: () => Arg<Someone, Someone, false>
   kv: () => Arg<KvValue, KvValue, false>
   amount: () => Arg<Amount, Amount, false>
   range: () => Arg<Range, Range, false>
@@ -138,7 +138,7 @@ const arg: {
 | `strings` | `() =>` [`Arg`](#arg)`<string \| readonly string[], string[], false>` |  |  | Returns an argument of one text or a list, `'cafe'` or `['cafe', 'park']`, which the implementation gets as a list. |
 | `numbers` | `() =>` [`Arg`](#arg)`<number \| readonly number[], number[], false>` |  |  | Returns an argument of one number or a list, which the implementation gets as a list. |
 | `entity` | `(trait?: string \| undefined) =>` [`Arg`](#arg)`<'${string}:${string}', '${string}:${string}', false>` |  |  | Returns an entity reference argument, such as `'food:bun'`. The checker must find the entity, carrying `trait` when one is given. |
-| `holder` | `() =>` [`Arg`](#arg)`<`[`Holder`](/docs/api/engine#holder)`,` [`Holder`](/docs/api/engine#holder)`, false>` |  |  | Returns a holder argument, `'player'`, `'you'` or a unique entity. The checker must find the holder. |
+| `someone` | `() =>` [`Arg`](#arg)`<`[`Someone`](/docs/api/engine#someone)`,` [`Someone`](/docs/api/engine#someone)`, false>` |  |  | Returns an argument naming someone, `'player'`, `'you'` or a unique entity. The checker must find them. |
 | `kv` | `() =>` [`Arg`](#arg)`<`[`KvValue`](/docs/api/engine#kvvalue)`,` [`KvValue`](/docs/api/engine#kvvalue)`, false>` |  |  | Returns a kv value argument, true or false, a number or text. |
 | `amount` | `() =>` [`Arg`](#arg)`<`[`Amount`](/docs/api/engine#amount)`,` [`Amount`](/docs/api/engine#amount)`, false>` |  |  | Returns an `Amount` argument, worked out when the implementation reads it with `amountOf`. The checker resolves the references it makes. |
 | `range` | `() =>` [`Arg`](#arg)`<`[`Range`](/docs/api/engine#range)`,` [`Range`](/docs/api/engine#range)`, false>` |  |  | Returns a range argument, such as `stacks: { gte: 2 }`. Its bounds are amounts, and the checker resolves the references they make. |
@@ -236,8 +236,8 @@ Function. Explained in [Entities](/docs/reference/entities#bindcurrent).
 Returns a condition or effects with `ref` in place of each `'$'`. A nested `each`'s effects and a nested `count`'s
 `where` keep their own `'$'`.
 
-It replaces `'$'` in every `of`, `entity`, `at` and `like`, in a `remove`, `move` or `you` effect's target, in a
-`move`'s `from` and `to`, and anywhere in a call's arguments or a `create`'s `with`
+It replaces `'$'` in every `of`, `entity` and `like`, in a `remove`, `you`, `receive`, `release` or `owned`'s
+target, in a `receive`'s `to` and a `release`'s `from`, and anywhere in a call's arguments or a `create`'s `with`
 (`{ 'cast/met': { character: '$' } }`).
 
 ```ts shape
@@ -280,7 +280,7 @@ A call in the short form, type-checked against registry `R` when its name is dec
 import type { CallIn } from '@ifloom/engine/plugin'
 type CallIn<R> =
   | { [K in keyof R & `${string}/${string}`]: { [P in K]: R[K]; }; }[keyof R & `${string}/${string}`]
-  | PluginCall & { [K in (keyof R & `${string}/${string}`) | 'achievements/earned' | 'calendar/period' | 'calendar/weekday' | 'calendar/weekend' | 'calendar/day' | 'calendar/curfew' | 'cast/at' | 'cast/here' | 'cast/met' | 'devices/open' | 'feed/appeared' | 'feed/posted' | 'feed/likes' | 'jobs/hired' | 'jobs/fired' | 'jobs/worked' | 'jobs/shifts' | 'messages/since' | 'messages/read' | 'messages/arrived' | 'messages/replied' | 'places/within' | 'places/at' | 'places/away' | 'quests/active' | 'quests/done' | 'quests/reached' | 'shop/open' | 'shop/outside' | 'shop/inStock' | 'statuses/active' | 'unlocks/has' | 'unlocks/cheated' | 'wardrobe/wearing' | 'achievements/grant' | 'calendar/pass' | 'calendar/set' | 'feed/post' | 'feed/react' | 'generators/generate' | 'jobs/hire' | 'jobs/fire' | 'messages/draw' | 'messages/due' | 'places/move' | 'quests/start' | 'statuses/apply' | 'statuses/remove' | 'calendar/sleep' | 'cast/call' | 'cast/talk' | 'debug/kv' | 'debug/turn' | 'debug/stat' | 'debug/scene' | 'debug/go' | 'debug/held' | 'debug/time' | 'devices/home' | 'devices/close' | 'feed/seen' | 'inventory/use' | 'inventory/drop' | 'inventory/give' | 'jobs/apply' | 'jobs/work' | 'jobs/quit' | 'messages/reply' | 'places/go' | 'places/pickUp' | 'quests/seen' | 'quests/track' | 'shop/buy' | 'shop/sell' | 'unlocks/cheat' | 'unlocks/record' | 'wardrobe/wear' | 'wardrobe/takeOff']?: undefined; }
+  | PluginCall & { [K in (keyof R & `${string}/${string}`) | 'achievements/earned' | 'calendar/period' | 'calendar/weekday' | 'calendar/weekend' | 'calendar/day' | 'calendar/curfew' | 'cast/at' | 'cast/here' | 'cast/met' | 'devices/open' | 'feed/appeared' | 'feed/posted' | 'feed/likes' | 'jobs/hired' | 'jobs/fired' | 'jobs/worked' | 'jobs/shifts' | 'messages/since' | 'messages/read' | 'messages/arrived' | 'messages/replied' | 'places/within' | 'places/at' | 'places/away' | 'quests/active' | 'quests/done' | 'quests/reached' | 'shop/open' | 'shop/outside' | 'shop/inStock' | 'statuses/active' | 'unlocks/has' | 'unlocks/cheated' | 'wardrobe/wearing' | 'achievements/grant' | 'calendar/pass' | 'calendar/set' | 'feed/post' | 'feed/react' | 'generators/generate' | 'inventory/set' | 'inventory/move' | 'jobs/hire' | 'jobs/fire' | 'messages/draw' | 'messages/due' | 'places/move' | 'places/put' | 'quests/start' | 'statuses/apply' | 'statuses/remove' | 'wardrobe/remove' | 'wardrobe/add' | 'wardrobe/store' | 'wardrobe/takeOut' | 'calendar/sleep' | 'cast/call' | 'cast/talk' | 'debug/kv' | 'debug/turn' | 'debug/stat' | 'debug/scene' | 'debug/go' | 'debug/held' | 'debug/time' | 'devices/home' | 'devices/close' | 'feed/seen' | 'inventory/use' | 'inventory/drop' | 'inventory/give' | 'jobs/apply' | 'jobs/work' | 'jobs/quit' | 'messages/reply' | 'places/go' | 'places/pickUp' | 'quests/seen' | 'quests/track' | 'shop/buy' | 'shop/sell' | 'unlocks/cheat' | 'unlocks/record' | 'wardrobe/wear' | 'wardrobe/takeOff']?: undefined; }
 ```
 
 Uses: [`PluginCall`](/docs/api/engine#plugincall).
@@ -593,6 +593,8 @@ type DefinedPlugin<S, V = unknown> = {
   profile?: ((state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown)
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
+  receiver?: Receiver<S>
+  carry?: ((fresh: GameState, from: GameState, context: PluginContext<S>) => GameState)
   read: (state: GameState, game: Game) => S
   write: (state: GameState, next: S) => GameState
 }
@@ -637,6 +639,8 @@ type DefinedPlugin<S, V = unknown> = {
 | `profile` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Returns the value the plugin keeps in the player's profile, which outlives saves and new games, such as earned achievements. Return undefined to leave the stored value. The runner asks it after every command that took, with the state after, the state before and the value the plugin's profile namespace (its id) holds now. Only a runner with a `profile` asks, and `apply` never does. |
 | `references` | [`PluginReferences`](#pluginreferences) | yes |  | The references the plugin's calls and content make, which the content checker resolves as it resolves the engine's own. See `PluginReferences`. |
 | `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Returns the problems the plugin's own rules find that a reference can't express, such as two entries with one id or an exit to nowhere. The content checker runs it after the references. `tools` words problems with anything else the plugin names as the checker does. |
+| `receiver` | [`Receiver`](#receiver)`<S>` | yes |  | The plugin's answers to the `receive` and `release` effects and the `owned` condition, for a plugin that keeps things. An inventory or a wardrobe declares one. See `Receiver`. |
+| `carry` | `((fresh:` [`GameState`](/docs/api/engine#gamestate)`, from:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | Returns a New Game+'s state with what the plugin carries from the game before laid over it, such as the things the player kept. The plugin starts fresh if left out. `fresh` is the new game's state so far, and `context.get(from)` reads the old game's slice. `context.set` writes the new one, and the plugin may copy an entity made in play with `writeEntity`. |
 | `read` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, game:` [`Game`](/docs/api/engine#game)`) => S` |  |  | Returns the plugin's state in a game state, or its starting state if the save has none yet. |
 | `write` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, next: S) =>` [`GameState`](/docs/api/engine#gamestate) |  |  | Returns the game state with the plugin's state replaced. |
 
@@ -724,6 +728,34 @@ function entityUi(state: GameState, game: Game, ref: string): Ui<EntityUi> | und
 ```
 
 Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`Ui`](/docs/api/engine#ui), [`EntityUi`](/docs/api/engine#entityui).
+
+## everyEntity
+
+Function. Explained in [Entities](/docs/reference/entities#everyentity-and-hasentity).
+
+Returns every entity in the game, as references. Declared ones not removed come first in content order, then those
+made in play, kind by kind in the order each kind first had one.
+
+```ts shape
+import { everyEntity } from '@ifloom/engine/plugin'
+function everyEntity(state: GameState, game: Game | undefined): EntityRef[]
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref).
+
+## hasEntity
+
+Function. Explained in [Entities](/docs/reference/entities#everyentity-and-hasentity).
+
+Returns true when an entity is in the game. A declared entity is in until it is removed, and one made in play is in
+while the save keeps its record.
+
+```ts shape
+import { hasEntity } from '@ifloom/engine/plugin'
+function hasEntity(state: GameState, game: Game | undefined, ref: string): boolean
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game).
 
 ## list
 
@@ -974,6 +1006,8 @@ type Plugin<S = any, V = unknown> = {
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
+  receiver?: Receiver<S>
+  carry?: (fresh: GameState, from: GameState, context: PluginContext<S>) => GameState
 }
 ```
 
@@ -1016,6 +1050,8 @@ type Plugin<S = any, V = unknown> = {
 | `profile` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, previous:` [`GameState`](/docs/api/engine#gamestate)`, stored: unknown, context:` [`PluginContext`](#plugincontext)`<S>) =>…` | yes |  | Returns the value the plugin keeps in the player's profile, which outlives saves and new games, such as earned achievements. Return undefined to leave the stored value. The runner asks it after every command that took, with the state after, the state before and the value the plugin's profile namespace (its id) holds now. Only a runner with a `profile` asks, and `apply` never does. |
 | `references` | [`PluginReferences`](#pluginreferences) | yes |  | The references the plugin's calls and content make, which the content checker resolves as it resolves the engine's own. See `PluginReferences`. |
 | `check` | `(game:` [`Game`](/docs/api/engine#game)`, tools:` [`CheckTools`](#checktools)`) =>` [`PluginProblem[]`](#pluginproblem) | yes |  | Returns the problems the plugin's own rules find that a reference can't express, such as two entries with one id or an exit to nowhere. The content checker runs it after the references. `tools` words problems with anything else the plugin names as the checker does. |
+| `receiver` | [`Receiver`](#receiver)`<S>` | yes |  | The plugin's answers to the `receive` and `release` effects and the `owned` condition, for a plugin that keeps things. An inventory or a wardrobe declares one. See `Receiver`. |
+| `carry` | `(fresh:` [`GameState`](/docs/api/engine#gamestate)`, from:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate) | yes |  | Returns a New Game+'s state with what the plugin carries from the game before laid over it, such as the things the player kept. The plugin starts fresh if left out. `fresh` is the new game's state so far, and `context.get(from)` reads the old game's slice. `context.set` writes the new one, and the plugin may copy an entity made in play with `writeEntity`. |
 
 ## PluginArgs
 
@@ -1147,6 +1183,7 @@ type PluginDef<S, V, C extends AnyCalls> = {
   actions?: ((state: GameState, context: PluginContext<S>) => readonly ButtonDef[] | undefined)
   audio?: ((state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined)
   scene?: ((state: GameState, context: PluginContext<S>) => RoomScene | undefined)
+  receiver?: Receiver<S>
   action?: ((state: GameState, id: string, context: PluginContext<S>) => ButtonDef | undefined)
   id: string
   label?: ((state: GameState, context: PluginContext<S>) => string | undefined)
@@ -1162,6 +1199,7 @@ type PluginDef<S, V, C extends AnyCalls> = {
   contentMigrations?: Record<number, ContentStep>
   commandVersion?: number
   commandMigrations?: Record<number, CommandStep>
+  carry?: ((fresh: GameState, from: GameState, context: PluginContext<S>) => GameState)
   queries?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => unknown>
   statModifiers?: ((state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined)
   onTurn?: ((state: GameState, context: TurnContext<S>) => GameState)
@@ -1188,6 +1226,7 @@ type PluginDef<S, V, C extends AnyCalls> = {
 | `actions` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`ButtonDef[]`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns the actions offered while no scene is open, such as a location's things to do. The view lists them before the game's own `actions`, rendered the same way. |
 | `audio` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => Record<string, string \| null> \|…` | yes |  | Returns the tracks the plugin plays on background channels, by channel, such as a location's ambience. Null silences a channel, and the first plugin that names a channel wins it. A plugin's track is below an open scene's and an `audio` effect's, and above the game's default. A channel left out is the next plugin's, then the default's. |
 | `scene` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`RoomScene`](#roomscene) `\| undefined)` | yes |  | Returns the `RoomScene` the screen shows while no scene is open, such as a location's description or a dashboard's heading. The first plugin that answers fills it. With none, the room shows the game's title and its actions. |
+| `receiver` | [`Receiver`](#receiver)`<S>` | yes |  | The plugin's answers to the `receive` and `release` effects and the `owned` condition, for a plugin that keeps things. An inventory or a wardrobe declares one. See `Receiver`. |
 | `action` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, id: string, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`ButtonDef`](/docs/api/engine#buttondef) `\| undefined)` | yes |  | Returns one of the plugin's actions that isn't among its `actions` now, by id without the prefix, such as an app's. Undefined when there is none. `{ type: 'action', id: '<plugin>/<id>' }` runs it, as for an action with a cost or effects. Without this provider, the engine looks the id up among the plugin's `actions`. |
 | `id` | `string` |  |  | The plugin's id, the prefix on everything it adds. It holds letters, digits and `-`. |
 | `label` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => string \| undefined)` | yes |  | Returns a few words on the time or place in the game for a header or a save, such as "Day 3 · Wednesday morning". |
@@ -1203,6 +1242,7 @@ type PluginDef<S, V, C extends AnyCalls> = {
 | `contentMigrations` | `Record<number,` [`ContentStep`](#contentstep)`>` | yes |  | The plugin's content migrations, one step per content version, keyed by the version each upgrades from. A version with no step changed nothing a pack holds. `upgradePack` runs them on every pack the game loads, mods included, after the engine's own steps for the same schema. See `ContentStep` and `ContentTools`. |
 | `commandVersion` | `number` | yes |  | The version of the plugin's commands' arguments, which command logs record. 1 if left out. Bump it when a command is renamed or its arguments change, and add the step to `commandMigrations`, so an old log still replays. |
 | `commandMigrations` | `Record<number,` [`CommandStep`](#commandstep)`>` | yes |  | The plugin's command migrations, one step per command version, keyed by the version each upgrades from. `replay` runs an older log's commands through them. See `CommandStep`. |
+| `carry` | `((fresh:` [`GameState`](/docs/api/engine#gamestate)`, from:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | Returns a New Game+'s state with what the plugin carries from the game before laid over it, such as the things the player kept. The plugin starts fresh if left out. `fresh` is the new game's state so far, and `context.get(from)` reads the old game's slice. `context.set` writes the new one, and the plugin may copy an entity made in play with `writeEntity`. |
 | `queries` | `Record<string, (state:` [`GameState`](/docs/api/engine#gamestate)`, args:` [`PluginArgs`](#pluginargs)`, context:` [`PluginContext`](#plugincontext)`<S>) => unknown>` | yes |  | The plugin's queries, answers other plugins ask for by name without importing it, such as `context.query('calendar/whenNext', { when })`. A query answers what a condition's yes or no can't, such as a location, a time or a list. |
 | `statModifiers` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`PluginContext`](#plugincontext)`<S>) => readonly` [`StatModifier[]`](#statmodifier) `\| undefined)` | yes |  | Returns the changes to what the player's stats read now, worked out from the plugin's state, such as a timed boost. It must not read stats itself, or it reads itself. Nothing is written into the state. Every reading of the stat (conditions, derived stats, costs, the view) sees the changed value, and `stat` effects still write the kept value underneath. |
 | `onTurn` | `((state:` [`GameState`](/docs/api/engine#gamestate)`, context:` [`TurnContext`](#turncontext)`<S>) =>` [`GameState`](/docs/api/engine#gamestate)`)` | yes |  | The hook run at the end of a turn, once the counter has moved on and `resets` are back. It returns the next state, and the hooks run in order, the game's first. `context.before` is the state as the turn ended, and a `turn` effect applied through `context.apply` does nothing. |
@@ -1383,6 +1423,35 @@ It also takes any other key: `[key: string]: unknown`.
 |---|---|---|---|---|
 | `type` | `string` |  |  | The command's type, such as `choose` or a plugin's `quests/track`. |
 
+## Receiver
+
+Type. Explained in [Plugin API](/docs/reference/plugin-api#receiver-1).
+
+A plugin that keeps things, as the `receive` and `release` effects and the `owned` condition ask it.
+
+The core keeps nothing itself. It asks the game's receivers in the order of the game's `receivers`, else of its
+`plugins`.
+
+`to`, `from` and `of` are someone (`'player'`, `'you'` or a unique entity) or undefined, when the receiver chooses
+its own default.
+
+```ts shape
+import type { Receiver } from '@ifloom/engine/plugin'
+type Receiver<S = any> = {
+  claims?: (state: GameState, ref: EntityRef, context: PluginContext<S>) => boolean
+  receive: (state: GameState, ref: EntityRef, count: number, to: string | undefined, context: PluginContext<S>) => GameState
+  owned: (state: GameState, ref: EntityRef, of: string | undefined, context: PluginContext<S>) => number
+  release: (state: GameState, ref: EntityRef, count: number, from: string | undefined, context: PluginContext<S>) => GameState
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `claims` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, ref:` [`EntityRef`](/docs/api/engine#entityref)`, context:` [`PluginContext`](#plugincontext)`<S>) => boolean` | yes |  | Returns true when the receiver takes this thing, such as a wardrobe for things that are worn. Every thing if left out. |
+| `receive` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, ref:` [`EntityRef`](/docs/api/engine#entityref)`, count: number, to: string \| undefined, context:…` |  |  | Returns the state with `count` of the thing given to `to`. |
+| `owned` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, ref:` [`EntityRef`](/docs/api/engine#entityref)`, of: string \| undefined, context:` [`PluginContext`](#plugincontext)`<S>) =>…` |  |  | Returns how many of the thing `of` has here. |
+| `release` | `(state:` [`GameState`](/docs/api/engine#gamestate)`, ref:` [`EntityRef`](/docs/api/engine#entityref)`, count: number, from: string \| undefined, context:…` |  |  | Returns the state with `count` of the thing taken from `from`. The core never asks for more than `owned` says. |
+
 ## Reference
 
 Type. Explained in [Checking content](/docs/reference/checks#reference).
@@ -1429,7 +1498,8 @@ type Reference =
   | { like: string; of?: string; }
   | { trait: string; }
   | { protagonist: string; }
-  | { holder: string; holds?: string; }
+  | { someone: string; }
+  | { receiver?: string; }
   | { action: string; }
   | { input: string; }
   | { choice: string; }

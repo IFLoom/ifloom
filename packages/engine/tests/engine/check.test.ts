@@ -30,7 +30,7 @@ describe('checkGame', () => {
   })
 
   it('names the pack "game" for a hand-built game, and describes a problem as pack · where · what', () => {
-    const game: Game = { ...fixture(), finished: { entity: 'thing:trophy', at: 'you' } }
+    const game: Game = { ...fixture(), finished: { entity: 'thing:trophy' } }
     expect(checkGame(game).problems).toEqual([{ pack: 'game', where: 'finished', what: 'unknown kind "thing"' }])
     expect(checkGame(game).problems.map(describeProblem)).toEqual(['game · finished · unknown kind "thing"'])
   })
@@ -40,13 +40,13 @@ describe('checkGame', () => {
     const pack: Content = {
       name: 'town',
       prose: {},
-      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', label: 'Buy one.', when: { entity: 'thing:missing', at: 'you' }, effects: [] }] }],
+      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', label: 'Buy one.', when: { entity: 'thing:missing' }, effects: [] }] }],
     }
     expect(loadWhole([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown kind "thing"'])
     expect(
       problemsOf({
         ...fixture(),
-        actions: [...(fixture().actions ?? []), { id: 'eat', blocked: [{ when: { not: { entity: 'thing:missing', at: 'you' } }, reason: 'Nothing to eat.' }] }],
+        actions: [...(fixture().actions ?? []), { id: 'eat', blocked: [{ when: { not: { entity: 'thing:missing' } }, reason: 'Nothing to eat.' }] }],
       }),
     ).toEqual(['action eat: unknown kind "thing"'])
   })
@@ -82,7 +82,7 @@ describe('checkGame', () => {
         {
           id: 'shop',
           body: [{ prose: 'shop.none' }],
-          choices: [{ id: 'buy', label: 'Buy one.', when: { stat: 'grit' }, effects: [{ entity: 'thing:roll', by: 1 }] }],
+          choices: [{ id: 'buy', label: 'Buy one.', when: { stat: 'grit' }, effects: [{ create: 'thing' }] }],
         },
       ],
     }
@@ -173,7 +173,7 @@ describe('the files a game names', () => {
               id: 'snap',
               label: 'Snap',
               effects: [
-                { create: 'photo', with: { id: 'flat', image: 'photo/flat.png' }, at: 'player' },
+                { create: 'photo', with: { id: 'flat', image: 'photo/flat.png' } },
                 { notify: 'Snap', image: 'https://example.com/x.png' },
               ],
             },

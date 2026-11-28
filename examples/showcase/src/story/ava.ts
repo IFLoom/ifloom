@@ -3,7 +3,8 @@
  * river, and the friendship quest. Her words are written where they are
  * read; the lines drawn at random, her small talk, are by key in `ava.prose.ts`.
  */
-import { choice, decide, give, holding, jump, move, point, say, text, type Content } from '@ifloom/engine'
+import { choice, decide, jump, point, say, text, type Content } from '@ifloom/engine'
+import { inventory } from '@ifloom/plugin-inventory'
 import { quests } from '@ifloom/plugin-quests'
 import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
@@ -30,7 +31,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
 }))
 
 export const ava: Content = {
-  // A keepsake is one particular thing, so whoever has it has the only one. Not listed: what you hold is in `view.held`.
+  // A keepsake is one particular thing, so whoever has it has the only one. Not listed: what you carry is in the inventory.
   kinds: [{ id: 'keepsake', label: 'Keepsake', unique: true, listed: false }],
   entities: [{ id: 'shell', of: 'keepsake', name: 'A river shell', description: 'Smooth and grey, from the bank by Ava’s bench.' }],
   scenes: [
@@ -50,15 +51,15 @@ export const ava: Content = {
         { variants: 'ava.smalltalk' },
         { text: 'She has your cup out before you ask.', when: { seen: 'ava.hi', gte: 3 } },
         // Things are held: once the shell is Ava's, it sits by her till.
-        { text: 'The river shell sits by the till, holding down the receipts.', when: { entity: 'keepsake:shell', at: cast.character('ava') } },
+        { text: 'The river shell sits by the till, holding down the receipts.', when: { owned: 'keepsake:shell', of: cast.character('ava') } },
       ],
       choices: [
         // Shown while you hold the shell from the river: giving it moves it to her.
         {
           id: 'shell',
           label: 'Give her the shell from the river',
-          when: holding('keepsake:shell'),
-          effects: [move('keepsake:shell', cast.character('ava')), { stat: 'friendship', by: 5, of: cast.character('ava') }],
+          when: { owned: 'keepsake:shell' },
+          effects: [inventory.move('keepsake:shell', cast.character('ava')), { stat: 'friendship', by: 5, of: cast.character('ava') }],
         },
         {
           id: 'chat',
@@ -105,8 +106,8 @@ export const ava: Content = {
         decide('evening', [
           // A thing to keep: the shell is an entity, and picking it up gives it to you.
           choice('shell', 'Pocket a smooth shell from the bank', {
-            when: { not: { entity: 'keepsake:shell', gte: 1 } },
-            effects: [give('keepsake:shell'), jump('bench')],
+            when: { not: { chose: 'ava.river#shell' } },
+            effects: [{ receive: 'keepsake:shell' }, jump('bench')],
             then: [text(`It's cold, and fits your palm exactly.`)],
           }),
           choice('ducks', 'Ask about the ducks', {

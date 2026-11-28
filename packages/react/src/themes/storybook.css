@@ -440,15 +440,8 @@
   box-shadow: var(--shadow-card);
 }
 
-[data-part="thing"] {
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
-}
-
 /* On the side card a card would vanish into it: there it takes the page's colour instead. */
-[data-part="sidebar"] :is([data-kit="card"], [data-part="thing"]) {
+[data-part="sidebar"] [data-kit="card"] {
   background: var(--background);
 }
 

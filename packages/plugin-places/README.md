@@ -1,6 +1,6 @@
 # @ifloom/plugin-places
 
-Places for IFLoom: locations with exits and things to do, travel between them, and where the player is. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
+Places for IFLoom: locations with exits and things to do, travel between them, where the player is, and things lying in rooms, hidden until found if the game likes. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
 
 ## Install
 

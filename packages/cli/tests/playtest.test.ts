@@ -71,7 +71,7 @@ describe('playtest', () => {
           name: 'shed',
           kinds: [
             { id: 'pot', label: 'Pot' },
-            { id: 'seed', label: 'Seed', listed: { entity: '$', at: 'you' } },
+            { id: 'seed', label: 'Seed', listed: { entity: '$' } },
             { id: 'note', label: 'Note', listed: false },
           ],
           entities: [

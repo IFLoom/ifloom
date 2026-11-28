@@ -313,7 +313,7 @@ The arguments a call can take, each an [`Arg`](#arg) that reads what content wro
 | `boolean()` | `true` or `false`, handed as `true` only for `true`. |
 | `strings()`, `numbers()` | One or a list, handed as a list. |
 | `entity(trait?)` | An entity reference, which the checker resolves, carrying `trait` if one is given. |
-| `holder()` | `'player'`, `'you'` or a unique entity, which the checker resolves. |
+| `someone()` | `'player'`, `'you'` or a unique entity, which the checker resolves as [someone](/docs/reference/checks#someone). |
 | `kv()` | A true or false, a number or text. |
 | `amount()` | An [`Amount`](/docs/reference/amounts#amount), handed for [`amountOf`](/docs/reference/amounts#amountof), whose shape and names the checker reads. |
 | `range()` | A [`Range`](/docs/reference/common#range) such as `{ gte: 2 }`, whose amount bounds the checker reads. |

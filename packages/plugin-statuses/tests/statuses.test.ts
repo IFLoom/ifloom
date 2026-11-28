@@ -185,7 +185,7 @@ describe('timed statuses', () => {
                   turns: 0,
                   max: 2,
                   modifiers: [{ stat: 'luck', add: 1 }],
-                  effects: { end: [{ entity: 'thing:moonstone', by: 1 }] },
+                  effects: { end: [{ create: 'thing' }] },
                 },
               ],
             },

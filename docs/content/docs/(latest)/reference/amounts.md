@@ -21,7 +21,7 @@ A number content names that the engine works out when it reads it. Every form is
 | `{ stat, of? }` | A stat, the player's or with `of` an entity's, read as [`statValue`](/docs/reference/stats#statvalue) reads it. |
 | `{ kv, of? }` | A key's number in a [kv store](/docs/reference/glossary#kv), the player's or with `of` another's. A value that isn't a number counts as 0. |
 | `{ value, with? }` | A [value](/docs/reference/custom#values) by name, the game's own (`game/…`) or a plugin's, asked with `with`. Text that reads as a number counts as that number. |
-| `{ count, where?, units? }` | The number of entities, counted as the [`count`](/docs/reference/conditions#count) condition counts them. |
+| `{ count, where? }` | The number of entities, counted as the [`count`](/docs/reference/conditions#count) condition counts them. |
 | `{ sum }`, `{ product }`, `{ min }`, `{ max }` | The sum, product, least or greatest of a list of amounts. |
 | `{ scale, by }` | An amount multiplied by the number `by`, so `{ scale: 'coins', by: -1 }` is minus the player's coins. |
 | `{ clamp, min?, max? }` | An amount held between two numbers. |
@@ -35,7 +35,7 @@ These fields take an amount:
 - The bounds of every [`Range`](/docs/reference/common#range), in every condition that takes one, a call's own bounds included.
 - The [`stat`](/docs/reference/effects#stat) effect's `by` and `to`.
 - The [`kv`](/docs/reference/effects#kv) effect's `by`, and each end of its `random`.
-- The [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects' `by`, and `entity`'s `to`.
+- The [`receive`](/docs/reference/effects#receive) and [`release`](/docs/reference/effects#release) effects' `by`.
 - A [roll](/docs/reference/rolls)'s `plus` and `against`.
 - A [stat](/docs/reference/stats#statdef)'s `min` and `max`.
 - A plugin field the plugin declares to the checker as `{ amount }`, such as an [achievement](/docs/reference/plugins/achievements)'s progress or a [device](/docs/reference/plugins/devices) app's badge.

@@ -1,6 +1,6 @@
 # @ifloom/plugin-inventory
 
-An inventory for IFLoom: using, dropping and giving away the things the player holds, by a usable trait on each thing. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
+An inventory for IFLoom: the things the player and other people carry, kept in the plugin's own state and handed over with the engine's `receive`, with use, drop and give buttons from a usable trait on each thing. It's an optional shortcut over plain kv keys. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
 
 ## Install
 

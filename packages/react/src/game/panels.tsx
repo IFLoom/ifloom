@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import type { OpenPanel } from '@ifloom/engine'
 import { useGame, type PanelComponent } from './context.tsx'
 import { PartDialog } from './dialog.tsx'
-import { Inventory } from './inventory.tsx'
 import { overridable } from './overrides.tsx'
 import { StatList } from './sidebar.tsx'
 import { mergedFrom, usePluginUis, type PluginPanel, type PluginUi } from './plugins.tsx'
@@ -10,18 +9,16 @@ import { uiSay, useWords, type UiStringKey } from './words.ts'
 
 /**
  * The panels the React UI draws by name, for `{ panel }`, for
- * what the engine itself keeps: `stats` (the `StatList`) and `inventory`
- * (the `Inventory`). A plugin UI in `plugins` adds its own, such as the
- * shop's `shop`, and a game's own `panels` of the same name go over both.
+ * what the engine itself keeps: `stats` (the `StatList`). A plugin UI in
+ * `plugins` adds its own, such as the shop's `shop` or the inventory's
+ * `inventory`, and a game's own `panels` of the same name go over both.
  */
 export const BUILT_IN_PANELS: Readonly<Record<string, PanelComponent>> = {
-  inventory: () => <Inventory title={false} />,
   stats: () => <StatList />,
 }
 
 /** The UI word each built-in panel is titled with. */
 const TITLES: Record<string, UiStringKey> = {
-  inventory: 'inventory',
   stats: 'stats',
 }
 
@@ -102,7 +99,7 @@ function PanelHostImpl() {
  * Renders the open panel, `view.panel`, in a `PartDialog`, and sends `closePanel` when the player closes it. The panel
  * gets its `with` as `data`.
  *
- * It renders the game's own panel of that name, else a plugin UI's, else a built-in one (`stats` or `inventory`). The
+ * It renders the game's own panel of that name, else a plugin UI's, else the built-in `stats`. The
  * default layout has one, and a layout of your own puts it anywhere inside the `GameProvider`.
  */
 export const PanelHost = overridable('PanelHost', PanelHostImpl)

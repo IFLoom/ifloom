@@ -52,13 +52,8 @@ describe('the loader', () => {
       triggers: [
         {
           id: 'parcel',
-          when: { count: { of: 'parcel', at: 'you' } },
-          effects: [
-            { create: 'drawer', with: { id: 'a' }, at: 'player' },
-            { notify: 'Post', text: 'post.unwritten' },
-            { scene: 'nowhere' },
-            { 'game/shred': true },
-          ],
+          when: { count: { of: 'parcel' } },
+          effects: [{ create: 'drawer', with: { id: 'a' } }, { notify: 'Post', text: 'post.unwritten' }, { scene: 'nowhere' }, { 'game/shred': true }],
         },
       ],
       inputs: [

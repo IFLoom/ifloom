@@ -226,10 +226,10 @@ A section of an app, one entry of an app's `sections`. Each form is told apart b
 
 ```ts shape
 import type { Section } from '@ifloom/plugin-devices'
-type Section = { blocks: Block[] } | { actions: ActionDef[] } | { things: { of: string; at?: string } } | { contacts: true } | { plugin: string; with?: Record<string, unknown> } | { panel: string; with?: Record<string, unknown> }
+type Section = { blocks: Block[] } | { actions: ActionDef[] } | { things: { of: string; where?: Condition } } | { contacts: true } | { plugin: string; with?: Record<string, unknown> } | { panel: string; with?: Record<string, unknown> }
 ```
 
-Uses: [`Block`](/docs/api/engine#block), [`ActionDef`](/docs/api/engine#actiondef).
+Uses: [`Block`](/docs/api/engine#block), [`ActionDef`](/docs/api/engine#actiondef), [`Condition`](/docs/api/engine#condition).
 
 ### SectionView
 

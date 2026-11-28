@@ -200,7 +200,7 @@ describe('jobs, on their own', () => {
                 {
                   id: 'bad',
                   name: 'Bad',
-                  blocked: [{ when: { not: { entity: 'thing:badge', at: 'you' } }, reason: 'x' }],
+                  blocked: [{ when: { not: { entity: 'thing:badge' } }, reason: 'x' }],
                   shift: { cost: { stamina: 1 } },
                   ranks: [
                     { id: 'a', name: 'A', pay: { gold: 1 }, requires: { shifts: 1 } },

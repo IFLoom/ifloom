@@ -18,7 +18,7 @@
 import type { Game } from './game.ts'
 import type { Reference } from './references.ts'
 import type { WordPart, WordShape } from './words.ts'
-import type { EntityRef, Holder } from './entities.ts'
+import type { EntityRef, Someone } from './entities.ts'
 import type { Amount, KvValue, Range } from './types.ts'
 import type { ContentReferences, PluginEntry, PluginProblem } from './plugin.ts'
 
@@ -391,14 +391,14 @@ export const arg = {
       },
       false,
     ),
-  /** Returns a holder argument, `'player'`, `'you'` or a unique entity. The checker must find the holder. */
-  holder: (): Arg<Holder, Holder, false> =>
+  /** Returns an argument naming someone, `'player'`, `'you'` or a unique entity. The checker must find them. */
+  someone: (): Arg<Someone, Someone, false> =>
     makeArg(
       {
-        kind: 'a holder',
+        kind: 'someone',
         fits: (value) => typeof value === 'string',
-        read: (value) => (value === undefined || value === null ? '' : String(value)) as Holder,
-        refs: (value) => (value ? [{ holder: value }] : []),
+        read: (value) => (value === undefined || value === null ? '' : String(value)) as Someone,
+        refs: (value) => (value ? [{ someone: value }] : []),
       },
       false,
     ),

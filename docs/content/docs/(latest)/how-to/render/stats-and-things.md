@@ -18,7 +18,7 @@ Each stat has its `label`, its value written through its `format` as `text`, suc
 
 ## Render what the player holds
 
-`view.held` lists the things you hold, the protagonist's first while one is played, then the player's, each a [`HeldView`](/docs/api/engine#heldview) with its `name`, `description`, `image` and `count`. `view.entities` lists each listed [kind](/docs/reference/glossary#kind) with its entities, as [`EntitiesView`](/docs/api/engine#entitiesview)s. The React UI's [`Inventory`](/docs/api/react#inventory) renders what you hold in the side column of the default layout, and [`EntityTable`](/docs/api/react#entitytable) renders a listed kind as a table wherever you place it.
+The engine keeps no list of what the player holds. A plugin that keeps things puts its own in the view, such as the inventory's `view.plugins.inventory.things`, which [Render things to use and drop](/docs/how-to/render/things-plugins#render-things-to-use-and-drop) renders, and a game that keeps things in kv keys reads them as any key. `view.entities` lists each listed [kind](/docs/reference/glossary#kind) with its entities, as [`EntitiesView`](/docs/api/engine#entitiesview)s, and the React UI's [`EntityTable`](/docs/api/react#entitytable) renders a listed kind as a table wherever you place it.
 
 ::include[../../../../../snippets/plain/entities.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

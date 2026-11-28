@@ -26,6 +26,7 @@ export type {
   Plugin,
   PluginArgs,
   PluginCommand,
+  Receiver,
   PluginContext,
   PluginDef,
   PluginEntry,
@@ -74,7 +75,7 @@ export { panelOf, pictureView, priceView, renderAction } from './screen.ts'
 export { parseBeats, styledBeats } from './sceneBody.ts'
 export type { SpeakerFinder } from './sceneBody.ts'
 export { speakerOf } from './speakers.ts'
-export { anyOf, bindCurrent, entityUi, setTraitState, traitState } from './entities.ts'
+export { anyOf, bindCurrent, entityUi, everyEntity, hasEntity, setTraitState, traitState } from './entities.ts'
 
 // Locks and what its content names
 export type { Lock, LockTarget } from './locks.ts'

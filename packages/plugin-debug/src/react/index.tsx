@@ -229,7 +229,9 @@ function DebugCardImpl({ className }: { className?: string }) {
         <TabsContent value="set" {...setSection}>
           <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug.stat(stat, num(to))} />
           <CommandForm label={words('debugKv')} fields={['key', 'to']} build={([key, to]) => debug.kv(key, parse(to))} />
-          <CommandForm label={words('debugHeld')} fields={['entity', 'count']} build={([entity, count]) => debug.held(entity, num(count))} />
+          {data?.receivers.length ? (
+            <CommandForm label={words('debugHeld')} fields={['entity', 'count']} build={([entity, count]) => debug.held(entity, num(count))} />
+          ) : null}
           <CommandForm label={words('debugStatOf')} fields={['stat', 'of', 'value']} build={([stat, of, to]) => debug.stat(stat, num(to), of)} />
           {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug.go(location)} /> : null}
           <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug.scene(scene || undefined)} />

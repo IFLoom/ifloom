@@ -15,8 +15,8 @@ import {
   entityKv,
   entityName,
   entityOf,
-  heldCount,
   holds,
+  ownedCount,
   inlineChoices,
   startingState,
   statValue,
@@ -39,7 +39,7 @@ import { shop, type ShopView } from '@ifloom/plugin-shop'
 import { inventory, type InventoryView } from '@ifloom/plugin-inventory'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { calendar } from '@ifloom/plugin-calendar'
-import { places, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
+import { lyingCount, places, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { cast, type CastView } from '@ifloom/plugin-cast'
 import { unlocks, enterCode, lockContent, startUnlocks, unlocksOf, unlockedPacks, type UnlocksView } from '@ifloom/plugin-unlocks'
 import { checkUiHints } from '@ifloom/react'
@@ -96,14 +96,33 @@ describe('Small Town', () => {
     expect(carried.find((thing) => thing.ref === 'item:sandwich')?.use?.label).toBe('Eat the sandwich')
     state = run({ ...state, stats: { ...state.stats, energy: 50 } }, inventory.use('item:sandwich'))
     expect(state.stats.energy).toBe(75)
-    expect(heldCount(state, game, 'item:sandwich')).toBe(0)
+    expect(ownedCount(state, game, 'item:sandwich')).toBe(0)
+  })
+
+  it('sends a bought scarf straight to the wardrobe, where wearing it makes you cosy', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on({ ...state, stats: { ...state.stats, coins: 50 } }, 1, 'morning'), places.go('high-street'), act('places/scarf'))
+    expect(ownedCount(state, game, 'clothing:scarf', undefined, 'wardrobe')).toBe(1)
+    expect(ownedCount(state, game, 'clothing:scarf', undefined, 'inventory')).toBe(0)
+    state = run(state, wardrobe.wear('clothing:scarf'))
+    expect(state.kv.cosy).toBe(true)
+  })
+
+  it('turns up the postcard in the flat once you have lived there a day', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('flat'))
+    expect(view(state, game).notices.unseen.some((notice) => notice.title === 'Something behind the radiator')).toBe(false)
+    state = run(on(state, 2, 'morning'), places.go('high-street'), places.go('flat'))
+    expect(view(state, game).notices.unseen.some((notice) => notice.title === 'Something behind the radiator')).toBe(true)
+    state = run(state, places.pickUp('keepsake:postcard'))
+    expect(ownedCount(state, game, 'keepsake:postcard')).toBe(1)
   })
 
   it('plays a first day: a note under the door, coffee, Ava, a photo and a post', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), places.go('high-street'))
     expect(view(state, game).notices.unseen[0].title).toBe('A note under your door')
-    expect(heldCount(state, game, 'note:welcome', 'player')).toBe(1)
+    expect(ownedCount(state, game, 'note:welcome', 'player')).toBe(1)
 
     state = run(state, places.go('cafe'))
     expect(view(state, game).scene.body).toContain('Ava is behind the counter')
@@ -244,16 +263,17 @@ describe('Small Town', () => {
       stats: { friendship: 30 },
     })
     state = run(state, places.go('high-street'), places.go('park'), cast.talk('ava'), { type: 'choose', id: 'shell' })
-    // What you hold is in the view, after the raincoat and the paper you came with and Sam's note; the keepsake kind itself isn't listed.
-    const held = () => view(state, game).held.map((thing) => thing.ref)
-    expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome', 'keepsake:shell'])
-    // The inventory shows only what it's for: no notes or photos, which the phone keeps.
-    expect((view(state, game).plugins.inventory as InventoryView).things.map((thing) => thing.ref)).toEqual([
-      'clothing:raincoat',
-      'item:paper',
-      'keepsake:shell',
-    ])
-    expect(view(state, game).held[3]).toMatchObject({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })
+    // The shell goes to the inventory; the raincoat you came in is the wardrobe's, and the note the phone shows.
+    const carried = () => (view(state, game).plugins.inventory as InventoryView).things.map((thing) => thing.ref)
+    expect(carried()).toEqual(['item:paper', 'keepsake:shell'])
+    expect(ownedCount(state, game, 'note:welcome')).toBe(1)
+    expect(ownedCount(state, game, 'clothing:raincoat', undefined, 'wardrobe')).toBe(1)
+    expect((view(state, game).plugins.inventory as InventoryView).things[1]).toMatchObject({
+      ref: 'keepsake:shell',
+      name: 'A river shell',
+      count: 1,
+      at: 'player',
+    })
     expect(view(state, game).entities.find((kind) => kind.id === 'keepsake')).toBeUndefined()
     // The evening reads on: the shell's line, the question again, then sitting with her, then home.
     expect(view(state, game).scene.beats.some((beat) => beat.type === 'chose' && beat.label === 'Pocket a smooth shell from the bank')).toBe(true)
@@ -261,8 +281,8 @@ describe('Small Town', () => {
     state = run(state, { type: 'choose', id: 'stay' }, { type: 'choose', id: 'home' })
     // The next morning at the café she takes it, and keeps it by the till.
     state = run(on(state, 7, 'morning'), places.go('high-street'), places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'shell' })
-    expect(holds(state, game, { entity: 'keepsake:shell', at: 'character:ava' })).toBe(true)
-    expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome'])
+    expect(holds(state, game, { owned: 'keepsake:shell', of: 'character:ava' })).toBe(true)
+    expect(carried()).toEqual(['item:paper'])
     expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
   })
 
@@ -270,14 +290,14 @@ describe('Small Town', () => {
     let state = on(run(startingState(game), { type: 'choose', id: 'unpack' }), 1, 'morning')
     const lying = () => (view(state, game).plugins.places as PlacesView).things.map((thing) => [thing.ref, thing.name, thing.count])
     state = run(state, inventory.drop('item:paper'))
-    expect(heldCount(state, game, 'item:paper')).toBe(0)
-    expect(holds(state, game, { entity: 'item:paper', at: 'location:flat' })).toBe(true)
+    expect(ownedCount(state, game, 'item:paper')).toBe(0)
+    expect(lyingCount(state, game, 'item:paper', 'flat')).toBe(1)
     expect(lying()).toEqual([['item:paper', 'newspaper', 1]])
     // Out on the high street it isn't there; back in the flat, it is.
     state = run(state, places.go('high-street'))
     expect(lying()).toEqual([])
     state = run(state, places.go('flat'), places.pickUp('item:paper'))
-    expect(heldCount(state, game, 'item:paper')).toBe(1)
+    expect(ownedCount(state, game, 'item:paper')).toBe(1)
     expect(lying()).toEqual([])
   })
 
@@ -437,7 +457,7 @@ describe('Small Town', () => {
     const coins = state.stats.coins
     state = run(state, act('places/buy-sandwich'))
     expect(state.stats.coins).toBe(coins - 4)
-    expect(heldCount(state, game, 'item:sandwich')).toBe(1)
+    expect(ownedCount(state, game, 'item:sandwich')).toBe(1)
     // Only in the café.
     expect(apply(run(state, places.go('high-street')), game, act('places/buy-sandwich')).reason).toBeDefined()
   })
@@ -455,8 +475,7 @@ describe('Small Town', () => {
     state = run(state, shop.buy('counter', 'item:flapjack'), shop.buy('counter', 'item:flapjack'))
     expect(apply(state, game, shop.buy('counter', 'item:flapjack')).reason).toBe('Sold out.')
     expect(flapjack().buy.disabled).toBe('Sold out.')
-    // The counter holds its flapjacks, as any holder holds things; a sandwich never runs out.
-    expect(heldCount(state, game, 'item:flapjack', 'vendor:counter')).toBe(0)
+    // A sandwich never runs out.
     expect(counter().goods[0].stock).toBeNull()
     const coins = state.stats.coins
     state = run(state, shop.buy('counter', 'item:sandwich'), shop.sell('counter', 'item:sandwich'))
@@ -560,7 +579,7 @@ describe('Small Town', () => {
       ...fresh,
       sceneId: null,
       kv: { ...fresh.kv, phase: 'open' },
-      plugins: { ...fresh.plugins, places: { version: 1, state: { at: 'park' } satisfies PlacesState } },
+      plugins: { ...fresh.plugins, places: { version: 1, state: { at: 'park', floor: {}, found: [] } satisfies PlacesState } },
     }
     expect(view(park, modded.game).scene.body).toContain('fog')
   })

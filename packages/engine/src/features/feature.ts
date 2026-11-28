@@ -1,7 +1,7 @@
 /**
  * What a core feature declares, and what the core lends it.
  *
- * A core feature (scenes, stats, entities, holdings, triggers and the rest; see
+ * A core feature (scenes, stats, entities, receivers, triggers and the rest; see
  * `FEATURES` in `registry.ts`) is a module that declares everything it adds in
  * one place: its slice of the state, its kinds of condition, effect and
  * command, its pack key, its checks and the references it resolves, its
@@ -10,7 +10,7 @@
  * core's shared code names no feature.
  *
  * A feature is a leaf. It imports types, other features, and at runtime only
- * modules that import nothing back (strings, entities, holdings, notices, storylines,
+ * modules that import nothing back (strings, entities, notices, storylines,
  * context, the scene body). What it needs from the core,
  * such as `holds` or `runEffects`, comes in a `FeatureContext` argument, as a
  * plugin's context does. That keeps the registry free of import cycles. Core
@@ -22,6 +22,7 @@ import type { DataScene, RenderedScene } from '../scene.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
+import type { EntityRef } from '../entities.ts'
 import type { Amount, Command, Condition, Effect, GameState, KvValue, StartOptions } from '../types.ts'
 import type { WordPart, WordWalk } from '../words.ts'
 
@@ -61,6 +62,14 @@ export type FeatureContext = {
   sceneOf: (game: Game, id: string) => DataScene | undefined
   /** Returns a scene rendered in this state, for a caller with no screen, such as a probe. */
   renderScene: (state: GameState, game: Game, scene: DataScene) => RenderedScene
+  /** Returns the ids of the game's plugins that keep things, in the order `receive` asks them. */
+  receivers: (game: Game) => string[]
+  /** Returns the state with `count` of a thing given to `to`, as `receiveThing` does. */
+  receive: (state: GameState, game: Game, ref: EntityRef, count: number, to?: string, via?: string) => GameState
+  /** Returns the state with up to `count` of a thing taken from `from`, as `releaseThing` does. */
+  release: (state: GameState, game: Game, ref: EntityRef, count: number, from?: string, via?: string) => GameState
+  /** Returns how many of a thing `of` has across the receivers, as `ownedCount` does. */
+  owned: (state: GameState, game: Game, ref: EntityRef, of?: string, via?: string) => number
 }
 
 /** A feature's context while effects apply. `ending` is true while a turn is ending. */

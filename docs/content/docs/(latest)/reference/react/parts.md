@@ -249,18 +249,12 @@ The [`GameMenu`](/docs/reference/react/components#gamemenu) and the dialogs it o
 | `mods-restart` | The line and button that appear once a mod has changed. |
 | `mods-changed` | The line saying a restart applies the change. |
 
-## What you carry, the entities and inputs
+## The entities and inputs
 
-[`Inventory`](/docs/reference/react/components#inventory), [`EntityTable`](/docs/reference/react/components#entitytable) and the [inputs](/docs/reference/react/components#inputfield) render these parts.
+[`EntityTable`](/docs/reference/react/components#entitytable) and the [inputs](/docs/reference/react/components#inputfield) render these parts. What the player carries is the [inventory plugin](#inventory-plugin)'s.
 
 | Key | Meaning |
 |---|---|
-| `inventory` | What the player carries. |
-| `inventory-title` | Its heading. |
-| `thing` | One thing you hold, carrying `data-thing` and `data-at`. |
-| `thing-name` | Its name. |
-| `thing-count` | How many, when there's more than one. |
-| `thing-text` | Its description. |
 | `entities` | The entity tables, all kinds. |
 | `entity-table` | One kind's table. |
 | `entity-heading` | The kind's heading. |
@@ -338,6 +332,12 @@ From [`@ifloom/plugin-inventory/react`](/docs/reference/plugins/inventory#react-
 
 | Key | Meaning |
 |---|---|
+| `inventory` | What the player carries. |
+| `inventory-title` | Its heading. |
+| `thing` | One thing you hold, carrying `data-thing` and `data-at`. |
+| `thing-name` | Its name. |
+| `thing-count` | How many, when there's more than one. |
+| `thing-text` | Its description. |
 | `thing-drop` | Its drop button, with `drop` on. |
 
 ### Wardrobe

@@ -528,15 +528,6 @@
   border-radius: 0;
 }
 
-[data-part="thing-text"] {
-  font-style: italic;
-}
-
-[data-part="thing"] {
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border);
-}
-
 [data-kit="label"] {
   font-variant: small-caps;
   letter-spacing: 0.04em;

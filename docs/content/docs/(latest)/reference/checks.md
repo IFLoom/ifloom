@@ -64,8 +64,9 @@ A plugin builds these in its `references`, a trait's `references`, an argument's
 | `{ stat, of, writes }` | A stat read, or written with `writes`, on the player or on `of`. |
 | `{ stat, starts }` | A stat an entity of the kind `starts` is given a value for. |
 | `{ storyline }`, `{ kind }`, `{ trait }`, `{ action }`, `{ input }`, `{ minigame }`, `{ timer }` | An id the game has to declare. A plugin's action, with a `/`, isn't checked. A timer's `to` and `by` have to be milliseconds. |
-| `{ holder, holds }` | Something that can hold things, checked as [holders](#checks) are. |
-| `{ protagonist }` | Whom a `you` effect makes the player play, checked as [protagonists](#checks) are. |
+| `{ someone }` | Someone: `'player'`, `'you'` or a unique entity, checked as [someone](#someone) is. |
+| `{ protagonist }` | Whom a `you` effect makes the player play, checked as [protagonists](#someone) are. |
+| `{ receiver }` | A call that needs a plugin that keeps things, or with an id, that plugin, checked as [receivers](#receivers) are. |
 | `{ like, of }` | An entity a `create` makes a thing like, of the kind it makes. |
 | `{ minigameKv }` | A key some minigame declares in its `kv`. |
 | `{ entity }` | An entity by reference, such as `'food:apple'`, that content or a plugin's `entities` declares. `'$'` and `'food:*'` pass once the kind exists. |
@@ -157,12 +158,13 @@ The checker reports each problem at a `where` that names what the problem is in.
 | `timer <id>` | `a timer needs ms above 0`, `two timers share this id`, and its `effects`. See [timers](/docs/reference/timers#checks). |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
 | `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no game value named "…"` or `no plugin value named "…"` for a `max: { value }`, its `visible` and its `ui`, and each problem [stats](/docs/reference/stats#checks) lists for a [formula](/docs/reference/stats#formula) and [levels](/docs/reference/stats#statlevels). |
-| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"`, `stat "…" is derived: it is worked out, never written`, `an entity id must not be a whole number`, what its `visible` names, its `image` file, and its [`at`](/docs/reference/entities#holder-and-placement), checked as a holder is. A unique thing starts with one holder, one of it, and `holders go round in a cycle: … → …` reports unique things that start inside each other. |
+| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"`, `stat "…" is derived: it is worked out, never written`, `an entity id must not be a whole number`, what its `visible` names, and its `image` file. Where a plugin starts it, such as the inventory's `inventory/at`, is that plugin's trait, checked as [traits](#traits) are. |
 | `kind <id>` | What its `listed` and `flags` conditions name, with `'$'` as any one of the kind, and its `ui`. |
 | `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but doesn't declare it. See [traits](#traits). |
 | `trait <id> on <kind>:<id>` | `unknown entity "…"` for a row of the `traits` table that names an entity nobody declares, and what the plugin's trait finds in the data. |
 | `finished` | The game's [`finished`](/docs/how-to/offer-new-game-plus) condition. |
-| `carryOver` | `unknown stat "…"` and `stat "…" belongs to <kind>, not the player` in [`carryOver`](/docs/how-to/offer-new-game-plus), and for each thing in `held`, `unknown entity "…": name one as "kind:id"` or `unknown kind "…"`. |
+| `carryOver` | `unknown stat "…"` and `stat "…" belongs to <kind>, not the player` in [`carryOver`](/docs/how-to/offer-new-game-plus). |
+| `receivers` | `"…" is no plugin of the game's that keeps things`, for an id in the game's [`receivers`](/docs/reference/content#gamebase) that isn't a [receiver](/docs/reference/entities#receivers). |
 | `lock <id>` | The `when` of each of the content's [locks](/docs/reference/locks#lock), by its `id`, or by its place in the list from 0 for one with none. |
 | `introScene` | `unknown scene "…"`, when the game opens on a scene it doesn't have. |
 | `plugin <id>` | `a plugin id is letters, digits and "-" only`, `two plugins share this id`, `trait "…" must be named "<id>/" and a name` and `two traits share the id "…"`. |
@@ -184,24 +186,6 @@ A stat is the player's or belongs to a [kind](/docs/reference/entities#kinddef),
 | `stat "…" belongs to <kind>: say whose with "of"` | A kind's stat is named with no `of`, as if it were the player's. |
 | `stat "…" is the player's, not <ref>'s` | The player's stat is named with an `of`. |
 | `stat "…" belongs to <kind>, not <other>` | A stat is named on an entity of another kind. |
-
-A [holder](/docs/reference/glossary#holder) that content names has to be one that can hold things, `'player'`, `'you'`, `'$'` or an entity of a [unique](/docs/reference/entities#unique) kind:
-
-| Problem | Cause |
-|---|---|
-| `unknown holder "…": a holder is "player", "you" or a unique entity` | The name is no holder at all, such as `'pal'`. |
-| `unknown kind "…"` | The entity is of a kind nobody declares. |
-| `"…" can't hold things: its kind "…" isn't unique` | The entity's kind stacks, such as `'food:apple'`. |
-| `"…" can't hold itself` | A `move`'s `to` is the thing it moves. |
-
-The entity a `you` effect makes the player play has to be `'player'`, `'$'` or an entity of a [unique](/docs/reference/entities#unique) kind:
-
-| Problem | Cause |
-|---|---|
-| `"you" is already whoever is played: …` | A `you` effect names `'you'`. |
-| `unknown protagonist "…": a protagonist is "player" or a unique entity` | The name is no entity reference, such as `'pal'`. |
-| `unknown kind "…"` | The entity is of a kind nobody declares. |
-| `"…" can't be played: its kind "…" isn't unique` | The entity's kind stacks, such as `'food:apple'`. |
 
 A [`Reason`](/docs/reference/actions#reason) written by key, `{ string: 'shop/closed' }`, in a `blocked` entry or a `once`, has to name a line in the game's strings, a plugin's or the engine's, or the checker reports `no string named "…"` where it's written.
 
@@ -230,7 +214,7 @@ The checker walks every condition, inside `all`, `any`, `not` and a `count`'s `w
 | `setting "…" is a ui setting; conditions read only play settings` | A `setting` condition names a `ui` [setting](/docs/reference/settings), which the state never holds. |
 | `<value> for setting "…" is not …` | An `is` the setting can't take: not `true` or `false` for a toggle, not an option of a choice, or outside a range's bounds or steps. |
 
-A call to a plugin's condition is also checked for what the plugin's [references](#reference) say it names. Stat owners and holders are checked as [the tables above](#checks) list.
+A call to a plugin's condition is also checked for what the plugin's [references](#reference) say it names. Stat owners are checked as [the tables above](#checks) list, and an `owned` condition as [someone](#someone) and [receivers](#receivers) are.
 
 ### Effects
 
@@ -260,7 +244,7 @@ A call to a plugin's condition is also checked for what the plugin's [references
 | `a timer’s to must be a number of milliseconds above 0, or null to stop it`, `a timer’s by must be a number of milliseconds` | A `timer` effect's `to` or `by` is out of range. |
 | `jumps to point "…", but a jump only works as a choice's effect in the scene that has that point` | A [`point`](/docs/reference/effects#point) effect sits anywhere but a data scene's choice. In a choice, the scene's [flow checks](/docs/reference/flows#checks) read it. |
 
-The checker also lists a `notify`'s `image` in [`files`](#fileref), checks an `audio` or `sound` effect as [audio](/docs/reference/audio#checks), a `panel` effect's `with` as each plugin's references say, and a call to a plugin's effect for what its references name. Stat owners and holders are checked as [the tables above](#checks) list, for an `entity` effect's `at`, a `move`'s `from` and `to`, a `create`'s `at` and an `each`'s `at`, and protagonists for the entity a `you` effect names.
+The checker also lists a `notify`'s `image` in [`files`](#fileref), checks an `audio` or `sound` effect as [audio](/docs/reference/audio#checks), a `panel` effect's `with` as each plugin's references say, and a call to a plugin's effect for what its references name. Stat owners are checked as [the tables above](#checks) list. A `receive`'s `to` and a `release`'s `from` are checked as [someone](#someone), the entity a `you` effect names as a protagonist, and every `receive` and `release` as [receivers](#receivers) are, its `via` included. A `create`'s `effects` are checked with `'$'` as one of the kind it makes.
 
 Inside an `each`, the checker reads `where` as a condition and `effects` as effects, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
 
@@ -329,6 +313,30 @@ The checker reads a translation's [words table](/docs/reference/words) against t
 |---|---|
 | `names no field the game has (translatableFields lists every key)` | A pack's key, at `words <key>`, names no field. It's a typo, or a block whose words changed so its hash key moved on. |
 | `two fields with different words share the words key "…"; give a block of words an id, or rename one` | Two blocks of words in one scene share an `id`, or two ids join into one key. |
+
+### someone
+
+Someone content names, a `receive`'s `to`, a `release`'s `from`, an `owned`'s `of` or a plugin's `arg.someone()`, has to be `'player'`, `'you'`, `'$'` or an entity of a [unique](/docs/reference/entities#unique) kind. The entity a `you` effect makes the player play has to be `'player'`, `'$'` or an entity of a unique kind, and not `'you'`:
+
+| Problem | Cause |
+|---|---|
+| `unknown someone "…": name "player", "you" or a unique entity` | The name is no entity reference at all, such as `'pal'`. |
+| `"…" isn't someone: its kind "…" isn't unique` | The entity's kind stacks, such as `'food:apple'`. |
+| `"you" is already whoever is played: …` | A `you` effect names `'you'`. |
+| `unknown protagonist "…": a protagonist is "player" or a unique entity` | A `you` effect names no entity reference, such as `'pal'`. |
+| `"…" can't be played: its kind "…" isn't unique` | A `you` effect names an entity whose kind stacks. |
+| `unknown kind "…"` | The entity is of a kind nobody declares. |
+
+### receivers
+
+A `receive`, `release` or `owned` needs a plugin that keeps things, a [receiver](/docs/reference/entities#receivers):
+
+| Problem | Cause |
+|---|---|
+| `no plugin of the game keeps things, so this does nothing: …` | The game has no receiver, so the call would do nothing. A Twine-style game uses [kv keys](/docs/how-to/hand-roll-an-inventory) instead. |
+| `via names "…", which isn't one of the game's plugins` | `via` names a plugin the game wasn't built with. |
+| `via names "…", which keeps no things` | `via` names a plugin with no receiver. |
+| `unknown entity "…"` | The thing isn't declared and isn't `'$'` or `'kind:*'`. |
 
 ## Caveats
 

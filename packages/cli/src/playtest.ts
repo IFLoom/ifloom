@@ -288,7 +288,7 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
     const command = commandOf(picked)
     lines.push(`> ${JSON.stringify(command)}`)
     // The same screen, the same state and the same command, again and again in one turn: nothing is moving, so stop.
-    const key = JSON.stringify([state.turn, text, command, state.stats, state.kv, state.held, state.plugins])
+    const key = JSON.stringify([state.turn, text, command, state.stats, state.kv, state.plugins])
     const round = (rounds.get(key) ?? 0) + 1
     rounds.set(key, round)
     if (round >= ROUNDS) {

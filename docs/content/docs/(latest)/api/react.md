@@ -6,8 +6,8 @@ Generated from the source of `@ifloom/react` and its TSDoc by `npm run api-docs`
 
 - Components: [`DefaultLayout`](#defaultlayout), [`GameProvider`](#gameprovider), [`GameShell`](#gameshell), [`InlineImage`](#inlineimage), [`InlineMail`](#inlinemail), [`InlineModal`](#inlinemodal), [`InlineMono`](#inlinemono), [`InlineProp`](#inlineprop), [`InlineTrigger`](#inlinetrigger), [`KeepPicturesOn`](#keeppictureson), [`Plugins`](#plugins), [`StatGauge`](#statgauge), [`UiProvider`](#uiprovider), [`WithPages`](#withpages)
 - Functions: [`assetUrl`](#asseturl), [`checkUiHints`](#checkuihints), [`mountGame`](#mountgame), [`poweredByIFLoom`](#poweredbyifloom), [`TextSize`](#textsize), [`useAudio`](#useaudio), [`useBacklog`](#usebacklog), [`useClock`](#useclock), [`useGame`](#usegame), [`useHolds`](#useholds), [`useMinigame`](#useminigame), [`useMods`](#usemods), [`useMotion`](#usemotion), [`usePage`](#usepage), [`usePart`](#usepart), [`usePicturesShown`](#usepicturesshown), [`usePluginUis`](#usepluginuis), [`useProfile`](#useprofile), [`useReducedMotion`](#usereducedmotion), [`useSaves`](#usesaves), [`useScene`](#usescene), [`useSetting`](#usesetting), [`useTimer`](#usetimer), [`useTimers`](#usetimers), [`useWords`](#usewords)
-- Constants: [`Backlog`](#backlog), [`Beat`](#beat), [`BeatGroup`](#beatgroup), [`ChangeItem`](#changeitem), [`Changes`](#changes), [`ChoiceButton`](#choicebutton), [`ChoiceList`](#choicelist), [`Clock`](#clock), [`Countdown`](#countdown), [`CreditsPage`](#creditspage), [`DiceOverlay`](#diceoverlay), [`DiceRoll`](#diceroll), [`EntityTable`](#entitytable), [`Fold`](#fold), [`Game`](#game), [`GameMenu`](#gamemenu), [`GatePage`](#gatepage), [`Hotspot`](#hotspot), [`InlineAction`](#inlineaction), [`InputField`](#inputfield), [`InputFields`](#inputfields), [`Inventory`](#inventory), [`LayeredPicture`](#layeredpicture), [`LoadPage`](#loadpage), [`MediaViewer`](#mediaviewer), [`MinigameCard`](#minigamecard), [`ModManager`](#modmanager), [`Notice`](#notice), [`Notices`](#notices), [`NoticeStrip`](#noticestrip), [`Overlay`](#overlay), [`PanelHost`](#panelhost), [`Picture`](#picture), [`PriceTag`](#pricetag), [`RoomActions`](#roomactions), [`SavesMenu`](#savesmenu), [`Scene`](#scene), [`SceneHeader`](#sceneheader), [`Section`](#section), [`SettingsPage`](#settingspage), [`Sidebar`](#sidebar), [`SplashPage`](#splashpage), [`StatList`](#statlist), [`Story`](#story), [`TEXT_SIZES`](#text_sizes), [`Timers`](#timers), [`Tip`](#tip), [`Title`](#title), [`TitlePage`](#titlepage), [`TRANSITIONS`](#transitions), [`Video`](#video), [`When`](#when)
-- Types: [`BehaviourOptions`](#behaviouroptions), [`CheckUiOptions`](#checkuioptions), [`Classes`](#classes), [`ClockState`](#clockstate), [`Components`](#components), [`CountdownProps`](#countdownprops), [`DiceRollProps`](#dicerollprops), [`GameContextValue`](#gamecontextvalue), [`GameProps`](#gameprops), [`GameProviderProps`](#gameproviderprops), [`GameShellProps`](#gameshellprops), [`GateOptions`](#gateoptions), [`InlineComponent`](#inlinecomponent), [`InlineComponents`](#inlinecomponents), [`InlineProps`](#inlineprops), [`InventoryProps`](#inventoryprops), [`KeyOptions`](#keyoptions), [`MediaViewerProps`](#mediaviewerprops), [`MinigameControls`](#minigamecontrols), [`ModsOption`](#modsoption), [`ModsState`](#modsstate), [`MountOptions`](#mountoptions), [`OverridableComponents`](#overridablecomponents), [`Page`](#page), [`PageDef`](#pagedef), [`PagesOptions`](#pagesoptions), [`PageState`](#pagestate), [`PanelComponent`](#panelcomponent), [`PartKey`](#partkey), [`PartNames`](#partnames), [`PluginSectionComponent`](#pluginsectioncomponent), [`PluginSpot`](#pluginspot), [`Reveal`](#reveal), [`RevealBeat`](#revealbeat), [`RevealGroup`](#revealgroup), [`RevealPoint`](#revealpoint), [`SavesState`](#savesstate), [`Say`](#say), [`SceneRolls`](#scenerolls), [`SceneTiming`](#scenetiming), [`ScreenTransition`](#screentransition), [`SectionProps`](#sectionprops), [`SidebarProps`](#sidebarprops), [`SplashCard`](#splashcard), [`SplashOptions`](#splashoptions), [`StatDisplay`](#statdisplay), [`StoryProps`](#storyprops), [`StyleOptions`](#styleoptions), [`Transition`](#transition), [`TransitionName`](#transitionname), [`UiOptions`](#uioptions), [`UiStringKey`](#uistringkey), [`VideoProps`](#videoprops), [`ViewerMedia`](#viewermedia), [`Words`](#words)
+- Constants: [`Backlog`](#backlog), [`Beat`](#beat), [`BeatGroup`](#beatgroup), [`ChangeItem`](#changeitem), [`Changes`](#changes), [`ChoiceButton`](#choicebutton), [`ChoiceList`](#choicelist), [`Clock`](#clock), [`Countdown`](#countdown), [`CreditsPage`](#creditspage), [`DiceOverlay`](#diceoverlay), [`DiceRoll`](#diceroll), [`EntityTable`](#entitytable), [`Fold`](#fold), [`Game`](#game), [`GameMenu`](#gamemenu), [`GatePage`](#gatepage), [`Hotspot`](#hotspot), [`InlineAction`](#inlineaction), [`InputField`](#inputfield), [`InputFields`](#inputfields), [`LayeredPicture`](#layeredpicture), [`LoadPage`](#loadpage), [`MediaViewer`](#mediaviewer), [`MinigameCard`](#minigamecard), [`ModManager`](#modmanager), [`Notice`](#notice), [`Notices`](#notices), [`NoticeStrip`](#noticestrip), [`Overlay`](#overlay), [`PanelHost`](#panelhost), [`Picture`](#picture), [`PriceTag`](#pricetag), [`RoomActions`](#roomactions), [`SavesMenu`](#savesmenu), [`Scene`](#scene), [`SceneHeader`](#sceneheader), [`Section`](#section), [`SettingsPage`](#settingspage), [`Sidebar`](#sidebar), [`SplashPage`](#splashpage), [`StatList`](#statlist), [`Story`](#story), [`TEXT_SIZES`](#text_sizes), [`Timers`](#timers), [`Tip`](#tip), [`Title`](#title), [`TitlePage`](#titlepage), [`TRANSITIONS`](#transitions), [`Video`](#video), [`When`](#when)
+- Types: [`BehaviourOptions`](#behaviouroptions), [`CheckUiOptions`](#checkuioptions), [`Classes`](#classes), [`ClockState`](#clockstate), [`Components`](#components), [`CountdownProps`](#countdownprops), [`DiceRollProps`](#dicerollprops), [`GameContextValue`](#gamecontextvalue), [`GameProps`](#gameprops), [`GameProviderProps`](#gameproviderprops), [`GameShellProps`](#gameshellprops), [`GateOptions`](#gateoptions), [`InlineComponent`](#inlinecomponent), [`InlineComponents`](#inlinecomponents), [`InlineProps`](#inlineprops), [`KeyOptions`](#keyoptions), [`MediaViewerProps`](#mediaviewerprops), [`MinigameControls`](#minigamecontrols), [`ModsOption`](#modsoption), [`ModsState`](#modsstate), [`MountOptions`](#mountoptions), [`OverridableComponents`](#overridablecomponents), [`Page`](#page), [`PageDef`](#pagedef), [`PagesOptions`](#pagesoptions), [`PageState`](#pagestate), [`PanelComponent`](#panelcomponent), [`PartKey`](#partkey), [`PartNames`](#partnames), [`PluginSectionComponent`](#pluginsectioncomponent), [`PluginSpot`](#pluginspot), [`Reveal`](#reveal), [`RevealBeat`](#revealbeat), [`RevealGroup`](#revealgroup), [`RevealPoint`](#revealpoint), [`SavesState`](#savesstate), [`Say`](#say), [`SceneRolls`](#scenerolls), [`SceneTiming`](#scenetiming), [`ScreenTransition`](#screentransition), [`SectionProps`](#sectionprops), [`SidebarProps`](#sidebarprops), [`SplashCard`](#splashcard), [`SplashOptions`](#splashoptions), [`StatDisplay`](#statdisplay), [`StoryProps`](#storyprops), [`StyleOptions`](#styleoptions), [`Transition`](#transition), [`TransitionName`](#transitionname), [`UiOptions`](#uioptions), [`UiStringKey`](#uistringkey), [`VideoProps`](#videoprops), [`ViewerMedia`](#viewermedia), [`Words`](#words)
 
 ## assetUrl
 
@@ -255,8 +255,8 @@ type Classes = {
   cheat?: string | ((defaults: string) => string)
   cheats?: string | ((defaults: string) => string)
   wardrobe?: string | ((defaults: string) => string)
-  debug?: string | ((defaults: string) => string)
   inventory?: string | ((defaults: string) => string)
+  debug?: string | ((defaults: string) => string)
   credits?: string | ((defaults: string) => string)
   title?: string | ((defaults: string) => string)
   viewer?: string | ((defaults: string) => string)
@@ -382,11 +382,6 @@ type Classes = {
   'mods-empty'?: string | ((defaults: string) => string)
   'mods-restart'?: string | ((defaults: string) => string)
   'mods-changed'?: string | ((defaults: string) => string)
-  'inventory-title'?: string | ((defaults: string) => string)
-  thing?: string | ((defaults: string) => string)
-  'thing-name'?: string | ((defaults: string) => string)
-  'thing-count'?: string | ((defaults: string) => string)
-  'thing-text'?: string | ((defaults: string) => string)
   'entity-table'?: string | ((defaults: string) => string)
   'entity-heading'?: string | ((defaults: string) => string)
   'entity-columns'?: string | ((defaults: string) => string)
@@ -499,6 +494,11 @@ type Classes = {
   'post-meta'?: string | ((defaults: string) => string)
   'post-portrait'?: string | ((defaults: string) => string)
   'post-text'?: string | ((defaults: string) => string)
+  'inventory-title'?: string | ((defaults: string) => string)
+  thing?: string | ((defaults: string) => string)
+  'thing-name'?: string | ((defaults: string) => string)
+  'thing-count'?: string | ((defaults: string) => string)
+  'thing-text'?: string | ((defaults: string) => string)
   'thing-drop'?: string | ((defaults: string) => string)
   'job-actions'?: string | ((defaults: string) => string)
   'job-details'?: string | ((defaults: string) => string)
@@ -653,7 +653,6 @@ type Components = {
   SavesMenu?: Override<{ className?: string; onLoaded?: (() => void); }> | undefined
   Backlog?: Override<{ className?: string; }> | undefined
   ModManager?: Override<{ className?: string; }> | undefined
-  Inventory?: Override<InventoryProps> | undefined
   PanelHost?: Override<object> | undefined
   EntityTable?: Override<{ kinds?: string[]; className?: string; }> | undefined
   InputFields?: Override<{ className?: string; }> | undefined
@@ -712,7 +711,6 @@ Plugins add fields of their own to it, which their pages list.
 | `SavesMenu` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; onLoaded?: (() => void); }> \| undefined` | yes |  | The replacement for `SavesMenu`. |
 | `Backlog` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `Backlog`. |
 | `ModManager` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `ModManager`. |
-| `Inventory` | [`Override`](/docs/api/react-kit#override)`<`[`InventoryProps`](#inventoryprops)`> \| undefined` | yes |  | The replacement for `Inventory`. |
 | `PanelHost` | [`Override`](/docs/api/react-kit#override)`<object> \| undefined` | yes |  | The replacement for `PanelHost`. |
 | `EntityTable` | [`Override`](/docs/api/react-kit#override)`<{ kinds?: string[]; className?: string; }> \| undefined` | yes |  | The replacement for `EntityTable`. |
 | `InputFields` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }> \| undefined` | yes |  | The replacement for `InputFields`. |
@@ -1339,44 +1337,6 @@ import { InputFields } from '@ifloom/react'
 const InputFields: ComponentType<{ className?: string; }>
 ```
 
-## Inventory
-
-Const. Explained in [Components](/docs/reference/react/components#inventory).
-
-Renders the things the player holds, `view.held`, as the `inventory` part, each with its count and its description.
-It renders nothing while the player holds nothing.
-
-The inventory plugin's UI renders its own `InventoryCard` in its place, with a button that uses each thing and, with
-`drop`, one that drops it.
-
-```ts shape
-import { Inventory } from '@ifloom/react'
-const Inventory: ComponentType<InventoryProps>
-```
-
-Uses: [`InventoryProps`](#inventoryprops).
-
-## InventoryProps
-
-Type.
-
-The props of `Inventory`.
-
-```ts shape
-import type { InventoryProps } from '@ifloom/react'
-type InventoryProps = {
-  className?: string
-  title?: string | false
-  drop?: boolean
-}
-```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `className` | `string` | yes |  | Classes added to the `inventory` part's own. |
-| `title` | `string \| false` | yes |  | The heading, the UI's word for the inventory if left out. `false` leaves it out, as under a section's title. |
-| `drop` | `boolean` | yes |  | True to give each thing a drop button, in a replacement that renders one, such as the inventory plugin's. The core list ignores it. |
-
 ## KeepPicturesOn
 
 Component. Explained in [Components](/docs/reference/react/components#keeppictureson).
@@ -1747,7 +1707,6 @@ type OverridableComponents = {
   SavesMenu: Override<{ className?: string; onLoaded?: (() => void); }>
   Backlog: Override<{ className?: string; }>
   ModManager: Override<{ className?: string; }>
-  Inventory: Override<InventoryProps>
   PanelHost: Override<object>
   EntityTable: Override<{ kinds?: string[]; className?: string; }>
   InputFields: Override<{ className?: string; }>
@@ -1806,7 +1765,6 @@ Plugins add fields of their own to it, which their pages list.
 | `SavesMenu` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; onLoaded?: (() => void); }>` |  |  | The replacement for `SavesMenu`. |
 | `Backlog` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `Backlog`. |
 | `ModManager` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `ModManager`. |
-| `Inventory` | [`Override`](/docs/api/react-kit#override)`<`[`InventoryProps`](#inventoryprops)`>` |  |  | The replacement for `Inventory`. |
 | `PanelHost` | [`Override`](/docs/api/react-kit#override)`<object>` |  |  | The replacement for `PanelHost`. |
 | `EntityTable` | [`Override`](/docs/api/react-kit#override)`<{ kinds?: string[]; className?: string; }>` |  |  | The replacement for `EntityTable`. |
 | `InputFields` | [`Override`](/docs/api/react-kit#override)`<{ className?: string; }>` |  |  | The replacement for `InputFields`. |
@@ -1931,7 +1889,7 @@ Const. Explained in [Components](/docs/reference/react/components#panelhost).
 Renders the open panel, `view.panel`, in a `PartDialog`, and sends `closePanel` when the player closes it. The panel
 gets its `with` as `data`.
 
-It renders the game's own panel of that name, else a plugin UI's, else a built-in one (`stats` or `inventory`). The
+It renders the game's own panel of that name, else a plugin UI's, else the built-in `stats`. The
 default layout has one, and a layout of your own puts it anywhere inside the `GameProvider`.
 
 ```ts shape
@@ -1967,7 +1925,6 @@ type PartKey =
   | 'minigame'
   | 'dice'
   | 'bold'
-  | 'inventory'
   | 'credits'
   | 'title'
   | 'viewer'
@@ -2093,11 +2050,6 @@ type PartKey =
   | 'mods-empty'
   | 'mods-restart'
   | 'mods-changed'
-  | 'inventory-title'
-  | 'thing'
-  | 'thing-name'
-  | 'thing-count'
-  | 'thing-text'
   | 'entity-table'
   | 'entity-heading'
   | 'entity-columns'
@@ -3012,7 +2964,6 @@ type UiStringKey =
   | 'chose'
   | 'close'
   | 'remove'
-  | 'inventory'
   | 'newGame'
   | 'dismiss'
   | 'noSaves'
@@ -3046,7 +2997,6 @@ type UiStringKey =
   | 'applyMods'
   | 'modsHint'
   | 'modsChanged'
-  | 'heldCount'
   | 'continue'
   | 'newGamePlus'
   | 'noSettings'

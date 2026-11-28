@@ -6,9 +6,9 @@ Generated from the source of `@ifloom/plugin-places` and `@ifloom/plugin-places/
 
 ## @ifloom/plugin-places
 
-- Functions: [`locationOf`](#locationof), [`locationsOf`](#locationsof), [`places`](#places)
+- Functions: [`locationOf`](#locationof), [`locationsOf`](#locationsof), [`lyingCount`](#lyingcount), [`places`](#places)
 - Constants: [`LOCATION`](#location)
-- Types: [`Arrival`](#arrival), [`ExitView`](#exitview), [`LyingView`](#lyingview), [`Place`](#place), [`PlaceDef`](#placedef), [`PlacesOptions`](#placesoptions), [`PlacesState`](#placesstate), [`PlacesView`](#placesview), [`PlaceView`](#placeview)
+- Types: [`Arrival`](#arrival), [`ExitView`](#exitview), [`Lies`](#lies), [`LyingView`](#lyingview), [`Place`](#place), [`PlaceDef`](#placedef), [`PlacesOptions`](#placesoptions), [`PlacesState`](#placesstate), [`PlacesView`](#placesview), [`PlaceView`](#placeview)
 
 ### Arrival
 
@@ -59,11 +59,26 @@ Plugins add fields of their own to it, which their pages list.
 | `description` | `string \| null` |  |  | The destination's `description`, the line under its name, or null when it has none. |
 | `image` | `string \| null` |  |  | The path of the destination's picture, its `image` through `artSrc`, or null when it has none. |
 
+### Lies
+
+Type. Explained in [Places](/docs/reference/plugins/places#lies).
+
+The data of the `places/lies` trait, which starts a thing lying in a location.
+
+It's the location's id, or the full form with a condition to find it and effects.
+
+```ts shape
+import type { Lies } from '@ifloom/plugin-places'
+type Lies = string | { at: string; count?: number; when?: Condition; onFind?: EffectRef[]; onPickUp?: EffectRef[] }
+```
+
+Uses: [`Condition`](/docs/api/engine#condition), [`EffectRef`](/docs/api/engine#effectref).
+
 ### LOCATION
 
 Const. Explained in [Places](/docs/reference/plugins/places#location).
 
-The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique, so each location can hold things.
+The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique: each location is one place.
 
 ```ts shape
 import { LOCATION } from '@ifloom/plugin-places'
@@ -97,6 +112,19 @@ function locationsOf(state: GameState, game: Game): EntityRef[]
 ```
 
 Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game), [`EntityRef`](/docs/api/engine#entityref).
+
+### lyingCount
+
+Function. Explained in [Places](/docs/reference/plugins/places#lyingcount).
+
+Returns how many of a thing lie in a location now, whether or not the player can see them.
+
+```ts shape
+import { lyingCount } from '@ifloom/plugin-places'
+function lyingCount(state: GameState, game: Game, ref: string, at: string): number
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game).
 
 ### LyingView
 
@@ -214,6 +242,8 @@ Uses: [`PlacesOptions`](#placesoptions), [`DefinedPlugin`](/docs/api/engine-plug
 |---|---|---|
 | `places.location` | `(def:` [`PlaceDef`](#placedef)`):` [`EntityDef`](/docs/api/engine#entitydef) | Returns a location for content's `entities`, an entity with the `places/location` trait, from the entity's fields and the trait's. |
 | `places.locationRef` | `(id: string):` [`EntityRef`](/docs/api/engine#entityref) | Returns the entity reference of a location; a bare id is one of the `location` kind. |
+| `places.lies` | `(at: string, more?: Omit<Exclude<`[`Lies`](#lies)`, string>, 'at'>): { 'places/lies':` [`Lies`](#lies) `}` | Returns the `places/lies` trait, to spread into an entity's `traits`, naming where it starts lying and any `when` to find it. |
+| `places.put` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, options?: { at?: string; by?: number }):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `places/put` effect, which puts a thing down where the player is, or `at` a location. |
 | `places.pickUp` | `(ref:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `places/pickUp` command, which picks up one of a thing lying where the player is. |
 | `places.go` | `(id: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `places/go` command, which walks to a location by an exit. |
 | `places.at` | `(...places: string[]):` [`Condition`](/docs/api/engine#condition) | Returns the `places/at` condition, which holds while the player is at any of these locations. |
@@ -233,12 +263,14 @@ Settings for `places()`.
 import type { PlacesOptions } from '@ifloom/plugin-places'
 type PlacesOptions = {
   start?: string
+  onPickUp?: EffectRef[]
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `start` | `string` | yes |  | The id of the location a new game starts at. The player is at no location if left out. |
+| `onPickUp` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | The effects that run each time the player picks anything up, after the thing's own `onPickUp`, with `'$'` as the thing. |
 
 ### PlacesState
 
@@ -250,12 +282,16 @@ The location a save keeps for the player. The plugin reads the locations from co
 import type { PlacesState } from '@ifloom/plugin-places'
 type PlacesState = {
   at: string | null
+  floor: Record<string, Record<string, number>>
+  found: string[]
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `at` | `string \| null` |  |  | The id of the location the player is at, its full reference for a location of another kind, or null when at none. |
+| `floor` | `Record<string, Record<string, number>>` |  |  | The counts of things lying in each location that play changed, by location id and then thing. A count stays once written, 0 included. For a count play hasn't changed, the plugin reads the thing's `places/lies`. |
+| `found` | `string[]` |  |  | The things with a `when` the player has found, by reference. |
 
 ### PlacesView
 
@@ -276,7 +312,7 @@ type PlacesView = {
 |---|---|---|---|---|
 | `location` | [`PlaceView`](#placeview) `\| null` |  |  | The location the player is at, or null when at none. |
 | `exits` | [`ExitView[]`](#exitview) |  |  | The location's exits in the order it lists them. It is empty while a scene is open or a lock holds everything. |
-| `things` | [`LyingView[]`](#lyingview) |  |  | The things the location holds, such as a thing the player dropped. It is empty while a scene is open or a lock holds everything. |
+| `things` | [`LyingView[]`](#lyingview) |  |  | The things lying in the location that the player can see, such as a thing they dropped. It is empty while a scene is open or a lock holds everything. |
 
 ### PlaceView
 
@@ -361,7 +397,7 @@ type PlacesControls = {
 |---|---|---|---|---|
 | `location` | [`PlaceView`](#placeview) `\| null` |  |  | The location the player is at, or null when at none. |
 | `exits` | [`ExitView[]`](#exitview) |  |  | The location's exits in the order it lists them. It is empty while a scene is open or a lock holds everything. |
-| `things` | [`LyingView[]`](#lyingview) |  |  | The things the location holds, such as a thing the player dropped. It is empty while a scene is open or a lock holds everything. |
+| `things` | [`LyingView[]`](#lyingview) |  |  | The things lying in the location that the player can see, such as a thing they dropped. It is empty while a scene is open or a lock holds everything. |
 | `go` | `(exit: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends the command of the exit to the location with this id. The engine refuses it, as any command, when the exit is disabled or missing. |
 | `pickUp` | `(thing:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends the `pickUp` command for one of the thing lying here with this reference, such as `'note:paper'`. |
 

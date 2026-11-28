@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { give, heldCount, holds, loadGame, statValue, view, whyNot, type Content, type Game, type GameState } from '@ifloom/engine'
+import { applyEffects, holds, loadGame, startingState, statValue, view, whyNot, type Content, type Game, type GameState } from '@ifloom/engine'
 import type { Plugin } from '@ifloom/engine/plugin'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { cast } from '@ifloom/plugin-cast'
 import { places, type PlacesView } from '@ifloom/plugin-places'
-import { shop, type ShopView } from '@ifloom/plugin-shop'
+import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
-import { inventory } from '../src/index.ts'
+import { heldBy, heldCount, holderOf, inventory } from '../src/index.ts'
 
-/** A picnic: food that stacks, a torch that is kept, a stone that does nothing, and a friend who holds things. */
+/** A picnic: food that stacks, a torch that is kept, a stone that does nothing, a friend who holds things and a ring that is one of a kind. */
 const picnic: Content = {
   name: 'picnic',
   stats: [{ id: 'energy', label: 'Energy', start: 10 }],
@@ -16,6 +16,7 @@ const picnic: Content = {
     { id: 'food', label: 'Food', listed: false },
     { id: 'gear', label: 'Gear', listed: false },
     { id: 'friend', label: 'Friend', unique: true, listed: false },
+    { id: 'ring', label: 'Ring', unique: true, listed: false },
   ],
   entities: [
     {
@@ -23,21 +24,39 @@ const picnic: Content = {
       of: 'food',
       name: 'apple',
       description: 'Crisp.',
-      at: { player: 2 },
-      traits: { ...inventory.usable('Eat the apple', [{ stat: 'energy', by: 5 }]) },
+      traits: { ...inventory.at({ player: 2 }), ...inventory.usable('Eat the apple', [{ stat: 'energy', by: 5 }]) },
     },
-    { id: 'torch', of: 'gear', name: 'torch', at: 'player', traits: { ...inventory.usable('Switch it on', [{ kv: 'lit', to: true }], { keep: true }) } },
-    { id: 'stone', of: 'gear', name: 'stone', at: 'player' },
+    {
+      id: 'torch',
+      of: 'gear',
+      name: 'torch',
+      traits: { ...inventory.at('player'), ...inventory.usable('Switch it on', [{ kv: 'lit', to: true }], { keep: true }) },
+    },
+    { id: 'stone', of: 'gear', name: 'stone', traits: { ...inventory.at('player') } },
     { id: 'kim', of: 'friend', name: 'Kim' },
+    { id: 'band', of: 'ring', name: 'band', traits: { ...inventory.at('friend:kim') } },
   ],
 }
 
-function game(extra: Content[] = [], plugins: Plugin[] = [inventory()]): Game {
-  return loadChecked([picnic, ...extra], { id: 'picnic', title: 'Picnic', plugins })
+function game(extra: Content[] = [], plugins: Plugin[] = [inventory()], base: { receivers?: string[] } = {}): Game {
+  return loadChecked([picnic, ...extra], { id: 'picnic', title: 'Picnic', plugins, ...base })
 }
 
 const shown = (g: Game, state: GameState) => view(state, g).plugins.inventory!
+
 describe('the inventory alone', () => {
+  it('starts things where their inventory/at trait says, with nothing in the save', () => {
+    const g = game()
+    const state = startingState(g)
+    expect(state.plugins.inventory.state).toEqual({ held: {} })
+    expect(heldBy(state, g, 'player')).toEqual([
+      { ref: 'food:apple', count: 2 },
+      { ref: 'gear:torch', count: 1 },
+      { ref: 'gear:stone', count: 1 },
+    ])
+    expect(holderOf(state, g, 'ring:band')).toBe('friend:kim')
+  })
+
   it('shows what you hold, with a button for each thing that does something', () => {
     const g = game()
     const things = shown(g, freshState(g)).things
@@ -48,6 +67,52 @@ describe('the inventory alone', () => {
     ])
     expect(things[0]).toMatchObject({ name: 'apple', description: 'Crisp.', image: null, at: 'player' })
     expect(things[0].use?.command).toEqual({ type: 'custom', name: 'inventory/use', with: { id: 'food:apple' } })
+  })
+
+  it('takes what receive gives, gives back what release takes, and counts it for owned', () => {
+    const g = game()
+    let state = applyEffects(startingState(g), g, [
+      { receive: 'food:apple', by: 3 },
+      { receive: 'food:apple', to: 'friend:kim' },
+    ])
+    expect(heldCount(state, g, 'food:apple')).toBe(5)
+    expect(heldCount(state, g, 'food:apple', 'friend:kim')).toBe(1)
+    expect(holds(state, g, { owned: 'food:apple', gte: 5 })).toBe(true)
+    expect(holds(state, g, { owned: 'food:apple', of: 'friend:kim', gte: 1, lte: 1 })).toBe(true)
+    state = applyEffects(state, g, [
+      { release: 'food:apple', by: 4 },
+      { release: 'food:apple', by: 9, from: 'friend:kim' },
+    ])
+    expect(heldCount(state, g, 'food:apple')).toBe(1)
+    expect(heldCount(state, g, 'food:apple', 'friend:kim')).toBe(0)
+  })
+
+  it('moves and sets counts with its own effects, and reads them as a value', () => {
+    const g = game()
+    let state = applyEffects(startingState(g), g, [inventory.move('food:apple', 'friend:kim', { by: 1 }), inventory.set('gear:stone', 4)])
+    expect(heldCount(state, g, 'food:apple')).toBe(1)
+    expect(heldCount(state, g, 'food:apple', 'friend:kim')).toBe(1)
+    expect(heldCount(state, g, 'gear:stone')).toBe(4)
+    expect(holds(state, g, { value: 'inventory/count', with: { entity: 'gear:stone' }, is: 4 })).toBe(true)
+    expect(holds(state, g, { value: 'inventory/count', with: { entity: 'food:apple', at: 'friend:kim' }, is: 1 })).toBe(true)
+    // Never below 0, never into itself.
+    state = applyEffects(state, g, [inventory.set('gear:stone', -3), inventory.move('ring:band', 'ring:band', { from: 'friend:kim' })])
+    expect(heldCount(state, g, 'gear:stone')).toBe(0)
+    expect(holderOf(state, g, 'ring:band')).toBe('friend:kim')
+  })
+
+  it('keeps a unique thing in one place, taking it from whoever had it', () => {
+    const g = game()
+    const state = applyEffects(startingState(g), g, [{ receive: 'ring:band', by: 2 }])
+    expect(heldCount(state, g, 'ring:band')).toBe(1)
+    expect(heldCount(state, g, 'ring:band', 'friend:kim')).toBe(0)
+  })
+
+  it('forgets what a removed entity held, and a removed thing', () => {
+    const g = game()
+    const state = applyEffects(startingState(g), g, [{ remove: 'friend:kim' }, { remove: 'gear:stone' }])
+    expect(holderOf(state, g, 'ring:band')).toBeUndefined()
+    expect(heldBy(state, g, 'player').map((entry) => entry.ref)).toEqual(['food:apple', 'gear:torch'])
   })
 
   it('uses one: its effects run and one is spent, unless it is kept', () => {
@@ -93,11 +158,32 @@ describe('the inventory alone', () => {
   })
 
   it('works on a thing made in play like another, through its trait', () => {
-    const g = game([{ name: 'bag', actions: [{ id: 'pick', effects: [{ create: 'food', like: 'food:apple', with: { id: 'windfall' }, at: 'player' }] }] }])
+    const g = game([
+      { name: 'bag', actions: [{ id: 'pick', effects: [{ create: 'food', like: 'food:apple', with: { id: 'windfall' }, effects: [{ receive: '$' }] }] }] },
+    ])
     const picked = play(freshState(g), g, { type: 'action', id: 'pick' })
     const windfall = shown(g, picked).things.find((thing) => thing.ref === 'food:windfall')
     expect(windfall?.use?.label).toBe('Eat the apple')
     expect(statValue(play(picked, g, inventory.use('food:windfall')), g, 'energy')).toBe(15)
+  })
+
+  it('carries what carryOver lists into a New Game+, with things made in play', () => {
+    const made = (g: Game) =>
+      applyEffects(startingState(g), g, [
+        { create: 'food', like: 'food:apple', with: { id: 'jam' }, effects: [{ receive: '$', by: 2 }] },
+        inventory.set('food:apple', 7),
+      ])
+    const some = game([], [inventory({ carryOver: ['food:apple'] })])
+    let plus = startingState(some, { carry: made(some) })
+    expect(heldCount(plus, some, 'food:apple')).toBe(7)
+    expect(heldCount(plus, some, 'food:jam')).toBe(0)
+    const all = game([], [inventory({ carryOver: 'all' })])
+    plus = startingState(all, { carry: made(all) })
+    expect(heldCount(plus, all, 'food:jam')).toBe(2)
+    expect(plus.entities.food?.jam).toEqual({ like: 'food:apple' })
+    // Without carryOver, it starts fresh.
+    const none = game()
+    expect(heldCount(startingState(none, { carry: made(none) }), none, 'food:apple')).toBe(2)
   })
 
   it('reports what content gets wrong', () => {
@@ -107,21 +193,37 @@ describe('the inventory alone', () => {
         picnic,
         {
           name: 'broken',
-          entities: [{ id: 'pear', of: 'food', name: 'pear', traits: { 'inventory/usable': { label: '', effects: [{ stat: 'joy', by: 1 }] } } }],
+          kinds: [{ id: 'box', label: 'Box', unique: true }],
+          entities: [
+            { id: 'pear', of: 'food', name: 'pear', traits: { 'inventory/usable': { label: '', effects: [{ stat: 'joy', by: 1 }] } } },
+            { id: 'quince', of: 'food', name: 'quince', traits: { ...inventory.at({ you: 1, 'food:apple': 1, 'food:quince': 2.5 }) } },
+            { id: 'a', of: 'box', name: 'A', traits: { ...inventory.at('box:b') } },
+            { id: 'b', of: 'box', name: 'B', traits: { ...inventory.at('box:a') } },
+            { id: 'lost', of: 'ring', name: 'lost', traits: { ...inventory.at({ player: 1, 'friend:kim': 1 }) } },
+          ],
           actions: [{ id: 'eat', effects: [] }],
           data: { inventory: { kinds: [{ id: 'drink' }] } },
         },
       ],
       { id: 'picnic', title: 'Picnic', plugins: [inventory()] },
     )
-    expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(
-      expect.arrayContaining([
-        'trait inventory/usable on food:pear: a usable thing needs a label for its button',
-        expect.stringContaining('unknown stat "joy"'),
-        'kinds drink: unknown kind "drink"',
-        expect.stringContaining('unknown entity "food:plum"'),
-      ]),
-    )
+    const problems = loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)
+    for (const expected of [
+      'trait inventory/usable on food:pear: a usable thing needs a label for its button',
+      'unknown stat "joy"',
+      'kinds drink: unknown kind "drink"',
+      'unknown entity "food:plum"',
+      'inventory/at can\'t be "you" where a thing starts',
+      'inventory/at names the entity itself',
+      'a count is a whole number above 0',
+      '"food:apple" isn\'t someone: its kind "food" isn\'t unique',
+      'holders go round in a cycle',
+      'a unique thing starts in one place, one of it',
+    ])
+      expect(
+        problems.some((line) => line.includes(expected)),
+        `${expected}\n${problems.join('\n')}`,
+      ).toBe(true)
   })
 })
 
@@ -138,7 +240,6 @@ describe('the inventory with places', () => {
     const g = game([park], [inventory(), places({ start: 'lawn' })])
     const dropped = play(freshState(g), g, inventory.drop('gear:stone'))
     expect(heldCount(dropped, g, 'gear:stone')).toBe(0)
-    expect(heldCount(dropped, g, 'gear:stone', places.locationRef('lawn'))).toBe(1)
     const lying = (state: GameState) => (view(state, g).plugins.places as PlacesView).things.map((thing) => thing.ref)
     expect(lying(dropped)).toEqual(['gear:stone'])
     // Somewhere else it isn't there; back on the lawn, it is.
@@ -164,8 +265,8 @@ describe('the inventory with the cast', () => {
     expect(heldCount(given, g, 'food:apple', cast.character('ava'))).toBe(1)
   })
 
-  it('hands what a protagonist holds over to them as you', () => {
-    const g = game([{ ...town, actions: [{ id: 'be', effects: [{ you: cast.character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
+  it('gives to the protagonist being played, and spends theirs before the player’s', () => {
+    const g = game([{ ...town, actions: [{ id: 'be', effects: [{ you: cast.character('ava') }, { receive: 'food:apple' }] }] }], [inventory(), cast()])
     const played = play(freshState(g), g, { type: 'action', id: 'be' })
     expect(shown(g, played).things.map((thing) => [thing.ref, thing.at])).toEqual([
       ['food:apple', 'character:ava'],
@@ -173,10 +274,15 @@ describe('the inventory with the cast', () => {
       ['gear:torch', 'player'],
       ['gear:stone', 'player'],
     ])
-    // Using it spends the protagonist's.
+    // What you own counts the protagonist's and the player's own.
+    expect(holds(played, g, { owned: 'food:apple', gte: 3, lte: 3 })).toBe(true)
     const ate = play(played, g, inventory.use('food:apple'))
     expect(heldCount(ate, g, 'food:apple', cast.character('ava'))).toBe(0)
     expect(heldCount(ate, g, 'food:apple', 'player')).toBe(2)
+    // Released, the protagonist's go first, then the player's.
+    const spent = applyEffects(played, g, [{ release: 'food:apple', by: 2 }])
+    expect(heldCount(spent, g, 'food:apple', cast.character('ava'))).toBe(0)
+    expect(heldCount(spent, g, 'food:apple', 'player')).toBe(1)
   })
 })
 
@@ -188,25 +294,22 @@ describe('the inventory with the shop and the wardrobe', () => {
     entities: [
       { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wardrobe.wearable('neck'), ...shop.sellable({ coins: 8 }) } },
       { id: 'pie', of: 'food', name: 'pie', traits: { ...inventory.usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...shop.sellable({ coins: 3 }) } },
-      shop.vendor({ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
+      shop.vendor({ id: 'stall', name: 'Stall', goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
     ],
     data: {
       wardrobe: { slots: [{ id: 'neck', label: 'Neck' }] },
     },
   }
 
-  it('buys a thing, wears it, uses another, and gives the first away, each plugin knowing nothing of the others', () => {
-    const g = game([market], [inventory(), shop(), wardrobe()])
+  it('sends clothes bought to the wardrobe and the rest to the inventory, each plugin knowing nothing of the others', () => {
+    const g = game([market], [inventory(), shop(), wardrobe()], { receivers: ['wardrobe', 'inventory'] })
     let state = play(freshState(g), g, shop.buy('stall', 'clothing:scarf'), shop.buy('stall', 'food:pie'), wardrobe.wear('clothing:scarf'))
     expect(state.stats.coins).toBe(9)
     expect(holds(state, g, wardrobe.wearing('clothing:scarf'))).toBe(true)
+    expect(heldCount(state, g, 'clothing:scarf')).toBe(0)
     expect(shown(g, state).things.find((thing) => thing.ref === 'food:pie')?.use?.label).toBe('Eat the pie')
     state = play(state, g, inventory.use('food:pie'))
     expect(statValue(state, g, 'energy')).toBe(30)
-    // Given away, it comes off; the stall sells what it holds, and the scarf isn't there.
-    state = play(state, g, inventory.give('clothing:scarf', 'vendor:stall'))
-    expect(holds(state, g, wardrobe.wearing('clothing:scarf'))).toBe(false)
-    expect((view(state, g).plugins.shop as ShopView).vendors[0].goods[0].stock).toBe(1)
   })
 
   it('leaves each one working without the others', () => {
@@ -217,7 +320,10 @@ describe('the inventory with the shop and the wardrobe', () => {
       const has = (id: string) => plugins.some((plugin) => plugin.id === id)
       const entities = (market.entities ?? []).filter((entity) => entity.of !== 'vendor' || has('shop'))
       const loaded = loadGame([picnic, { ...market, data, entities }], { id: 'picnic', title: 'Picnic', plugins })
-      expect(loaded.problems, plugins.map((plugin) => plugin.id).join()).toEqual([])
+      // A shop with nothing to keep what it sells is told so: its goods would need `deliver: false` and flags.
+      const keeps = has('inventory') || has('wardrobe')
+      const problems = loaded.problems.filter((problem) => keeps || !problem.what.includes('no plugin of the game keeps things'))
+      expect(problems, plugins.map((plugin) => plugin.id).join()).toEqual([])
     }
   })
 })

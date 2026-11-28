@@ -96,7 +96,7 @@ import type { Content } from '@ifloom/engine'
 
 export const words: Content = {
   strings: {
-    'ui.inventory': 'In your bag',
+    'ui.stats': 'How you are',
     'ui.quests': 'To do',
   },
 }
@@ -111,8 +111,6 @@ export const words: Content = {
 | `ui.back` | `Back`, the button on the settings, load and credits pages. |
 | `ui.dismiss` | `Dismiss`, the label on each notice's dismiss button. |
 | `ui.undo`, `ui.redo` | `Undo` and `Redo`, the [`GameMenu`](/docs/reference/react/components#gamemenu)'s buttons. |
-| `ui.inventory` | `Carrying`, the [`Inventory`](/docs/reference/react/components#inventory)'s title and the inventory panel's. |
-| `ui.heldCount` | `×{n}`, after a thing the player holds more than one of. |
 | `ui.saves`, `ui.save`, `ui.saveNew`, `ui.load` | `Saves`, `Save`, `Save in a new slot` and `Load`, in the [`SavesMenu`](/docs/reference/react/components#savesmenu). |
 | `ui.remove` | `Delete`, the button that deletes a save or removes a mod. |
 | `ui.exportSave`, `ui.importSave` | `Export` and `Import a save file`, in the saves menu and on the load page. |

@@ -62,8 +62,7 @@ export const paper: EntityDef = {
   of: 'item',
   name: 'newspaper',
   description: 'Today’s Small Town Gazette. The back page is job ads.',
-  at: 'player',
-  traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) },
+  traits: { ...inventory.at('player'), ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) },
 }
 ```
 

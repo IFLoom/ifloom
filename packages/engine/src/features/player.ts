@@ -31,6 +31,8 @@ export type PlayerShape = {
   references: {
     /** A reference to whom a `you` effect makes the player play: `'player'` or an entity of a unique kind. */
     protagonist: { protagonist: string }
+    /** A reference to someone, `'player'`, `'you'` or an entity of a unique kind, such as who a `receive` gives a thing to. */
+    someone: { someone: string }
   }
   game: {
     /** The game's player, such as their picture beside their own spoken lines. */
@@ -81,6 +83,15 @@ export const player = defineFeature<PlayerShape>({
       const kind = kindOf(game, parts.kind)
       if (!kind) return [`unknown kind "${parts.kind}"`]
       if (!kind.unique) return [`"${who}" can't be played: its kind "${parts.kind}" isn't unique`]
+      return []
+    },
+    someone: ({ someone: who }) => {
+      if (who === PLAYER || who === YOU || who === '$') return []
+      const parts = parseRef(who)
+      if (!parts) return [`unknown someone "${who}": name "player", "you" or a unique entity`]
+      const kind = kindOf(game, parts.kind)
+      if (!kind) return [`unknown kind "${parts.kind}"`]
+      if (!kind.unique) return [`"${who}" isn't someone: its kind "${parts.kind}" isn't unique`]
       return []
     },
   }),

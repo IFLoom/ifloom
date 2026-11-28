@@ -17,7 +17,6 @@ export const UI_STRINGS = {
   undo: 'Undo',
   redo: 'Redo',
   // the titles of the built-in sections and panels
-  inventory: 'Carrying',
   saves: 'Saves',
   save: 'Save',
   saveNew: 'Save in a new slot',
@@ -42,7 +41,6 @@ export const UI_STRINGS = {
   modsHint: 'Mods add to the game or change it. Add one from a file, and turn it on or off here.',
   modsChanged: 'Changes to mods take effect when the game restarts.',
   close: 'Close',
-  heldCount: '×{n}',
   newGame: 'New game',
   continue: 'Continue',
   newGamePlus: 'New Game+',

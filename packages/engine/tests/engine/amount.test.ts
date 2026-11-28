@@ -7,7 +7,6 @@ import { loadGame, type Content } from '../../src/loader.ts'
 import { applyEffects } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { statMax, statValue } from '../../src/stats.ts'
-import { heldCount } from '../../src/holdings.ts'
 import { view } from '../../src/view.ts'
 import type { Amount, Effect, GameState } from '../../src/types.ts'
 import type { Game } from '../../src/game.ts'
@@ -32,7 +31,7 @@ const flat: Content = {
   entities: [
     { id: 'ana', of: 'staff', name: 'Ana', stats: { wage: 4 } },
     { id: 'ben', of: 'staff', name: 'Ben' },
-    { id: 'apple', of: 'food', name: 'Apple', at: { player: 3 } },
+    { id: 'apple', of: 'food', name: 'Apple' },
   ],
   kv: { tips: 5, floor: 2, mood: 'fine' },
 }
@@ -69,7 +68,7 @@ describe('amountOf', () => {
     expect(read({ value: 'game/bonus', with: { times: 3 } })).toBe(6)
     expect(read({ value: 'game/missing' })).toBe(0)
     expect(read({ count: 'staff' })).toBe(2)
-    expect(read({ count: { of: 'food', at: 'player' }, units: true })).toBe(3)
+    expect(read({ count: { of: 'food' } })).toBe(1)
     expect(read({ count: 'staff', where: { stat: 'wage', of: '$', gte: 4 } })).toBe(1)
   })
 })
@@ -122,14 +121,10 @@ describe('an amount in an effect', () => {
     expect(statValue(state, g, 'coins')).toBe(5)
   })
 
-  it('changes a kv key, a holding and a draw’s ends by amounts', () => {
+  it('changes a kv key and a draw’s ends by amounts', () => {
     const g = game()
-    let state = run(startingState(g), g, [
-      { kv: 'tips', by: { stat: 'rent' } },
-      { entity: 'food:apple', by: { kv: 'floor' } },
-    ])
+    let state = run(startingState(g), g, [{ kv: 'tips', by: { stat: 'rent' } }])
     expect(state.kv.tips).toBe(15)
-    expect(heldCount(state, g, 'food:apple')).toBe(5)
     state = run(state, g, [{ kv: 'draw', random: [{ kv: 'floor' }, { kv: 'floor' }] }])
     expect(state.kv.draw).toBe(2)
   })

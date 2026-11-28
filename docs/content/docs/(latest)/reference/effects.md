@@ -27,7 +27,7 @@ import type { Effect } from '@ifloom/engine'
 
 export const lunch: Effect[] = [
   { stat: 'coins', by: -4 },
-  { entity: 'item:sandwich', by: 1 },
+  { receive: 'item:sandwich' },
   { kv: 'boughtLunch', of: 'storyline:ava', to: true },
 ]
 ```
@@ -36,7 +36,7 @@ export const lunch: Effect[] = [
 
 The fields a [`create`](#create) effect takes besides its kind. Every field is in [`CreateFields`](/docs/api/engine#createfields).
 
-`like` names a declared entity of the same kind to copy from, `with` gives what the new entity is made with, and `at` names who holds it once made. Nobody holds it when `at` is left out.
+`like` names a declared entity of the same kind to copy from, `with` gives what the new entity is made with, and `effects` run once it's made, with `'$'` as the new entity, such as `[{ receive: '$' }]` to hand it to someone.
 
 ## CreatedEntity
 
@@ -128,15 +128,15 @@ Adds an [entity](/docs/reference/entities) of the kind `create` names, after the
 
 ```ts fragment
 { create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }
-{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
-{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }
+{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, effects: [{ receive: '$' }] }
+{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, effects: [{ receive: '$', to: 'player' }] }
 ```
 
-With `like`, the new entity reads whatever `with` doesn't give from the one it copies: name, description, picture, tags, stats, kv and traits. With `at`, a [holder](/docs/reference/glossary#holder) holds it once made: one holder for one of it, or how many each holder has, such as `{ 'place:larder': 6 }`.
+With `like`, the new entity reads whatever `with` doesn't give from the one it copies: name, description, picture, tags, stats, kv and traits. Its `effects` run once it's made, with `'$'` as the new entity, the only way to name an entity made without an `id`. They're the place to [`receive`](#receive) it, set its kv keys or note it on a storyline. A `'$'` outside them, such as in `with`, is the `each` or `count` around the `create`, if any.
 
 Without `id`, the entity gets the next free number of its kind (`#1`, `#2` and so on), recorded in [`state.created`](/docs/reference/state#created). The engine never gives a number again, even once its entity is removed. With `id`, it gets that id, unless an entity of that kind already has it, and then the effect does nothing. A declared entity's id counts as taken unless that entity was removed, which brings it back with the name the `create` gives. An `id` that is a whole number, such as `'7'`, does nothing.
 
-The effect doesn't hand back the id it gave. Code reaches an entity made without an `id` through [`each`](#each) or [`entitiesOf`](/docs/reference/entities#entitiesof).
+The effect doesn't hand back the id it gave. Content reaches the new entity through `effects`, and code through [`each`](#each) or [`entitiesOf`](/docs/reference/entities#entitiesof).
 
 ### remove
 
@@ -147,7 +147,7 @@ Takes an [entity](/docs/reference/entities) out of the game, with what the save 
 { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
 
-A declared entity is also recorded in [`state.removed`](/docs/reference/state#removed), which keeps it gone in this save and when it loads again. An entity made in play has no record left once removed. Nobody holds a removed entity, and what it held goes to whoever held it, or goes with it when nobody did. When it was the [protagonist](/docs/reference/glossary#you) being played, `'you'` is the player again.
+A declared entity is also recorded in [`state.removed`](/docs/reference/state#removed), which keeps it gone in this save and when it loads again. An entity made in play has no record left once removed. A receiver forgets a removed entity, so nobody owns it any more. When it was the [protagonist](/docs/reference/glossary#you) being played, `'you'` is the player again.
 
 ### each
 
@@ -155,10 +155,10 @@ Runs `effects` once for each [entity](/docs/reference/entities) of the kind `eac
 
 ```ts fragment
 { each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }
-{ each: { of: 'food', at: 'you' }, effects: [{ stat: 'fresh', by: -1, of: '$' }] }
+{ each: { of: 'food', where: { owned: '$' } }, effects: [{ stat: 'fresh', by: -1, of: '$' }] }
 ```
 
-In place of a kind, `each` takes a [`Select`](/docs/reference/entities#select). Its `at` runs the effects once for each thing a holder holds, however many of it, and `tag` and `trait` narrow it further. A `Select` with no `of` runs over every kind.
+In place of a kind, `each` takes a [`Select`](/docs/reference/entities#select), narrowed by `tag`, `trait` and `where`. `where: { owned: '$' }` runs the effects once for each thing someone has, however many of it. A `Select` with no `of` runs over every kind.
 
 - **The list of entities is fixed before the first runs.** One made along the way isn't visited, and one removed by an earlier entity's effects is skipped.
 - **`where` is tested as each entity comes up**, after the effects for the ones before it.
@@ -167,29 +167,31 @@ In place of a kind, `each` takes a [`Select`](/docs/reference/entities#select). 
 
 An effect inside that doesn't name `'$'` still runs once per entity, so `{ stat: 'coins', by: -10 }` in an `each` over three staff takes 30 coins. The checker reads the effects with `'$'` as one of the kind, so a stat named on `'$'` has to belong to that kind.
 
-### entity
+### receive
 
-Changes how many of a thing a [holder](/docs/reference/glossary#holder) holds, `by` an amount or `to` a count. `at` is `'you'` when left out. The count never goes below 0. A unique thing's count is 0 or 1, and giving it to one holder takes it from whoever had it.
-
-```ts fragment
-{ entity: 'food:apple', by: 2 }
-{ entity: 'food:apple', at: 'place:larder', to: 6 }
-{ entity: 'gift:scarf', at: 'character:ava', to: 1 }
-```
-
-It does nothing when the thing isn't in the game, when the holder isn't there or its kind isn't [unique](/docs/reference/entities#kinddef), or when the thing would hold itself. The [`give` and `take`](/docs/reference/entities#give-take-move-and-holding) helpers write it with `by`.
-
-### move
-
-Moves a thing from one [holder](/docs/reference/glossary#holder) `to` another. Here `to` names a holder, not a value. Without `from`, a unique thing moves from wherever it is, and any other thing from `'you'`. Without `by`, all of it moves. It moves at most what `from` holds, so asking for 10 apples from someone with 2 moves 2.
+Gives someone a thing, `by` how many (1 if left out), through the game's [receivers](/docs/reference/entities#receivers), the plugins that keep things. The first receiver in the game's [`receivers`](/docs/reference/content#gamebase) order that claims the thing takes it, so a wardrobe listed first takes clothes and the inventory takes the rest. `via` names one receiver, which takes it whether it claims it or not.
 
 ```ts fragment
-{ move: 'food:apple', to: 'character:ava', by: 1 }
-{ move: 'food:bread', from: 'place:larder', to: 'you' }
-{ move: 'gift:scarf', to: 'gift:box' }
+{ receive: 'food:apple', by: 2 }
+{ receive: 'gift:scarf', to: 'character:ava' }
+{ receive: 'clothing:shirt', via: 'wardrobe' }
 ```
 
-It does nothing when `to` can't hold things, when `from` and `to` are the same, or when the thing would end up holding itself, however far round. The [`move`](/docs/reference/entities#give-take-move-and-holding) helper writes it.
+`to` names [someone](/docs/reference/entities#someone-and-played), `'player'`, `'you'` or a unique entity, and the receiver that takes the thing chooses when it's left out: the first-party ones give it to the protagonist being played, else the player. `by` is an [`Amount`](/docs/reference/amounts#amount).
+
+It does nothing when no receiver claims the thing, so a game with no plugin that keeps things gives the player things with [kv keys](/docs/how-to/hand-roll-an-inventory) instead, and the checker reports a `receive` there. A purchase or a find that should do more than hand a thing over runs its own effects beside it.
+
+### release
+
+Takes back `by` of a thing (1 if left out) `from` someone, asking each receiver in turn until that many are gone, and never more than there is. `via` asks one receiver only.
+
+```ts fragment
+{ release: 'food:apple' }
+{ release: 'food:bread', by: 2, from: 'character:ava' }
+{ release: 'clothing:shirt', via: 'wardrobe' }
+```
+
+`from` names someone, and each receiver chooses when it's left out. The first-party ones take from the protagonist being played, then from the player. Moving a thing between two receivers, or between two people, is a `release` and a `receive` together, or a receiver's own effect, such as the inventory's `inventory/move`.
 
 ### you
 

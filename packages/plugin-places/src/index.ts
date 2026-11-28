@@ -6,20 +6,23 @@
  * with `places.location({ ... })` in content's `entities`. Its name, `description` and `image` are the entity's, and
  * its exits, body and actions are the trait's, so a mod adds or changes a location as it does any entity.
  *
- * The plugin brings the unique kind `location`, so a location holds the things lying there, which the view lists with
- * a button to pick each up. The `places/holder` query names the location the player is at, so another plugin, such
- * as the inventory, can put a thing down there.
+ * The plugin brings the unique kind `location`. It keeps the things lying in each location in its own state, starting
+ * them with the `places/lies` trait, and the view lists those where the player is with a button to pick each up.
+ * Picking one up runs `receive` (ADR 0016), so whichever plugin keeps things takes it, then its `onPickUp`. A thing
+ * whose `when` doesn't hold yet lies hidden until it does, and its `onFind` runs the first time it's found. The
+ * `places/put` effect puts a thing down where the player is, as the inventory's drop does.
  */
 import {
   artSrc,
+  buildEffects,
   commandOf,
+  declaredTrait,
+  declaredWithTrait,
   entityDescription,
   entityImage,
   entityName,
   entityOf,
   entityTags,
-  heldBy,
-  heldCount,
   holds,
   pluginQuery,
   reasonOf,
@@ -41,7 +44,6 @@ import {
   type PictureView,
   type SceneUi,
   type Ui,
-  YOU,
 } from '@ifloom/engine'
 import {
   actionReferences,
@@ -50,6 +52,8 @@ import {
   defineCalls,
   defineTraitKind,
   definePlugin,
+  everyEntity,
+  hasEntity,
   lockOn,
   lockedOut,
   renderAction,
@@ -102,9 +106,33 @@ export type Place = {
   arrive?: Arrival
 }
 
+/**
+ * The data of the `places/lies` trait, which starts a thing lying in a location.
+ *
+ * It's the location's id, or the full form with a condition to find it and effects.
+ */
+export type Lies =
+  | string
+  | {
+      /** The location the thing lies in, by id (`'kitchen'`) or reference. */
+      at: string
+      /** How many lie there. 1 if left out. */
+      count?: number
+      /**
+       * The condition, with `'$'` as the thing, that must hold before the player can see it or pick it up, such as
+       * `{ stat: 'perception', gte: 5 }`. Once found, it stays found. Always in sight if left out.
+       */
+      when?: Condition
+      /** The effects that run once, the first time the player is there while `when` holds. Only with `when`. */
+      onFind?: EffectRef[]
+      /** The effects that run each time the player picks one up, after it's received, before the game-wide `onPickUp`. */
+      onPickUp?: EffectRef[]
+    }
+
 declare module '@ifloom/engine' {
   interface TraitRegistry {
     'places/location': Place
+    'places/lies': Lies
   }
 }
 
@@ -130,12 +158,22 @@ export type Arrival = {
 export type PlacesOptions = {
   /** The id of the location a new game starts at. The player is at no location if left out. */
   start?: string
+  /** The effects that run each time the player picks anything up, after the thing's own `onPickUp`, with `'$'` as the thing. */
+  onPickUp?: EffectRef[]
 }
 
 /** The location a save keeps for the player. The plugin reads the locations from content. */
 export type PlacesState = {
   /** The id of the location the player is at, its full reference for a location of another kind, or null when at none. */
   at: string | null
+  /**
+   * The counts of things lying in each location that play changed, by location id and then thing.
+   *
+   * A count stays once written, 0 included. For a count play hasn't changed, the plugin reads the thing's `places/lies`.
+   */
+  floor: Record<string, Record<string, number>>
+  /** The things with a `when` the player has found, by reference. */
+  found: string[]
 }
 
 /**
@@ -197,13 +235,13 @@ export type PlacesView = {
   location: PlaceView | null
   /** The location's exits in the order it lists them. It is empty while a scene is open or a lock holds everything. */
   exits: ExitView[]
-  /** The things the location holds, such as a thing the player dropped. It is empty while a scene is open or a lock holds everything. */
+  /** The things lying in the location that the player can see, such as a thing they dropped. It is empty while a scene is open or a lock holds everything. */
   things: LyingView[]
 }
 
 const ID = 'places'
 
-/** The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique, so each location can hold things. */
+/** The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique: each location is one place. */
 export const LOCATION = 'location'
 
 /** The places: entities carrying the `places/location` trait, a bare id naming one of the `location` kind. */
@@ -238,6 +276,8 @@ const CALLS = defineCalls(ID, {
   effects: {
     /** Be somewhere else at once. */
     move: { location: place() },
+    /** Put `by` of the thing `entity` (1 if left out; below 0 takes them away) down `at` a location, where the player is if left out. */
+    put: { entity: arg.entity(), at: place().optional(), by: arg.number().optional() },
   },
   commands: {
     /** Walk through an exit to the place `id`. */
@@ -259,8 +299,6 @@ declare module '@ifloom/engine' {
   interface QueryRegistry {
     /** Returns the id of the location the player is at, or null when they are at none. */
     'places/here': () => string | null
-    /** Returns the entity of the location the player is at, which holds the things put down there, or null when they are at none. */
-    'places/holder': () => EntityRef | null
     /** Returns true when the game has the location. */
     'places/known': (args: { location: string }) => boolean
     'places/all': () => (Place & { id: string; ref: EntityRef })[]
@@ -296,11 +334,73 @@ const declaredLocation = (game: Game, id: string): Place | undefined => PLACES.d
 /** A place as the plugin keeps it: `'park'` and `'location:park'` are both `'park'`. */
 const placeId = (id: string): string => short(locationRef(id))
 
-/** What lies in a place that the player can see: what its entity holds, but things whose `visible` doesn't hold. */
+const LIES = 'places/lies'
+
+/** A `places/lies` in its full form. */
+function liesOf(data: Lies | undefined): Exclude<Lies, string> | undefined {
+  if (data === undefined || data === null) return undefined
+  return typeof data === 'string' ? { at: data } : data
+}
+
+/** The plugin's state in this save, or nobody anywhere when the game has just started without one. */
+function sliceOf(state: GameState): PlacesState {
+  const slice = state.plugins?.[ID]?.state as Partial<PlacesState> | undefined
+  return { at: slice?.at ?? null, floor: slice?.floor ?? {}, found: slice?.found ?? [] }
+}
+
+const startsCache = new WeakMap<Game, Map<string, Map<string, number>>>()
+
+/** What content starts lying where, by location id and then thing, from each declared entity's `places/lies`. */
+function floorStarts(game: Game): Map<string, Map<string, number>> {
+  let found = startsCache.get(game)
+  if (!found) {
+    found = new Map()
+    for (const ref of declaredWithTrait(game, LIES)) {
+      const lies = liesOf(declaredTrait(game, ref, LIES) as Lies | undefined)
+      if (!lies || typeof lies.at !== 'string') continue
+      const at = placeId(lies.at)
+      const into = found.get(at) ?? new Map<string, number>()
+      into.set(ref, lies.count ?? 1)
+      found.set(at, into)
+    }
+    startsCache.set(game, found)
+  }
+  return found
+}
+
+/** Returns how many of a thing lie in a location now, whether or not the player can see them. */
+export function lyingCount(state: GameState, game: Game, ref: string, at: string): number {
+  const id = placeId(at)
+  if (!hasEntity(state, game, ref)) return 0
+  const written = sliceOf(state).floor[id]?.[ref]
+  return Math.max(0, written ?? floorStarts(game).get(id)?.get(ref) ?? 0)
+}
+
+/** The state with a location's count of a thing written, 0 included. */
+function withLying(state: GameState, ref: string, at: string, count: number): GameState {
+  const slice = sliceOf(state)
+  const id = placeId(at)
+  const next: PlacesState = { ...slice, floor: { ...slice.floor, [id]: { ...slice.floor[id], [ref]: Math.max(0, Math.floor(count)) } } }
+  return { ...state, plugins: { ...state.plugins, [ID]: { version: state.plugins?.[ID]?.version ?? 1, state: next } } }
+}
+
+/** Whether the player can see a thing lying in a location: it has no `when`, it was found, or its `when` holds there now. */
+function inSight(state: GameState, game: Game, ref: EntityRef): boolean {
+  const lies = liesOf(declaredTrait(game, ref, LIES) as Lies | undefined)
+  if (!lies?.when || sliceOf(state).found.includes(ref)) return true
+  return holds(state, game, bindCurrent(lies.when, ref))
+}
+
+/** What lies in a place that the player can see: neither hidden by its `when` nor by its `visible`. */
 function lyingIn(state: GameState, game: Game, at: string): { ref: EntityRef; count: number }[] {
-  return heldBy(state, game, locationRef(at)).filter(({ ref }) =>
-    holds(state, game, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref)),
-  )
+  return everyEntity(state, game)
+    .map((ref) => ({ ref, count: lyingCount(state, game, ref, at) }))
+    .filter(
+      ({ ref, count }) =>
+        count > 0 &&
+        inSight(state, game, ref) &&
+        holds(state, game, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref)),
+    )
 }
 
 /** An entity's picture's path, through `artSrc`, or null with none. */
@@ -334,11 +434,42 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
   function pickUpBlocked(state: GameState, game: Game, at: string | null, ref: string): string | undefined {
     if (state.sceneId) return stringOf(game, 'finishFirst')
     if (!entityOf(state, game, ref)) return stringOf(game, 'noSuchThing')
-    if (at === null || heldCount(state, game, ref, locationRef(at)) <= 0) return stringOf(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
+    if (at === null || lyingCount(state, game, ref, at) <= 0 || !inSight(state, game, ref as EntityRef))
+      return stringOf(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
     return undefined
   }
-  /** Picking one up: from the place to whoever the player is playing. */
-  const pickUpEffects = (at: string | null, ref: string): Effect[] => (at === null ? [] : [{ move: ref, from: locationRef(at), to: YOU, by: 1 }])
+  /** Picking one up: it leaves the floor, whichever plugin keeps things receives it, then the thing's and the game's `onPickUp`. */
+  const pickUpEffects = (game: Game, at: string | null, ref: EntityRef): Effect[] => {
+    if (at === null) return []
+    const own = liesOf(declaredTrait(game, ref, LIES) as Lies | undefined)?.onPickUp ?? []
+    return buildEffects(game, [
+      CALLS.effects.put({ entity: ref, at, by: -1 }),
+      { receive: ref },
+      ...bindCurrent(own, ref),
+      ...bindCurrent(options.onPickUp ?? [], ref),
+    ])
+  }
+
+  /** Where a thing starts lying: a known location, a count above 0, and a `when` and effects checked with `'$'` as the thing. */
+  const liesTrait: TraitDef<'places/lies'> = {
+    id: LIES,
+    words: { onFind: 'effects', onPickUp: 'effects' },
+    check: (data, { game }) => {
+      const lies = liesOf(data as Lies)
+      if (!lies || typeof lies.at !== 'string') return ['a lying thing needs the location it lies in: places.lies("kitchen")']
+      const problems: string[] = []
+      if (!declaredLocation(game, lies.at)) problems.push(`lies in unknown location "${lies.at}"`)
+      if (lies.count !== undefined && !(Number.isInteger(lies.count) && lies.count > 0))
+        problems.push(`lies ${lies.count} of it: a count is a whole number above 0`)
+      if (lies.onFind !== undefined && lies.when === undefined) problems.push('onFind runs when a hidden thing is found: give it a when')
+      return problems
+    },
+    references: (data, { ref }) => {
+      const lies = liesOf(data as Lies)
+      if (!lies) return []
+      return [{ when: bindCurrent(lies.when, ref) }, { effects: bindCurrent(lies.onFind, ref) }, { effects: bindCurrent(lies.onPickUp, ref) }]
+    },
+  }
 
   const locationTrait: TraitDef<'places/location'> = {
     id: TRAIT,
@@ -372,7 +503,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     id: ID,
     calls: CALLS,
     version: 1,
-    traits: [locationTrait],
+    traits: [locationTrait, liesTrait],
     strings: {
       noSuchPlace: 'There is no such place.',
       alreadyHere: 'You are already here.',
@@ -381,9 +512,9 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       notLyingHere: 'There is no {thing} here.',
       notHere: 'Not here.',
     },
-    // Each location is a unique entity, so it can hold things: what lies there. Not listed: the places are the plugin's to show.
+    // Each location is one particular place. Not listed: the places are the plugin's to show.
     content: { kinds: [{ id: LOCATION, label: 'Place', plural: 'Places', unique: true, listed: false }] },
-    start: () => ({ at: options.start ?? null }),
+    start: () => ({ at: options.start ?? null, floor: {}, found: [] }),
     conditions: {
       /** `{ 'places/at': { location: ['cafe', 'park'] } }`: the player is in one of these. */
       at: (_state, { location }, { slice }) => slice.at !== null && location.map(placeId).includes(slice.at),
@@ -398,19 +529,25 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     },
     effects: {
       /** `{ 'places/move': { location: 'park' } }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
-      move: (state, { location }, { set, game }) => {
+      move: (state, { location }, { set, slice, game }) => {
         const to = placeId(location)
         if (!locationOf(state, game, to)) return state
-        return set({ at: to }, { ...state, sceneId: null })
+        return set({ ...slice, at: to }, { ...state, sceneId: null })
+      },
+      /** `{ 'places/put': { entity, at?, by? } }`: put a thing down where the player is, or `at` a location; nothing when nowhere. */
+      put: (state, { entity, at, by }, { slice, game }) => {
+        const where = at !== undefined ? placeId(at) : slice.at
+        if (where === null || !locationOf(state, game, where) || !hasEntity(state, game, entity)) return state
+        return withLying(state, entity, where, lyingCount(state, game, entity, where) + (by ?? 1))
       },
     },
     commands: {
       /** `{ 'places/go': { id } }`: walk through an exit to the place `id`, then its `arrive`. */
       go: {
         whyNot: (state, { id }, { slice, game }) => goBlocked(state, game, slice.at, placeId(id)),
-        run: (state, { id }, { set, apply, game }) => {
+        run: (state, { id }, { set, slice, apply, game }) => {
           const to = placeId(id)
-          const arrived = set({ at: to })
+          const arrived = set({ ...slice, at: to })
           const arrive = locationOf(state, game, to)?.arrive
           return arrive && holds(arrived, game, arrive.when) ? apply(arrive.effects, arrived) : arrived
         },
@@ -418,14 +555,27 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       /** `{ 'places/pickUp': { id } }`: pick up one of the thing `id` lying where the player is, for whoever they are playing. */
       pickUp: {
         whyNot: (state, { id }, { slice, game }) => pickUpBlocked(state, game, slice.at, id),
-        effectsOf: (_state, { id }, { slice }) => pickUpEffects(slice.at, id),
-        run: (state, { id }, { slice, apply }) => apply(pickUpEffects(slice.at, id), state),
+        effectsOf: (_state, { id }, { slice, game }) => pickUpEffects(game, slice.at, id),
+        run: (state, { id }, { slice, apply, game }) => apply(pickUpEffects(game, slice.at, id), state),
       },
+    },
+    // A hidden thing is found the first time the player is where it lies while its `when` holds: remembered, then its `onFind`.
+    onCommand: (_before, after, { game, apply }) => {
+      const slice = sliceOf(after)
+      if (slice.at === null) return after
+      let next = after
+      for (const ref of declaredWithTrait(game, LIES)) {
+        const lies = liesOf(declaredTrait(game, ref, LIES) as Lies | undefined)
+        if (!lies?.when || slice.found.includes(ref) || placeId(lies.at) !== slice.at || lyingCount(next, game, ref, slice.at) <= 0) continue
+        if (!holds(next, game, bindCurrent(lies.when, ref))) continue
+        const now = sliceOf(next)
+        next = { ...next, plugins: { ...next.plugins, [ID]: { version: next.plugins?.[ID]?.version ?? 1, state: { ...now, found: [...now.found, ref] } } } }
+        if (lies.onFind) next = apply(bindCurrent(lies.onFind, ref), next)
+      }
+      return next
     },
     queries: {
       here: (_state, _args, { slice }) => slice.at,
-      /** The entity of where the player is, which holds what is put down there (`'location:park'`); null when nowhere. */
-      holder: (state, _args, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? locationRef(slice.at) : null),
       /** Every place, each its trait with its `id` and `ref`. */
       all: (state, _args, { game }) =>
         locationsOf(state, game).flatMap((ref) => {
@@ -502,7 +652,10 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       }
     },
     references: {
-      content: () => (options.start !== undefined ? [{ list: 'options', id: 'start', refs: [PLACES.entry(options.start)] }] : []),
+      content: () => [
+        ...(options.start !== undefined ? [{ list: 'options', id: 'start', refs: [PLACES.entry(options.start)] }] : []),
+        ...(options.onPickUp !== undefined ? [{ list: 'options', id: 'onPickUp', refs: [{ effects: options.onPickUp }] }] : []),
+      ],
     },
   })
 }
@@ -518,6 +671,20 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
 function location(def: PlaceDef): EntityDef {
   return PLACES.define(def)
 }
+
+/**
+ * Returns the `places/lies` trait, to spread into an entity's `traits`: the location it starts lying in, with a
+ * condition to find it and effects when it's found or picked up.
+ *
+ * ```ts
+ * traits: { ...places.lies('kitchen', { when: { stat: 'perception', gte: 5 }, onFind: [{ kv: 'foundKey', to: true }] }) }
+ * ```
+ */
+const lies = (at: string, more: Omit<Exclude<Lies, string>, 'at'> = {}): { 'places/lies': Lies } => ({
+  [LIES]: Object.keys(more).length ? { at, ...more } : at,
+})
+/** Returns the `places/put` effect, which puts a thing down where the player is, or `at` a location. */
+const put = (entity: EntityRef, options: { at?: string; by?: number } = {}): EffectRef => CALLS.effects.put({ entity, ...options })
 
 /** Returns the `places/pickUp` command, which picks up one of a thing lying where the player is. */
 const pickUp = (ref: EntityRef): CommandRef => CALLS.commands.pickUp({ id: ref })
@@ -557,6 +724,10 @@ export const places = Object.assign(placesPlugin, {
   location,
   /** Returns the entity reference of a location; a bare id is one of the `location` kind. */
   locationRef,
+  /** Returns the `places/lies` trait, to spread into an entity's `traits`, naming where it starts lying and any `when` to find it. */
+  lies,
+  /** Returns the `places/put` effect, which puts a thing down where the player is, or `at` a location. */
+  put,
   /** Returns the `places/pickUp` command, which picks up one of a thing lying where the player is. */
   pickUp,
   /** Returns the `places/go` command, which walks to a location by an exit. */

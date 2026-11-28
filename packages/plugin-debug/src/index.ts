@@ -1,6 +1,6 @@
 /**
  * @ifloom/plugin-debug — commands for testing a game while it runs: set a stat
- * (an entity's too) or a kv key, set how many of a thing someone holds, jump
+ * (an entity's too) or a kv key, set how many of a thing someone has, jump
  * to a scene, set the
  * clock, go anywhere.
  *
@@ -12,17 +12,18 @@
  * triggers that have fired, and the seed.
  */
 import {
-  canHold,
   clampStat,
   entityOf,
   holds,
+  ownedCount,
   parseRef,
-  resolveHolder,
+  receiversOf,
+  receiveThing,
+  releaseThing,
   sceneOf,
   statOf,
   stringOf,
   writeEntity,
-  YOU,
   type CommandRef,
   type Game,
   type KvValue,
@@ -37,6 +38,8 @@ export type DebugView = {
   fired: Record<string, number>
   /** The save's seed, which every random draw is hashed from. */
   seed: number
+  /** The ids of the game's plugins that keep things, which `debug/held` sets counts through. Empty in a game that keeps none. */
+  receivers: string[]
 }
 
 /** A command that ignores locks, as every debug command does. */
@@ -54,8 +57,8 @@ const CALLS = defineCalls('debug', {
     stat: { stat: arg.string(), to: arg.number(), of: arg.string().optional() },
     /** Set a key in the kv store. */
     kv: { key: arg.string(), to: arg.kv() },
-    /** Set how many of a thing a holder holds, `'you'` if `at` is left out. */
-    held: { entity: arg.string(), to: arg.number(), at: arg.string().optional(YOU) },
+    /** Set how many of a thing someone has, across the plugins that keep things; each plugin's own default if `at` is left out. */
+    held: { entity: arg.string(), to: arg.number(), at: arg.string().optional() },
     /** Put the scene `id` on screen; leave `id` out to close it. */
     scene: { id: arg.string().optional() },
     /** Set the calendar's clock. */
@@ -91,7 +94,7 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
       noSuchStat: 'There is no stat called {id}.',
       noSuchEntity: 'There is nobody and nothing called {id}.',
       notTheirs: 'That is not whose {id} it is.',
-      cantHold: '{id} can’t hold things.',
+      noReceivers: 'No plugin of this game keeps things.',
       noSuchPlace: 'There is no location called {id}.',
       noPlaces: 'This game has no places.',
       noSuchScene: 'There is no scene called {id}.',
@@ -126,16 +129,21 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
         run: (state, { key, to }) => ({ ...state, kv: { ...state.kv, [key]: to } }),
       }),
       /**
-       * `{ name: 'debug/held', with: { entity, at?, to } }`: set how many of a thing a holder
-       * holds, `'you'` if `at` is left out. Never below 0, and a unique thing is taken from whoever had it.
+       * `{ name: 'debug/held', with: { entity, at?, to } }`: set how many of a thing someone has. It reads the total
+       * across the plugins that keep things (`owned`), then receives or releases the difference, as the game would.
        */
       held: free({
-        whyNot: (state, { entity, at, to }, { game }) => {
+        whyNot: (state, { entity, to }, { game }) => {
+          if (!receiversOf(game).length) return sayDebug(game, 'noReceivers')
           if (!entityOf(state, game, entity)) return sayDebug(game, 'noSuchEntity', entity)
-          if (!canHold(state, game, resolveHolder(state, at))) return sayDebug(game, 'cantHold', at)
           return isNumber(to) ? undefined : sayDebug(game, 'notANumber')
         },
-        run: (_state, { entity, at, to }, { apply }) => apply([{ entity, at, to }]),
+        run: (state, { entity, at, to }, { game }) => {
+          const ref = entity as `${string}:${string}`
+          const have = ownedCount(state, game, ref, at)
+          const want = Math.max(0, Math.floor(to))
+          return want > have ? receiveThing(state, game, ref, want - have, at) : releaseThing(state, game, ref, have - want, at)
+        },
       }),
       /** `{ name: 'debug/scene', with: { id } }`: put the scene `id` on screen; leave `id` out to close it. */
       scene: free({
@@ -178,6 +186,7 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
       locks: (game.locks ?? []).filter((lock) => holds(state, game, lock.when)).map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
       fired: { ...state.fired },
       seed: state.seed,
+      receivers: receiversOf(game).map((plugin) => plugin.id),
     }),
   })
 }
@@ -190,7 +199,7 @@ function sayDebug(game: Game, key: string, id?: string, periods?: string): strin
 const debugStat = (stat: string, to: number, of?: string): CommandRef => CALLS.commands.stat({ stat, to, ...(of === undefined ? {} : { of }) })
 /** A command: set a key in the kv store. */
 const debugKv = (key: string, to: KvValue): CommandRef => CALLS.commands.kv({ key, to })
-/** A command: set how many of a thing a holder holds, `'you'` if `at` is left out. */
+/** A command: set how many of a thing someone has, through the plugins that keep things. */
 const debugHeld = (entity: string, to: number, at?: string): CommandRef => CALLS.commands.held({ entity, to, ...(at === undefined ? {} : { at }) })
 /** A command: put a scene on screen, or close it. */
 const debugScene = (scene?: string): CommandRef => CALLS.commands.scene(scene === undefined ? undefined : { id: scene })
@@ -213,7 +222,7 @@ export const debug = Object.assign(debugPlugin, {
   stat: debugStat,
   /** Returns the `debug/kv` command, which sets the kv key to `to`. */
   kv: debugKv,
-  /** Returns the `debug/held` command, which sets how many of the thing the holder `at` holds. `'you'` if `at` is left out. */
+  /** Returns the `debug/held` command, which sets how many of the thing someone (`at`) has, through the plugins that keep things. */
   held: debugHeld,
   /** Returns the `debug/scene` command, which opens the scene, or closes the open scene when none is named. */
   scene: debugScene,

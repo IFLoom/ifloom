@@ -6,7 +6,7 @@ import type { QueryAnswer, QueryArgs, QueryRegistry } from './calls.ts'
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef, GameRules } from './game.ts'
-import type { TraitDef } from './entities.ts'
+import type { EntityRef, TraitDef } from './entities.ts'
 import type { Content } from './loader.ts'
 import type { Reference } from './references.ts'
 import type { SceneUi, Ui } from './features/ui.ts'
@@ -356,6 +356,41 @@ export type Plugin<S = any, V = unknown> = {
    * `tools` words problems with anything else the plugin names as the checker does.
    */
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
+  /**
+   * The plugin's answers to the `receive` and `release` effects and the `owned` condition, for a plugin that keeps
+   * things.
+   *
+   * An inventory or a wardrobe declares one. See `Receiver`.
+   */
+  receiver?: Receiver<S>
+  /**
+   * Returns a New Game+'s state with what the plugin carries from the game before laid over it, such as the things
+   * the player kept. The plugin starts fresh if left out.
+   *
+   * `fresh` is the new game's state so far, and `context.get(from)` reads the old game's slice. `context.set` writes the
+   * new one, and the plugin may copy an entity made in play with `writeEntity`.
+   */
+  carry?: (fresh: GameState, from: GameState, context: PluginContext<S>) => GameState
+}
+
+/**
+ * A plugin that keeps things, as the `receive` and `release` effects and the `owned` condition ask it.
+ *
+ * The core keeps nothing itself. It asks the game's receivers in the order of the game's `receivers`, else of its
+ * `plugins`.
+ *
+ * `to`, `from` and `of` are someone (`'player'`, `'you'` or a unique entity) or undefined, when the receiver chooses
+ * its own default.
+ */
+export type Receiver<S = any> = {
+  /** Returns true when the receiver takes this thing, such as a wardrobe for things that are worn. Every thing if left out. */
+  claims?: (state: GameState, ref: EntityRef, context: PluginContext<S>) => boolean
+  /** Returns the state with `count` of the thing given to `to`. */
+  receive: (state: GameState, ref: EntityRef, count: number, to: string | undefined, context: PluginContext<S>) => GameState
+  /** Returns how many of the thing `of` has here. */
+  owned: (state: GameState, ref: EntityRef, of: string | undefined, context: PluginContext<S>) => number
+  /** Returns the state with `count` of the thing taken from `from`. The core never asks for more than `owned` says. */
+  release: (state: GameState, ref: EntityRef, count: number, from: string | undefined, context: PluginContext<S>) => GameState
 }
 
 /**

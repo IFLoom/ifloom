@@ -6,8 +6,8 @@ Generated from the source of `@ifloom/plugin-wardrobe` and `@ifloom/plugin-wardr
 
 ## @ifloom/plugin-wardrobe
 
-- Functions: [`slotsOf`](#slotsof), [`wardrobe`](#wardrobe), [`wearableOf`](#wearableof)
-- Types: [`Closet`](#closet), [`WardrobeSlot`](#wardrobeslot), [`WardrobeState`](#wardrobestate), [`WardrobeView`](#wardrobeview), [`Wearable`](#wearable)
+- Functions: [`ownedHere`](#ownedhere), [`slotsOf`](#slotsof), [`wardrobe`](#wardrobe), [`wearableOf`](#wearableof)
+- Types: [`Closet`](#closet), [`Owners`](#owners), [`WardrobeOptions`](#wardrobeoptions), [`WardrobeSlot`](#wardrobeslot), [`WardrobeState`](#wardrobestate), [`WardrobeView`](#wardrobeview), [`Wearable`](#wearable)
 
 ### Closet
 
@@ -28,6 +28,32 @@ type Closet = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `label` | `string` | yes |  | The label of the button that opens the `wardrobe` panel. The `wardrobe/open` string (`Wardrobe`) if left out. |
+
+### ownedHere
+
+Function. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#ownedhere).
+
+Returns how many of a thing a body (`'you'` if left out) has in its wardrobe, its starts read from `wardrobe/owned`.
+
+```ts shape
+import { ownedHere } from '@ifloom/plugin-wardrobe'
+function ownedHere(state: GameState, game: Game, ref: string, at?: string): number
+```
+
+Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game).
+
+### Owners
+
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#owners).
+
+The bodies that own a thing at the start, one body for one of it or a count for each body (`{ player: 1, 'character:sam': 1 }`).
+
+```ts shape
+import type { Owners } from '@ifloom/plugin-wardrobe'
+type Owners = EntityRef | typeof PLAYER | Partial<Record<EntityRef | typeof PLAYER, number>>
+```
+
+Uses: [`EntityRef`](/docs/api/engine#entityref).
 
 ### slotsOf
 
@@ -51,19 +77,43 @@ The wardrobe plugin's factory, with its helpers as properties. `wardrobe()` retu
 
 ```ts shape
 import { wardrobe } from '@ifloom/plugin-wardrobe'
-function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView>
+function wardrobe(options?: WardrobeOptions): DefinedPlugin<WardrobeState, WardrobeView>
 ```
 
-Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`WardrobeState`](#wardrobestate), [`WardrobeView`](#wardrobeview).
+Uses: [`WardrobeOptions`](#wardrobeoptions), [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`WardrobeState`](#wardrobestate), [`WardrobeView`](#wardrobeview).
 
 | Helper | Signature | Description |
 |---|---|---|
-| `wardrobe.wearable` | `(slot: string): { 'wardrobe/wearable':` [`Wearable`](#wearable) `}` | Returns the `wardrobe/wearable` trait for a slot, to spread into an entity's or a kind's `traits`. |
+| `wardrobe.wearable` | `(slot: string, hooks?: { onWear?:` [`EffectRef[]`](/docs/api/engine#effectref)`; onTakeOff?:` [`EffectRef[]`](/docs/api/engine#effectref) `}): { 'wardrobe/wearable':` [`Wearable`](#wearable) `}` | Returns the `wardrobe/wearable` trait for a slot, with its `onWear` and `onTakeOff` effects, to spread into `traits`. |
+| `wardrobe.owned` | `(owners:` [`Owners`](#owners)`): { 'wardrobe/owned':` [`Owners`](#owners) `}` | Returns the `wardrobe/owned` trait, to spread into an entity's `traits`, naming whose wardrobe it starts in. |
 | `wardrobe.closet` | `(options?:` [`Closet`](#closet)`): { 'wardrobe/closet':` [`Closet`](#closet) `}` | Returns the `wardrobe/closet` trait, to spread into a location's `traits`, which offers a button that opens the `wardrobe` panel. |
 | `wardrobe.wearing` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, slot?: string):` [`Condition`](/docs/api/engine#condition) | Returns the `wardrobe/wearing` condition, which holds while whoever the player is playing wears the thing, in `slot` if given. |
 | `wardrobe.slotFilled` | `(slot: string):` [`Condition`](/docs/api/engine#condition) | Returns the `wardrobe/wearing` condition for a slot, which holds while whoever the player is playing has something in it. |
-| `wardrobe.wear` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `wardrobe/wear` command, which puts on a thing the player holds. |
+| `wardrobe.wear` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `wardrobe/wear` command, which puts on a thing the player owns. |
 | `wardrobe.takeOff` | `(slot: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `wardrobe/takeOff` command, which takes off whatever is in the slot. |
+| `wardrobe.store` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, options?: { at?:` [`Someone`](/docs/api/engine#someone)`; by?: number; via?: string }):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `wardrobe/store` effect, which puts a thing someone carries away in their wardrobe. |
+| `wardrobe.takeOut` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`, options?: { at?:` [`Someone`](/docs/api/engine#someone)`; by?: number; via?: string }):` [`EffectRef`](/docs/api/engine#effectref) | Returns the `wardrobe/takeOut` effect, which takes a thing out of someone's wardrobe into the next receiver. |
+
+### WardrobeOptions
+
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobeoptions).
+
+The wardrobe plugin's settings, which the game passes to `wardrobe()`.
+
+```ts shape
+import type { WardrobeOptions } from '@ifloom/plugin-wardrobe'
+type WardrobeOptions = {
+  claims?: boolean
+  onWear?: EffectRef[]
+  onTakeOff?: EffectRef[]
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `claims` | `boolean` | yes |  | False for a game where clothes are carried before they're put away. True if left out. With it false, the wardrobe claims nothing a `receive` gives, so wearables go to the next receiver, and `wardrobe/store` puts them away by name. |
+| `onWear` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run when a body puts on anything, after the thing's own `onWear`. |
+| `onTakeOff` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run when a body takes off anything, after the thing's own `onTakeOff`. |
 
 ### WardrobeSlot
 
@@ -84,7 +134,7 @@ type WardrobeSlot = {
 |---|---|---|---|---|
 | `id` | `string` |  |  | The slot's id, which a wearable thing's `slot` names. |
 | `label` | `string` |  |  | The slot's label. |
-| `start` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | The wearable thing in the slot at the start, one the player starts holding. The slot starts empty if left out. |
+| `start` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | The wearable thing in the slot at the start, one the player owns at the start. The slot starts empty if left out. |
 
 ### WardrobeState
 
@@ -96,12 +146,14 @@ The clothes a save keeps for each body. The plugin reads slots and wearable thin
 import type { WardrobeState } from '@ifloom/plugin-wardrobe'
 type WardrobeState = {
   worn: Record<string, Record<string, EntityRef | null>>
+  owned: Record<string, Record<string, number>>
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `worn` | `Record<string, Record<string,` [`EntityRef`](/docs/api/engine#entityref) `\| null>>` |  |  | The thing worn in each slot, by body (`'player'` or a protagonist such as `'character:sam'`) and then by slot id. |
+| `owned` | `Record<string, Record<string, number>>` |  |  | The counts of clothes in each body's wardrobe that play changed, by body and then thing. A count written once is kept, 0 included. For the rest, the plugin reads each thing's `wardrobe/owned` trait. |
 
 ### WardrobeView
 
@@ -120,7 +172,7 @@ type WardrobeView = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `slots` | `{ id: string; label: string; entity:` [`EntityRef`](/docs/api/engine#entityref) `\| null; name: string \| null; takeOff:…` |  |  | The game's slots in order, each with the thing in it. |
-| `spare` | `{ entity:` [`EntityRef`](/docs/api/engine#entityref)`; name: string; slot: string; wear:` [`RenderedChoice`](/docs/api/engine#renderedchoice) `}[]` |  |  | The wearable things the player holds and isn't wearing, in the order of the game's entities. Each has its slot and the button that puts it on, labelled with the `wardrobe/wear` string (`Wear {thing}`). |
+| `spare` | `{ entity:` [`EntityRef`](/docs/api/engine#entityref)`; name: string; slot: string; wear:` [`RenderedChoice`](/docs/api/engine#renderedchoice) `}[]` |  |  | The wearable things whoever is played owns and isn't wearing, in the order of the game's entities. Each has its slot and the button that puts it on, labelled with the `wardrobe/wear` string (`Wear {thing}`). |
 
 ### Wearable
 
@@ -132,12 +184,16 @@ The data of the `wardrobe/wearable` trait, which makes a thing wearable in one s
 import type { Wearable } from '@ifloom/plugin-wardrobe'
 type Wearable = {
   slot: string
+  onWear?: EffectRef[]
+  onTakeOff?: EffectRef[]
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `slot` | `string` |  |  | The id of the slot the thing goes in, such as `'coat'`. |
+| `onWear` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run when a body puts the thing on, such as `[{ kv: 'onDuty', to: true }]`, before the game-wide ones. |
+| `onTakeOff` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | Effects that run when a body takes the thing off, or it comes off by itself, before the game-wide ones. |
 
 ### wearableOf
 
@@ -217,7 +273,7 @@ type WardrobeControls = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `spare` | `{ entity:` [`EntityRef`](/docs/api/engine#entityref)`; name: string; slot: string; wear:` [`RenderedChoice`](/docs/api/engine#renderedchoice) `}[]` |  |  | The wearable things the player holds and isn't wearing, in the order of the game's entities. Each has its slot and the button that puts it on, labelled with the `wardrobe/wear` string (`Wear {thing}`). |
+| `spare` | `{ entity:` [`EntityRef`](/docs/api/engine#entityref)`; name: string; slot: string; wear:` [`RenderedChoice`](/docs/api/engine#renderedchoice) `}[]` |  |  | The wearable things whoever is played owns and isn't wearing, in the order of the game's entities. Each has its slot and the button that puts it on, labelled with the `wardrobe/wear` string (`Wear {thing}`). |
 | `slots` | [`WardrobeSlotControls[]`](#wardrobeslotcontrols) |  |  | The game's slots in order, each with the thing in it and its buttons. |
 | `wear` | `(entity:` [`EntityRef`](/docs/api/engine#entityref)`) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `wardrobe/wear` for a thing the player holds, by its reference, such as `'clothing:scarf'`. |
 | `takeOff` | `(slot: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends `wardrobe/takeOff`, which empties the slot with this id. |

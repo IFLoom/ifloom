@@ -214,7 +214,7 @@ export const camera: AppDef = {
           id: 'photo-ava',
           label: 'Photograph Ava',
           blocked: [{ when: { not: cast.here('ava') }, reason: 'She isn’t here.' }],
-          effects: [{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }],
+          effects: [{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, effects: [{ receive: '$', to: 'player' }] }],
         },
       ],
     },
@@ -251,7 +251,7 @@ export const mail: AppDef = {
 }
 ```
 
-A button in an `actions` section takes a `when` too, so a café app's Order a scarf button can hide once the player holds one: `when: { not: { entity: 'clothing:scarf', at: 'you' } }`.
+A button in an `actions` section takes a `when` too, so a café app's Order a scarf button can hide once the player has one: `when: { not: { owned: 'clothing:scarf' } }`.
 
 ## Shut the phone in some places
 

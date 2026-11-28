@@ -25,7 +25,8 @@ function draw(view: View): void {
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx
-import { Game, Inventory, Scene, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Game, Scene, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { InventoryCard } from '@ifloom/plugin-inventory/react'
 
 export function Layout() {
   return (
@@ -37,7 +38,7 @@ export function Layout() {
         </Section>
         {/* Folded until the player opens it. */}
         <Section id="inventory" title="In your bag" collapsible open={false}>
-          <Inventory title={false} />
+          <InventoryCard title={false} />
         </Section>
       </Sidebar>
       <Story>

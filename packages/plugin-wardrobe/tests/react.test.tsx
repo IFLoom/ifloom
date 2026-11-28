@@ -16,8 +16,8 @@ function game(): Game {
         name: 'flat',
         kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
         entities: [
-          { id: 'coat', of: 'clothing', name: 'coat', at: 'player', traits: { ...wardrobe.wearable('back') } },
-          { id: 'cape', of: 'clothing', name: 'cape', at: 'player', traits: { ...wardrobe.wearable('back') } },
+          { id: 'coat', of: 'clothing', name: 'coat', traits: { ...wardrobe.wearable('back'), ...wardrobe.owned('player') } },
+          { id: 'cape', of: 'clothing', name: 'cape', traits: { ...wardrobe.wearable('back'), ...wardrobe.owned('player') } },
         ],
         data: { wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'clothing:coat' }] } },
         actions: [{ id: 'change', label: 'Change', effects: [{ panel: 'wardrobe' }] }],

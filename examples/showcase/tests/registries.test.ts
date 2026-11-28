@@ -7,7 +7,7 @@ import {
   type CustomContext,
   type EffectRef,
   type EntityRef,
-  type Holder,
+  type Someone,
   type View,
 } from '@ifloom/engine'
 import type { CalendarState } from '@ifloom/plugin-calendar'
@@ -67,8 +67,8 @@ describe('typed registries', () => {
     const ava: EntityRef = 'character:ava'
     // @ts-expect-error a bare id is not a reference
     const bare: EntityRef = 'ava'
-    const holders: Holder[] = ['player', 'you', ava]
-    expect([ava, bare, holders]).toHaveLength(3)
+    const someone: Someone[] = ['player', 'you', ava]
+    expect([ava, bare, someone]).toHaveLength(3)
   })
 })
 

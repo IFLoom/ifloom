@@ -54,8 +54,8 @@ Each kind of condition the engine keeps, by the key that tells it apart.
 `all` holds when every condition in its list holds, `any` when at least one does, and `not` when its one condition doesn't. `{ all: [] }` is true and `{ any: [] }` is false.
 
 ```ts fragment
-{ all: [{ kv: 'marketDay' }, { entity: 'clothing:scarf', at: 'you' }] }
-{ any: [{ entity: 'clothing:scarf', at: 'you' }, { entity: 'clothing:raincoat', at: 'you' }] }
+{ all: [{ kv: 'marketDay' }, { owned: 'clothing:scarf' }] }
+{ any: [{ owned: 'clothing:scarf' }, { kv: 'hasRaincoat' }] }
 { not: { kv: 'phase', is: 'arrival' } }
 ```
 
@@ -165,26 +165,39 @@ With `of`, it tests an [entity](/docs/reference/entities)'s stat: an [`EntityRef
 
 The number of [entities](/docs/reference/entities) of a kind, against a range. A bare `{ count }` means at least one, and a kind with none, or one the game doesn't declare, has 0. With `where`, it counts the entities `where` holds for, asking it once for each with `'$'` as that entity.
 
-In place of a kind, `count` takes a [`Select`](/docs/reference/entities#select) of a kind, a holder, a tag, a trait and a `where`, and counts distinct entities. With `units: true` it adds up how many of each are held instead, by the `Select`'s holder or else by everyone. A `count` binds its own `'$'`, so inside an `each`'s `where`, a `count`'s `'$'` is the entity being counted.
+In place of a kind, `count` takes a [`Select`](/docs/reference/entities#select) of a kind, a tag, a trait and a `where`, and counts distinct entities. `where: { owned: '$' }` counts the sorts of thing someone has. How many of one thing they have is [`owned`](#owned). A `count` binds its own `'$'`, so inside an `each`'s `where`, a `count`'s `'$'` is the entity being counted.
 
 ```ts fragment
 { count: 'staff', lt: 4 }                                                 // room for one more
 { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }   // two happy people
-{ count: { at: 'you', tag: 'fruit' }, gte: 3 }                            // three sorts of fruit on you
-{ count: { of: 'food', at: 'place:larder' }, units: true, lt: 4 }         // fewer than four bits of food there
+{ count: { tag: 'fruit', where: { owned: '$' } }, gte: 3 }               // three sorts of fruit on you
+{ count: { of: 'food', where: { owned: '$', of: 'character:ava' } }, lt: 4 } // Ava has fewer than four sorts of food
 ```
 
 ### entity
 
-Tests an [entity](/docs/reference/entities). Bare, it holds while the entity is in the game, declared or created and not removed. With `at`, it tests how many of it a [holder](/docs/reference/glossary#holder) holds against a range, at least one without a range. With a range and no `at`, it tests how many everyone holds together. The [`holding`](/docs/reference/entities#give-take-move-and-holding) helper writes `{ entity, at: 'you', gte }`.
+Holds while an [entity](/docs/reference/entities) is in the game, declared or created and not removed. Whether someone has it is [`owned`](#owned).
 
-The checker reports a kind the game doesn't declare, and not an unknown id, since the entity may be made in play. Inside an `each` or a `count`'s `where`, `'$'` is bound here and in `at`, so `{ entity: '$' }` is always true there and false anywhere else.
+The checker reports a kind the game doesn't declare, and not an unknown id, since the entity may be made in play. Inside an `each` or a `count`'s `where`, `'$'` is bound here, so `{ entity: '$' }` is always true there and false anywhere else.
 
 ```ts fragment
 { entity: 'staff:ana' }                          // Ana works here
-{ entity: 'item:sandwich', at: 'you' }           // you have a sandwich
-{ entity: 'gift:scarf', at: 'character:ava' }    // Ava has the scarf
 ```
+
+### owned
+
+How many of a thing someone has, against a range, added up across the game's [receivers](/docs/reference/entities#receivers), the plugins that keep things. A bare `{ owned }` means at least one. It's the one question "do they have it", whether the inventory, the wardrobe or another plugin keeps the thing.
+
+`of` names whose, [someone](/docs/reference/entities#someone-and-played): `'player'`, `'you'` or a unique entity. Each receiver reads its own default when it's left out, and the first-party ones count the protagonist being played and then the player's own things. `via` asks one receiver only.
+
+```ts fragment
+{ owned: 'item:sandwich' }                          // you have a sandwich
+{ owned: 'food:coffee', gte: 2 }                    // two coffees
+{ owned: 'gift:scarf', of: 'character:ava' }        // Ava has the scarf
+{ owned: 'clothing:shirt', via: 'wardrobe' }        // in the wardrobe, not carried
+```
+
+In a game with no receiver it's always 0 and the checker reports it. A Twine-style game asks a [kv key](#kv) instead, such as `{ kv: 'hasSandwich' }`.
 
 ### level
 
@@ -342,6 +355,7 @@ The [content checker](/docs/reference/checks) checks every condition content wri
 | `a condition needs one key that says what it asks, such as kv or stat, or a call by name; this one has only "at"` | The object holds no key the engine knows. |
 | `unknown stat "gold"`, `unknown storyline "nobody"` | The condition names a stat, storyline, scene, timer or setting the game doesn't declare. |
 | `no game condition named "marketDay"; the game's own code is called with "game/" in front, as "game/marketDay"` | A call's name has no `game/` or plugin id in front. |
+| `no plugin of the game keeps things, so this does nothing: …` | An `owned` in a game with no [receiver](/docs/reference/entities#receivers). |
 
 ## Caveats
 

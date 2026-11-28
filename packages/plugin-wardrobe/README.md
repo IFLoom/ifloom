@@ -1,6 +1,6 @@
 # @ifloom/plugin-wardrobe
 
-A wardrobe for IFLoom: slots the game declares, things with a wearable trait that go in them, and what the player has on. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
+A wardrobe for IFLoom: slots the game declares, things with a wearable trait that go in them, each body's own clothes, what they have on, and effects when something goes on or comes off. Bought clothes can go straight to it through the engine's `receive`. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
 
 ## Install
 

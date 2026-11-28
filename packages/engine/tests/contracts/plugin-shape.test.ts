@@ -19,6 +19,8 @@ import { PLUGIN_NAMES, firstPartyPlugins } from './first-party.ts'
 const MEMBERS = {
   // Who it is, and its state.
   identity: ['id', 'version', 'start', 'migrations', 'cooperates'],
+  // What it keeps for others to give, take and ask about (`receive`, `release`, `owned`), and what a New Game+ keeps.
+  keeps: ['receiver', 'carry'],
   // How content and command logs written for an older version are carried forward.
   upgrades: ['contentVersion', 'contentMigrations', 'commandVersion', 'commandMigrations'],
   // Tables of named functions content and code call, and its words.
@@ -64,6 +66,19 @@ const OPTIONS: Record<string, Record<string, string>> = {
   },
   places: {
     start: 'where a new game starts',
+    onPickUp: 'a rule: what every pick-up runs, after the thing’s own',
+  },
+  inventory: {
+    carryOver: 'what a New Game+ keeps of the player’s things',
+  },
+  wardrobe: {
+    claims: 'whether it takes what is worn, or leaves it to be carried',
+    onWear: 'a rule: what putting anything on runs, after the thing’s own',
+    onTakeOff: 'a rule: what taking anything off runs, after the thing’s own',
+  },
+  shop: {
+    onBuy: 'a rule: what every purchase runs, after the good’s and the vendor’s',
+    onSell: 'a rule: what every sale runs, after the good’s and the vendor’s',
   },
 }
 

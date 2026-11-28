@@ -118,7 +118,7 @@ describe('generators', () => {
     expect(visitors(run(loaded, g, 'one'), g)).toHaveLength(1)
   })
 
-  it('make one like another, with a description, a picture, tags, traits and a holder, keeping only the stats that differ', () => {
+  it('make one like another, with a description, a picture, tags, traits and effects on what it made, keeping only the stats that differ', () => {
     const regular: TemplateDef = {
       id: 'regular',
       like: 'visitor:pattern',
@@ -126,7 +126,7 @@ describe('generators', () => {
       image: 'art/visitor.png',
       tags: ['regular'],
       traits: { 'town/seat': { table: 2 } },
-      at: 'player',
+      effects: [{ kv: 'seated', of: '$', to: true }],
       stats: { mood: { between: [1, 1] }, patience: 0 },
     }
     const { game: g, problems } = loadGame(
@@ -159,7 +159,8 @@ describe('generators', () => {
     expect(['none', 'dog', 'parrot']).toContain(record.description)
     expect(record.stats).not.toHaveProperty('mood')
     expect(entityName(state, g, 'visitor:#1')).toBe('A regular')
-    expect(state.held.player).toEqual({ 'visitor:#1': 1 })
+    // Its effects ran on the one made, `'$'` as it.
+    expect(record.kv).toEqual({ seated: true })
   })
 
   it('report templates and pools that name what the game does not have, and their own mistakes', () => {

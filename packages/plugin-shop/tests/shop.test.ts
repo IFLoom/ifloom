@@ -3,23 +3,44 @@ import {
   SCHEMA,
   commandOf,
   createRunner,
-  heldCount,
   holds,
   loadGame,
   loadState,
   replay,
   startingState,
   view,
+  ownedCount,
   whyNot,
   type Game,
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import type { Plugin } from '@ifloom/engine/plugin'
+import { definePlugin, type Plugin } from '@ifloom/engine/plugin'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { shop, vendorOf, vendorsOf, type ShopView } from '../src/index.ts'
+
+/**
+ * A bag for these tests, a plugin that keeps things: it takes whatever no receiver before it claims, or only what
+ * `claims` says, and counts each thing the player has.
+ */
+function bag(id = 'bag', claims?: (ref: string) => boolean): Plugin<Record<string, number>> {
+  return definePlugin<Record<string, number>>({
+    id,
+    version: 1,
+    start: () => ({}),
+    receiver: {
+      ...(claims ? { claims: (_state, ref) => claims(ref) } : {}),
+      receive: (_state, ref, count, _to, { slice, set }) => set({ ...slice, [ref]: (slice[ref] ?? 0) + count }),
+      owned: (_state, ref, _of, { slice }) => slice[ref] ?? 0,
+      release: (_state, ref, count, _from, { slice, set }) => set({ ...slice, [ref]: (slice[ref] ?? 0) - count }),
+    },
+  })
+}
+
+/** How many of a thing the player owns, across the game's receivers. */
+const owned = (state: GameState, g: Game, ref: string) => ownedCount(state, g, ref as `${string}:${string}`)
 
 /** The café counter, in the café only: coffee for coins, three biscuits a day, and half back on a sandwich. */
 const counter = shop.vendor({
@@ -75,7 +96,7 @@ function game(...partners: Plugin[]): Game {
       { id: 'sleep', effects: [{ turn: true }] },
     ],
   }
-  return loadChecked([town], { id: 'g', title: 'g', plugins: [...partners, shop()] })
+  return loadChecked([town], { id: 'g', title: 'g', plugins: [...partners, bag(), shop()] })
 }
 
 const fresh = (g: Game, seed = 1) => freshState(g, { seed })
@@ -95,7 +116,7 @@ describe('the shop, on its own', () => {
     const g = game()
     const state = play(fresh(g), g, shop.buy('counter', 'food:sandwich'), shop.buy('counter', 'food:coffee', 2))
     expect(state.stats).toMatchObject({ coins: 20 - 5 - 6, energy: 49 })
-    expect([heldCount(state, g, 'food:sandwich'), heldCount(state, g, 'food:coffee')]).toEqual([1, 2])
+    expect([owned(state, g, 'food:sandwich'), owned(state, g, 'food:coffee')]).toEqual([1, 2])
   })
 
   it('refuses what the player can’t afford, in the stat’s own words, and greys the button with it', () => {
@@ -132,7 +153,7 @@ describe('the shop, on its own', () => {
     })
     state = play(state, g, shop.sell('counter', 'food:sandwich'))
     expect(state.stats.coins).toBe(20 - 5 + 2)
-    expect(heldCount(state, g, 'food:sandwich')).toBe(0)
+    expect(owned(state, g, 'food:sandwich')).toBe(0)
     expect(whyNot(state, g, shop.sell('counter', 'food:sandwich'))).toBe('You don’t have that.')
     expect(whyNot(play(state, g, shop.buy('stall', 'fruit:apple')), g, shop.sell('stall', 'fruit:apple'))).toBe('They don’t buy things back.')
   })
@@ -218,7 +239,7 @@ describe('the shop, on its own', () => {
           ],
         },
       ],
-      { id: 'g', title: 'g', plugins: [shop()] },
+      { id: 'g', title: 'g', plugins: [bag(), shop()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action y: unknown entity "vendor:kiosk"',
@@ -226,7 +247,7 @@ describe('the shop, on its own', () => {
       'trait shop/vendor on vendor:bad: buysBack must be between 0 and 1',
       'trait shop/vendor on vendor:bad: good stone:moon: price in stat "charm", which is not spendable',
       'trait shop/vendor on vendor:bad: sells "stone:moon" twice',
-      'trait shop/vendor on vendor:bad: good stone:moon: restock needs a stock',
+      'trait shop/vendor on vendor:bad: good stone:moon: restock needs a number stock',
       'trait shop/vendor on vendor:bad: good gem:ruby: a unique thing has a stock of 1 at most',
       'trait shop/vendor on vendor:bad: good gem:ruby: no price: give the good a price, or the thing a shop/sellable trait',
       'trait shop/vendor on vendor:bad: good stone:moon: unknown kind "stone"',
@@ -237,8 +258,8 @@ describe('the shop, on its own', () => {
   })
 })
 
-describe('the shop’s stock, held by the vendor', () => {
-  it('makes each vendor an entity of the vendor kind, unlisted, that holds its stock', () => {
+describe('the shop’s stock, kept by the shop', () => {
+  it('makes each vendor an entity of the vendor kind, unlisted, that holds nothing', () => {
     const g = game()
     expect(g.entities?.filter((entity) => entity.of === 'vendor').map((entity) => [entity.id, entity.name])).toEqual([
       ['counter', 'The counter'],
@@ -246,47 +267,53 @@ describe('the shop’s stock, held by the vendor', () => {
     ])
     expect(view(fresh(g), g).entities.find((kind) => kind.id === 'vendor')).toBeUndefined()
     expect(shown(fresh(g), g).vendors[0]).toMatchObject({ id: 'counter', ref: 'vendor:counter', name: 'The counter' })
-    // The vendor holds what it has left once anything has been done, and buying moves it to you.
+    // What's left is the shop's to keep, and buying hands the good over with a receive.
     const state = play(fresh(g), g, shop.buy('counter', 'food:biscuit'))
-    expect(heldCount(state, g, 'food:biscuit', shop.vendorRef('counter'))).toBe(2)
-    expect(heldCount(state, g, 'food:biscuit')).toBe(1)
-    // A good that never runs out is not held by anyone until it is bought.
-    expect(heldCount(state, g, 'food:coffee', shop.vendorRef('counter'))).toBe(0)
+    expect(state.plugins.shop.state).toEqual({ stock: { counter: { 'food:biscuit': { left: 2, at: 0 } } } })
+    expect(owned(state, g, 'food:biscuit')).toBe(1)
     expect(goods(state, g).find((good) => good.entity === 'food:coffee')).toMatchObject({ stock: null, owned: 0 })
   })
 
-  it('starts the vendor with what content places with it, and sells that', () => {
-    const extra = loadGame(
+  it('sells a good with stock once only one, and a number until it runs out', () => {
+    const loaded = loadGame(
       [
         {
           name: 'town',
           stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }],
           kinds: [{ id: 'jar', label: 'Jar', listed: false }],
           entities: [
-            { id: 'honey', of: 'jar', name: 'honey', at: { 'vendor:market': 2 } },
-            shop.vendor({ id: 'market', name: 'Market', goods: [{ entity: 'jar:honey', price: { coins: 1 }, stock: 0 }] }),
+            { id: 'honey', of: 'jar', name: 'honey' },
+            { id: 'jam', of: 'jar', name: 'jam' },
+            shop.vendor({
+              id: 'market',
+              name: 'Market',
+              goods: [
+                { entity: 'jar:honey', price: { coins: 1 }, stock: 2 },
+                { entity: 'jar:jam', price: { coins: 1 }, stock: 'once' },
+              ],
+            }),
           ],
         },
       ],
-      { id: 'g', title: 'g', plugins: [shop()] },
+      { id: 'g', title: 'g', plugins: [bag(), shop()] },
     )
-    expect(extra.problems).toEqual([])
-    const market = extra.game
-    const jars = () => (view(state, market).plugins.shop as ShopView).vendors[0].goods[0]
+    expect(loaded.problems).toEqual([])
+    const market = loaded.game
     let state: GameState = fresh(market)
-    expect(jars().stock).toBe(2)
-    state = play(state, market, shop.buy('market', 'jar:honey', 2))
+    expect(goods(state, market, 'market').map((good) => good.stock)).toEqual([2, 1])
+    state = play(state, market, shop.buy('market', 'jar:honey', 2), shop.buy('market', 'jar:jam'))
     expect(whyNot(state, market, shop.buy('market', 'jar:honey'))).toBe('Sold out.')
+    expect(whyNot(state, market, shop.buy('market', 'jar:jam'))).toBe('Sold out.')
+    expect([owned(state, market, 'jar:honey'), owned(state, market, 'jar:jam')]).toEqual([2, 1])
   })
 
-  it('takes a thing that never runs out back by taking it from you', () => {
+  it('takes a thing back with a release', () => {
     const g = game()
     const state = play(fresh(g), g, shop.buy('counter', 'food:sandwich'), shop.sell('counter', 'food:sandwich'))
-    expect(heldCount(state, g, 'food:sandwich', shop.vendorRef('counter'))).toBe(0)
-    expect(heldCount(state, g, 'food:sandwich')).toBe(0)
+    expect(state.plugins.bag.state).toEqual({ 'food:sandwich': 0 })
   })
 
-  it('sells a unique thing once, from the vendor, and has it back to sell when you sell it back', () => {
+  it('sells a unique thing once, keeps it off the shelf while you have it, and has it back when you sell it back', () => {
     const loaded = loadGame(
       [
         {
@@ -300,21 +327,131 @@ describe('the shop’s stock, held by the vendor', () => {
           actions: [{ id: 'sleep', effects: [{ turn: true }] }],
         },
       ],
-      { id: 'g', title: 'g', plugins: [shop()] },
+      { id: 'g', title: 'g', plugins: [bag(), shop()] },
     )
     expect(loaded.problems).toEqual([])
     const g = loaded.game
     let state = play(fresh(g), g, shop.buy('milliner', 'hat:bowler'))
     expect(state.stats.coins).toBe(14)
-    expect(heldCount(state, g, 'hat:bowler')).toBe(1)
+    expect(owned(state, g, 'hat:bowler')).toBe(1)
     expect(whyNot(state, g, shop.buy('milliner', 'hat:bowler'))).toBe('Sold out.')
-    // A new day restocks, but never takes the one you hold.
+    // A new day restocks, but never while you have the one there is.
     state = play(state, g, { type: 'action', id: 'sleep' })
     expect(whyNot(state, g, shop.buy('milliner', 'hat:bowler'))).toBe('Sold out.')
-    expect(heldCount(state, g, 'hat:bowler')).toBe(1)
     state = play(state, g, shop.sell('milliner', 'hat:bowler'))
     expect(state.stats.coins).toBe(17)
-    expect(heldCount(state, g, 'hat:bowler', shop.vendorRef('milliner'))).toBe(1)
+    expect(owned(state, g, 'hat:bowler')).toBe(0)
+    expect(whyNot(state, g, shop.buy('milliner', 'hat:bowler'))).toBeUndefined()
+  })
+})
+
+describe('buying and selling, and what it hands over', () => {
+  /** A kitchen game with no plugin that keeps things: the coffee machine is a kv flag, Twine-style. */
+  const kitchen: Content = {
+    name: 'kitchen',
+    stats: [{ id: 'coins', label: 'Coins', start: 100, spendable: true }],
+    kinds: [{ id: 'gadget', label: 'Gadget', listed: false }],
+    entities: [
+      { id: 'coffeeMachine', of: 'gadget', name: 'coffee machine' },
+      shop.vendor({
+        id: 'store',
+        name: 'Store',
+        goods: [{ entity: 'gadget:coffeeMachine', price: { coins: 80 }, stock: 'once', deliver: false, onBuy: [{ kv: 'kitchen.coffeeMachine', to: true }] }],
+      }),
+    ],
+  }
+
+  it('buys a coffee machine that only sets a flag, in a game with no plugin that keeps things', () => {
+    const { game: g, problems } = loadGame([kitchen], { id: 'g', title: 'g', plugins: [shop()] })
+    expect(problems).toEqual([])
+    let state = fresh(g)
+    expect(holds(state, g, { kv: 'kitchen.coffeeMachine' })).toBe(false)
+    state = play(state, g, shop.buy('store', 'gadget:coffeeMachine'))
+    expect(state.stats.coins).toBe(20)
+    expect(holds(state, g, { kv: 'kitchen.coffeeMachine' })).toBe(true)
+    expect(owned(state, g, 'gadget:coffeeMachine')).toBe(0)
+    expect(whyNot(state, g, shop.buy('store', 'gadget:coffeeMachine'))).toBe('Sold out.')
+  })
+
+  it('reports a good it would give in a game with no plugin that keeps things, and a deliver to one that keeps none', () => {
+    const shelf = shop.vendor({
+      id: 'shelf',
+      name: 'Shelf',
+      goods: [
+        { entity: 'gadget:coffeeMachine', price: { coins: 1 } },
+        { entity: 'gadget:kettle', price: { coins: 1 }, deliver: 'calendar' },
+      ],
+    })
+    const content: Content = {
+      ...kitchen,
+      entities: [{ id: 'coffeeMachine', of: 'gadget', name: 'coffee machine' }, { id: 'kettle', of: 'gadget', name: 'kettle' }, shelf],
+    }
+    const problems = loadGame([content], { id: 'g', title: 'g', plugins: [calendar(), shop()] }).problems.map((problem) => problem.what)
+    expect(problems).toEqual([
+      'good gadget:coffeeMachine: no plugin of the game keeps things, so this does nothing: add one, such as the inventory, or use kv keys',
+      'good gadget:kettle: via names "calendar", which keeps no things',
+    ])
+  })
+
+  it('gives a good to the receiver deliver names, whatever the others claim', () => {
+    const box = bag('box', () => false)
+    const { game: g, problems } = loadGame(
+      [
+        {
+          ...kitchen,
+          entities: [
+            { id: 'coffeeMachine', of: 'gadget', name: 'coffee machine' },
+            { id: 'kettle', of: 'gadget', name: 'kettle' },
+            shop.vendor({
+              id: 'store',
+              name: 'Store',
+              goods: [
+                { entity: 'gadget:coffeeMachine', price: { coins: 1 }, deliver: 'box' },
+                { entity: 'gadget:kettle', price: { coins: 1 } },
+              ],
+            }),
+          ],
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [box, bag(), shop()] },
+    )
+    expect(problems).toEqual([])
+    const state = play(fresh(g), g, shop.buy('store', 'gadget:coffeeMachine'), shop.buy('store', 'gadget:kettle'))
+    expect(state.plugins.box.state).toEqual({ 'gadget:coffeeMachine': 1 })
+    expect(state.plugins.bag.state).toEqual({ 'gadget:kettle': 1 })
+  })
+
+  it('runs onBuy on the good, then the vendor, then the game, once for each one bought, with $ as the thing', () => {
+    const store = shop.vendor({
+      id: 'store',
+      name: 'Store',
+      onBuy: [{ kv: 'step', by: 10 }],
+      onSell: [{ kv: 'sold', by: 1 }],
+      buysBack: 0.5,
+      goods: [{ entity: 'gadget:kettle', price: { coins: 1 }, onBuy: [{ kv: 'step', to: 1 }], onSell: [{ kv: 'sold', to: 0 }] }],
+    })
+    const { game: g, problems } = loadGame([{ ...kitchen, entities: [{ id: 'kettle', of: 'gadget', name: 'kettle' }, store] }], {
+      id: 'g',
+      title: 'g',
+      plugins: [
+        bag(),
+        shop({
+          onBuy: [
+            { kv: 'step', by: 100 },
+            { kv: 'bought', of: '$', by: 1 },
+          ],
+          onSell: [{ kv: 'sold', by: 5 }],
+        }),
+      ],
+    })
+    expect(problems).toEqual([])
+    let state = play(fresh(g), g, shop.buy('store', 'gadget:kettle', 2))
+    expect(state.kv.step).toBe(111)
+    expect(holds(state, g, { kv: 'bought', of: 'gadget:kettle', is: 2 })).toBe(true)
+    expect(owned(state, g, 'gadget:kettle')).toBe(2)
+    state = play(state, g, shop.sell('store', 'gadget:kettle'))
+    expect(state.kv.sold).toBe(6)
+    expect(owned(state, g, 'gadget:kettle')).toBe(1)
   })
 })
 
@@ -344,7 +481,7 @@ describe('a vendor is an entity with the vendor trait', () => {
           entities: [...things.entities!, shop.vendor({ id: 'ava', of: 'character', name: 'Ava', goods: [{ entity: 'food:coffee', price: { coins: 2 } }] })],
         },
       ],
-      { id: 'g', title: 'g', plugins: [shop()] },
+      { id: 'g', title: 'g', plugins: [bag(), shop()] },
     )
     expect(loaded.problems).toEqual([])
     const g = loaded.game
@@ -360,7 +497,7 @@ describe('a vendor is an entity with the vendor trait', () => {
     }
     const loaded = loadGame(
       [{ name: 'town', stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }], ...things, entities: [...things.entities!, counter] }],
-      { id: 'g', title: 'g', plugins: [shop()] },
+      { id: 'g', title: 'g', plugins: [bag(), shop()] },
       { packs: [mod] },
     )
     expect(loaded.problems).toEqual([])
@@ -449,7 +586,7 @@ describe('the shop’s opening hours', () => {
       {
         id: 'g',
         title: 'g',
-        plugins: [clock, shop()],
+        plugins: [clock, bag(), shop()],
       },
     )
     expect(problems).toEqual([])
@@ -469,7 +606,7 @@ describe('the shop with places', () => {
       ['stall', true],
     ])
     const cafe = play(street, g, places.go('cafe'), shop.buy('counter', 'food:coffee'))
-    expect(heldCount(cafe, g, 'food:coffee')).toBe(1)
+    expect(owned(cafe, g, 'food:coffee')).toBe(1)
   })
 
   it('works with both: a counter in the café, open in the day', () => {
@@ -507,7 +644,7 @@ describe('the shop panel', () => {
           ],
         },
       ],
-      { id: 'g', title: 'g', plugins: [shop()] },
+      { id: 'g', title: 'g', plugins: [bag(), shop()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action b: unknown entity "vendor:kiosk"',

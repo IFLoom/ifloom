@@ -1,8 +1,9 @@
 /**
  * Holdings: who holds what. The player and unique entities hold things, any
- * entity can be held, and `'you'` is whoever the player is playing now. The
- * logic is in `holdings.ts`; the `entity` and `count` conditions, and what
- * `create`, `remove` and `each` do with holders, are the entities feature's.
+ * entity can be held, and `'you'` is whoever the player is playing now (the
+ * player feature's `you`). The logic is in `holdings.ts`; the `entity` and
+ * `count` conditions, and what `create`, `remove` and `each` do with holders,
+ * are the entities feature's.
  */
 import { artSrc } from '../sceneBody.ts'
 import {
@@ -19,13 +20,12 @@ import {
   parseRef,
   PLAYER,
   protagonist,
-  traitDef,
   writeEntity,
   YOU,
   type EntityRef,
   type Holder,
 } from '../entities.ts'
-import { canHold, heldBy, heldCount, holderOf, moveHeld, placementCounts, setHeld } from '../holdings.ts'
+import { heldBy, heldCount, holderOf, moveHeld, placementCounts, setHeld } from '../holdings.ts'
 import type { Game } from '../game.ts'
 import type { Amount, GameState } from '../types.ts'
 import { withUi, type EntityUi, type Ui } from './ui.ts'
@@ -51,7 +51,7 @@ export type HeldView = {
   ui?: Ui<EntityUi>
 }
 
-/** The holdings feature's state, effects, view and references, as types. */
+/** The holdings feature's state, effects, view and reference, as types. */
 export type HoldingsShape = {
   state: {
     /**
@@ -61,8 +61,6 @@ export type HoldingsShape = {
      * For a count play hasn't changed, the engine reads the entity's `at` in content.
      */
     held: Record<string, Record<string, number>>
-    /** The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. */
-    you: EntityRef | null
   }
   effects: {
     /**
@@ -78,26 +76,14 @@ export type HoldingsShape = {
      * the holder named, else from wherever a unique thing is, else from `'you'`.
      */
     move: { move: string; from?: string; to: string; by?: Amount }
-    /**
-     * An effect that makes a protagonist, a unique entity, the one `'you'` names, such as `{ you: 'character:ava' }`.
-     * `{ you: null }` makes the player themselves again.
-     */
-    you: { you: string | null }
   }
   view: {
     /** The things you hold, in the game's order of its entities. The protagonist's come first while one is played, then the player's. */
     held: HeldView[]
   }
   references: {
-    /**
-     * A reference to a holder, `'player'`, `'you'` or a unique entity. `holds` names the thing given to it, which
-     * can't be the holder itself, and `protagonist` marks a `you` effect's choice of whom to play.
-     */
-    holder: { holder: string; holds?: string; protagonist?: boolean }
-    /** A reference to the entity a `create` makes a thing like, with the kind it makes when it names one. */
-    like: { like: string; of?: string }
-    /** A reference to a trait by id. */
-    trait: { trait: string }
+    /** A reference to a holder, `'player'`, `'you'` or a unique entity. `holds` names the thing given to it, which can't be the holder itself. */
+    holder: { holder: string; holds?: string }
   }
 }
 
@@ -181,12 +167,11 @@ function kindIds(game: Game): Set<string> {
   return new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.content?.kinds ?? [])].map((kind) => kind.id))
 }
 
-/** The holdings feature, which keeps the counts each holder holds and the protagonist `'you'` names. */
+/** The holdings feature, which keeps the counts each holder holds. */
 export const holdings = defineFeature<HoldingsShape>({
   name: 'holdings',
   state: {
     held: { start: () => ({}), load: () => ({}) },
-    you: { start: () => null, load: () => null },
   },
   effects: {
     entity: {
@@ -214,15 +199,6 @@ export const holdings = defineFeature<HoldingsShape>({
         { holder: effect.to },
         ...(effect.move === effect.to ? [{ holder: effect.to, holds: effect.move }] : []),
       ],
-    },
-    you: {
-      apply: (state, effect, game) => {
-        const to = effect.you
-        if (to === null || to === PLAYER) return state.you === null ? state : { ...state, you: null }
-        if (to === YOU || !canHold(state, game, to)) return state
-        return state.you === to ? state : { ...state, you: to as EntityRef }
-      },
-      references: (effect) => (effect.you === null ? [] : [{ holder: effect.you, protagonist: true }]),
     },
   },
   // A New Game+ carries how many the player held of what `carryOver.held` lists, or of everything; a thing made in play comes with its record.
@@ -263,27 +239,12 @@ export const holdings = defineFeature<HoldingsShape>({
       holder: (ref) => {
         const { holder } = ref
         if ('holds' in ref && ref.holds === holder) return [`"${holder}" can't hold itself`]
-        if (holder === PLAYER || holder === '$') return []
-        if (holder === YOU) return 'protagonist' in ref ? ['"you" is already whoever is played: name the protagonist, or null for the player'] : []
+        if (holder === PLAYER || holder === YOU || holder === '$') return []
         const parts = parseRef(holder)
         if (!parts) return [`unknown holder "${holder}": a holder is "player", "you" or a unique entity`]
         if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
         if (!kindOf(game, parts.kind)?.unique) return [`"${holder}" can't hold things: its kind "${parts.kind}" isn't unique`]
         return []
-      },
-      like: (ref) => {
-        const parts = parseRef(ref.like)
-        if (!parts) return ref.like === '$' ? [] : [`unknown entity "${ref.like}" to be like`]
-        if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
-        if (ref.of !== undefined && parts.kind !== ref.of) return [`like names a ${parts.kind}, not a ${ref.of}`]
-        if (parts.id !== '*' && !entityDef(game, ref.like)) return [`unknown entity "${ref.like}" to be like: name one the game declares`]
-        return []
-      },
-      trait: (ref) => {
-        const at = ref.trait.indexOf('/')
-        if (at <= 0) return []
-        const plugin = game.plugins?.find((entry) => entry.id === ref.trait.slice(0, at))
-        return plugin && !traitDef(game, ref.trait) ? [`plugin "${plugin.id}" has no trait "${ref.trait}"`] : []
       },
     }
   },

@@ -30,7 +30,9 @@ import { inventory } from '@ifloom/plugin-inventory'
  *   apart; a kv store's key is named by `kv`, and an effect that does
  *   something to its target is named by what it does (`move`, `remove`).
  * - `by` changes a number and `to` sets a value. Never `value`, `add`,
- *   `amount`, `delta` or `set`.
+ *   `amount`, `delta` or `set`. The one `value` is the `value` condition's
+ *   target, a plugin's or the game's value by name, as an amount's
+ *   `{ value }` names one (ADR 0016); it never changes anything.
  * - A command that targets one thing names it `id`.
  *
  * The core's fields are held at compile time (`npm run typecheck`), from the
@@ -67,6 +69,8 @@ const TARGETS = [
   // the latest roll under a key, for the roll condition
   'roll',
   'timer',
+  // a plugin's or the game's value by name, for the value condition only
+  'value',
   // effects named by what they do to their target
   'create',
   'remove',
@@ -150,8 +154,9 @@ const core = {
   // A command names its target `id`, and sets with `to`.
   // oxlint-disable-next-line typescript/no-duplicate-type-constituents -- the intersection is the test: every key is one of COMMAND_FIELDS
   commands: true as Exactly<KeysOf<Command>, KeysOf<Command> & (typeof COMMAND_FIELDS)[number]>,
-  // No banned word anywhere.
-  banned: true as Exactly<Extract<KeysOf<Condition> | KeysOf<Effect> | KeysOf<Command>, (typeof BANNED)[number]>, never>,
+  // No banned word anywhere, but the value condition's target.
+  banned: true as Exactly<Extract<KeysOf<Exclude<Condition, { value: string }>> | KeysOf<Effect> | KeysOf<Command>, (typeof BANNED)[number]>, never>,
+  valueIsACondition: true as Exactly<Extract<Condition, { value: string }>, Extract<Condition, { value: string }> & { with?: Record<string, unknown> }>,
 } satisfies Record<string, true>
 
 /** A sample call of each plugin kind, by `kind:plugin/name`, as its helper writes it. */

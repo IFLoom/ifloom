@@ -2,15 +2,15 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { createRunner, heldCount, holding, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
+import { createRunner, loadGame, ownedCount, startingState, type Game, type Runner } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { jobs } from '@ifloom/plugin-jobs'
 import { shop, type ShopView } from '@ifloom/plugin-shop'
 import { statuses } from '@ifloom/plugin-statuses'
 import { inventory } from '@ifloom/plugin-inventory'
-import { GameProvider, GameShell, Inventory, PanelHost, RoomActions, Scene, type Components, Game as GamePage, Story } from '@ifloom/react'
+import { GameProvider, GameShell, PanelHost, RoomActions, Scene, type Components, Game as GamePage, Story } from '@ifloom/react'
 import { AchievementList, useAchievements } from '@ifloom/plugin-achievements/react'
-import { useInventory } from '@ifloom/plugin-inventory/react'
+import { InventoryCard, useInventory } from '@ifloom/plugin-inventory/react'
 import { JobBoard, useJobs } from '@ifloom/plugin-jobs/react'
 import { ShopCounter, useShop } from '@ifloom/plugin-shop/react'
 import { StatusList, useStatuses } from '@ifloom/plugin-statuses/react'
@@ -111,7 +111,7 @@ function game(withPlugins = true): Game {
             achievements: [
               { id: 'rich', name: 'Nest egg', description: 'Have 20 coins.', progress: { value: 'coins', target: 20 } },
               { id: 'river', name: 'Dusk by the river', description: 'Sit by the river.', secret: true, when: { kv: 'river' } },
-              { id: 'shopper', name: 'Shopper', description: 'Buy a sandwich.', when: holding('food:sandwich') },
+              { id: 'shopper', name: 'Shopper', description: 'Buy a sandwich.', when: { owned: 'food:sandwich' } },
             ],
           },
           statuses: {
@@ -179,11 +179,11 @@ describe('the shop', () => {
     const sandwich = () => within(dialog.querySelector('[data-good="food:sandwich"]') as HTMLElement)
     expect(sandwich().queryByRole('button', { name: /Sell/ })).toBeNull()
     act(() => void fireEvent.click(sandwich().getByRole('button', { name: /Buy/ })))
-    expect(heldCount(runner.state, runner.game, 'food:sandwich')).toBe(1)
+    expect(ownedCount(runner.state, runner.game, 'food:sandwich')).toBe(1)
     expect(runner.state.stats.coins).toBe(1)
     expect(sandwich().getByText('You have 1')).toBeTruthy()
     act(() => void fireEvent.click(sandwich().getByRole('button', { name: /Sell for 2 coins/ })))
-    expect(heldCount(runner.state, runner.game, 'food:sandwich')).toBe(0)
+    expect(ownedCount(runner.state, runner.game, 'food:sandwich')).toBe(0)
     expect(runner.state.stats.coins).toBe(3)
   })
 
@@ -206,7 +206,7 @@ describe('the inventory', () => {
     act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:sandwich' } }))
     render(
       <GameProvider plugins={UIS} runner={runner}>
-        <Inventory drop />
+        <InventoryCard drop />
       </GameProvider>,
     )
     const sandwich = within(document.querySelector('[data-thing="food:sandwich"]') as HTMLElement)
@@ -217,21 +217,19 @@ describe('the inventory', () => {
     expect(document.querySelector('[data-thing="food:sandwich"]')).toBeNull()
     act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:flapjack' } }))
     act(() => void fireEvent.click(within(document.querySelector('[data-thing="food:flapjack"]') as HTMLElement).getByRole('button', { name: 'Drop' })))
-    expect(heldCount(runner.state, runner.game, 'food:flapjack')).toBe(0)
+    expect(ownedCount(runner.state, runner.game, 'food:flapjack')).toBe(0)
   })
 
-  it('lists what you hold without the plugin too, with no buttons', () => {
+  it('draws nothing without the plugin: what a game keeps in kv keys is its own scenes’ to show', () => {
     const g = game(false)
-    const runner = createRunner(g, { ...startingState(g), held: { player: { 'food:cake': 2 } } })
+    const runner = createRunner(g, { ...startingState(g), kv: { cakes: 2 } })
     render(
       <GameProvider plugins={UIS} runner={runner}>
-        <Inventory drop />
+        <InventoryCard drop />
       </GameProvider>,
     )
-    const cake = document.querySelector('[data-thing="food:cake"]') as HTMLElement
-    expect(cake.textContent).toContain('Cake')
-    expect(cake.textContent).toContain('×2')
-    expect(within(cake).queryByRole('button')).toBeNull()
+    expect(document.querySelector('[data-inventory]')).toBeNull()
+    expect(document.querySelector('[data-thing]')).toBeNull()
   })
 })
 
@@ -440,7 +438,7 @@ describe('the hooks', () => {
     })
     expect(result.current.shop!.here.map((vendor) => vendor.id)).toEqual(['counter'])
     act(() => void result.current.shop!.buy('counter', 'food:sandwich'))
-    expect(heldCount(runner.state, runner.game, 'food:sandwich')).toBe(1)
+    expect(ownedCount(runner.state, runner.game, 'food:sandwich')).toBe(1)
     expect(result.current.shop!.sell('counter', 'food:cake').ok).toBe(false)
     expect(result.current.jobs!.apply('office')).toMatchObject({ ok: false, reason: 'Nobody has interviewed you.' })
     act(() => void result.current.jobs!.apply('weekend'))
@@ -484,6 +482,6 @@ describe('the hooks', () => {
       </GameProvider>,
     )
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Grab a flapjack' })))
-    expect(heldCount(runner.state, runner.game, 'food:flapjack')).toBe(1)
+    expect(ownedCount(runner.state, runner.game, 'food:flapjack')).toBe(1)
   })
 })

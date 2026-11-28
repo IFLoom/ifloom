@@ -1,29 +1,31 @@
 /**
- * The inventory plugin, which lets the player use, drop and give away the things they hold.
+ * The inventory plugin: things the player and other people carry, used, dropped and given away.
  *
- * The engine keeps what each holder holds (`give`, `take`, `move`, `view.held`). A thing with the `inventory/usable`
- * trait gets a button that runs its effects and spends one unless it is kept. `inventory/drop` puts one down, and
- * `inventory/give` moves one to another holder, such as a character.
+ * It keeps who holds what in its own state, and it's a receiver (ADR 0016): a `receive` the game's other receivers
+ * don't claim gives the thing to someone's inventory, `release` takes it back and `owned` counts it. A thing starts
+ * held by its `inventory/at` trait. A thing with the `inventory/usable` trait gets a button that runs its effects and
+ * spends one unless it is kept. `inventory/drop` puts one down, and `inventory/give` hands one to someone.
  *
- * It requires no other plugin. With places, a dropped thing goes to the holder the `places/holder` query names for
- * where the player is. Without one, a dropped thing is gone.
+ * It requires no other plugin. With places, a dropped thing lies where the player is (`places/put`). Without it, a
+ * dropped thing is gone.
  */
 import {
   artSrc,
   buildEffects,
-  canHold,
+  declaredTrait,
+  declaredWithTrait,
   entityDescription,
   entityImage,
   entityName,
   entityOf,
-  heldBy,
-  heldCount,
   holds,
+  isUnique,
   parseRef,
   PLAYER,
   protagonist,
   stringOf,
   traitOf,
+  writeEntity,
   YOU,
   type CommandRef,
   type Effect,
@@ -31,7 +33,6 @@ import {
   type EntityRef,
   type Game,
   type GameState,
-  type Holder,
   type RenderedChoice,
 } from '@ifloom/engine'
 import {
@@ -44,9 +45,26 @@ import {
   renderAction,
   type CommandsOf,
   type DefinedPlugin,
-  type PluginContext,
+  type EffectsOf,
+  type PluginProblem,
   type TraitDef,
 } from '@ifloom/engine/plugin'
+import {
+  AT,
+  canHold,
+  defaultHolders,
+  heldBy,
+  heldCount,
+  ID,
+  moveHeld,
+  placementCounts,
+  setHeld,
+  type Holder,
+  type InventoryState,
+  type Placement,
+} from './held.ts'
+
+export { canHold, heldBy, heldCount, holderOf, holdersOf, type Holder, type InventoryState, type Placement } from './held.ts'
 
 /** The data of the `inventory/usable` trait, which makes a thing usable. It gives the button's label, the effects of using one and whether one is kept. */
 export type Usable = {
@@ -61,6 +79,7 @@ export type Usable = {
 declare module '@ifloom/engine' {
   interface TraitRegistry {
     'inventory/usable': Usable
+    'inventory/at': Placement
   }
 }
 
@@ -73,7 +92,16 @@ export type InventoryData = {
   kinds?: { id: string }[]
 }
 
-/** A thing the player holds as the player sees it, in `view.plugins.inventory.things`. */
+/** The inventory plugin's settings, which the game passes to `inventory()`. */
+export type InventoryOptions = {
+  /**
+   * The things a New Game+ keeps in the player's own inventory, by reference (`'food:apple'`), or `'all'` for
+   * everything the player holds, things made in play included. Nothing if left out.
+   */
+  carryOver?: readonly string[] | 'all'
+}
+
+/** A thing someone holds as the player sees it, in `view.plugins.inventory.things`. */
 export type InventoryThing = {
   /** The thing's entity reference, such as `'food:apple'`. */
   ref: EntityRef
@@ -100,31 +128,35 @@ export type InventoryView = {
 }
 
 /**
- * What content writes for each of the plugin's calls (from `CALLS`), its
- * queries' answers and its view, so a call with a misspelled argument fails
- * to compile.
+ * What content writes for each of the plugin's calls (from `CALLS`) and its view, so a call with a misspelled argument
+ * fails to compile.
  */
 declare module '@ifloom/engine' {
+  interface EffectRegistry extends EffectsOf<typeof CALLS> {}
   interface CommandRegistry extends CommandsOf<typeof CALLS> {}
   interface ViewRegistry {
     inventory: InventoryView
   }
 }
 
-const ID = 'inventory'
-
 /** The plugin's one list, `kinds`, as content writes it in `data.inventory.kinds` (a plugin's `data` holds its lists by name), the kinds it shows. */
 const DATA = defineData(ID, { kinds: list<{ id: string }>({ noun: 'kind' }) })
 
 /** The plugin's calls, and what each takes. */
 const CALLS = defineCalls(ID, {
+  effects: {
+    /** Move `by` of the thing `entity` (all there is if left out) `from` one holder (`'you'` if left out) `to` another. */
+    move: { entity: arg.entity(), from: arg.someone().optional(), to: arg.someone(), by: arg.number().optional() },
+    /** Set how many of the thing `entity` a holder (`at`, `'you'` if left out) holds `to` a count. */
+    set: { entity: arg.entity(), at: arg.someone().optional(), to: arg.number() },
+  },
   commands: {
     /** Use one of the thing `id`, by its `inventory/usable` trait. */
     use: { id: arg.entity() },
     /** Put one of the thing `id` down where you are, or let it go. */
     drop: { id: arg.entity() },
     /** Hand one of the thing `id` to `to`, someone who can hold things. */
-    give: { id: arg.entity(), to: arg.holder() },
+    give: { id: arg.entity(), to: arg.someone() },
   },
 })
 const USABLE = 'inventory/usable'
@@ -149,7 +181,23 @@ const usableTrait: TraitDef<'inventory/usable'> = {
   references: (data) => [{ effects: data?.effects }],
 }
 
-type Ctx = Pick<PluginContext<unknown>, 'game' | 'query'>
+/** Where a thing starts: `'you'` is no one yet, a thing can't hold itself, and counts are whole numbers above 0. */
+const atTrait: TraitDef<'inventory/at'> = {
+  id: AT,
+  check: (data, { ref }) => {
+    const wrong: string[] = []
+    for (const [holder, count] of Object.entries(placementCounts(data as Placement))) {
+      if (holder === YOU) wrong.push('inventory/at can\'t be "you" where a thing starts: name "player" or the protagonist')
+      else if (holder === ref) wrong.push('inventory/at names the entity itself: nothing can hold itself')
+      if (!Number.isInteger(count) || count < 1) wrong.push(`inventory/at gives "${holder}" ${count}: a count is a whole number above 0`)
+    }
+    return wrong
+  },
+  references: (data) =>
+    Object.keys(placementCounts(data as Placement))
+      .filter((holder) => holder !== YOU)
+      .map((holder) => ({ someone: holder })),
+}
 
 /** Whether the inventory shows things of this one's kind. */
 function shows(game: Game, ref: EntityRef): boolean {
@@ -168,14 +216,9 @@ function nameOf(state: GameState, game: Game, ref: string): string {
   return inGame(state, game, ref) ? entityName(state, game, ref) : ref
 }
 
-/**
- * Whose one of this thing a command takes: the protagonist's while they
- * hold one, else the player's. Undefined when neither holds any.
- */
+/** Whose one of this thing a command takes: the protagonist's while they hold one, else the player's. Undefined when neither holds any. */
 function takenFrom(state: GameState, game: Game, ref: EntityRef): Holder | undefined {
-  const you = protagonist(state)
-  if (heldCount(state, game, ref, you) > 0) return you
-  return heldCount(state, game, ref, PLAYER) > 0 ? PLAYER : undefined
+  return defaultHolders(state).find((holder) => heldCount(state, game, ref, holder) > 0)
 }
 
 /** Why you can't do anything with this thing now: not in the game, or you hold none. */
@@ -184,30 +227,27 @@ function notHeld(state: GameState, game: Game, ref: EntityRef): string | undefin
   return takenFrom(state, game, ref) === undefined ? stringOf(game, 'inventory/haveNone', { thing: nameOf(state, game, ref) }) : undefined
 }
 
+/** The effect that sets how many of a thing a holder holds. */
+const setTo = (entity: EntityRef, at: Holder, to: number): Effect => CALLS.effects.set({ entity, at, to }) as Effect
+
 function useEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
   const usable = usableOf(state, game, ref)
   const from = takenFrom(state, game, ref)
   if (!usable || from === undefined) return []
-  const spent: Effect[] = usable.keep ? [] : [{ entity: ref, at: from, by: -1 }]
+  const spent = usable.keep ? [] : [setTo(ref, from, heldCount(state, game, ref, from) - 1)]
   return [...spent, ...buildEffects(game, usable.effects)]
 }
 
-/** Where a dropped thing goes: the holder places names for where you are, if it names one that can hold; nowhere otherwise. */
-function dropHolder(state: GameState, cx: Ctx): Holder | undefined {
-  const holder = cx.query<string | null>('places/holder')
-  return typeof holder === 'string' && canHold(state, cx.game, holder) ? holder : undefined
-}
-
-function dropEffects(state: GameState, ref: EntityRef, cx: Ctx): Effect[] {
-  const from = takenFrom(state, cx.game, ref)
+/** Dropping one: it leaves the inventory, then lies where the player is when the game has places. */
+function dropEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
+  const from = takenFrom(state, game, ref)
   if (from === undefined) return []
-  const to = dropHolder(state, cx)
-  return to === undefined ? [{ entity: ref, at: from, by: -1 }] : [{ move: ref, from, to, by: 1 }]
+  return [setTo(ref, from, heldCount(state, game, ref, from) - 1), ...buildEffects(game, [{ 'places/put': { entity: ref } }])]
 }
 
 function giveEffects(state: GameState, game: Game, { id, to }: { id: EntityRef; to: Holder }): Effect[] {
   const from = takenFrom(state, game, id)
-  return from === undefined ? [] : [{ move: id, from, to, by: 1 }]
+  return from === undefined ? [] : [CALLS.effects.move({ entity: id, from, to, by: 1 }) as Effect]
 }
 
 /** One holder's things as the inventory shows them. */
@@ -240,23 +280,90 @@ function inventoryView(state: GameState, game: Game): InventoryView {
   return { things: [...played, ...thingsOf(state, game, PLAYER)] }
 }
 
+/** The holders a receiver's `of` or `from` reads: the one named, else the protagonist's and then the player's own. */
+function holdersFor(state: GameState, who: string | undefined): Holder[] {
+  return who === undefined ? defaultHolders(state) : [who as Holder]
+}
+
+/** What's wrong with where content starts things that one entity's trait can't see: holders that can't hold, unique things in two places, and cycles. */
+function startProblems(game: Game): PluginProblem[] {
+  const problems: PluginProblem[] = []
+  const startHolder = new Map<string, string>()
+  for (const ref of declaredWithTrait(game, AT)) {
+    const counts = placementCounts(declaredTrait(game, ref, AT) as Placement | undefined)
+    if (isUnique(game, ref)) {
+      const holders = Object.keys(counts)
+      if (holders.length > 1 || Object.values(counts).some((count) => count > 1))
+        problems.push({ list: 'entity', id: ref, what: 'a unique thing starts in one place, one of it' })
+      if (holders.length === 1) startHolder.set(ref, holders[0])
+    }
+  }
+  // A unique thing starting inside what it holds, however far round.
+  const reported = new Set<string>()
+  for (const start of startHolder.keys()) {
+    const path: string[] = []
+    for (let at: string | undefined = start; at !== undefined; at = startHolder.get(at)) {
+      const loop = path.indexOf(at)
+      if (loop >= 0) {
+        const cycle = path.slice(loop)
+        const key = [...cycle].sort().join(',')
+        if (!reported.has(key)) {
+          reported.add(key)
+          problems.push({ list: 'entity', id: at, what: `holders go round in a cycle: ${[...cycle, at].join(' → ')}` })
+        }
+        break
+      }
+      path.push(at)
+    }
+  }
+  return problems
+}
+
 /**
- * Returns the inventory plugin for the game's `plugins`. Give each thing with a use the `inventory/usable` trait
- * (`inventory.usable(label, effects)`); the plugin keeps nothing in the save.
+ * Returns the inventory plugin for the game's `plugins`. Start things held with the `inventory/at` trait
+ * (`inventory.at('player')`), and give each thing with a use the `inventory/usable` trait
+ * (`inventory.usable(label, effects)`).
  */
-function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
-  return definePlugin<null, InventoryView, typeof CALLS>({
+function inventoryPlugin(options: InventoryOptions = {}): DefinedPlugin<InventoryState, InventoryView> {
+  return definePlugin<InventoryState, InventoryView, typeof CALLS>({
     id: ID,
     version: 1,
+    start: () => ({ held: {} }),
     calls: CALLS,
     data: DATA,
     cooperates: ['places'],
-    traits: [usableTrait],
+    traits: [usableTrait, atTrait],
     strings: {
       haveNone: 'You have no {thing}.',
       doesNothing: 'The {thing} does not do anything.',
       cantGiveTo: 'You can’t give things to {to}.',
       giveToSelf: 'You already have it.',
+    },
+    receiver: {
+      // It claims anything: the inventory takes what no receiver before it claims.
+      receive: (state, ref, count, to, { game }) => {
+        const at = to ?? YOU
+        return setHeld(state, game, ref, at, heldCount(state, game, ref, at) + count)
+      },
+      owned: (state, ref, of, { game }) => holdersFor(state, of).reduce((sum, holder) => sum + heldCount(state, game, ref, holder), 0),
+      release: (state, ref, count, from, { game }) => {
+        let left = count
+        let next = state
+        for (const holder of holdersFor(state, from)) {
+          const here = Math.min(left, heldCount(next, game, ref, holder))
+          if (here > 0) next = setHeld(next, game, ref, holder, heldCount(next, game, ref, holder) - here)
+          left -= here
+        }
+        return next
+      },
+    },
+    effects: {
+      move: (state, { entity, from, to, by }, { game }) => moveHeld(state, game, entity, from ?? YOU, to, by),
+      set: (state, { entity, at, to }, { game }) => setHeld(state, game, entity, at ?? YOU, to),
+    },
+    values: {
+      /** `{{inventory/count entity=food:apple}}`: how many of a thing someone holds, `at` them (`'you'` if left out). */
+      count: (state, args, { game }) => heldCount(state, game, String(args.entity ?? ''), typeof args.at === 'string' ? args.at : YOU),
     },
     commands: {
       /** `{ 'inventory/use': { id } }`: use one of the thing `id`, by its `inventory/usable` trait. */
@@ -273,8 +380,8 @@ function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
       /** `{ 'inventory/drop': { id } }`: put one of the thing `id` down where you are, or let it go. */
       drop: {
         whyNot: (state, { id }, { game }) => notHeld(state, game, id),
-        effectsOf: (state, { id }, context) => dropEffects(state, id, context),
-        run: (state, { id }, context) => context.apply(dropEffects(state, id, context), state),
+        effectsOf: (state, { id }, { game }) => dropEffects(state, game, id),
+        run: (state, { id }, { game, apply }) => apply(dropEffects(state, game, id), state),
       },
       /** `{ 'inventory/give': { id, to } }`: hand one of the thing `id` to `to`, someone who can hold things. */
       give: {
@@ -288,14 +395,36 @@ function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
         run: (state, args, { game, apply }) => apply(giveEffects(state, game, args), state),
       },
     },
+    // A New Game+ keeps the player's things `carryOver` lists; a thing made in play comes with its record.
+    carry: (fresh, from, { game }) => {
+      const listed = options.carryOver
+      if (!listed) return fresh
+      const refs = listed === 'all' ? heldBy(from, game, PLAYER).map((entry) => entry.ref) : listed
+      let next = fresh
+      for (const ref of refs) {
+        const parts = parseRef(ref)
+        const record = parts ? from.entities?.[parts.kind]?.[parts.id] : undefined
+        if (parts && record && !game.entities?.some((entity) => `${entity.of}:${entity.id}` === ref) && !inGame(next, game, ref)) {
+          next = writeEntity(next, ref, record)
+          const made = from.created?.[parts.kind] ?? 0
+          if (made > (next.created?.[parts.kind] ?? 0)) next = { ...next, created: { ...next.created, [parts.kind]: made } }
+        }
+        next = setHeld(next, game, ref, PLAYER, heldCount(from, game, ref, PLAYER))
+      }
+      return next
+    },
     view: (state, { game }) => inventoryView(state, game),
     references: {
       // Nothing gives a thing to itself.
       calls: (_table, name, args) =>
-        name === 'give' && args.to !== undefined && args.to === args.id ? [{ problem: `"${String(args.to)}" can't hold itself` }] : [],
+        (name === 'give' && args.to !== undefined && args.to === args.id) || (name === 'move' && args.to !== undefined && args.to === args.entity)
+          ? [{ problem: `"${String(args.to)}" can't hold itself` }]
+          : [],
     },
-    check: (game, tools) =>
-      (inventoryKindsOf(game) ?? []).flatMap((kind) => tools.problems([{ kind: kind.id }]).map((what) => DATA.kinds.problem(kind.id, what))),
+    check: (game, tools) => [
+      ...(inventoryKindsOf(game) ?? []).flatMap((kind) => tools.problems([{ kind: kind.id }]).map((what) => DATA.kinds.problem(kind.id, what))),
+      ...startProblems(game),
+    ],
   })
 }
 
@@ -310,11 +439,20 @@ const usable = (label: string, effects: EffectRef[], options: { keep?: boolean }
   [USABLE]: options.keep ? { label, effects, keep: true } : { label, effects },
 })
 
+/**
+ * Returns the `inventory/at` trait, to spread into an entity's `traits`: who holds it at the start, or how many each
+ * holder holds.
+ *
+ * @example
+ * traits: { ...inventory.at({ player: 2, 'place:larder': 6 }) }
+ */
+const at = (placement: Placement): { 'inventory/at': Placement } => ({ [AT]: placement })
+
 /** Returns the `inventory/use` command, which uses one of a thing the player holds. */
 const useThing = (ref: EntityRef): CommandRef => CALLS.commands.use({ id: ref })
 /** Returns the `inventory/drop` command, which drops one of a thing the player holds. */
 const dropThing = (ref: EntityRef): CommandRef => CALLS.commands.drop({ id: ref })
-/** Returns the `inventory/give` command, which gives one of a thing the player holds to another holder, such as `'character:ava'`. */
+/** Returns the `inventory/give` command, which gives one of a thing the player holds to someone, such as `'character:ava'`. */
 const giveThing = (ref: EntityRef, to: Holder): CommandRef => CALLS.commands.give({ id: ref, to })
 
 /**
@@ -324,10 +462,16 @@ const giveThing = (ref: EntityRef, to: Holder): CommandRef => CALLS.commands.giv
 export const inventory = Object.assign(inventoryPlugin, {
   /** Returns the `inventory/usable` trait, to spread into an entity's or a kind's `traits`. Using the thing spends one unless `keep` is true. */
   usable,
+  /** Returns the `inventory/at` trait, to spread into an entity's `traits`, naming who holds it at the start. */
+  at,
   /** Returns the `inventory/use` command, which uses one of a thing the player holds. */
   use: useThing,
   /** Returns the `inventory/drop` command, which drops one of a thing the player holds. */
   drop: dropThing,
-  /** Returns the `inventory/give` command, which gives one of a thing the player holds to another holder. */
+  /** Returns the `inventory/give` command, which gives one of a thing the player holds to someone. */
   give: giveThing,
+  /** Returns the `inventory/move` effect, which moves a thing from one holder to another, from `'you'` if `from` is left out. */
+  move: (entity: EntityRef, to: Holder, options: { from?: Holder; by?: number } = {}): EffectRef => CALLS.effects.move({ entity, to, ...options }),
+  /** Returns the `inventory/set` effect, which sets how many of a thing a holder (`'you'` if left out) holds. */
+  set: (entity: EntityRef, to: number, holder?: Holder): EffectRef => CALLS.effects.set({ entity, to, ...(holder ? { at: holder } : {}) }),
 })

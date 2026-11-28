@@ -65,13 +65,13 @@ export const pools: PoolDef[] = [
 
 A template the game declares in `data.generators.templates`, which makes entities of one kind through the engine's [`create`](/docs/reference/effects#create) effect. Every field is in [`TemplateDef`](/docs/api/plugin-generators#templatedef).
 
-A template has the fields of `create`. `name`, `description`, `image`, `stats` and `kv` are each a [`FieldDef`](#fielddef), drawn for every new entity, and `tags`, `traits` and `at` are written as they are. A template needs an `of` or a `like`, and a `name` or a `like`:
+A template has the fields of `create`. `name`, `description`, `image`, `stats` and `kv` are each a [`FieldDef`](#fielddef), drawn for every new entity, and `tags`, `traits` and `effects` are written as they are. A template needs an `of` or a `like`, and a `name` or a `like`:
 
 - **`of`** is the kind it makes, and the `like`'s kind if left out.
 - **`like`** is a declared entity the new ones are made like, so a field the template doesn't give, such as the picture, traits or stats, comes from that one.
 - **`stats`** names stats the game declares for the kind. A drawn stat equal to the value the entity would read anyway, its `like`'s or else the stat's `start`, isn't kept, so the save holds only what differs.
 - **`traits`** is laid over the `like`'s or the kind's, so `{ 'cast/person': { home: 'park' } }` makes someone the [cast](/docs/reference/plugins/cast) can find.
-- **`at`** is who holds the new entity, a [holder](/docs/reference/glossary#holder) or how many each holds, and nobody if left out.
+- **`effects`** run once each new entity is made, with `'$'` as it, such as `[{ receive: '$' }]` to hand it to whichever [receiver](/docs/reference/glossary#receiver) the game has. Nothing runs if left out.
 
 The showcase's park visitor draws a name from a pool and two kv keys:
 
@@ -197,7 +197,7 @@ When the game loads, the plugin reports problems with each pool and template aga
 | `stat mood: between [5, 1] runs backwards` | A `between`'s first number is bigger than its second. |
 | `stat mood: between needs two numbers` | A `between` doesn't hold two numbers. |
 
-A `like` that isn't a declared entity of the kind, a holder in `at` that can't hold things, a trait no plugin declares, or an `image` path with no file gives the problem the engine's `create` gives. A call that names a template the game doesn't have gives `unknown template "…"` where it's written, and a `count` that isn't a whole number of 1 or more gives `count must be a whole number, 1 or more`.
+A `like` that isn't a declared entity of the kind, an `effects` entry the engine's checker rejects, a trait no plugin declares, or an `image` path with no file gives the problem the engine's `create` gives. A call that names a template the game doesn't have gives `unknown template "…"` where it's written, and a `count` that isn't a whole number of 1 or more gives `count must be a whole number, 1 or more`.
 
 ## Caveats
 

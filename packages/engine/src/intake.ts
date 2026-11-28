@@ -7,7 +7,7 @@
 import { fail, ok, type Result } from './result.ts'
 import { stringOf } from './strings.ts'
 import type { Game } from './game.ts'
-import { pluginsOf, type PluginSlice } from './plugin.ts'
+import { pluginContext, pluginsOf, type PluginSlice } from './plugin.ts'
 import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
 import { hash } from './random.ts'
 import { carryChain, runChain } from './chain.ts'
@@ -45,11 +45,18 @@ function startingPlugins(game: Game): Record<string, PluginSlice> {
   return out
 }
 
-/** What `carryOver` takes from the game before, laid over a fresh state: each feature's fields, worked out from the fresh state. */
+/**
+ * What a New Game+ takes from the game before, laid over a fresh state: each feature's fields `carryOver` lists, worked
+ * out from the fresh state, then each plugin's own `carry`.
+ */
 function carried(state: GameState, game: Game, from: GameState, options: StartOptions): GameState {
-  if (!game.carryOver) return state
   const cx = featureContext()
-  return Object.assign({ ...state }, ...carrySteps.map((step) => step(state, game, from, options, cx))) as GameState
+  let next = game.carryOver ? (Object.assign({ ...state }, ...carrySteps.map((step) => step(state, game, from, options, cx))) as GameState) : state
+  for (const plugin of pluginsOf(game)) {
+    if (!plugin.carry) continue
+    next = plugin.carry(next, from, pluginContext(plugin, next, game))
+  }
+  return next
 }
 
 /**

@@ -12,7 +12,7 @@ import type { GameState } from '../types.ts'
 import { actions, type ActionsShape } from './actions.ts'
 import { audio, type AudioShape } from './audio.ts'
 import { entities, type EntitiesShape } from './entities.ts'
-import { holdings, type HoldingsShape } from './holdings.ts'
+import { receivers, type ReceiversShape } from './receivers.ts'
 import { inputs, type InputsShape } from './inputs.ts'
 import { locks, type LocksShape } from './locks.ts'
 import type { ConditionEntry, CommandEntry, ContentKey, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
@@ -42,7 +42,7 @@ import { credits, type CreditsShape } from './credits.ts'
 type Shapes =
   | EntitiesShape
   | PlayerShape
-  | HoldingsShape
+  | ReceiversShape
   | TurnsShape
   | KvShape
   | StorylinesShape
@@ -81,8 +81,8 @@ type Shapes =
  * - Settings come before audio, which requires them.
  * - Stats come before entities, so a loaded save's entities are filled after their stats.
  * - Panels run after the plugins' hooks, so a turn or scene a hook moves on closes the panel the command found open.
- * - The player, holdings, saving, ui, phrases and credits can go anywhere, since they only apply, render, merge or check. Holdings sits
- *   beside entities, whose kinds it reads.
+ * - The player, receivers, saving, ui, phrases and credits can go anywhere, since they only apply, render, merge or
+ *   check. Receivers sit beside entities, whose things they hand to the plugins.
  * - Rolls run after the plugins' hooks, so the rolls a command keeps for the view include any a hook or a trigger made.
  * - Changes run after every other step, so the stats it compares are those the command left once everything had run.
  * - The ending goes last, so `finished` is checked after the rest.
@@ -107,7 +107,7 @@ export const FEATURES = [
   panels,
   entities,
   player,
-  holdings,
+  receivers,
   locks,
   saving,
   rolls,

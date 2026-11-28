@@ -129,7 +129,7 @@ describe('quests', () => {
       storyline: 'nobody',
       starts: { 'quests/nope': true },
       stages: [
-        { id: 'a', hint: '', done: { entity: 'thing:moonstone', at: 'you' } },
+        { id: 'a', hint: '', done: { entity: 'thing:moonstone' } },
         { id: 'a', hint: '', done: { kv: 'x' } },
       ],
     }

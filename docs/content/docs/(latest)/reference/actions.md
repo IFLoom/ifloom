@@ -133,7 +133,7 @@ Returns a [`Blocked`](#blocked) entry written the other way round, refused with 
 ```ts
 import { need, type Blocked } from '@ifloom/engine'
 
-export const scarfNeeded: Blocked[] = [need('You need a scarf for this.', { entity: 'clothing:scarf', at: 'you' })]
+export const scarfNeeded: Blocked[] = [need('You need a scarf for this.', { owned: 'clothing:scarf' })]
 ```
 
 ### whyNot

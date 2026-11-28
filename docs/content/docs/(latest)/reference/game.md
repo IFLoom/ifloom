@@ -14,13 +14,14 @@ import { sceneOf, type Game } from '@ifloom/engine'
 
 A loaded game, the base's fields and the merged content's. Every field is in [`Game`](/docs/api/engine#game).
 
-The base gives `id`, `title`, `version`, `plugins` and `rules`. The content and packs give the rest, so a mod can reach it, and `loadGame` sets `prose`, `traits`, `data` and `packs` as it merges. [Content](/docs/reference/content#content) lists how each content key merges. These fields need more than their API description:
+The base gives `id`, `title`, `version`, `plugins`, `receivers` and `rules`. The content and packs give the rest, so a mod can reach it, and `loadGame` sets `prose`, `traits`, `data` and `packs` as it merges. [Content](/docs/reference/content#content) lists how each content key merges. These fields need more than their API description:
 
 | Field | Meaning |
 |---|---|
 | `id` | The game's id, which [saves](/docs/reference/saves#savedriver) are kept under. A save from another game's id is refused, so the id never changes once players have saves. |
 | `version` | The game's own version, a whole number from 1, which saves record. Declaring it, even as 1, stops the engine filling new stats, settings and entities into old saves itself. See [`migrations`](/docs/reference/rules#migrations). |
 | `plugins` | The [plugins](/docs/reference/plugins) the game is built with. Their hooks run in this order. |
+| `receivers` | The order the [`receive`](/docs/reference/effects#receive) effect asks the plugins that keep things, by id. The order of `plugins` if left out. See [Receivers](/docs/reference/entities#receivers). |
 | `introScene` | The scene open on the first frame, counted as seen once at turn 0. A game without one opens on its room with nothing seen. |
 | `actions` | The [actions](/docs/reference/actions#actiondef) the room offers. One with a `label` is a button after every plugin's buttons, and one without is done only by `{ type: 'action', id }`. |
 | `traits` | Every declared entity's traits, worked out from the content's [`traits`](/docs/reference/content#traits) table, the entities and their kinds. |

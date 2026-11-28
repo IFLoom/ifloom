@@ -1,7 +1,6 @@
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { InputFields } from './inputs.tsx'
-import { Inventory } from './inventory.tsx'
 import { GameMenu } from './menu.tsx'
 import { Notices } from './notices.tsx'
 import { PanelHost } from './panels.tsx'
@@ -49,9 +48,6 @@ export function DefaultLayout() {
         <Section id="stats" title={words('stats')} collapsible open>
           <StatList />
           <Plugins at="stats" />
-        </Section>
-        <Section id="inventory" title={words('inventory')} collapsible>
-          <Inventory title={false} />
         </Section>
         <Plugins at="sidebar" />
       </Sidebar>

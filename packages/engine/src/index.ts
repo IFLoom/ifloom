@@ -94,8 +94,8 @@ export type { ActionCost } from './action.ts'
 export { actionOf, need } from './action.ts'
 export { effectsOf, whyNot } from './availability.ts'
 
-// Entities, holdings, notices, triggers and input
-export type { EntityDef, EntityRef, EntityState, Holder, KindDef, Placement, TraitData, TraitRegistry, TraitSource, TraitTable } from './entities.ts'
+// Entities, receivers, notices, triggers and input
+export type { EntityDef, EntityRef, EntityState, KindDef, Played, Someone, TraitData, TraitRegistry, TraitSource, TraitTable } from './entities.ts'
 export {
   PLAYER,
   YOU,
@@ -108,15 +108,14 @@ export {
   isUnique,
   parseRef,
   protagonist,
-  resolveHolder,
+  resolveYou,
   declaredTrait,
   declaredWithTrait,
   withTrait,
   writeEntity,
 } from './entities.ts'
 export type { CreatedEntity, CreateFields, Select } from './features/entities.ts'
-export type { HeldView } from './features/holdings.ts'
-export { canHold, give, heldBy, heldCount, holderOf, holding, move, take } from './holdings.ts'
+export { ownedCount, receiversOf, receiveThing, releaseThing } from './receivers.ts'
 export type { Notice } from './notices.ts'
 export { dismiss, notify } from './notices.ts'
 export type { TriggerDef } from './features/triggers.ts'

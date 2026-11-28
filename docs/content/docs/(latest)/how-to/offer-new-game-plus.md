@@ -18,23 +18,31 @@ export const endings: Content = {
 
 ## Choose what carries over
 
-List it in your content's `carryOver`, a [`CarryOver`](/docs/reference/state#carryover), with player stats in `stats`, kv keys in `kv`, and things the player holds in `held`, or `held: 'all'` for everything:
+List player stats and kv keys in your content's `carryOver`, a [`CarryOver`](/docs/reference/state#carryover):
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
 export const nextRun: Content = {
-  carryOver: { stats: ['coins'], kv: ['readBefore'], held: ['clothing:umbrella'] },
+  carryOver: { stats: ['coins'], kv: ['readBefore'] },
 }
 ```
+
+Things the player has belong to the plugin that keeps them, and each plugin carries its own with its [`carry`](/docs/reference/plugin-api#carry). The inventory takes a `carryOver` option, the things to keep or `'all'`:
+
+```ts fragment
+plugins: [inventory({ carryOver: ['clothing:umbrella'] })]
+```
+
+A game that keeps things in kv keys lists those keys in `carryOver.kv` instead.
 
 A New Game+ starts like any new game, then copies these from the finished game's state:
 
 - **Each stat** in `stats`, held to its range.
 - **Each kv key** in `kv` that is set.
-- **How many the player held** of each thing in `held`. A thing made in play, such as a photo, comes with its record. With `'all'`, a thing the new game would start the player with that they no longer had is 0.
+- **What each plugin carries**, such as the things the inventory's `carryOver` lists. A thing made in play, such as a photo, comes with its record.
 
-Nothing else comes across. The turn, the scenes seen, the storylines, other entities, what other holders hold and the plugins' states all start fresh.
+Nothing else comes across. The turn, the scenes seen, the storylines, the entities and the state of every plugin that carries nothing all start fresh.
 
 ## Write lines for a second run
 
@@ -69,7 +77,7 @@ Carry from the state the player finished on. The profile records only when the g
 
 ## Check it worked
 
-Run `npm run check`. It reports a stat in `carryOver` the game doesn't declare or that belongs to a kind, and a thing in `held` not written `kind:id` or whose kind the game doesn't have:
+Run `npm run check`. It reports a stat in `carryOver` the game doesn't declare or that belongs to a kind:
 
 ```text
 content · carryOver · unknown stat "gold"

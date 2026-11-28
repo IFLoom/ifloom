@@ -153,7 +153,7 @@ type TemplateDef = {
   image?: FieldDef
   tags?: string[]
   traits?: Record<string, unknown>
-  at?: Placement
+  effects?: EffectRef[]
   stats?: Record<string, FieldDef>
   kv?: Record<string, FieldDef>
 }
@@ -169,7 +169,7 @@ type TemplateDef = {
 | `image` | [`FieldDef`](#fielddef) | yes |  | The new entity's picture, a path in the game's `art/` folder, drawn as the name is, such as `{ pool: 'faces' }`. |
 | `tags` | `string[]` | yes |  | The new entity's tags, added after its kind's and its `like`'s. |
 | `traits` | `Record<string, unknown>` | yes |  | The new entity's trait data by trait id, over its `like`'s or its kind's, such as `{ 'cast/person': { home: 'park' } }`. |
-| `at` | [`Placement`](/docs/api/engine#placement) | yes |  | The holder of the new entity once made, or how many each holder holds. Nobody holds it if left out. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) | yes |  | The effects that run once the new entity is made, with `'$'` as it, such as `[{ receive: '$' }]` to hand it to whichever plugin keeps things. Nothing more happens if left out. |
 | `stats` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | The new entity's stats by id, each a stat the game declares for the kind. A stat left out reads the `like`'s value, else its `start`. |
 | `kv` | `Record<string,` [`FieldDef`](#fielddef)`>` | yes |  | The new entity's kv keys by name. |
 

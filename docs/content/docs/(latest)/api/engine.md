@@ -4,9 +4,9 @@ description: "Every export of @ifloom/engine, the main entry for writing and run
 ---
 Generated from the source of `@ifloom/engine` and its TSDoc by `npm run api-docs`. Each export links to the page that explains it, where one does.
 
-- Functions: [`actionOf`](#actionof), [`amountOf`](#amountof), [`apply`](#apply), [`applyEffects`](#applyeffects), [`artSrc`](#artsrc), [`audioSrc`](#audiosrc), [`buildEffects`](#buildeffects), [`callOf`](#callof), [`canHold`](#canhold), [`cases`](#cases), [`chance`](#chance), [`checkGame`](#checkgame), [`choice`](#choice-1), [`clampStat`](#clampstat), [`commandOf`](#commandof), [`createRunner`](#createrunner), [`creditsOf`](#creditsof), [`decide`](#decide), [`declaredTrait`](#declaredtrait), [`declaredWithTrait`](#declaredwithtrait), [`describeProblem`](#describeproblem), [`dismiss`](#dismiss), [`draw`](#draw), [`drawOne`](#drawone), [`effectsOf`](#effectsof), [`entitiesOf`](#entitiesof), [`entityDescription`](#entitydescription), [`entityImage`](#entityimage), [`entityKv`](#entitykv), [`entityName`](#entityname), [`entityOf`](#entityof), [`entityTags`](#entitytags), [`explain`](#explain), [`explainText`](#explaintext), [`fillTokens`](#filltokens), [`fold`](#fold), [`give`](#give), [`hash`](#hash), [`heldBy`](#heldby), [`heldCount`](#heldcount), [`holderOf`](#holderof), [`holding`](#holding), [`holds`](#holds), [`image`](#image), [`inlineChoices`](#inlinechoices), [`inlineMarkup`](#inlinemarkup), [`inRange`](#inrange), [`isUnique`](#isunique), [`jump`](#jump), [`lackingLine`](#lackingline), [`loadGame`](#loadgame), [`loadState`](#loadstate), [`mediaType`](#mediatype), [`memoryDriver`](#memorydriver), [`minigame`](#minigame), [`mods`](#mods-1), [`move`](#move), [`need`](#need), [`notify`](#notify), [`panel`](#panel), [`parseRef`](#parseref), [`pluginQuery`](#pluginquery), [`point`](#point), [`profile`](#profile-1), [`proseBeats`](#prosebeats), [`protagonist`](#protagonist), [`reasonOf`](#reasonof), [`replay`](#replay), [`resolveHolder`](#resolveholder), [`saves`](#saves-1), [`say`](#say), [`sceneOf`](#sceneof), [`screen`](#screen-1), [`startingState`](#startingstate), [`statLevel`](#statlevel), [`statOf`](#statof), [`statValue`](#statvalue), [`storylineOpen`](#storylineopen), [`stringOf`](#stringof), [`take`](#take), [`text`](#text), [`traitOf`](#traitof), [`translatableFields`](#translatablefields), [`uiInContent`](#uiincontent-1), [`upgradePack`](#upgradepack), [`view`](#view-1), [`weighted`](#weighted), [`when`](#when), [`whyNot`](#whynot), [`withTrait`](#withtrait), [`writeEntity`](#writeentity)
+- Functions: [`actionOf`](#actionof), [`amountOf`](#amountof), [`apply`](#apply), [`applyEffects`](#applyeffects), [`artSrc`](#artsrc), [`audioSrc`](#audiosrc), [`buildEffects`](#buildeffects), [`callOf`](#callof), [`cases`](#cases), [`chance`](#chance), [`checkGame`](#checkgame), [`choice`](#choice-1), [`clampStat`](#clampstat), [`commandOf`](#commandof), [`createRunner`](#createrunner), [`creditsOf`](#creditsof), [`decide`](#decide), [`declaredTrait`](#declaredtrait), [`declaredWithTrait`](#declaredwithtrait), [`describeProblem`](#describeproblem), [`dismiss`](#dismiss), [`draw`](#draw), [`drawOne`](#drawone), [`effectsOf`](#effectsof), [`entitiesOf`](#entitiesof), [`entityDescription`](#entitydescription), [`entityImage`](#entityimage), [`entityKv`](#entitykv), [`entityName`](#entityname), [`entityOf`](#entityof), [`entityTags`](#entitytags), [`explain`](#explain), [`explainText`](#explaintext), [`fillTokens`](#filltokens), [`fold`](#fold), [`hash`](#hash), [`holds`](#holds), [`image`](#image), [`inlineChoices`](#inlinechoices), [`inlineMarkup`](#inlinemarkup), [`inRange`](#inrange), [`isUnique`](#isunique), [`jump`](#jump), [`lackingLine`](#lackingline), [`loadGame`](#loadgame), [`loadState`](#loadstate), [`mediaType`](#mediatype), [`memoryDriver`](#memorydriver), [`minigame`](#minigame), [`mods`](#mods-1), [`need`](#need), [`notify`](#notify), [`ownedCount`](#ownedcount), [`panel`](#panel), [`parseRef`](#parseref), [`pluginQuery`](#pluginquery), [`point`](#point), [`profile`](#profile-1), [`proseBeats`](#prosebeats), [`protagonist`](#protagonist), [`reasonOf`](#reasonof), [`receiversOf`](#receiversof), [`receiveThing`](#receivething), [`releaseThing`](#releasething), [`replay`](#replay), [`resolveYou`](#resolveyou), [`saves`](#saves-1), [`say`](#say), [`sceneOf`](#sceneof), [`screen`](#screen-1), [`startingState`](#startingstate), [`statLevel`](#statlevel), [`statOf`](#statof), [`statValue`](#statvalue), [`storylineOpen`](#storylineopen), [`stringOf`](#stringof), [`text`](#text), [`traitOf`](#traitof), [`translatableFields`](#translatablefields), [`uiInContent`](#uiincontent-1), [`upgradePack`](#upgradepack), [`view`](#view-1), [`weighted`](#weighted), [`when`](#when), [`whyNot`](#whynot), [`withTrait`](#withtrait), [`writeEntity`](#writeentity)
 - Constants: [`PLAYER`](#player), [`SAVE_VERSION`](#save_version), [`SCHEMA`](#schema), [`STRINGS`](#strings), [`YOU`](#you)
-- Types: [`ActionCost`](#actioncost), [`ActionDef`](#actiondef), [`Amount`](#amount), [`Applied`](#applied), [`AudioChannelView`](#audiochannelview), [`AudioCue`](#audiocue), [`AudioState`](#audiostate), [`AudioView`](#audioview), [`AutosaveOptions`](#autosaveoptions), [`BacklogEntry`](#backlogentry), [`BacklogOptions`](#backlogoptions), [`BeatSize`](#beatsize), [`Block`](#block), [`Blocked`](#blocked), [`BlockExtras`](#blockextras), [`BlockUi`](#blockui), [`BrokenSave`](#brokensave), [`ButtonDef`](#buttondef), [`CarryOver`](#carryover), [`Change`](#change), [`ChangesDef`](#changesdef), [`ChangeView`](#changeview), [`ChannelDef`](#channeldef), [`Checked`](#checked), [`Choice`](#choice), [`ChoiceUi`](#choiceui), [`Command`](#command), [`CommandCall`](#commandcall), [`CommandLog`](#commandlog), [`CommandRef`](#commandref), [`CommandRegistry`](#commandregistry), [`Condition`](#condition), [`ConditionCall`](#conditioncall), [`ConditionRegistry`](#conditionregistry), [`Content`](#content), [`CreatedEntity`](#createdentity), [`CreateFields`](#createfields), [`Credit`](#credit), [`CreditGroup`](#creditgroup), [`CustomContext`](#customcontext), [`DataScene`](#datascene), [`Dice`](#dice), [`Effect`](#effect), [`EffectCall`](#effectcall), [`EffectRef`](#effectref), [`EffectRegistry`](#effectregistry), [`EntitiesView`](#entitiesview), [`EntityDef`](#entitydef), [`EntityRef`](#entityref), [`EntityState`](#entitystate), [`EntityUi`](#entityui), [`EntityView`](#entityview), [`Explanation`](#explanation), [`FileRef`](#fileref), [`FillPart`](#fillpart), [`FlowChoice`](#flowchoice), [`FlowState`](#flowstate), [`FlowStep`](#flowstep), [`Formula`](#formula), [`Game`](#game), [`GameAudio`](#gameaudio), [`GameBase`](#gamebase), [`GameMedia`](#gamemedia), [`GameRules`](#gamerules), [`GameState`](#gamestate), [`GameUi`](#gameui), [`HeldView`](#heldview), [`HelperRegistry`](#helperregistry), [`HelpersIn`](#helpersin), [`HistoryOptions`](#historyoptions), [`Holder`](#holder), [`HotspotDef`](#hotspotdef), [`HotspotView`](#hotspotview), [`InlinePart`](#inlinepart), [`InlineSpan`](#inlinespan), [`InlineUi`](#inlineui), [`InlineUiArgs`](#inlineuiargs), [`InputDef`](#inputdef), [`InputView`](#inputview), [`InstalledMod`](#installedmod), [`KindDef`](#kinddef), [`KvValue`](#kvvalue), [`Loaded`](#loaded), [`LoadedSave`](#loadedsave), [`LoadOptions`](#loadoptions), [`MediaState`](#mediastate), [`MigrationTools`](#migrationtools), [`MinigameDef`](#minigamedef), [`MinigameInput`](#minigameinput), [`MinigameSceneFields`](#minigamescenefields), [`MinigameState`](#minigamestate), [`MinigameStateDef`](#minigamestatedef), [`MinigameTarget`](#minigametarget), [`MinigameTransition`](#minigametransition), [`MinigameView`](#minigameview), [`ModFile`](#modfile), [`Mods`](#mods), [`Notice`](#notice), [`NoticesView`](#noticesview), [`NoticeView`](#noticeview), [`Once`](#once), [`OpenPanel`](#openpanel), [`Pack`](#pack), [`Patch`](#patch), [`Phrase`](#phrase), [`PhraseRow`](#phraserow), [`Phrases`](#phrases), [`PhraseWithArgs`](#phrasewithargs), [`PictureDef`](#picturedef), [`PictureLayer`](#picturelayer), [`PictureLayerView`](#picturelayerview), [`PictureView`](#pictureview), [`Placement`](#placement), [`PlaylistDef`](#playlistdef), [`PluginCall`](#plugincall), [`PoolFile`](#poolfile), [`Price`](#price), [`Probe`](#probe), [`Problem`](#problem), [`Profile`](#profile), [`ProseStore`](#prosestore), [`Query`](#query), [`QueryRegistry`](#queryregistry), [`Range`](#range), [`RawPack`](#rawpack), [`Reason`](#reason), [`RenderedChoice`](#renderedchoice), [`Result`](#result), [`Roll`](#roll), [`RollsState`](#rollsstate), [`Runner`](#runner), [`RunnerOptions`](#runneroptions), [`RunnerSnapshot`](#runnersnapshot), [`RunningTimer`](#runningtimer), [`SaveDriver`](#savedriver), [`SaveExtra`](#saveextra), [`SaveFile`](#savefile), [`SaveListing`](#savelisting), [`SaveMeta`](#savemeta), [`Saves`](#saves), [`SavingView`](#savingview), [`SceneBeat`](#scenebeat), [`SceneMedia`](#scenemedia), [`ScenePanel`](#scenepanel), [`SceneUi`](#sceneui), [`Screen`](#screen), [`ScreenChoice`](#screenchoice), [`ScreenScene`](#screenscene), [`Select`](#select), [`SettingDef`](#settingdef), [`SettingView`](#settingview), [`SpeakerView`](#speakerview), [`StartOptions`](#startoptions), [`StatDef`](#statdef), [`StatKey`](#statkey), [`StatLevels`](#statlevels), [`StatRound`](#statround), [`Stats`](#stats), [`StatUi`](#statui), [`StatView`](#statview), [`StatWords`](#statwords), [`StoryletFields`](#storyletfields), [`StorylineDef`](#storylinedef), [`StorylineState`](#storylinestate), [`StringKey`](#stringkey), [`Strings`](#strings-1), [`TextLine`](#textline), [`TimerDef`](#timerdef), [`TimerView`](#timerview), [`Times`](#times), [`TrackDef`](#trackdef), [`TraitData`](#traitdata), [`TraitRegistry`](#traitregistry), [`TraitSource`](#traitsource), [`TraitTable`](#traittable), [`TriggerDef`](#triggerdef), [`Ui`](#ui), [`UiField`](#uifield), [`UiInContent`](#uiincontent), [`UiTarget`](#uitarget), [`ValueRef`](#valueref), [`VariantMember`](#variantmember), [`VideoFlags`](#videoflags), [`VideoView`](#videoview), [`View`](#view), [`ViewOptions`](#viewoptions), [`ViewRegistry`](#viewregistry), [`ViewsIn`](#viewsin), [`WordField`](#wordfield), [`WordPart`](#wordpart), [`WordShape`](#wordshape)
+- Types: [`ActionCost`](#actioncost), [`ActionDef`](#actiondef), [`Amount`](#amount), [`Applied`](#applied), [`AudioChannelView`](#audiochannelview), [`AudioCue`](#audiocue), [`AudioState`](#audiostate), [`AudioView`](#audioview), [`AutosaveOptions`](#autosaveoptions), [`BacklogEntry`](#backlogentry), [`BacklogOptions`](#backlogoptions), [`BeatSize`](#beatsize), [`Block`](#block), [`Blocked`](#blocked), [`BlockExtras`](#blockextras), [`BlockUi`](#blockui), [`BrokenSave`](#brokensave), [`ButtonDef`](#buttondef), [`CarryOver`](#carryover), [`Change`](#change), [`ChangesDef`](#changesdef), [`ChangeView`](#changeview), [`ChannelDef`](#channeldef), [`Checked`](#checked), [`Choice`](#choice), [`ChoiceUi`](#choiceui), [`Command`](#command), [`CommandCall`](#commandcall), [`CommandLog`](#commandlog), [`CommandRef`](#commandref), [`CommandRegistry`](#commandregistry), [`Condition`](#condition), [`ConditionCall`](#conditioncall), [`ConditionRegistry`](#conditionregistry), [`Content`](#content), [`CreatedEntity`](#createdentity), [`CreateFields`](#createfields), [`Credit`](#credit), [`CreditGroup`](#creditgroup), [`CustomContext`](#customcontext), [`DataScene`](#datascene), [`Dice`](#dice), [`Effect`](#effect), [`EffectCall`](#effectcall), [`EffectRef`](#effectref), [`EffectRegistry`](#effectregistry), [`EntitiesView`](#entitiesview), [`EntityDef`](#entitydef), [`EntityRef`](#entityref), [`EntityState`](#entitystate), [`EntityUi`](#entityui), [`EntityView`](#entityview), [`Explanation`](#explanation), [`FileRef`](#fileref), [`FillPart`](#fillpart), [`FlowChoice`](#flowchoice), [`FlowState`](#flowstate), [`FlowStep`](#flowstep), [`Formula`](#formula), [`Game`](#game), [`GameAudio`](#gameaudio), [`GameBase`](#gamebase), [`GameMedia`](#gamemedia), [`GameRules`](#gamerules), [`GameState`](#gamestate), [`GameUi`](#gameui), [`HelperRegistry`](#helperregistry), [`HelpersIn`](#helpersin), [`HistoryOptions`](#historyoptions), [`HotspotDef`](#hotspotdef), [`HotspotView`](#hotspotview), [`InlinePart`](#inlinepart), [`InlineSpan`](#inlinespan), [`InlineUi`](#inlineui), [`InlineUiArgs`](#inlineuiargs), [`InputDef`](#inputdef), [`InputView`](#inputview), [`InstalledMod`](#installedmod), [`KindDef`](#kinddef), [`KvValue`](#kvvalue), [`Loaded`](#loaded), [`LoadedSave`](#loadedsave), [`LoadOptions`](#loadoptions), [`MediaState`](#mediastate), [`MigrationTools`](#migrationtools), [`MinigameDef`](#minigamedef), [`MinigameInput`](#minigameinput), [`MinigameSceneFields`](#minigamescenefields), [`MinigameState`](#minigamestate), [`MinigameStateDef`](#minigamestatedef), [`MinigameTarget`](#minigametarget), [`MinigameTransition`](#minigametransition), [`MinigameView`](#minigameview), [`ModFile`](#modfile), [`Mods`](#mods), [`Notice`](#notice), [`NoticesView`](#noticesview), [`NoticeView`](#noticeview), [`Once`](#once), [`OpenPanel`](#openpanel), [`Pack`](#pack), [`Patch`](#patch), [`Phrase`](#phrase), [`PhraseRow`](#phraserow), [`Phrases`](#phrases), [`PhraseWithArgs`](#phrasewithargs), [`PictureDef`](#picturedef), [`PictureLayer`](#picturelayer), [`PictureLayerView`](#picturelayerview), [`PictureView`](#pictureview), [`Played`](#played), [`PlaylistDef`](#playlistdef), [`PluginCall`](#plugincall), [`PoolFile`](#poolfile), [`Price`](#price), [`Probe`](#probe), [`Problem`](#problem), [`Profile`](#profile), [`ProseStore`](#prosestore), [`Query`](#query), [`QueryRegistry`](#queryregistry), [`Range`](#range), [`RawPack`](#rawpack), [`Reason`](#reason), [`RenderedChoice`](#renderedchoice), [`Result`](#result), [`Roll`](#roll), [`RollsState`](#rollsstate), [`Runner`](#runner), [`RunnerOptions`](#runneroptions), [`RunnerSnapshot`](#runnersnapshot), [`RunningTimer`](#runningtimer), [`SaveDriver`](#savedriver), [`SaveExtra`](#saveextra), [`SaveFile`](#savefile), [`SaveListing`](#savelisting), [`SaveMeta`](#savemeta), [`Saves`](#saves), [`SavingView`](#savingview), [`SceneBeat`](#scenebeat), [`SceneMedia`](#scenemedia), [`ScenePanel`](#scenepanel), [`SceneUi`](#sceneui), [`Screen`](#screen), [`ScreenChoice`](#screenchoice), [`ScreenScene`](#screenscene), [`Select`](#select), [`SettingDef`](#settingdef), [`SettingView`](#settingview), [`Someone`](#someone), [`SpeakerView`](#speakerview), [`StartOptions`](#startoptions), [`StatDef`](#statdef), [`StatKey`](#statkey), [`StatLevels`](#statlevels), [`StatRound`](#statround), [`Stats`](#stats), [`StatUi`](#statui), [`StatView`](#statview), [`StatWords`](#statwords), [`StoryletFields`](#storyletfields), [`StorylineDef`](#storylinedef), [`StorylineState`](#storylinestate), [`StringKey`](#stringkey), [`Strings`](#strings-1), [`TextLine`](#textline), [`TimerDef`](#timerdef), [`TimerView`](#timerview), [`Times`](#times), [`TrackDef`](#trackdef), [`TraitData`](#traitdata), [`TraitRegistry`](#traitregistry), [`TraitSource`](#traitsource), [`TraitTable`](#traittable), [`TriggerDef`](#triggerdef), [`Ui`](#ui), [`UiField`](#uifield), [`UiInContent`](#uiincontent), [`UiTarget`](#uitarget), [`ValueRef`](#valueref), [`VariantMember`](#variantmember), [`VideoFlags`](#videoflags), [`VideoView`](#videoview), [`View`](#view), [`ViewOptions`](#viewoptions), [`ViewRegistry`](#viewregistry), [`ViewsIn`](#viewsin), [`WordField`](#wordfield), [`WordPart`](#wordpart), [`WordShape`](#wordshape)
 
 ## ActionCost
 
@@ -96,7 +96,7 @@ A number content names that the engine works out when it reads it. Read one with
 
 An amount is a number, a stat of the player's by id, a stat with `{ stat, of? }`, a kv key's number with
 `{ kv, of? }` (a value that is not a number counts as 0), a value by name with `{ value, with? }`, or a count of
-entities with `{ count, where?, units? }`, counted as the `count` condition counts. Amounts combine as a `Formula`
+entities with `{ count, where? }`, counted as the `count` condition counts. Amounts combine as a `Formula`
 does (`sum`, `product`, `min`, `max`, `scale`, `clamp`), with any amount as a part, and `of` names the owner as it
 does in conditions.
 
@@ -105,7 +105,7 @@ Effects take one in `by` and `to`, ranges in their bounds, stats in `min` and `m
 
 ```ts shape
 import type { Amount } from '@ifloom/engine'
-type Amount = number | StatKey | { stat: StatKey; of?: string } | { kv: string; of?: string } | ValueRef | { count: string | Select; where?: Condition; units?: true } | { sum: Amount[] } | { product: Amount[] } | { min: Amount[] } | { max: Amount[] } | { scale: Amount; by: number } | { clamp: Amount; min?: number; max?: number }
+type Amount = number | StatKey | { stat: StatKey; of?: string } | { kv: string; of?: string } | ValueRef | { count: string | Select; where?: Condition } | { sum: Amount[] } | { product: Amount[] } | { min: Amount[] } | { max: Amount[] } | { scale: Amount; by: number } | { clamp: Amount; min?: number; max?: number }
 ```
 
 Uses: [`StatKey`](#statkey), [`ValueRef`](#valueref), [`Select`](#select), [`Condition`](#condition).
@@ -547,31 +547,17 @@ import { callOf } from '@ifloom/engine'
 function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined
 ```
 
-## canHold
-
-Function. Explained in [Entities](/docs/reference/entities#canhold).
-
-Returns true when `holder` can hold things now. The player always can, and a unique entity can while it is in the game.
-
-```ts shape
-import { canHold, type Game } from '@ifloom/engine'
-function canHold(state: GameState, game: Game, holder: string): boolean
-```
-
-Uses: [`GameState`](#gamestate), [`Game`](#game).
-
 ## CarryOver
 
 Type. Explained in [Game state](/docs/reference/state#carryover).
 
-The stats, kv keys and things a New Game+ carries over from the game before, declared in `carryOver`.
+The stats and kv keys a New Game+ carries over from the game before, declared in `carryOver`. A plugin carries its own state with its `carry`.
 
 ```ts shape
 import type { CarryOver } from '@ifloom/engine'
 type CarryOver = {
   stats?: string[]
   kv?: string[]
-  held?: string[] | 'all'
 }
 ```
 
@@ -579,7 +565,6 @@ type CarryOver = {
 |---|---|---|---|---|
 | `stats` | `string[]` | yes |  | The player's stats to carry, by id. |
 | `kv` | `string[]` | yes |  | The player's kv keys to carry, by key. |
-| `held` | `string[] \| 'all'` | yes |  | The things the player holds to carry, by reference (`'food:apple'`), or `'all'` for every thing the player holds. A thing made in play is carried too. |
 
 ## cases
 
@@ -970,8 +955,9 @@ type Condition =
   | { all: Condition[]; }
   | { any: Condition[]; }
   | { not: Condition; }
-  | { count: string | Select; where?: Condition; units?: true; } & Range
-  | { entity: string; at?: string; } & Range
+  | { count: string | Select; where?: Condition; } & Range
+  | { entity: string; }
+  | { owned: string; of?: string; via?: string; } & Range
   | { turn: Range; }
   | { value: string; with?: PluginArgs; is?: KvValue | readonly KvValue[]; } & Range
   | { storyline: string; open?: boolean; }
@@ -1152,7 +1138,7 @@ import type { CreateFields } from '@ifloom/engine'
 type CreateFields = {
   like?: string
   with?: CreatedEntity
-  at?: Placement
+  effects?: EffectRef[]
 }
 ```
 
@@ -1160,7 +1146,7 @@ type CreateFields = {
 |---|---|---|---|---|
 | `like` | `string` | yes |  | The entity of the same kind the new one reads what it isn't given from. |
 | `with` | [`CreatedEntity`](#createdentity) | yes |  | The new entity's fields, its id, name, description, picture, tags, traits, stats and kv. |
-| `at` | [`Placement`](#placement) | yes |  | The new entity's holder, or how many each holder holds. Nobody holds it if left out. |
+| `effects` | [`EffectRef[]`](#effectref) | yes |  | Effects that run once the entity is made, with `'$'` as it, such as `[{ receive: '$' }]` to hand it over. |
 
 ## createRunner
 
@@ -1433,8 +1419,6 @@ type Effect =
   | { kv: string; by: Amount; of?: string; }
   | { kv: string; random: [Amount, Amount]; of?: string; }
   | { audio: string; to?: string | null; }
-  | { entity: string; at?: string; by: Amount; }
-  | { entity: string; at?: string; to: Amount; }
   | { turn: true | { by: number; }; }
   | { stat: string; by: Amount; of?: string; }
   | { stat: string; to: Amount; of?: string; }
@@ -1445,10 +1429,11 @@ type Effect =
   | { you: string | null; }
   | { minigame: string; }
   | { sound: string; }
-  | { move: string; from?: string; to: string; by?: Amount; }
   | { remove: string; }
   | { create: string; } & CreateFields
   | { each: string | Select; where?: Condition; effects: Effect[]; }
+  | { receive: string; by?: Amount; to?: string; via?: string; }
+  | { release: string; by?: Amount; from?: string; via?: string; }
   | { closeStoryline: string; turns: number; }
   | { notify: string; text?: string; image?: string; tag?: string; id?: string; }
   | { point: string; }
@@ -1574,7 +1559,6 @@ type EntityDef = {
   visible?: Condition
   stats?: Record<string, number>
   kv?: Record<string, KvValue>
-  at?: Placement
   traits?: { [K in keyof TraitRegistry]?: Partial<TraitRegistry[K]> } & Record<string, unknown>
   ui?: Ui<EntityUi>
 }
@@ -1591,7 +1575,6 @@ type EntityDef = {
 | `visible` | [`Condition`](#condition) | yes |  | The entity's visibility condition, asked with `'$'` as it, which narrows its kind's `listed`. Always visible if left out. |
 | `stats` | `Record<string, number>` | yes |  | The entity's starting stats, where they differ from each stat's `start`. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The entity's starting kv keys. |
-| `at` | [`Placement`](#placement) | yes |  | The entity's starting holder, such as `'player'` or a unique entity like `'character:ava'`, or a count for each holder (`{ player: 2, 'place:larder': 6 }`). Held by no one if left out. |
 | `traits` | `{ [K in keyof` [`TraitRegistry`](#traitregistry)`]?: Partial<`[`TraitRegistry`](#traitregistry)`[K]> } & Record<string, unknown>` | yes |  | The entity's traits, by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. They go over its kind's and under a content `traits` row for the entity, and an object merges with its kind's field by field. |
 | `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The entity's ui hints, laid over its kind's field by field and carried to the view. See `EntityUi`. |
 
@@ -2020,6 +2003,7 @@ type Game = {
   rules?: GameRules
   strings?: Record<string, string>
   plugins?: readonly Plugin<any>[]
+  receivers?: readonly string[]
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   kinds?: KindDef[]
   entities?: EntityDef[]
@@ -2060,6 +2044,7 @@ type Game = {
 | `rules` | [`GameRules`](#gamerules) | yes |  | The game's own code, its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
 | `strings` | `Record<string, string>` | yes |  | The game's lines in place of the engine's and plugins' strings, by key, such as `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Packs can add theirs, and a later pack's line wins. |
 | `plugins` | `readonly` [`Plugin`](/docs/api/engine-plugin#plugin)`<any>[]` | yes |  | The plugins the game is built with, in the order their hooks run. |
+| `receivers` | `readonly string[]` | yes |  | The order the `receive` effect asks the plugins that keep things, by plugin id. The order of `plugins` if left out. `['wardrobe', 'inventory']` sends clothes to the wardrobe and the rest to the inventory. |
 | `data` | `Record<string, Record<string, readonly` [`PluginEntry[]`](/docs/api/engine-plugin#pluginentry)`>>` | yes |  | The plugins' content, by plugin id and then list, such as `data.quests.quests`. `loadGame` merges packs' entries by id, as it does scenes. |
 | `kinds` | [`KindDef[]`](#kinddef) | yes |  | The game's kinds, the sorts of entity it keeps, each with its own stats. |
 | `entities` | [`EntityDef[]`](#entitydef) | yes |  | The game's entities at the start. Play can create more. |
@@ -2127,6 +2112,7 @@ type GameBase = {
   title: string
   version?: number
   plugins?: readonly Plugin<any>[]
+  receivers?: readonly string[]
   rules?: GameRules
 }
 ```
@@ -2137,6 +2123,7 @@ type GameBase = {
 | `title` | `string` |  |  | The game's title, which a title page shows. |
 | `version` | `number` | yes |  | The game's own version, a whole number from 1. Saves record it, and `rules.migrations` carry an older save forward. 1 if left out. Declaring it also stops the engine filling new stats, settings and entities into old saves by itself, so your migration steps fill them with `tools.fill()`. |
 | `plugins` | `readonly` [`Plugin`](/docs/api/engine-plugin#plugin)`<any>[]` | yes |  | The plugins the game is built with, in the order their hooks run. |
+| `receivers` | `readonly string[]` | yes |  | The order the `receive` effect asks the plugins that keep things, by plugin id. The order of `plugins` if left out. `['wardrobe', 'inventory']` sends clothes to the wardrobe and the rest to the inventory. |
 | `rules` | [`GameRules`](#gamerules) | yes |  | The game's own code, its hooks, providers and the calls content makes as `game/<name>`. See `GameRules`. |
 
 ## GameMedia
@@ -2256,7 +2243,6 @@ type GameState = {
   created: Record<string, number>
   removed: string[]
   you: EntityRef | null
-  held: Record<string, Record<string, number>>
   turn: number
   kv: Record<string, KvValue>
   storylines: Record<string, StorylineState>
@@ -2288,7 +2274,6 @@ type GameState = {
 | `created` | `Record<string, number>` |  |  | The number of entities of each kind created in play, for the next one's id. |
 | `removed` | `string[]` |  |  | The references of declared entities removed in play. A `create` with the same id brings one back. |
 | `you` | [`EntityRef`](#entityref) `\| null` |  |  | The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. |
-| `held` | `Record<string, Record<string, number>>` |  |  | The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once written, 0 included. For a count play hasn't changed, the engine reads the entity's `at` in content. |
 | `turn` | `number` |  |  | The number of turns that have passed, the engine's one clock. It starts at 0. The game decides how long a turn is (a day, an hour, a week or a chapter). The engine dates `seen`, `fired` and notices in turns. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The player's kv store, keys with a true/false, number or text value. |
 | `storylines` | `Record<string,` [`StorylineState`](#storylinestate)`>` |  |  | The storylines a save keeps, by id, each with its kv store and the turn it stays closed until. |
@@ -2324,24 +2309,6 @@ type GameUi = {
 
 Plugins add fields of their own to it, which their pages list.
 
-## give
-
-Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
-
-Returns the effect that gives `you` `n` of a thing, 1 if left out. A unique thing someone else holds is taken from
-them.
-
-```ts fragment
-effects: [give('food:apple', 2)]
-```
-
-```ts shape
-import { give } from '@ifloom/engine'
-function give(ref: string, n?: number): Effect
-```
-
-Uses: [`Effect`](#effect).
-
 ## hash
 
 Function. Explained in [Randomness](/docs/reference/random#hash).
@@ -2352,64 +2319,6 @@ Returns a 32-bit unsigned hash of `text`. Texts that differ in one character giv
 import { hash } from '@ifloom/engine'
 function hash(text: string): number
 ```
-
-## heldBy
-
-Function. Explained in [Entities](/docs/reference/entities#heldby).
-
-Returns the things a holder holds, `'you'` if left out, each with its count. They come in the game's entity order,
-declared ones in content order and then those made in play.
-
-```ts shape
-import { heldBy, type Game } from '@ifloom/engine'
-function heldBy(state: GameState, game: Game, at?: string): { ref: EntityRef; count: number }[]
-```
-
-Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
-
-## heldCount
-
-Function. Explained in [Entities](/docs/reference/entities#heldcount).
-
-Returns the count of a thing a holder holds, `'you'` if left out. Returns 0 for a thing not held there or not in the game.
-
-```ts shape
-import { heldCount, type Game } from '@ifloom/engine'
-function heldCount(state: GameState, game: Game, ref: string, at?: string): number
-```
-
-Uses: [`GameState`](#gamestate), [`Game`](#game).
-
-## HeldView
-
-Type. Explained in [The view](/docs/reference/view#heldview).
-
-A thing you hold as the player sees it, in `view.held`. Only things whose `visible` holds are listed.
-
-```ts shape
-import type { HeldView } from '@ifloom/engine'
-type HeldView = {
-  ref: EntityRef
-  name: string
-  description: string | null
-  image: string | null
-  tags: string[]
-  count: number
-  at: Holder
-  ui?: Ui<EntityUi>
-}
-```
-
-| Field | Type | Optional | Default | Description |
-|---|---|---|---|---|
-| `ref` | [`EntityRef`](#entityref) |  |  | The thing's entity reference, such as `'food:apple'`. |
-| `name` | `string` |  |  | The thing's name, with its prose tokens filled in. |
-| `description` | `string \| null` |  |  | The thing's description, with its tokens filled in. Null if it has none. |
-| `image` | `string \| null` |  |  | The thing's picture, as a path through `artSrc`. Null if it has none. |
-| `tags` | `string[]` |  |  | The thing's tags, its kind's first and then its own. |
-| `count` | `number` |  |  | The number of the thing held. |
-| `at` | [`Holder`](#holder) |  |  | The thing's holder, the protagonist being played or `'player'`. |
-| `ui` | [`Ui`](#ui)`<`[`EntityUi`](#entityui)`>` | yes |  | The thing's presentation hints (a `EntityUi`), its own over its kind's, kept as written. Left out if it has none. |
 
 ## HelperRegistry
 
@@ -2469,46 +2378,6 @@ type HistoryOptions = {
 | `stopAtIrreversible` | `boolean` | yes |  | The setting that stops undo at a choice marked `irreversible`. On unless set to false. |
 | `stopAtNewTurn` | `boolean` | yes |  | The setting that stops undo at the start of a new turn. Off if left out. |
 | `stopWhen` | [`Condition`](#condition) | yes |  | A condition that stops undo at any state where it holds, tested after each command. |
-
-## Holder
-
-Type. Explained in [Entities](/docs/reference/entities#holder-and-placement).
-
-A holder of things, `'player'`, a unique entity (`'character:ava'`) or `'you'`. `'you'` is whoever the player is
-playing now, the player unless a `you` effect switched to a protagonist.
-
-```ts shape
-import type { Holder } from '@ifloom/engine'
-type Holder = EntityRef | typeof PLAYER | typeof YOU
-```
-
-Uses: [`EntityRef`](#entityref).
-
-## holderOf
-
-Function. Explained in [Entities](/docs/reference/entities#holderof).
-
-Returns the holder of a thing when one holder has it, as always for a unique thing. Returns undefined when no one holds it.
-
-```ts shape
-import { holderOf, type Game } from '@ifloom/engine'
-function holderOf(state: GameState, game: Game, ref: string): Holder | undefined
-```
-
-Uses: [`GameState`](#gamestate), [`Game`](#game), [`Holder`](#holder).
-
-## holding
-
-Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
-
-Returns the condition that holds while `you` hold at least `n` of a thing, 1 if left out.
-
-```ts shape
-import { holding } from '@ifloom/engine'
-function holding(ref: string, n?: number): Condition
-```
-
-Uses: [`Condition`](#condition).
 
 ## holds
 
@@ -2810,7 +2679,7 @@ type InstalledMod = {
 
 Function. Explained in [Entities](/docs/reference/entities#isunique).
 
-Returns true when the entity's kind is `unique`, so each entity is one particular thing that can hold others.
+Returns true when the entity's kind is `unique`, so each entity is one particular someone or something.
 
 ```ts shape
 import { isUnique, type Game } from '@ifloom/engine'
@@ -3314,25 +3183,6 @@ function mods(gameId: string, driver: SaveDriver): Mods
 
 Uses: [`SaveDriver`](#savedriver), [`Mods`](#mods).
 
-## move
-
-Function. Explained in [Effects](/docs/reference/effects#move).
-
-Returns the effect that moves a thing to another holder. It moves all there is unless `by` says otherwise.
-
-Without `from`, a stack moves from `you` and a unique thing moves from wherever it is.
-
-```ts fragment
-effects: [move('gift:scarf', 'character:ava')]
-```
-
-```ts shape
-import { move } from '@ifloom/engine'
-function move(ref: string, to: string, options?: { from?: Holder; by?: number }): Effect
-```
-
-Uses: [`Holder`](#holder), [`Effect`](#effect).
-
 ## need
 
 Function. Explained in [Actions](/docs/reference/actions#need).
@@ -3478,6 +3328,19 @@ type OpenPanel = {
 | `panel` | `string` |  |  | The panel's name, which the UI renders it by, such as `'shop'`, `'jobs'` or one of the game's own. |
 | `with` | [`PluginArgs`](/docs/api/engine-plugin#pluginargs) |  |  | The panel's arguments, such as `{ vendor: 'cafe' }`. Empty if the effect gave none. |
 | `scene` | `string` | yes |  | The scene that holds the panel open, for a scene's own `panel`, which stays open as long as the scene does. It's left out for a panel the `panel` effect opened. `closePanel` doesn't close a panel a scene holds open. |
+
+## ownedCount
+
+Function. Explained in [Entities](/docs/reference/entities#receivething-releasething-and-ownedcount).
+
+Returns how many of a thing `of` has, added up across the receivers, or in the one `via` names.
+
+```ts shape
+import { ownedCount, type Game } from '@ifloom/engine'
+function ownedCount(state: GameState, game: Game, ref: EntityRef, of?: string, via?: string): number
+```
+
+Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
 
 ## Pack
 
@@ -3776,24 +3639,24 @@ type PictureView = {
 | `layers` | [`PictureLayerView[]`](#picturelayerview) |  |  | The layers whose `when` holds, bottom first. |
 | `hotspots` | [`HotspotView[]`](#hotspotview) |  |  | The hotspots whose `when` holds and whose layer shows. |
 
-## Placement
+## Played
 
-Type. Explained in [Entities](/docs/reference/entities#holder-and-placement).
+Type. Explained in [Entities](/docs/reference/entities#someone-and-played).
 
-A thing's placement, one holder for one of it or a count for each holder.
+The one the player is playing, a protagonist or `'player'`.
 
 ```ts shape
-import type { Placement } from '@ifloom/engine'
-type Placement = Holder | Partial<Record<Holder, number>>
+import type { Played } from '@ifloom/engine'
+type Played = EntityRef | typeof PLAYER
 ```
 
-Uses: [`Holder`](#holder).
+Uses: [`EntityRef`](#entityref).
 
 ## PLAYER
 
 Const. Explained in [Entities](/docs/reference/entities#player-and-you).
 
-The holder id of the player, whose things stay theirs whoever they are playing.
+The id of the player themselves, whoever they are playing.
 
 ```ts shape
 import { PLAYER } from '@ifloom/engine'
@@ -4037,16 +3900,16 @@ type ProseStore = {
 
 ## protagonist
 
-Function. Explained in [Entities](/docs/reference/entities#protagonist-and-resolveholder).
+Function. Explained in [Entities](/docs/reference/entities#protagonist-and-resolveyou).
 
-Returns the holder `'you'` stands for now, the protagonist the `you` effect chose or else `'player'`.
+Returns whom `'you'` stands for now, the protagonist the `you` effect chose or else `'player'`.
 
 ```ts shape
 import { protagonist } from '@ifloom/engine'
-function protagonist(state: GameState): Holder
+function protagonist(state: GameState): Played
 ```
 
-Uses: [`GameState`](#gamestate), [`Holder`](#holder).
+Uses: [`GameState`](#gamestate), [`Played`](#played).
 
 ## Query
 
@@ -4155,6 +4018,46 @@ function reasonOf(game: Game | undefined, reason: string | { string: string }): 
 
 Uses: [`Game`](#game).
 
+## receiversOf
+
+Function.
+
+Returns the game's plugins that keep things, in the order `receive` asks them.
+
+```ts fragment
+function receiversOf(game: Game | undefined): readonly Receiving[]
+```
+
+Uses: [`Game`](#game).
+
+## receiveThing
+
+Function. Explained in [Entities](/docs/reference/entities#receivething-releasething-and-ownedcount).
+
+Returns the state with `count` of a thing given to `to`, by the first receiver that claims it.
+
+The one `via` names takes it whether it claims it or not. The state comes back unchanged when none takes it.
+
+```ts shape
+import { receiveThing, type Game } from '@ifloom/engine'
+function receiveThing(state: GameState, game: Game, ref: EntityRef, count: number, to?: string, via?: string): GameState
+```
+
+Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
+
+## releaseThing
+
+Function. Explained in [Entities](/docs/reference/entities#receivething-releasething-and-ownedcount).
+
+Returns the state with up to `count` of a thing taken from `from`, asking each receiver in order until it's done.
+
+```ts shape
+import { releaseThing, type Game } from '@ifloom/engine'
+function releaseThing(state: GameState, game: Game, ref: EntityRef, count: number, from?: string, via?: string): GameState
+```
+
+Uses: [`GameState`](#gamestate), [`Game`](#game), [`EntityRef`](#entityref).
+
 ## RenderedChoice
 
 Type. Explained in [The view](/docs/reference/view#renderedchoice).
@@ -4207,15 +4110,15 @@ function replay(game: Game, log: CommandLog): Result<GameState>
 
 Uses: [`Game`](#game), [`CommandLog`](#commandlog), [`Result`](#result), [`GameState`](#gamestate).
 
-## resolveHolder
+## resolveYou
 
-Function. Explained in [Entities](/docs/reference/entities#protagonist-and-resolveholder).
+Function. Explained in [Entities](/docs/reference/entities#protagonist-and-resolveyou).
 
-Returns the holder a holder id stands for now, so `'you'` becomes the protagonist or the player. Any other id is returned unchanged.
+Returns whom an id stands for now, so `'you'` becomes the protagonist or the player. Any other id is returned unchanged.
 
 ```ts shape
-import { resolveHolder } from '@ifloom/engine'
-function resolveHolder(state: GameState, holder: string): string
+import { resolveYou } from '@ifloom/engine'
+function resolveYou(state: GameState, who: string): string
 ```
 
 Uses: [`GameState`](#gamestate).
@@ -4891,14 +4794,13 @@ Type. Explained in [Entities](/docs/reference/entities#select).
 
 A selection of entities that a `count` or an `each` reads. Every entity in the game when it sets nothing.
 
-It narrows to those `of` a kind, those a holder holds (`at`), those with a tag or a trait, and those `where` holds
-for, with `'$'` as each one.
+It narrows to those `of` a kind, those with a tag or a trait, and those `where` holds for, with `'$'` as each one.
+Things someone has are `where: { owned: '$' }`.
 
 ```ts shape
 import type { Select } from '@ifloom/engine'
 type Select = {
   of?: string
-  at?: string
   tag?: string
   trait?: string
   where?: Condition
@@ -4908,7 +4810,6 @@ type Select = {
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `of` | `string` | yes |  | The kind the entities are of. |
-| `at` | `string` | yes |  | The holder whose things are selected, `'you'`, `'player'` or a unique entity. |
 | `tag` | `string` | yes |  | The tag the entities have, their kind's or their own. |
 | `trait` | `string` | yes |  | The id of a trait the entities carry. |
 | `where` | [`Condition`](#condition) | yes |  | The condition each entity must meet, with `'$'` as that entity. |
@@ -4963,6 +4864,20 @@ type SettingView = {
 | `step` | `number` | yes |  | The step of a `range` setting. Left out when the setting gives none, which means 1. |
 | `default` | [`KvValue`](#kvvalue) |  |  | The setting's default, its value until the player changes it. |
 | `value` | [`KvValue`](#kvvalue) `\| null` |  |  | The value of a `play` setting in this game. Null for a `ui` setting, which the UI reads from the profile. |
+
+## Someone
+
+Type. Explained in [Entities](/docs/reference/entities#someone-and-played).
+
+Someone, `'player'`, a unique entity (`'character:ava'`) or `'you'`. `'you'` is whoever the player is playing now,
+the player unless a `you` effect switched to a protagonist. It's who a `receive` gives a thing to.
+
+```ts shape
+import type { Someone } from '@ifloom/engine'
+type Someone = EntityRef | typeof PLAYER | typeof YOU
+```
+
+Uses: [`EntityRef`](#entityref).
 
 ## SpeakerView
 
@@ -5532,19 +5447,6 @@ It also takes any other key: `[key: string]: string`.
 
 Its fields are the keys of `Partial<Record<StringKey, string>> & Record<string, string>`, so they grow when a game or a plugin adds to those.
 
-## take
-
-Function. Explained in [Entities](/docs/reference/entities#give-take-move-and-holding).
-
-Returns the effect that takes `n` of a thing from `you`, 1 if left out. The count never goes below 0.
-
-```ts shape
-import { take } from '@ifloom/engine'
-function take(ref: string, n?: number): Effect
-```
-
-Uses: [`Effect`](#effect).
-
 ## text
 
 Function. Explained in [Flowing scenes](/docs/reference/flows#text).
@@ -6017,7 +5919,6 @@ type View = {
   actions: RenderedChoice[]
   plugins: ViewsIn
   entities: EntitiesView[]
-  held: HeldView[]
   turn: number
   notices: NoticesView
   inputs: InputView[]
@@ -6042,7 +5943,6 @@ type View = {
 | `actions` | [`RenderedChoice[]`](#renderedchoice) |  |  | The actions on offer besides the scene's choices, ready to render. The `actions` providers' come first, such as wait, sleep and travel, then the game's own `actions`. |
 | `plugins` | [`ViewsIn`](#viewsin) |  |  | The plugins' views, by plugin id. Each plugin that declares its view in `ViewRegistry` has it typed. |
 | `entities` | [`EntitiesView[]`](#entitiesview) |  |  | Each listed kind with its listed, visible entities, in the order the kinds are declared. A kind whose `listed` is false is left out, and a listed kind with no entities shows empty. |
-| `held` | [`HeldView[]`](#heldview) |  |  | The things you hold, in the game's order of its entities. The protagonist's come first while one is played, then the player's. |
 | `turn` | `number` |  |  | The number of turns that have passed, 0 on the first. |
 | `notices` | [`NoticesView`](#noticesview) |  |  | The notices the player hasn't dismissed, with a count for each tag. |
 | `inputs` | [`InputView[]`](#inputview) |  |  | The inputs on offer now, in the order the game declares them, each with its value. |
@@ -6260,7 +6160,7 @@ Uses: [`GameState`](#gamestate), [`EntityState`](#entitystate).
 
 Const. Explained in [Entities](/docs/reference/entities#player-and-you).
 
-The holder id of whoever the player is playing now, the protagonist the `you` effect last chose or else the player.
+The id of whoever the player is playing now, the protagonist the `you` effect last chose or else the player.
 
 ```ts shape
 import { YOU } from '@ifloom/engine'

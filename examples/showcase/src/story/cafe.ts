@@ -2,7 +2,7 @@
  * The Corner Café: coffee, the counter, its storylets when you sit a while,
  * and weekend work.
  */
-import { give, type Content } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { statuses } from '@ifloom/plugin-statuses'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { calendar } from '@ifloom/plugin-calendar'
@@ -91,7 +91,7 @@ export const cafe: Content = {
         // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
         { id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] },
         // A sandwich as a plain action: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
-        { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [give('item:sandwich')] },
+        { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [{ receive: 'item:sandwich' }] },
         // Something small happens while you sit: one of the café's storylets, drawn at random.
         { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
       ],

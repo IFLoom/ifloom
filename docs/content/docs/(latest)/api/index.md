@@ -6,10 +6,10 @@ These pages list every export of every entry point, with its signature and, for 
 
 | Page | Entries | Exports |
 |---|---|---|
-| [@ifloom/engine](/docs/api/engine) | `@ifloom/engine` | 287 |
-| [@ifloom/engine/plugin](/docs/api/engine-plugin) | `@ifloom/engine/plugin` | 79 |
+| [@ifloom/engine](/docs/api/engine) | `@ifloom/engine` | 282 |
+| [@ifloom/engine/plugin](/docs/api/engine-plugin) | `@ifloom/engine/plugin` | 82 |
 | [@ifloom/engine/testing](/docs/api/engine-testing) | `@ifloom/engine/testing` | 8 |
-| [@ifloom/react](/docs/api/react) | `@ifloom/react` | 146 |
+| [@ifloom/react](/docs/api/react) | `@ifloom/react` | 144 |
 | [@ifloom/react/kit](/docs/api/react-kit) | `@ifloom/react/kit` | 56 |
 | [@ifloom/browser](/docs/api/browser) | `@ifloom/browser` | 16 |
 | [@ifloom/audio](/docs/api/audio) | `@ifloom/audio` | 4 |
@@ -23,12 +23,12 @@ These pages list every export of every entry point, with its signature and, for 
 | [@ifloom/plugin-devices](/docs/api/plugin-devices) | `@ifloom/plugin-devices`, `@ifloom/plugin-devices/react` | 23 |
 | [@ifloom/plugin-feed](/docs/api/plugin-feed) | `@ifloom/plugin-feed`, `@ifloom/plugin-feed/react` | 16 |
 | [@ifloom/plugin-generators](/docs/api/plugin-generators) | `@ifloom/plugin-generators` | 10 |
-| [@ifloom/plugin-inventory](/docs/api/plugin-inventory) | `@ifloom/plugin-inventory`, `@ifloom/plugin-inventory/react` | 12 |
+| [@ifloom/plugin-inventory](/docs/api/plugin-inventory) | `@ifloom/plugin-inventory`, `@ifloom/plugin-inventory/react` | 23 |
 | [@ifloom/plugin-jobs](/docs/api/plugin-jobs) | `@ifloom/plugin-jobs`, `@ifloom/plugin-jobs/react` | 17 |
 | [@ifloom/plugin-messages](/docs/api/plugin-messages) | `@ifloom/plugin-messages`, `@ifloom/plugin-messages/react` | 17 |
-| [@ifloom/plugin-places](/docs/api/plugin-places) | `@ifloom/plugin-places`, `@ifloom/plugin-places/react` | 18 |
+| [@ifloom/plugin-places](/docs/api/plugin-places) | `@ifloom/plugin-places`, `@ifloom/plugin-places/react` | 20 |
 | [@ifloom/plugin-quests](/docs/api/plugin-quests) | `@ifloom/plugin-quests`, `@ifloom/plugin-quests/react` | 15 |
-| [@ifloom/plugin-shop](/docs/api/plugin-shop) | `@ifloom/plugin-shop`, `@ifloom/plugin-shop/react` | 23 |
+| [@ifloom/plugin-shop](/docs/api/plugin-shop) | `@ifloom/plugin-shop`, `@ifloom/plugin-shop/react` | 25 |
 | [@ifloom/plugin-statuses](/docs/api/plugin-statuses) | `@ifloom/plugin-statuses`, `@ifloom/plugin-statuses/react` | 14 |
 | [@ifloom/plugin-unlocks](/docs/api/plugin-unlocks) | `@ifloom/plugin-unlocks`, `@ifloom/plugin-unlocks/react` | 38 |
-| [@ifloom/plugin-wardrobe](/docs/api/plugin-wardrobe) | `@ifloom/plugin-wardrobe`, `@ifloom/plugin-wardrobe/react` | 15 |
+| [@ifloom/plugin-wardrobe](/docs/api/plugin-wardrobe) | `@ifloom/plugin-wardrobe`, `@ifloom/plugin-wardrobe/react` | 18 |

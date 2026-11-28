@@ -22,7 +22,7 @@ import { PeopleHere, PeopleSection } from '@ifloom/plugin-cast/react'
 import { CheatsButton } from '@ifloom/plugin-unlocks/react'
 import { DebugCard } from '@ifloom/plugin-debug/react'
 import { DeviceButtons } from '@ifloom/plugin-devices/react'
-import { InventoryCard } from '@ifloom/plugin-inventory/react'
+import { INVENTORY_WORDS, InventoryCard } from '@ifloom/plugin-inventory/react'
 import { places } from '@ifloom/plugin-places'
 import { Exits, LocationCard } from '@ifloom/plugin-places/react'
 import { QuestsSection } from '@ifloom/plugin-quests/react'
@@ -39,7 +39,7 @@ import { WARDROBE_WORDS, WardrobeCard } from '@ifloom/plugin-wardrobe/react'
  * has drop buttons.
  */
 export function Layout() {
-  const words = useWords(WARDROBE_WORDS)
+  const words = useWords({ ...WARDROBE_WORDS, ...INVENTORY_WORDS })
   return (
     <Game>
       <Sidebar>

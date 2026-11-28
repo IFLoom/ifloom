@@ -30,8 +30,8 @@ export function savesGame(extra: Partial<Game> = {}): Game {
     entities: [
       { id: 'ana', of: 'staff', name: 'Ana' },
       { id: 'cleo', of: 'staff', name: 'Cleo' },
-      { id: 'umbrella', of: 'item', name: 'Umbrella', description: 'Blue.', at: 'player' },
-      { id: 'apple', of: 'item', name: 'Apple', description: 'Red.', at: { player: 2 } },
+      { id: 'umbrella', of: 'item', name: 'Umbrella', description: 'Blue.' },
+      { id: 'apple', of: 'item', name: 'Apple', description: 'Red.' },
     ],
     settings: [{ id: 'hints', label: 'Hints', type: 'toggle', default: true }],
     resets: { tidied: false },

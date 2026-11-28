@@ -1,26 +1,42 @@
 /**
- * What the player can carry: things, each an entity. Clothes are each one
- * particular thing, worn by the wardrobe; food and the newspaper stack, and
- * the inventory uses them. Their prices are the shop's, from their traits.
- * Notes are things too, read in the phone's Notes app; photos are the
- * phone's `photo` kind, made by the camera app in `phone.ts`.
+ * What the player can have: things, each an entity. Clothes are each one
+ * particular thing, and go straight to the wardrobe when you get one (the
+ * game lists the wardrobe first in `receivers`); food and the newspaper
+ * stack, and the inventory keeps and uses them. Their prices are the shop's,
+ * from their traits. Notes are things too, read in the phone's Notes app;
+ * photos are the phone's `photo` kind, made by the camera app in `phone.ts`.
  */
 import type { Content } from '@ifloom/engine'
+import { calendar } from '@ifloom/plugin-calendar'
 import { inventory } from '@ifloom/plugin-inventory'
 import { jobs } from '@ifloom/plugin-jobs'
+import { places } from '@ifloom/plugin-places'
 import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 export const things: Content = {
-  // Not listed with the town's people and visitors: what you hold is in `view.held`.
+  // Not listed with the town's people and visitors: what you have is in the wardrobe and the inventory.
   kinds: [
     { id: 'clothing', label: 'Clothing', unique: true, listed: false },
     { id: 'item', label: 'Thing', plural: 'Things', listed: false },
     { id: 'note', label: 'Note', plural: 'Notes', listed: false },
   ],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', description: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
-    { id: 'scarf', of: 'clothing', name: 'scarf', description: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
+    {
+      id: 'raincoat',
+      of: 'clothing',
+      name: 'raincoat',
+      description: 'Yellow, a size too big.',
+      traits: { ...wardrobe.wearable('coat'), ...wardrobe.owned('player') },
+    },
+    // Wearing it is a small comfort: its own effects run as you put it on and take it off.
+    {
+      id: 'scarf',
+      of: 'clothing',
+      name: 'scarf',
+      description: 'Knitted by someone who loved you.',
+      traits: { ...wardrobe.wearable('neck', { onWear: [{ kv: 'cosy', to: true }], onTakeOff: [{ kv: 'cosy', to: false }] }) },
+    },
     {
       id: 'sandwich',
       of: 'item',
@@ -41,8 +57,20 @@ export const things: Content = {
       of: 'item',
       name: 'newspaper',
       description: 'Today’s Small Town Gazette. The back page is job ads.',
-      at: 'player',
-      traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }), ...shop.sellable({ coins: 2 }) },
+      traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }), ...shop.sellable({ coins: 2 }), ...inventory.at('player') },
+    },
+    // Lying in the flat, out of sight until you've lived there a day: then it turns up once, with a notice, to pick up.
+    {
+      id: 'postcard',
+      of: 'keepsake',
+      name: 'A postcard',
+      description: 'From the last tenant: “Look after the place. The radiator knocks, but it means well.”',
+      traits: {
+        ...places.lies('flat', {
+          when: calendar.day({ gte: 2 }),
+          onFind: [{ notify: 'Something behind the radiator', text: 'A postcard has slipped down behind it.', tag: 'post' }],
+        }),
+      },
     },
   ],
   data: {

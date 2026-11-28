@@ -71,11 +71,14 @@ const TARGETS = [
   'timer',
   // a plugin's or the game's value by name, for the value condition only
   'value',
+  // a thing someone has, across the plugins that keep things
+  'owned',
   // effects named by what they do to their target
   'create',
   'remove',
   'each',
-  'move',
+  'receive',
+  'release',
   'you',
   'closeStoryline',
   'notify',
@@ -87,13 +90,11 @@ const TARGETS = [
 const DETAILS = [
   // whose, or of which kind
   'of',
-  // who holds it (a holder: 'player', 'you' or a unique entity)
-  'at',
+  // which plugin that keeps things, for receive, release and owned
+  'via',
   // what a thing is made like, and what a selection picks by
   'like',
   'trait',
-  // a count of units held, not of distinct things
-  'units',
   // the comparisons
   'is',
   'gte',
@@ -226,6 +227,13 @@ const SAMPLES: Record<string, Call> = {
   'conditions:places/within': places.within('cafe'),
   'conditions:places/away': places.away('cafe'),
   'effects:places/move': places.move('park'),
+  'effects:places/put': places.put('item:paper'),
+  'effects:inventory/move': inventory.move('food:apple', 'character:ava'),
+  'effects:inventory/set': inventory.set('food:apple', 2),
+  'effects:wardrobe/add': { 'wardrobe/add': { entity: 'clothing:scarf' } },
+  'effects:wardrobe/remove': { 'wardrobe/remove': { entity: 'clothing:scarf' } },
+  'effects:wardrobe/store': wardrobe.store('clothing:scarf'),
+  'effects:wardrobe/takeOut': wardrobe.takeOut('clothing:scarf'),
   'commands:places/go': places.go('park'),
   'commands:places/pickUp': places.pickUp('item:paper'),
   'conditions:quests/active': quests.active('settle'),

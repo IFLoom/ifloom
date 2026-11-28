@@ -113,8 +113,6 @@ import type {
   InputDef,
   InputView,
   KindDef,
-  HeldView,
-  Placement,
   Select,
   CreatedEntity,
   TraitTable,
@@ -215,9 +213,11 @@ export type FrozenCondition =
    * for (`'$'` in it is each one in turn). Bare, at least one:
    * `{ count: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, gte: 2 }`.
    */
-  | ({ count: string | Select; where?: FrozenCondition; units?: true } & FrozenRange)
-  /** An entity is in the game: `{ entity: 'staff:ana' }`; with `at` or a range, how many are held. */
-  | ({ entity: string; at?: string } & FrozenRange)
+  | ({ count: string | Select; where?: FrozenCondition } & FrozenRange)
+  /** An entity is in the game: `{ entity: 'staff:ana' }`. */
+  | { entity: string }
+  /** How many of a thing someone owns, across the plugins that keep things (ADR 0016). */
+  | ({ owned: string; of?: string; via?: string } & FrozenRange)
   /**
    * The level a stat with `levels` is at: the player's, or with `of`, an
    * entity's. Bare, level 1 or more: `{ level: 'baking', gte: 2 }`. A stat
@@ -268,8 +268,6 @@ export type FrozenGameState = {
    * character, say) unless it is here: gone for good.
    */
   removed: string[]
-  /** What play changed about who holds what, by holder and then thing. */
-  held: Record<string, Record<string, number>>
   /** The protagonist being played, or null for the player. */
   you: EntityRef | null
   storylines: Record<string, StorylineState>
@@ -341,17 +339,16 @@ export type FrozenEffect =
   | { kv: string; to: KvValue; of?: string }
   | { kv: string; by: Amount; of?: string }
   | { kv: string; random: [Amount, Amount]; of?: string }
-  /** A new entity of a kind, made `with` what it is given, `like` another, given `at` a holder. */
-  | { create: string; like?: string; with?: CreatedEntity; at?: Placement }
+  /** A new entity of a kind, made `with` what it is given, `like` another, then its `effects` with `'$'` as it. */
+  | { create: string; like?: string; with?: CreatedEntity; effects?: EffectRef[] }
   /** Take an entity out of the game. */
   | { remove: string }
   /** The same effects for every entity of a kind, or of a selection, where `where` holds, with `'$'` as each. */
   | { each: string | Select; where?: FrozenCondition; effects: EffectRef[] }
-  /** Change how many of a thing a holder (`'you'` if left out) holds, `by` or `to`. */
-  | { entity: string; at?: string; by: Amount }
-  | { entity: string; at?: string; to: Amount }
-  /** Move a thing to another holder. */
-  | { move: string; from?: string; to: string; by?: Amount }
+  /** Give someone a thing, through the plugins that keep things (ADR 0016). */
+  | { receive: string; by?: Amount; to?: string; via?: string }
+  /** Take a thing back from someone, through the plugins that keep things. */
+  | { release: string; by?: Amount; from?: string; via?: string }
   /** Play as a protagonist, or `null` for the player. */
   | { you: string | null }
   /** Open a scene, close the one on screen with null, or draw one from a set. */
@@ -386,8 +383,8 @@ export type FrozenEffectKey =
   | 'create'
   | 'remove'
   | 'each'
-  | 'entity'
-  | 'move'
+  | 'receive'
+  | 'release'
   | 'you'
   | 'scene'
   | 'closeStoryline'
@@ -472,6 +469,8 @@ export type FrozenGame = {
   inputs?: InputDef[]
   /** The plugins the game is built with, in the order their hooks run. */
   plugins?: readonly Plugin<any>[]
+  /** The order `receive` asks the plugins that keep things, by id. */
+  receivers?: readonly string[]
   /**
    * Content for plugins, by plugin id and then list: `data.quests.quests`.
    * Merged from packs by id, as scenes are.
@@ -606,8 +605,6 @@ export type FrozenView = {
   statsById: Record<string, StatView>
   /** Each listed kind, with its listed, visible entities, in the order the kinds are declared. */
   entities: EntitiesView[]
-  /** What you hold: the protagonist's things while one is played, then the player's. */
-  held: HeldView[]
   notices: NoticesView
   /** The inputs on offer now, in the order declared, with the value each holds. */
   inputs: InputView[]
@@ -658,11 +655,10 @@ export type FrozenReference =
    * 'location:cafe', carrying: 'places/location' }`.
    */
   | { entity: string; carrying?: string }
-  /**
-   * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
-   * thing given to it, which can't be the holder itself.
-   */
-  | { holder: string; holds?: string }
+  /** Someone: `'player'`, `'you'` or a unique entity, such as whom a `receive` gives to. */
+  | { someone: string }
+  /** A call that needs a plugin that keeps things; with an id, that plugin. */
+  | { receiver?: string }
   /** Whom a `you` effect makes the player play: `'player'` or a unique entity. */
   | { protagonist: string }
   /** The entity a `create` makes a thing like, and the kind it makes, if it says. */

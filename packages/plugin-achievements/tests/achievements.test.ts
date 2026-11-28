@@ -179,7 +179,7 @@ describe('achievements', () => {
           data: {
             achievements: {
               achievements: [
-                { id: 'a', name: 'A', when: { entity: 'thing:moonstone', at: 'you' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
+                { id: 'a', name: 'A', when: { entity: 'thing:moonstone' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
                 { id: 'b', name: 'B', progress: { value: { value: 'game/nothing' }, target: 3 } },
               ],
             },

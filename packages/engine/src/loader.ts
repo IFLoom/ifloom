@@ -85,7 +85,7 @@ export type Pack = Flat<
  * The base `loadGame` takes beside the content, the game's `id`, `title`, `version`, `plugins` and `rules`. Anything a
  * mod could change goes in the content or a pack instead.
  */
-export type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
+export type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'receivers' | 'rules'>
 
 /** Settings for `loadGame`. A game loaded without them has no packs. */
 export type LoadOptions = {
@@ -102,6 +102,7 @@ const BASE_KEYS: { [K in keyof GameBase]-?: true } = {
   title: true,
   version: true,
   plugins: true,
+  receivers: true,
   rules: true,
 }
 

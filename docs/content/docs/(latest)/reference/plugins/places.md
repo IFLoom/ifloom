@@ -2,7 +2,9 @@
 title: "Places"
 description: "The places plugin gives a game a map of locations with exits between them, and keeps track of where the player is."
 ---
-`@ifloom/plugin-places` gives a game a map of [locations](/docs/reference/glossary#location) with exits between them, and keeps track of where the player is. A location is an [entity](/docs/reference/glossary#entity) carrying the `places/location` trait, so a mod adds or changes one as it would any entity. While no scene is open, the plugin fills the [room](/docs/reference/glossary#room) with the location the player is at, its actions and its exits. Places needs no other plugin, and its conditions read the [calendar](/docs/reference/plugins/calendar)'s for opening hours. The [cast](/docs/reference/plugins/cast), the [inventory](/docs/reference/plugins/inventory), the [shop](/docs/reference/plugins/shop), [jobs](/docs/reference/plugins/jobs) and [debug](/docs/reference/plugins/debug) ask it where the player is. [Entities, things and traits](/docs/explanation/entities-and-traits#locations-characters-and-vendors-are-entities) explains why a location is an entity, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Add a location](/docs/how-to/add-a-location) builds one.
+`@ifloom/plugin-places` gives a game a map of [locations](/docs/reference/glossary#location) with exits between them, and keeps track of where the player is. A location is an [entity](/docs/reference/glossary#entity) carrying the `places/location` trait, so a mod adds or changes one as it would any entity. While no scene is open, the plugin fills the [room](/docs/reference/glossary#room) with the location the player is at, its actions, its exits and the things lying there.
+
+Places is an optional shortcut. A game in the Twine style moves the player by opening a scene per room and keeps where things lie in [kv keys](/docs/reference/state#kv); places saves writing that for every room. Things lie in locations by the `places/lies` trait, can stay hidden until a condition holds, and picking one up hands it over with [`receive`](/docs/reference/effects#receive), so whichever [receiver](/docs/reference/glossary#receiver) the game has keeps it. Without a receiver, picking up just takes the thing off the floor, and its `onPickUp` can set a kv key. Places needs no other plugin, and its conditions read the [calendar](/docs/reference/plugins/calendar)'s for opening hours. The [cast](/docs/reference/plugins/cast), the [inventory](/docs/reference/plugins/inventory), the [shop](/docs/reference/plugins/shop), [jobs](/docs/reference/plugins/jobs) and [debug](/docs/reference/plugins/debug) ask it where the player is. [Entities, things and traits](/docs/explanation/entities-and-traits#locations-characters-and-vendors-are-entities) explains why a location is an entity, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Add a location](/docs/how-to/add-a-location) builds one.
 
 In the showcase: `examples/showcase/src/story/`, where each area's file declares its location, with opening hours on the café and the office and a layered picture in the café.
 
@@ -11,9 +13,11 @@ import {
   places,
   locationsOf,
   locationOf,
+  lyingCount,
   LOCATION,
   type Arrival,
   type ExitView,
+  type Lies,
   type LyingView,
   type Place,
   type PlaceDef,
@@ -40,14 +44,14 @@ declare const town: Content
 const map = places({ start: 'flat' })
 const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [calendar(), map] })
 
-map.read(startingState(game), game) // { at: 'flat' }
+map.read(startingState(game), game) // { at: 'flat', floor: {}, found: [] }
 ```
 
 ### PlacesOptions
 
 The plugin's settings. Every field is in [`PlacesOptions`](/docs/api/plugin-places#placesoptions).
 
-`start` is the id of the location a new game starts at. With none, the player starts nowhere, the room shows only the game's title and its actions, and [`places/go`](#placesgo) is refused until a [`places/move`](#placesmove) puts the player on the map. The options are code, so a mod can't change them, and everything a mod could change is in each location's trait.
+`start` is the id of the location a new game starts at. With none, the player starts nowhere, the room shows only the game's title and its actions, and [`places/go`](#placesgo) is refused until a [`places/move`](#placesmove) puts the player on the map. `onPickUp` runs each time the player picks anything up, after the thing's own, with `'$'` as the thing. The options are code, so a mod can't change them, and everything a mod could change is in each location's trait and each thing's.
 
 ## Content
 
@@ -71,7 +75,7 @@ The loader merges entities by reference, so a pack's `location:cafe` replaces th
 
 The kind `places.location()` gives each location, `'location'`. Its value is in [`LOCATION`](/docs/api/plugin-places#location).
 
-The plugin declares the kind in its own content. It is [`unique`](/docs/reference/entities#unique), so each location is a [holder](/docs/reference/glossary#holder) and things can lie in it. It isn't [`listed`](/docs/reference/entities#listed), so locations stay out of `view.entities` and reach the view through the plugin's own. A game can redeclare the kind, to list the locations say, and keeps what it leaves out.
+The plugin declares the kind in its own content. It is [`unique`](/docs/reference/entities#unique), so each location is one particular place. It isn't [`listed`](/docs/reference/entities#listed), so locations stay out of `view.entities` and reach the view through the plugin's own. A game can redeclare the kind, to list the locations say, and keeps what it leaves out.
 
 A location of this kind is named by its bare id in the plugin's calls, `places.go('hall')`, and its entity is `location:hall`, which `places.locationRef('hall')` writes. A location of another kind is named by its whole reference everywhere, as in `places.go('vessel:ferry')`.
 
@@ -133,6 +137,32 @@ export const park = places.location({
 })
 ```
 
+### Lies
+
+The data of the `places/lies` trait, where a thing starts lying. Its type is in [`Lies`](/docs/api/plugin-places#lies).
+
+The short form is the location's id, `'kitchen'`. The full form is `{ at, count?, when?, onFind?, onPickUp? }`:
+
+- `count` is how many lie there, 1 if left out.
+- `when` is a condition, with `'$'` as the thing, that must hold before the player can see it or pick it up, such as `{ stat: 'perception', gte: 5 }`. Any condition works, so a game without stats gates it on a kv key, the time or a quest. Once found, it stays found.
+- `onFind` runs once, the first time the player is there while `when` holds. It needs a `when`.
+- `onPickUp` runs each time the player picks one up, after it's received, before the game-wide `onPickUp`.
+
+`places.lies(at, { count, when, onFind, onPickUp }?)` writes the trait. Places checks after every command, so a thing hidden at the start of the game doesn't show until the first command. A game that wants a "search the room" button writes a choice that sets the kv key the `when` reads.
+
+```ts
+import type { Content } from '@ifloom/engine'
+import { places } from '@ifloom/plugin-places'
+
+export const hall: Content = {
+  kinds: [{ id: 'item', label: 'Thing' }],
+  entities: [
+    { id: 'parcel', of: 'item', name: 'parcel', traits: { ...places.lies('hall') } },
+    { id: 'key', of: 'item', name: 'key', traits: { ...places.lies('hall', { when: { kv: 'searchedHall' }, onFind: [{ kv: 'foundKey', to: true }] }) } },
+  ],
+}
+```
+
 ## Effects
 
 ### places/move
@@ -141,6 +171,14 @@ Puts the player at a location at once and closes any open scene. No exit is need
 
 ```ts fragment
 { 'places/move': { location: 'cafe' } } // places.move('cafe')
+```
+
+### places/put
+
+Puts `by` of a thing (1 if left out) down where the player is, or `at` a location. A negative `by` takes some away. It does nothing while the player is nowhere. The inventory's [`drop`](/docs/reference/plugins/inventory#inventorydrop) runs it, so a dropped thing lies where the player is.
+
+```ts fragment
+{ 'places/put': { entity: 'item:paper' } } // places.put('item:paper')
 ```
 
 ## Conditions
@@ -193,13 +231,13 @@ Since `blocked` comes before the exits, a closed café says it's closed even fro
 
 ### places/pickUp
 
-Moves one of a thing from where the player is to [`'you'`](/docs/reference/entities#player-and-you). It lists a [`move`](/docs/reference/effects#move) effect, so a lock with `effect` sees it.
+Takes one of a thing off the floor where the player is, gives it to whoever the player is playing with [`receive`](/docs/reference/effects#receive), then runs the thing's `onPickUp` and the game-wide `onPickUp`. It lists those effects, so a lock with `effect` sees them. In a game with no receiver, the thing just leaves the floor.
 
 ```ts fragment
 { 'places/pickUp': { id: 'item:paper' } } // places.pickUp('item:paper')
 ```
 
-The plugin refuses it with `Finish this first.` while a scene is open, `There is no such thing.` (the engine's `noSuchThing`) for a thing the game doesn't have, and `There is no paper here.` (`places/notLyingHere`) when none lies here.
+The plugin refuses it with `Finish this first.` while a scene is open, `There is no such thing.` (the engine's `noSuchThing`) for a thing the game doesn't have, and `There is no paper here.` (`places/notLyingHere`) when none lies here, or it's hidden and not yet found.
 
 ## Queries
 
@@ -208,7 +246,6 @@ Other plugins ask these through their context's [`query`](/docs/reference/plugin
 | Key | Meaning |
 |---|---|
 | `places/here` | The id of the location the player is at, or `null`. The cast asks it to find who is in the room. |
-| `places/holder` | The entity of the location the player is at, such as `'location:park'`, or `null`. The inventory's `drop` asks it for somewhere to put a dropped thing. |
 | `places/known` | Whether the game has a location with the id or reference given as `{ location }`. The cast asks it to check its characters' locations. |
 | `places/all` | Every location the game has now, each its [`Place`](#place) trait with its `id` and `ref`. |
 | `places/exits` | The current location's `exits` as listed, leaving out any the game doesn't have, and empty when nowhere. |
@@ -244,7 +281,7 @@ Prose prints these as tokens. Each is empty while the player is nowhere.
 
 ### PlacesState
 
-The location a save keeps at `state.plugins.places`, its id, or `null` while the player is nowhere. Every field is in [`PlacesState`](/docs/api/plugin-places#placesstate).
+What a save keeps at `state.plugins.places`. `at` is the location's id, or `null` while the player is nowhere. `floor` holds the counts of things lying in each location that play changed, 0 included, and the plugin reads the rest from each thing's `places/lies`. `found` lists the hidden things the player has found. Every field is in [`PlacesState`](/docs/api/plugin-places#placesstate).
 
 Code reads it with `places.where(state, game)`, which reads a save with no places state yet as the plugin's `start`. A UI reads [`PlacesView`](#placesview) instead.
 
@@ -282,17 +319,7 @@ The exit's `id` and `label` are the destination's id and `name`, and `ref`, `des
 
 One thing lying where the player is, in `view.plugins.places.things`. Every field is in [`LyingView`](/docs/api/plugin-places#lyingview).
 
-The things are what the location's entity holds, in that order, with `count` for how many. A thing whose [`visible`](/docs/reference/entities#entitydef) condition doesn't hold isn't listed. `pickUp` is a button labelled with the `places/pickUp` string that sends `places.pickUp(ref)`. A thing gets into a room from its `at` in content, or from the inventory's `drop` through `places/holder`.
-
-```ts
-import type { Content } from '@ifloom/engine'
-import { places } from '@ifloom/plugin-places'
-
-export const hall: Content = {
-  kinds: [{ id: 'item', label: 'Thing' }],
-  entities: [{ id: 'parcel', of: 'item', name: 'parcel', at: places.locationRef('hall') }],
-}
-```
+The things are what lies at the location, in the game's order of its entities, with `count` for how many. A hidden thing not yet found isn't listed, and nor is one whose [`visible`](/docs/reference/entities#entitydef) condition doesn't hold. `pickUp` is a button labelled with the `places/pickUp` string that sends `places.pickUp(ref)`. A thing gets into a room from its [`places/lies`](#lies) trait, from a [`places/put`](#placesput), or from the inventory's `drop`.
 
 [Render the location and its exits](/docs/how-to/render/world-plugins#render-the-location-and-its-exits) renders this view in Plain JS, React and Vue.
 
@@ -332,8 +359,9 @@ The helpers are properties of `places` and write its calls, typed:
 
 - **`places.location(def)`** returns a location's [`EntityDef`](#placedef).
 - **`places.locationRef(id)`** returns a location's entity reference, `'location:park'` for `'park'`, and a reference as written.
+- **`places.lies(at, { count, when, onFind, onPickUp }?)`** returns the [`places/lies`](#lies) trait, to spread into a thing's `traits`.
 - **`places.go(id)`** and **`places.pickUp(ref)`** return the [commands](#commands).
-- **`places.move(location)`** returns the [`places/move`](#placesmove) effect.
+- **`places.move(location)`** returns the [`places/move`](#placesmove) effect, and **`places.put(entity, { at, by }?)`** the [`places/put`](#placesput) effect.
 - **`places.at(...ids)`**, **`places.within(...ids)`** and **`places.away(...ids)`** return the [conditions](#conditions).
 - **`places.onlyAt(ids, reason?, { hide? })`** returns a [`blocked`](/docs/reference/actions#blocked) entry, `{ when: places.away(...ids), reason }`, that refuses an action, a vendor or a shift anywhere else. Its reason is the `places/notHere` string if left out.
 - **`places.where(state, game)`** returns the id of the location the player is at, or `null`.
@@ -350,6 +378,16 @@ export const phoneHome: ActionDef = {
   blocked: [places.onlyAt(['flat'], 'The phone is at home.')],
   effects: [{ kv: 'calledHome', to: true }],
 }
+```
+
+### lyingCount
+
+Returns how many of a thing lie at a location, by id or reference, read from the save and then from the thing's `places/lies`, whether or not it's been found. Its signature is in [`lyingCount`](/docs/api/plugin-places#lyingcount).
+
+```ts given
+import { lyingCount } from '@ifloom/plugin-places'
+
+lyingCount(state, game, 'item:parcel', 'hall') // 1
 ```
 
 ### locationsOf
@@ -383,6 +421,9 @@ When the game loads, places checks every location named by its calls wherever co
 | `audio: unknown track "rain"` | The `audio` names a track or channel the game doesn't have, or a cue channel. |
 | `hotspot menu: names choice "order", but only a scene has choices` | The picture has a hotspot with a `choice`, or another problem a [picture check](/docs/reference/media#checks) finds. |
 | `ui must be an object of hints` | The `ui` isn't data. |
+| `lies in unknown location "attic"` | A `places/lies` names a location the game doesn't have, pinned as `trait places/lies on <ref>`. |
+| `lies 0 of it: a count is a whole number above 0` | A `places/lies` count isn't a whole number above 0. |
+| `onFind runs when a hidden thing is found: give it a when` | A `places/lies` has `onFind` and no `when`. |
 
 A location's `image` and its picture's files are listed in the checker's [`files`](/docs/reference/checks#fileref).
 
@@ -404,3 +445,4 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 - A game that starts nowhere refuses every `places/go` with `You cannot get there from here.`, so its first scene puts the player on the map with `places.move`.
 - A location's `arrive` runs on `places/go` only. A [trigger](/docs/reference/triggers) on `places.at(...)` runs however the player got there.
 - A pack's `traits` row replaces the whole `places/location` trait, so it gives every field the location needs.
+- A thing lying in a room isn't [`owned`](/docs/reference/conditions#owned) by anyone until it's picked up.

@@ -221,8 +221,8 @@ describe('sections', () => {
 
   it('hide themselves when nothing in them draws anything', () => {
     play()
-    // Nothing held, and no errand yet.
-    for (const id of ['inventory', 'errands']) expect(section(id)!.hidden, id).toBe(true)
+    // No errand yet.
+    expect(section('errands')!.hidden).toBe(true)
     expect(section('stats')!.hidden).toBe(false)
     press(/Wait a while/)
     expect(section('errands')!.hidden).toBe(false)

@@ -2,7 +2,9 @@
 title: "Shop"
 description: "The shop plugin adds vendors who sell things for any spendable stat, with stock, restocking, selling back and daily discounts."
 ---
-`@ifloom/plugin-shop` adds vendors the player buys [things](/docs/reference/glossary#thing) from and sells them back to, for prices in any spendable [stat](/docs/reference/stats#statdef), such as coins, energy or both. A vendor is an [entity](/docs/reference/glossary#entity) carrying the `shop/vendor` [trait](/docs/reference/glossary#trait), and it holds the stock of each good that has one. The shop needs no other plugin, and it cooperates with the [calendar](/docs/reference/plugins/calendar) for opening hours and days, and with [places](/docs/reference/plugins/places) for where a vendor stands. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Open a shop, a job board or another panel](/docs/how-to/open-a-panel) opens a vendor's counter.
+`@ifloom/plugin-shop` adds vendors the player buys [things](/docs/reference/glossary#thing) from and sells them back to, for prices in any spendable [stat](/docs/reference/stats#statdef), such as coins, energy or both. A vendor is an [entity](/docs/reference/glossary#entity) carrying the `shop/vendor` [trait](/docs/reference/glossary#trait), and the plugin keeps how many of each good it has left.
+
+The shop is an optional shortcut. A game in the Twine style writes a purchase as a choice that costs coins and sets a [kv key](/docs/reference/state#kv), and the shop saves writing that for every good: prices in any stat, stock, restocking, discounts, selling back and refusals with reasons. It hands a bought thing over with [`receive`](/docs/reference/effects#receive), so the game's [receivers](/docs/reference/glossary#receiver), such as the [wardrobe](/docs/reference/plugins/wardrobe) or the [inventory](/docs/reference/plugins/inventory), keep it, in the game's [`receivers`](/docs/reference/content#gamebase) order. A good with `deliver: false` gives nothing and only runs its `onBuy`, so a shop works in a game with no receivers at all. The shop names no plugin to deliver to. It needs no other plugin, and it cooperates with the [calendar](/docs/reference/plugins/calendar) for opening hours and days, and with [places](/docs/reference/plugins/places) for where a vendor stands. [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Open a shop, a job board or another panel](/docs/how-to/open-a-panel) opens a vendor's counter.
 
 In the showcase: `examples/showcase/src/story/cafe.ts`, whose `counter` sells sandwiches, two flapjacks a day and the newspaper, buys back at half price and marks one good down each day, with the prices in `examples/showcase/src/world/things.ts`.
 
@@ -17,7 +19,9 @@ import {
   type GoodView,
   type Restock,
   type Sellable,
+  type ShopOptions,
   type ShopState,
+  type Stock,
   type ShopView,
   type StockRecord,
   type Vendor,
@@ -28,9 +32,9 @@ import {
 
 ## shop
 
-The plugin's factory, which returns the plugin with the id `shop`. It takes no options, because the vendors are entities a mod can change. Every field of its result is in [`shop`](/docs/api/plugin-shop#shop), and its helpers are listed under [Functions](#functions).
+The plugin's factory, which returns the plugin with the id `shop`. It takes [`ShopOptions`](#shopoptions). The vendors are entities, so a mod can change them. Every field of its result is in [`shop`](/docs/api/plugin-shop#shop), and its helpers are listed under [Functions](#functions).
 
-The plugin brings the kind `vendor` in its own content, [`unique`](/docs/reference/entities#unique) so each vendor can hold its stock, and not [`listed`](/docs/reference/entities#listed). After each command that goes through, the plugin's [`onCommand`](/docs/reference/plugin-api#oncommand) hook writes every restock that came due to what each vendor holds. The view and the conditions count a due restock before the hook writes it.
+The plugin brings the kind `vendor` in its own content, [`unique`](/docs/reference/entities#unique) and not [`listed`](/docs/reference/entities#listed). A vendor holds nothing: the plugin keeps each good's stock in its own state.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -41,6 +45,14 @@ import { shop } from '@ifloom/plugin-shop'
 declare const town: Content
 
 export const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [calendar(), places({ start: 'flat' }), shop()] })
+```
+
+### ShopOptions
+
+The plugin's settings. `onBuy` runs for each one of anything bought from any vendor, after the good's and the vendor's own, and `onSell` for each one sold back. In both, `'$'` is the thing. Every field is in [`ShopOptions`](/docs/api/plugin-shop#shopoptions).
+
+```ts fragment
+shop({ onBuy: [{ kv: 'purchases', by: 1 }] })
 ```
 
 ## Content
@@ -79,22 +91,46 @@ The loader merges entities by reference, so a pack's `vendor:counter` replaces t
 
 One thing a vendor sells, an entry of its `goods`. Every field is in [`GoodDef`](/docs/api/plugin-shop#gooddef).
 
-`entity` names the thing by reference, and a vendor sells each thing once. `price` is what one costs, by stat, and with no `price` the good costs the thing's [`Sellable`](#sellable) price. A good whose `when` doesn't hold isn't on offer, so the view leaves it out and `shop/buy` refuses it as if the vendor didn't sell it.
+`entity` names the thing by reference, and a vendor sells each thing once. Goods always name an entity: a game that keeps things in kv keys declares a light one, a name and no traits. `price` is what one costs, by stat, and with no `price` the good costs the thing's [`Sellable`](#sellable) price. A good whose `when` doesn't hold isn't on offer, so the view leaves it out and `shop/buy` refuses it as if the vendor didn't sell it.
 
-A good with no `stock` never runs out. Buying one makes a new one for the player with the [`entity`](/docs/reference/effects#entity) effect, and selling one back removes it, so no vendor holds it in between. A good with a `stock` is held by the vendor's entity, as any [holder](/docs/reference/glossary#holder) holds things:
+`stock` is a [`Stock`](#stock). `deliver` says where buying one puts it:
 
-- The vendor starts with `stock` of it, and content can place more with it, such as `at: { 'vendor:market': 3 }` on the thing.
-- Buying [`move`](/docs/reference/effects#move)s one from the vendor to the player, and the good is sold out when the vendor holds none.
-- Selling one back moves it from the player to the vendor, so it's for sale again.
-- With `restock`, the vendor is topped up to `stock` each turn or each day, and never brought down, so selling things back can leave it with more.
+- Left out, buying runs `{ receive: entity }`, so whichever receiver claims the thing first keeps it.
+- A plugin's id gives it to that receiver only, as a `receive`'s `via` does, such as `deliver: 'wardrobe'`.
+- `false` gives nothing, so the purchase is only its `onBuy`.
 
-A vendor always sells a [unique](/docs/reference/entities#unique) thing from its stock, because there is only one of it, so give it `stock: 1` or start it with the vendor. A restock never takes a unique thing back from whoever holds it. `{ entity: 'food:flapjack', at: 'vendor:counter', gte: 1 }` is a condition on what the counter has left, and an effect can add to its stock or take it away.
+`onBuy` runs for each one bought, after it's given, then the vendor's `onBuy`, then the game's ([`ShopOptions`](#shopoptions)). `onSell` runs the same way for each one sold back. In both, `'$'` is the thing. A coffee machine that goes straight to the kitchen is a kv flag:
+
+```ts
+import type { Content } from '@ifloom/engine'
+import { shop } from '@ifloom/plugin-shop'
+
+export const homeStore: Content = {
+  kinds: [{ id: 'gadget', label: 'Gadget', listed: false }],
+  entities: [
+    { id: 'coffeeMachine', of: 'gadget', name: 'coffee machine' },
+    shop.vendor({
+      id: 'homeStore',
+      name: 'Home store',
+      goods: [{ entity: 'gadget:coffeeMachine', price: { coins: 80 }, stock: 'once', deliver: false, onBuy: [{ kv: 'kitchen.coffeeMachine', to: true }] }],
+    }),
+  ],
+}
+```
+
+### Stock
+
+How many of a good a vendor has. Its values are in [`Stock`](/docs/api/plugin-shop#stock).
+
+- A number is what the vendor starts with, and the good is sold out when none are left. With `restock`, it's topped back up to that number. Selling one back adds one.
+- `'unlimited'`, the default, never runs out.
+- `'once'` sells out after one, for upgrades and unique things. It's the default for a [unique](/docs/reference/entities#unique) thing, which also shows as sold out while the player owns it.
 
 ### Restock
 
-When a good's stock comes back up to its `stock`, `'turn'` or `'day'`. Its values are in [`Restock`](/docs/api/plugin-shop#restock).
+When a good with a number `stock` comes back up to it, `'turn'` or `'day'`. Its values are in [`Restock`](/docs/api/plugin-shop#restock).
 
-A day is the calendar's day, or a turn in a game without the calendar. A good with no `restock` is never topped up.
+A day is the calendar's day, or a turn in a game without the calendar. A good with no `restock` is never topped up. The stock is worked out when it's read, so nothing writes a restock until play changes the good again.
 
 ### DiscountDef
 
@@ -174,7 +210,7 @@ Both commands list the effects they apply, so a [lock](/docs/reference/locks) wi
 
 ### shop/buy
 
-Pays today's price for `count` of the thing (1 if left out) and gives them to you. A good with a stock moves from the vendor, and any other good is made new.
+Pays today's price for `count` of the thing (1 if left out), takes them from the stock, gives them to you with `{ receive: entity, by: count }` (unless the good's `deliver` is `false`), then runs the `onBuy` effects for each one.
 
 ```ts fragment
 { 'shop/buy': { vendor: 'counter', entity: 'food:flapjack' } } // shop.buy('counter', 'food:flapjack')
@@ -186,12 +222,12 @@ The plugin refuses it, in this order:
 
 1. With `That isn’t for sale here.` (`shop/unknown`) for a vendor or thing the game doesn't have, or a good whose `when` doesn't hold.
 2. With the reason of the vendor's first `blocked` entry that holds, such as `You aren’t at that shop.` or `Closed.`.
-3. With `Sold out.` (`shop/soldOut`) when the vendor holds fewer than `count`.
+3. With `Sold out.` (`shop/soldOut`) when the vendor has fewer than `count` left.
 4. With the stat's [`lacking`](/docs/reference/stats#statwords) line, such as `You need 4 coins.`, when you have too little.
 
 ### shop/sell
 
-Takes `count` of the thing from you (1 if left out) and pays the vendor's `buysBack` fraction of its full price, rounded down for each one. A good with a stock goes back to the vendor, and any other good is removed.
+Takes `count` of the thing back from you with `{ release: entity, by: count }` (1 if left out), pays the vendor's `buysBack` fraction of its full price, rounded down for each one, and runs the `onSell` effects for each one. A good with a number stock, or `'once'`, goes back into stock.
 
 ```ts fragment
 { 'shop/sell': { vendor: 'counter', entity: 'food:sandwich' } } // shop.sell('counter', 'food:sandwich')
@@ -202,21 +238,19 @@ The plugin refuses it, in this order:
 1. With `That isn’t for sale here.` for a vendor or thing the game doesn't have, or a good whose `when` doesn't hold.
 2. With `They don’t buy things back.` (`shop/noBuyBack`) for a vendor with no `buysBack`.
 3. With the reason of the vendor's first `blocked` entry that holds.
-4. With `You don’t have that.` (`shop/notOwned`) when you hold fewer than `count`.
+4. With `You don’t have that.` (`shop/notOwned`) when you own fewer than `count`, across every receiver ([`owned`](/docs/reference/conditions#owned)).
 
 ## State
 
 ### ShopState
 
-The restocks a save keeps at `state.plugins.shop`. Every field is in [`ShopState`](/docs/api/plugin-shop#shopstate).
-
-The stock itself is what each vendor's entity holds, in [`state.held`](/docs/reference/state#held), and the plugin reads the goods from content. For each vendor and good with a stock, the save keeps a [`StockRecord`](#stockrecord). A UI reads [`ShopView`](#shopview) instead.
+The stock a save keeps at `state.plugins.shop`, in `stock`, by vendor and then by thing: only the goods play changed, each as a [`StockRecord`](#stockrecord). The plugin reads the goods and their starting stock from content. Every field is in [`ShopState`](/docs/api/plugin-shop#shopstate). A UI reads [`ShopView`](#shopview) instead.
 
 ### StockRecord
 
-When the plugin last topped up one vendor's stock of one good, in `stocked`, by vendor and then by thing. Every field is in [`StockRecord`](/docs/api/plugin-shop#stockrecord).
+What a save keeps of one good's stock once play changed it. Every field is in [`StockRecord`](/docs/api/plugin-shop#stockrecord).
 
-`at` is the turn or the day of the last top-up, and `0` for a good that never restocks. When the turn or the day moves past `at`, the stock reads as full again before anything writes it.
+`left` is how many the vendor had left then, and `at` is the turn or the day it was written, which a `restock` compares with now, or `0` for a good that never restocks. When the turn or the day moves past `at`, the stock reads as full again before anything writes it.
 
 ## View
 
@@ -242,7 +276,7 @@ One vendor as the player sees it, an entry of `vendors`. Every field is in [`Ven
 
 One good as the player sees it, an entry of a vendor's `goods`. Every field is in [`GoodView`](/docs/api/plugin-shop#goodview).
 
-`buy` and `sell` are [`RenderedChoice`](/docs/reference/view#renderedchoice) buttons labelled with the thing's name, each with today's `price` and the reason it's refused in `disabled`. `sell` and `sellFor` are `null` for a vendor that takes nothing back. `stock` is `null` for a good that never runs out, `owned` counts what you hold, and `off` is today's discount. `fullPrice` is the price before the discount, and `null` on a day the good isn't marked down.
+`buy` and `sell` are [`RenderedChoice`](/docs/reference/view#renderedchoice) buttons labelled with the thing's name, each with today's `price` and the reason it's refused in `disabled`. `sell` and `sellFor` are `null` for a vendor that takes nothing back. `stock` is `null` for a good that never runs out, `owned` counts what you own across every receiver, and `off` is today's discount. `fullPrice` is the price before the discount, and `null` on a day the good isn't marked down.
 
 [Render a shop counter](/docs/how-to/render/things-plugins#render-a-shop-counter) renders this view in Plain JS, React and Vue.
 
@@ -346,8 +380,12 @@ When the game loads, the plugin checks the `shop/vendor` trait on each vendor. A
 | `sells "food:apple" twice` | Two goods name the same thing. |
 | `good gem:ruby: no price: give the good a price, or the thing a shop/sellable trait` | A good has no `price`, and its thing has no `shop/sellable` trait. |
 | `good stone:moon: price in stat "charm", which is not spendable` | A price is in a stat that isn't `spendable`, or one that is derived. |
-| `good stone:moon: price must be 0 or more`, `stock must be 0 or more` | A price or a stock is negative. |
-| `good stone:moon: restock needs a stock` | A good has `restock` and no `stock`. |
+| `good stone:moon: price must be 0 or more` | A price is negative. |
+| `good stone:moon: stock must be a whole number, 0 or more`, `stock is a number, "unlimited" or "once"` | A `stock` isn't one of its forms. |
+| `good stone:moon: restock needs a number stock` | A good has `restock` and no number `stock`. |
+| `good stone:moon: deliver is false or a plugin's id` | A `deliver` isn't one of its forms. |
+| `no plugin of the game keeps things, so this does nothing: …` | A good is delivered in a game with no receiver. Give it `deliver: false`, or add a receiver such as the inventory. |
+| `via names "box", which keeps no things` | A `deliver` names a plugin that isn't a receiver. |
 | `good gem:ruby: a unique thing has a stock of 1 at most` | A unique thing's `stock` is above 1. |
 | `buysBack must be between 0 and 1`, `discounts.off must be more than 0 and at most 1` | `buysBack` or `discounts.off` is out of range. |
 | `blocked: unknown entity "location:moon"` | A `blocked` entry names something the game doesn't have, such as a location in `places.onlyAt()`, which places reports. |
@@ -371,5 +409,5 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 
 - A `traits` row replaces the whole `shop/vendor` trait, so a mod that changes a vendor's goods gives every field the vendor needs, its `blocked` included.
 - Selling back pays from the full price, not from today's discounted one.
-- Selling back a good that never runs out removes the thing, and no vendor holds it after.
+- Selling back takes the thing from whichever receivers keep it, in the game's `receivers` order.
 - Opening a counter doesn't move the player, so a counter opened away from a vendor with a `places.onlyAt()` entry shows every button refused with that entry's reason.

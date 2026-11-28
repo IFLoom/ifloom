@@ -16,7 +16,6 @@ import {
   Game,
   GameMenu,
   InputFields,
-  Inventory,
   Notices,
   Overlay,
   PanelHost,
@@ -44,9 +43,6 @@ export function Layout() {
         <Section id="stats" title={words('stats')} collapsible open>
           <StatList />
           <Plugins at="stats" />
-        </Section>
-        <Section id="inventory" title={words('inventory')} collapsible>
-          <Inventory title={false} />
         </Section>
         {/* What the plugins' UIs bring to the side column: a Quests button, the People, ... */}
         <Plugins at="sidebar" />

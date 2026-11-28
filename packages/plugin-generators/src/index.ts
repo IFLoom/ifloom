@@ -21,9 +21,20 @@ import {
   type Game,
   type GameState,
   type KvValue,
-  type Placement,
 } from '@ifloom/engine'
-import { arg, defineCalls, defineData, definePlugin, list, type DefinedPlugin, type EffectsOf, type PluginProblem, type Reference } from '@ifloom/engine/plugin'
+import {
+  anyOf,
+  arg,
+  bindCurrent,
+  defineCalls,
+  defineData,
+  definePlugin,
+  list,
+  type DefinedPlugin,
+  type EffectsOf,
+  type PluginProblem,
+  type Reference,
+} from '@ifloom/engine/plugin'
 
 /** An entry of a pool, a value or a value with a weight. A bare value, or a weight left out, weighs 1. */
 export type PoolEntry = KvValue | { value: KvValue; weight?: number }
@@ -69,8 +80,11 @@ export type TemplateDef = {
   tags?: string[]
   /** The new entity's trait data by trait id, over its `like`'s or its kind's, such as `{ 'cast/person': { home: 'park' } }`. */
   traits?: Record<string, unknown>
-  /** The holder of the new entity once made, or how many each holder holds. Nobody holds it if left out. */
-  at?: Placement
+  /**
+   * The effects that run once the new entity is made, with `'$'` as it, such as `[{ receive: '$' }]` to hand it to
+   * whichever plugin keeps things. Nothing more happens if left out.
+   */
+  effects?: EffectRef[]
   /**
    * The new entity's stats by id, each a stat the game declares for the kind. A stat left out reads the `like`'s
    * value, else its `start`.
@@ -203,7 +217,7 @@ function created(template: TemplateDef, state: GameState, game: Game, kind: stri
   return {
     create: kind,
     ...(template.like !== undefined ? { like: template.like } : {}),
-    ...(template.at !== undefined ? { at: template.at } : {}),
+    ...(template.effects !== undefined ? { effects: template.effects } : {}),
     with: {
       ...drawn,
       stats,
@@ -275,7 +289,9 @@ function generatorsPlugin(): DefinedPlugin<null> {
           ...Object.keys(template.stats ?? {}).flatMap((stat): Reference[] =>
             templateKind(template) !== undefined ? [{ stat, starts: templateKind(template)! }] : [],
           ),
-          ...Object.keys(typeof template.at === 'string' ? { [template.at]: 1 } : (template.at ?? {})).map((holder): Reference => ({ holder })),
+          ...(template.effects !== undefined && templateKind(template) !== undefined
+            ? [{ within: 'effects', refs: [{ effects: bindCurrent(template.effects, anyOf(templateKind(template)!)) }] }]
+            : []),
           ...Object.keys(template.traits ?? {}).map((trait): Reference => ({ trait })),
           ...(typeof template.image === 'string' ? [{ picture: template.image }] : []),
           ...fields(template)

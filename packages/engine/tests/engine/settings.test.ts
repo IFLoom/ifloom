@@ -258,7 +258,7 @@ describe('settings checks in a hand-built game', () => {
         { id: 'upside', label: 'Upside', type: 'range', min: 5, max: 1, default: 3 },
       ],
       finished: { any: [{ setting: 'volume' }, { setting: 'textSize' }, { setting: 'patience', is: 3 }] },
-      carryOver: { stats: ['charm'], held: ['umbrella', 'thing:umbrella'] },
+      carryOver: { stats: ['charm'] },
     })
     expect(problemsOf(g)).toEqual([
       'setting hints: two settings share this id',
@@ -267,8 +267,6 @@ describe('settings checks in a hand-built game', () => {
       'finished: setting "textSize" is a ui setting; conditions read only play settings',
       'finished: 3 for setting "patience" is not in steps of 2',
       'carryOver: unknown stat "charm"',
-      'carryOver: unknown entity "umbrella": name one as "kind:id"',
-      'carryOver: unknown kind "thing"',
     ])
   })
 })

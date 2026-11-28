@@ -38,7 +38,7 @@ Each part of the view is explained on the page of the feature it comes from:
 | `scene` | The open scene, or the room while none is open, explained under [`scene`](#scene) below and on [Scenes](/docs/reference/scenes#view). Its `beats` are on [Prose](/docs/reference/prose#view), its `choices` are [`RenderedChoice`](#renderedchoice)s, and a flowing scene's are on [Flows](/docs/reference/flows#view). |
 | `actions` | The room's actions while no scene is open, explained on [Actions](/docs/reference/actions#view). |
 | `stats`, `statsById` | The player's stats, each a [`StatView`](#statview), explained on [Stats](/docs/reference/stats#view). |
-| `entities`, `held` | The listed kinds with their entities, and what you hold, explained on [Entities](/docs/reference/entities#view). |
+| `entities` | The listed kinds with their entities, explained on [Entities](/docs/reference/entities#view). What the player has is each receiver's slice of `plugins`, such as `plugins.inventory`. |
 | `notices` | The notices not yet dismissed, explained on [Notices](/docs/reference/notices#view). |
 | `inputs` | The inputs on offer now, explained on [Inputs](/docs/reference/inputs#view). |
 | `settings` | Every setting the game declares, explained on [Settings](/docs/reference/settings#view). |
@@ -134,12 +134,6 @@ import { view } from '@ifloom/engine'
 const staff = view(state, game).entities.find((kind) => kind.id === 'staff')
 staff?.entries.map((entry) => entry.name) // ['Ana', 'Dev'], once Dev is hired
 ```
-
-## HeldView
-
-One thing you hold, in `view.held`, with its count and its holder. Every field is in [`HeldView`](/docs/api/engine#heldview).
-
-`at` is the protagonist's reference or `'player'`, and the protagonist's things come first. `name`, `description`, `image` and `tags` read through the entity a thing was made [like](/docs/reference/entities#entitystate). A thing whose `visible` doesn't hold is left out, while its kind's `listed` doesn't matter here.
 
 ## NoticesView and NoticeView
 

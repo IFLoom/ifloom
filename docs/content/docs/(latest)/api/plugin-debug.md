@@ -30,7 +30,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`DebugView`](#d
 |---|---|---|
 | `debug.stat` | `(stat: string, to: number, of?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/stat` command, which sets the stat to `to`, clamped to its range. With `of`, it sets the entity's stat. |
 | `debug.kv` | `(key: string, to:` [`KvValue`](/docs/api/engine#kvvalue)`):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/kv` command, which sets the kv key to `to`. |
-| `debug.held` | `(entity: string, to: number, at?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/held` command, which sets how many of the thing the holder `at` holds. `'you'` if `at` is left out. |
+| `debug.held` | `(entity: string, to: number, at?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/held` command, which sets how many of the thing someone (`at`) has, through the plugins that keep things. |
 | `debug.scene` | `(scene?: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/scene` command, which opens the scene, or closes the open scene when none is named. |
 | `debug.time` | `(time: { day?: number; period?: string }):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/time` command, which sets the calendar's day and period without ending a turn. It's refused without the calendar. |
 | `debug.turn` | `(turn: number):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `debug/turn` command, which sets the turn count without running any turn's rules. |
@@ -48,6 +48,7 @@ type DebugView = {
   locks: { reason: string; deny: string[] }[]
   fired: Record<string, number>
   seed: number
+  receivers: string[]
 }
 ```
 
@@ -56,6 +57,7 @@ type DebugView = {
 | `locks` | `{ reason: string; deny: string[] }[]` |  |  | The game's locks whose `when` holds now, each with its reason and the commands it denies. |
 | `fired` | `Record<string, number>` |  |  | The triggers that have fired, each id mapped to the turn it last fired on. |
 | `seed` | `number` |  |  | The save's seed, which every random draw is hashed from. |
+| `receivers` | `string[]` |  |  | The ids of the game's plugins that keep things, which `debug/held` sets counts through. Empty in a game that keeps none. |
 
 ## @ifloom/plugin-debug/react
 
@@ -145,6 +147,7 @@ type DebugControls = {
   locks: { reason: string; deny: string[] }[]
   fired: Record<string, number>
   seed: number
+  receivers: string[]
   greyed: RenderedChoice[]
   state: GameState
   log: Command[]
@@ -160,6 +163,7 @@ type DebugControls = {
 | `locks` | `{ reason: string; deny: string[] }[]` |  |  | The game's locks whose `when` holds now, each with its reason and the commands it denies. |
 | `fired` | `Record<string, number>` |  |  | The triggers that have fired, each id mapped to the turn it last fired on. |
 | `seed` | `number` |  |  | The save's seed, which every random draw is hashed from. |
+| `receivers` | `string[]` |  |  | The ids of the game's plugins that keep things, which `debug/held` sets counts through. Empty in a game that keeps none. |
 | `greyed` | [`RenderedChoice[]`](/docs/api/engine#renderedchoice) |  |  | The disabled buttons on screen, from the actions, the scene's choices and the cast's people here. |
 | `state` | [`GameState`](/docs/api/engine#gamestate) |  |  | The runner's whole game state. |
 | `log` | [`Command[]`](/docs/api/engine#command) |  |  | The commands the runner has run since the start, in order. |

@@ -37,7 +37,7 @@ Content has no id and no schema, because the engine it is compiled with reads it
 | `media` | [Pools of pictures](/docs/reference/media#gamemedia), merged by id. |
 | `ui` | [UI hints](/docs/reference/ui-hints) for the whole game, merged by key. |
 
-The base holds `id`, `title`, `version`, `plugins` and `rules`, and content never does. `loadGame` leaves out any of those keys that content holds, and reports `content has no "…", so it was left out`. It does the same for `id`, `schema` and `patches`, which only a pack has, and for `custom`, which belongs in [`rules`](/docs/reference/rules). TypeScript reports them sooner, because they aren't in the `Content` type.
+The base holds `id`, `title`, `version`, `plugins`, `receivers` and `rules`, and content never does. `loadGame` leaves out any of those keys that content holds, and reports `content has no "…", so it was left out`. It does the same for `id`, `schema` and `patches`, which only a pack has, and for `custom`, which belongs in [`rules`](/docs/reference/rules). TypeScript reports them sooner, because they aren't in the `Content` type.
 
 This file, cut down from the showcase's `story/cafe.ts`, declares a scene and a kv key the café puts back each day.
 
@@ -154,7 +154,9 @@ The version of the pack format this engine reads, a whole number that goes up wi
 
 ## GameBase
 
-The second argument of [`loadGame`](#loadgame), holding the game's `id`, `title`, `version`, `plugins` and `rules`, and nothing a mod could change. Every field is in [`GameBase`](/docs/api/engine#gamebase), and [`Game`](/docs/reference/game#game) describes each.
+The second argument of [`loadGame`](#loadgame), holding the game's `id`, `title`, `version`, `plugins`, `receivers` and `rules`, and nothing a mod could change. Every field is in [`GameBase`](/docs/api/engine#gamebase), and [`Game`](/docs/reference/game#game) describes each.
+
+`receivers` lists, by plugin id, the order the [`receive`](/docs/reference/effects#receive) effect asks the plugins that keep things, such as `['wardrobe', 'inventory']` so clothes go to the wardrobe and the rest to the inventory. The order of `plugins` if left out. An id that isn't a [receiver](/docs/reference/entities#receivers) is a problem.
 
 A base needs only `id` and `title`. `loadGame` leaves out any other key on it and says where the key belongs, as in `the base has no "actions", so it was left out; it is content now, so it goes in the game's content`. The game's code (`custom`, `migrations` and `saveName`) goes in `rules`.
 

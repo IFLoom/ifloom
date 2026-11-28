@@ -32,14 +32,20 @@ const camera: AppDef = {
           id: `photo-${who}`,
           label: who === 'ava' ? 'Photograph Ava' : 'Photograph Sam',
           blocked: [{ when: { not: cast.here(who) }, reason: 'They aren’t here.' }],
-          effects: [{ create: 'photo', with: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` }, at: 'player' }],
+          effects: [
+            {
+              create: 'photo',
+              with: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` },
+              effects: [{ receive: '$', to: 'player' }],
+            },
+          ],
         })),
         {
           id: 'post',
           label: 'Post your latest photo',
           cost: { stats: { energy: 5 } },
           blocked: [
-            { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
+            { when: { not: { count: { of: 'photo', where: { owned: '$', of: 'player' } } } }, reason: 'Take a photo first.' },
             { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
           ],
           effects: [{ 'game/postLatest': true }, { kv: 'postedToday', to: true }],
@@ -70,10 +76,10 @@ const apps: AppDef[] = [
   // The people you've met who can be called, each with a Call button.
   { id: 'contacts', name: 'Contacts', icon: 'contacts', on: 'phone', sections: [{ contacts: true }] },
   // The photos you hold, newest first.
-  { id: 'gallery', name: 'Gallery', icon: 'gallery', on: 'phone', sections: [{ things: { of: 'photo' } }] },
+  { id: 'gallery', name: 'Gallery', icon: 'gallery', on: 'phone', sections: [{ things: { of: 'photo', where: { owned: '$' } } }] },
   camera,
   // The notes you keep, such as Sam's welcome note.
-  { id: 'notes', name: 'Notes', icon: 'notes', on: 'phone', sections: [{ things: { of: 'note' } }] },
+  { id: 'notes', name: 'Notes', icon: 'notes', on: 'phone', sections: [{ things: { of: 'note', where: { owned: '$' } } }] },
 ]
 
 export const phone: Content = {

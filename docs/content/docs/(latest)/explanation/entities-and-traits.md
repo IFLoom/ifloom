@@ -1,30 +1,37 @@
 ---
 title: "Entities, things and traits"
-description: "The engine keeps one list of entities, each of a kind, carrying traits and holding others, so plugins share them without knowing each other."
+description: "The engine keeps one list of entities, each of a kind and carrying traits, which plugins share, and leaves who has what to variables or plugins."
 ---
-The engine keeps the people, places and things of a game's world in one list of entities, so plugins can share them without knowing each other. Each is of a kind, carries data called traits, and can hold others. The places plugin, the cast, the shop, the wardrobe and the inventory all work on that one list.
+The engine keeps the people, places and things of a game's world in one list of entities, so plugins can share them without knowing each other. Each is of a kind and carries data called traits. The places plugin, the cast, the shop, the wardrobe and the inventory all work on that one list. Who has what isn't the engine's: a game keeps it in plain variables, or a plugin keeps it.
 
 ## Kinds and entities
 
 An [entity](/docs/reference/glossary#entity) is one of several things of the same [kind](/docs/reference/glossary#kind), such as a member of staff, a dish, a person or a sandwich. The game declares its kinds in `kinds` and the entities there are at the start in `entities`. Content names one by its kind and id, `'staff:ana'`. A stat declared with `of: 'staff'` is kept on every member of staff rather than on the player, so the café's cook has her own skill, morale and wage.
 
-Reach for an entity when the game has several of something, each with its own name and numbers, or when the player can hold it. A single number the player watches, such as their coins, is a stat. A single fact the story remembers, such as whether a door has been opened, is a kv key.
+Reach for an entity when the game has several of something, each with its own name and numbers, or when a plugin keeps it for the player, as the inventory does. A single number the player watches, such as their coins, is a stat. A single fact the story remembers, such as whether a door has been opened, is a kv key.
 
 ## Definitions stay in content
 
 Content declares each entity's name, description, picture, tags, traits and starting stats. The save keeps only what play has changed. A new game's state holds nothing about Ana until her morale moves, and then it holds the new morale and nothing else.
 
-The engine could have copied each entity into the save at the start, which would be simpler to read. It doesn't, for two reasons. An update that fixes a name or a description reaches every old save, because the save never had a copy. And a save stays small whatever the size of the world. The rule is the same for holdings: a thing's `at` in content says who holds it at the start, and the save records a count only once play changes it.
+The engine could have copied each entity into the save at the start, which would be simpler to read. It doesn't, for two reasons. An update that fixes a name or a description reaches every old save, because the save never had a copy. And a save stays small whatever the size of the world. The first-party plugins that keep things follow the same rule: a thing's `inventory/at` trait says who holds it at the start, and the save records a count only once play changes it.
 
 Entities made in play follow the same idea. A cake made with `create` and `like: 'food:cake'` reads whatever it isn't given from the cake in content, so the save keeps a reference and the few stats of its own, such as how fresh it is.
 
-## Things and holders
+## Who has what
 
-A [thing](/docs/reference/glossary#thing) is an entity the player can hold, such as a sandwich, a note or a photo. The engine has no separate list of things. Anything holdable is an entity, so a thing has a name, a picture, stats and traits like anything else.
+A [thing](/docs/reference/glossary#thing) is an entity the player can have, such as a sandwich, a note or a photo. The engine has no separate list of things, so a thing has a name, a picture, stats and traits like anything else. But the engine doesn't keep who has it.
 
-A [holder](/docs/reference/glossary#holder) is who has things: the player, or a unique entity. A kind is `unique` when each of its entities is one particular thing that can hold others, such as a person, a location or a gift box. Ava can hold a scarf, and the café can hold a lost glove. A kind that isn't unique stacks instead, so six apples are a count of six, not six entities. Nothing holds itself, however far round: a box can't go into the scarf it holds.
+That's deliberate. Games keep things in very different ways. In a Twine game, buying a coffee machine just sets a variable, and a scene says so when the variable is set. One game sends a bought shirt straight to the wardrobe and keeps the inventory for food. Another makes the player carry it home and hang it up. Another has no inventory at all. If the engine kept one record of who holds what, every game would be built around carrying, and the shop, the wardrobe and the floor of a room would all be kinds of carrying.
 
-`'you'` is a holder too. It means whoever the player is playing now. A game with one protagonist never changes it, so `'you'` is the player. A game with two siblings taking turns switches it with the `you` effect, and then `'you'` holds what the sibling being played holds, while `'player'` keeps what the household shares.
+So there are two ways, and a game can mix them:
+
+- **Plain variables.** A [kv key](/docs/reference/glossary#kv) such as `hasKey` or `coffees`, set by an effect and read by a condition or a scene, as SugarCube's `$inventory` is. Nothing else is needed. [Hand-roll an inventory with variables](/docs/how-to/hand-roll-an-inventory) shows it.
+- **A plugin that keeps things.** The inventory, the wardrobe or a plugin of the game's own keeps its own collection in its own state, with the rules that go with it: a unique thing in one place, a coat worn only once owned. Each one is a [receiver](/docs/reference/glossary#receiver).
+
+Content talks to the plugins without naming them. [`{ receive: 'clothing:shirt' }`](/docs/reference/effects#receive) means someone got the shirt, and the first receiver in the game's order that claims it takes it, so the same content works with a wardrobe, with an inventory, or with both. [`{ owned: 'clothing:shirt' }`](/docs/reference/conditions#owned) asks whether they have it, however many plugins keep it. In a game with no receiver, both do nothing, and the checker says so. The engine only passes the call on and keeps nothing, which is why it can sit in the core without making any one style the engine's.
+
+`'you'` is whoever the player is playing now. A game with one protagonist never changes it, so `'you'` is the player. A game with two siblings taking turns switches it with the `you` effect. The first-party receivers then give things to the sibling being played, while `'player'` keeps what the household shares.
 
 ## Traits give entities meaning
 
@@ -34,7 +41,7 @@ A [trait](/docs/reference/glossary#trait) is a named piece of data an entity car
 - **`cast/person`** makes an entity a character, with a schedule and a way to talk to them.
 - **`shop/vendor` and `shop/sellable`** make one entity sell things and give another a price.
 - **`wardrobe/wearable`** names the slot a thing goes in.
-- **`inventory/usable`** gives a thing a use button.
+- **`inventory/usable`** gives a thing a use button, and **`inventory/at`** says who carries it at the start.
 
 So a scarf that lies in the park, can be worn and is worth 8 coins at the market stall is one entity with two traits, `wardrobe/wearable` and `shop/sellable`. The wardrobe reads one, the shop reads the other, and neither plugin knows the other exists. Take the shop out of the game and its trait stays on the scarf and does nothing.
 
@@ -46,7 +53,7 @@ A kind can give its entities a default trait, an entity can carry its own, and c
 
 The places the player walks between, the people they meet and the stalls they buy from are entities too. Each plugin brings a kind for its entities (`location`, `character`, `vendor`) and a helper that writes one, such as `places.location({ ... })` or `cast.person({ ... })`. The helper puts the entity's own fields, its name, `description` and `image`, on the entity, and the rest in the trait.
 
-Making them entities pays off in several places. A relationship is a stat the game declares on the kind `character`, so each person keeps their own friendship. A mod changes a location the way it changes a sandwich, by replacing the entity or adding a `traits` row. A location is unique, so things lie at it and the player can pick them up. And any entity can carry any trait, so a person can keep a stall: give `shop.vendor()` an `of: 'character'` and Ava sells pastries.
+Making them entities pays off in several places. A relationship is a stat the game declares on the kind `character`, so each person keeps their own friendship. A mod changes a location the way it changes a sandwich, by replacing the entity or adding a `traits` row. A location is unique, so the places plugin keeps the things lying at it, and the player can pick them up. And any entity can carry any trait, so a person can keep a stall: give `shop.vendor()` an `of: 'character'` and Ava sells pastries.
 
 ## The engine decides what the view lists
 
@@ -64,4 +71,4 @@ A game keeps three other kinds of value, and each has a different job:
 
 The engine also remembers every choice the player made, so `{ chose: 'ch1.mat#open' }` asks about an earlier choice with no kv key to set. A value the player never sees as a number, such as how many excuses they've made, goes in the kv store. A number shown on screen is a stat.
 
-For the details, see [Entities](/docs/reference/entities), [Stats](/docs/reference/stats), [Storylines](/docs/reference/storylines) and [Game state](/docs/reference/state#kv). [Give the player things to hold and use](/docs/how-to/give-the-player-things), [Add a location](/docs/how-to/add-a-location) and [Add a character with a schedule](/docs/how-to/add-a-character) are the tasks.
+For the details, see [Entities](/docs/reference/entities), [Stats](/docs/reference/stats), [Storylines](/docs/reference/storylines) and [Game state](/docs/reference/state#kv). [Hand-roll an inventory with variables](/docs/how-to/hand-roll-an-inventory), [Give the player things to hold and use](/docs/how-to/give-the-player-things), [Add a location](/docs/how-to/add-a-location) and [Add a character with a schedule](/docs/how-to/add-a-character) are the tasks.

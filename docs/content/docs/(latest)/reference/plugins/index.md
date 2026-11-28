@@ -42,9 +42,9 @@ A plugin works with another only when the game has both, and names it in its [`c
 | Cast | Asks places where the player is, and its schedules read the calendar's conditions. Without places, nobody is ever here. |
 | Shop | Keeps a vendor's opening hours with the calendar and stands a vendor at a location with places. |
 | Jobs | Puts shifts on the calendar's weekdays and periods, takes its time, and sets each workplace with places. |
-| Inventory | Asks places for the holder a dropped thing goes to, `places/holder`. Without an answer, a dropped thing is gone. |
+| Inventory | Runs `places/put` for a dropped thing, so it lies where the player is. Without places, a dropped thing is gone. |
 | Cheats | Names `unlocks/has` in a supporter-only cheat's `blocked`. Without unlocks the condition is false, so the cheat stays refused. |
 | Debug | Sets the calendar's clock with `debug/time` and moves the player with `debug/go`. |
 | Messages, feed and devices | Show the cast's names and faces, and a device's contacts section lists the characters the player can call. A device's app can show a messages channel or a feed by name. |
 
-The shop, the wardrobe and the inventory don't cooperate. Each reads what the player holds from the engine and its own trait on each thing, so one scarf can carry the shop's `shop/sellable` and the wardrobe's `wardrobe/wearable` at once.
+The shop, the wardrobe and the inventory never name each other to hand a thing over. The shop gives a bought thing with [`receive`](/docs/reference/effects#receive), and the wardrobe and the inventory are receivers, each keeping its own things and asked in the game's [`receivers`](/docs/reference/content#gamebase) order. One scarf can carry a shop good's entry and the wardrobe's `wardrobe/wearable` at once.

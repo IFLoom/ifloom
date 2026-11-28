@@ -82,7 +82,7 @@ One entry of an app's `sections`, told apart by its key. Its forms are in [`Sect
 |---|---|
 | `blocks` | Words, written as a scene's [body](/docs/reference/glossary#body) is, with tokens and `when`s, so a [value](/docs/reference/custom#values) of the game's own can print a balance. |
 | `actions` | [`ActionDef`](/docs/reference/actions#actiondef)s, rendered as a location's are, each with its price and the reason it's refused. One whose `when` fails, or that a `hide` entry refuses, is left out. One with a cost or effects runs as `{ type: 'action', id: 'devices/<id>' }`, so its id must be unique among every app's actions. |
-| `things` | The things of the kind `of` that a [holder](/docs/reference/glossary#holder) holds, newest first. `at` is `'you'` if left out. Each entry has the thing's reference, name, description and picture, and no buttons. |
+| `things` | The things of the kind `of`, newest first, narrowed by `where`, a condition with `'$'` as each, such as `{ owned: '$' }` for the ones the player has. Every one of the kind if `where` is left out. Each entry has the thing's reference, name, description and picture, and no buttons. |
 | `contacts` | The people the cast's `cast/contacts` [query](/docs/reference/plugins/cast#queries) answers, the characters the player has met who can be called. Each entry has the person's name, description and portrait, and a Call button that sends the cast's [`cast/call`](/docs/reference/plugins/cast#castcall). It's empty in a game without the cast. |
 | `plugin` | Another plugin's view, named by its id, for a UI to render with that plugin's own components. `with` names the part, such as `{ channel: 'texts' }` for messages or `{ feed: 'social' }` for a feed. |
 | `panel` | A [panel](/docs/reference/panels) a UI renders by name, with the values in `with`, as one the `panel` effect opens. |
@@ -105,7 +105,7 @@ export const camera: AppDef = {
           id: 'photo-ava',
           label: 'Photograph Ava',
           blocked: [{ when: { not: cast.here('ava') }, reason: 'They aren’t here.' }],
-          effects: [{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }],
+          effects: [{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, effects: [{ receive: '$', to: 'player' }] }],
         },
       ],
     },
@@ -329,7 +329,7 @@ When the game loads, the plugin checks each app. An app's problems are pinned on
 | `no prose for "bank.balance"` | A `blocks` section has a prose block with no prose. |
 | `action shop: unknown character "ghost"` | An action's `when`, `blocked` or `command` names something the game doesn't have, checked as the game's own actions are. |
 
-The app's `when`, its `blocked` entries and a dot badge are checked as any condition is, such as `unknown storyline "bank"`. A `things` section's `at` must name a holder that can hold things, and a `panel` section's `with` must be one the plugin that renders that panel accepts, such as the shop's vendor. A `devices/open` condition that takes both an app and a device, or neither, gives `"devices/open" takes an app or a device, one of them`.
+The app's `when`, its `blocked` entries and a dot badge are checked as any condition is, such as `unknown storyline "bank"`. A `things` section's `of` must name a kind the game has, its `where` is checked as any condition is with `'$'` as one of the kind, and a `panel` section's `with` must be one the plugin that renders that panel accepts, such as the shop's vendor. A `devices/open` condition that takes both an app and a device, or neither, gives `"devices/open" takes an app or a device, one of them`.
 
 ## Strings
 

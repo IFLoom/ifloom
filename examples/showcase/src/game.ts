@@ -102,12 +102,14 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
         jobs(),
         generators(),
         wardrobe(),
-        // Using, dropping and giving away what you hold: the sandwich, the paper.
+        // What you carry, used, dropped and given away: the sandwich, the paper, the shell.
         inventory(),
         // Cheats and supporter codes, for players: one code opens a cheat and a scene. The debugger below is for the developer.
         unlocks(),
         ...(withDebug ? [debug()] : []),
       ],
+      // Clothes go straight to the wardrobe when you get one; the rest, food, the paper and keepsakes, to the inventory.
+      receivers: ['wardrobe', 'inventory'],
       rules,
     },
     // Packs go over the content: what the player's codes opened, then their mods.

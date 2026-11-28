@@ -34,7 +34,7 @@ A layout is a component that renders the page from the regions and parts below. 
 
 `DefaultLayout` is the React UI's own layout, which a `GameShell` with no `layout` renders and the `react` and `next` templates copy into `src/layout.tsx`. Its signature is in [`DefaultLayout`](/docs/api/react#defaultlayout). It renders these regions:
 
-- **A [`Sidebar`](#sidebar)** with the [`Title`](#title), the [`Clock`](#clock), the [`GameMenu`](#gamemenu), a folding `stats` [section](#section) with the [`StatList`](#statlist), and a folding `inventory` section with the [`Inventory`](#inventory). The plugin UIs' parts for the `stats` and `sidebar` spots follow.
+- **A [`Sidebar`](#sidebar)** with the [`Title`](#title), the [`Clock`](#clock), the [`GameMenu`](#gamemenu), and a folding `stats` [section](#section) with the [`StatList`](#statlist). The plugin UIs' parts for the `stats` and `sidebar` spots follow, such as the [inventory plugin](/docs/reference/plugins/inventory#react-ui)'s card. The engine keeps no inventory, so the React UI has none of its own.
 - **A [`Story`](#story)** with the [`Scene`](#scene) and the [`InputFields`](#inputfields), then the plugin UIs' `room` parts, the [`RoomActions`](#roomactions), and the plugin UIs' `story` parts.
 - **A [`PanelHost`](#panelhost)**, and **an [`Overlay`](#overlay)** with the [`Notices`](#notices).
 
@@ -94,7 +94,7 @@ import { places } from '@ifloom/plugin-places'
 </Section>
 ```
 
-A card inside a section has a title of its own, so pass `title={false}` to [`Inventory`](#inventory), [`WardrobeCard`](/docs/reference/plugins/wardrobe#wardrobecard) and the rest, or the heading shows twice.
+A card inside a section has a title of its own, so pass `title={false}` to the inventory plugin's [`InventoryCard`](/docs/reference/plugins/inventory#inventorycard), [`WardrobeCard`](/docs/reference/plugins/wardrobe#wardrobecard) and the rest, or the heading shows twice.
 
 Parts: `section` (with `data-section`, `data-open` when it folds and `data-dialog` when it opens a dialog), `section-title`, `section-toggle`, `section-body` and `section-badge`.
 
@@ -221,7 +221,7 @@ The keys never fire while the player types in a field, holds Ctrl, Alt, Meta or 
 
 Each replacement renders everywhere the UI renders that component, with the same props plus `Default`, the built-in one. These are the names:
 
-- **Layout**: `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `Inventory`, `EntityTable` and `Icon`.
+- **Layout**: `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `EntityTable` and `Icon`.
 - **Scene**: `Scene`, `Beat`, `SceneHeader`, `BeatGroup`, `Fold`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot` and `MediaViewer`.
 - **Around the story**: `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `Changes`, `ChangeItem` and `PanelHost`.
 - **Menu and pages**: `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
@@ -653,14 +653,6 @@ import { EntityTable } from '@ifloom/react'
 ```
 
 Parts: `entities` (with `data-kind`), `entity-heading`, `entity-table`, `entity-columns`, `entity-column`, `entity-row` (with `data-entity`), `entity-name`, `entity-image`, `entity-desc` and `entity-value`.
-
-### Inventory
-
-`Inventory` renders the things you hold, from [`view.held`](/docs/reference/view#heldview), each with its name, `×n` (`ui.heldCount`) and description. Its props are in [`InventoryProps`](/docs/api/react#inventoryprops).
-
-The heading is `title`, else `ui.inventory`, and `false` leaves it out. It renders nothing while you hold nothing. The inventory plugin's UI renders its [`InventoryCard`](/docs/reference/plugins/inventory#inventorycard) in its place with the same props, adding use buttons and, with `drop`, a **Drop** button. This one ignores `drop`.
-
-Parts: `inventory`, `inventory-title`, `thing` (with `data-thing` and `data-at`), `thing-name`, `thing-count` and `thing-text`.
 
 ## Inputs
 
@@ -1108,10 +1100,9 @@ The built-in panels are the ones [`PanelHost`](#panelhost) renders by name for w
 
 | Name | Meaning |
 |---|---|
-| `inventory` | The [`Inventory`](#inventory) without its heading, or the inventory plugin's [`InventoryCard`](/docs/reference/plugins/inventory#inventorycard) when the game lists its UI. |
 | `stats` | The [`StatList`](#statlist). |
 
-The first-party plugins' panels are on their pages: `shop`, `jobs`, `wardrobe`, `quests`, `people`, `achievements` and `statuses`.
+The first-party plugins' panels are on their pages: `inventory`, `shop`, `jobs`, `wardrobe`, `quests`, `people`, `achievements` and `statuses`.
 
 ### PartDialog
 

@@ -61,13 +61,13 @@ Sets a key in the [kv store](/docs/reference/glossary#kv) to `true`, `false`, a 
 
 ### debug/held
 
-Sets how many of a [thing](/docs/reference/glossary#thing) a [holder](/docs/reference/glossary#holder) holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. A count below 0 counts as 0, and a unique thing is taken from whoever held it.
+Sets how many of a [thing](/docs/reference/glossary#thing) someone owns, whoever is played if `at` is left out. It reads the total across the game's [receivers](/docs/reference/glossary#receiver) (as [`owned`](/docs/reference/conditions#owned) does), then gives the difference with [`receive`](/docs/reference/effects#receive) or takes it back with [`release`](/docs/reference/effects#release), so the change goes through the game's own path. A count below 0 counts as 0.
 
 ```ts fragment
 { 'debug/held': { entity: 'item:sandwich', to: 2 } } // debug.held('item:sandwich', 2)
 ```
 
-The plugin refuses it with `There is nobody and nothing called item:pie.` for a thing the game doesn't have, with `vendor:kiosk can’t hold things.` (`debug/cantHold`) for an `at` that can't hold, and with `That needs a number.` for a `to` that isn't a finite number.
+The plugin refuses it with `There is nobody and nothing called item:pie.` for a thing the game doesn't have, with `No plugin of this game keeps things.` (`debug/noReceivers`) in a game with no receiver, and with `That needs a number.` for a `to` that isn't a finite number.
 
 ### debug/scene
 
@@ -116,7 +116,7 @@ The plugin refuses it with `This game has no places.` (`debug/noPlaces`) in a ga
 
 The debug readout, in `view.plugins.debug`. Every field is in [`DebugView`](/docs/api/plugin-debug#debugview).
 
-`locks` lists every lock whose `when` holds now, in the order the game declares them, with its reason and what it denies. A lock with `effect` is listed while its `when` holds, even when it stops no command. `fired` is a copy of [`state.fired`](/docs/reference/state#fired), each trigger mapped to the turn it last fired on. `seed` is the save's [seed](/docs/reference/random), which every draw is hashed from.
+`locks` lists every lock whose `when` holds now, in the order the game declares them, with its reason and what it denies. A lock with `effect` is listed while its `when` holds, even when it stops no command. `fired` is a copy of [`state.fired`](/docs/reference/state#fired), each trigger mapped to the turn it last fired on. `seed` is the save's [seed](/docs/reference/random), which every draw is hashed from. `receivers` lists the ids of the game's receivers in the order `receive` asks them, and the React card shows its **Held** form only when it isn't empty.
 
 [Render a debug readout](/docs/how-to/render/player-tools#render-a-debug-readout) renders this view in Plain JS, React and Vue.
 
@@ -208,7 +208,7 @@ A game rewords these by their full key in its [strings](/docs/reference/strings#
 | `debug/noSuchStat` | `There is no stat called {id}.` |
 | `debug/noSuchEntity` | `There is nobody and nothing called {id}.` |
 | `debug/notTheirs` | `That is not whose {id} it is.` |
-| `debug/cantHold` | `{id} can’t hold things.` |
+| `debug/noReceivers` | `No plugin of this game keeps things.` |
 | `debug/noSuchPlace` | `There is no location called {id}.` |
 | `debug/noPlaces` | `This game has no places.` |
 | `debug/noSuchScene` | `There is no scene called {id}.` |

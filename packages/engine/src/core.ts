@@ -19,6 +19,7 @@ import { actionOf } from './action.ts'
 import { defaultRuntime, renderScene } from './scene.ts'
 import { fillTokens } from './prose.ts'
 import { amountOf } from './amount.ts'
+import { ownedCount, receiversOf, receiveThing, releaseThing } from './receivers.ts'
 import {
   missingCall,
   pluginAudio,
@@ -61,6 +62,10 @@ export function featureContext(): FeatureContext {
     sceneOf,
     actionOf: (state, game, id) => actionOf(state, game, id),
     renderScene: (state, game, scene) => renderScene(scene, state, defaultRuntime(game)),
+    receivers: (game) => receiversOf(game).map((plugin) => plugin.id),
+    receive: receiveThing,
+    release: releaseThing,
+    owned: ownedCount,
   })
 }
 

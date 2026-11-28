@@ -1,15 +1,17 @@
 ---
 title: "Entities"
-description: "Kinds, entities, holders and traits, and the functions that read an entity, its traits and what each holder holds."
+description: "Kinds, entities, traits and receivers, and the functions that read an entity, its traits and what someone owns."
 ---
-An entity is one of a kind of thing a game keeps, such as a member of staff, a dish, a person or a sandwich, and a kind names the sort (`staff`, `dish`, `character`). Your content declares the kinds in `kinds` and the entities there are at the start in `entities`, and the save keeps only what play changes. [Entities, things and traits](/docs/explanation/entities-and-traits) explains kinds, holders and traits, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) adds things to a game.
+An entity is one of a kind of thing a game keeps, such as a member of staff, a dish, a person or a sandwich, and a kind names the sort (`staff`, `dish`, `character`). Your content declares the kinds in `kinds` and the entities there are at the start in `entities`, and the save keeps only what play changes. [Entities, things and traits](/docs/explanation/entities-and-traits) explains kinds, traits and receivers, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) adds things to a game.
+
+The engine keeps no record of who has what. A plugin that keeps things, such as the [inventory](/docs/reference/plugins/inventory) or the [wardrobe](/docs/reference/plugins/wardrobe), is a [receiver](#receivers), and content gives and takes things through it with [`receive`](/docs/reference/effects#receive), [`release`](/docs/reference/effects#release) and [`owned`](/docs/reference/conditions#owned). A game with no such plugin keeps what the player has in [kv keys](/docs/how-to/hand-roll-an-inventory), as a Twine game does.
 
 In the showcase: `examples/showcase/src/world/things.ts`, which declares clothing as a unique kind and food and the newspaper as kinds that stack.
 
 ```ts
-import { PLAYER, YOU, canHold, declaredTrait, declaredWithTrait, entitiesOf, entityDescription, entityImage, entityKv, entityName, entityOf, entityTags, give, heldBy, heldCount, holderOf, holding, isUnique, move, parseRef, protagonist, resolveHolder, take, traitOf, withTrait, writeEntity } from '@ifloom/engine'
-import type { EntityDef, EntityState, Holder, KindDef, Placement, Select, TraitData, TraitRegistry, TraitSource, TraitTable } from '@ifloom/engine'
-import { anyOf, bindCurrent, setTraitState, traitState } from '@ifloom/engine/plugin'
+import { PLAYER, YOU, declaredTrait, declaredWithTrait, entitiesOf, entityDescription, entityImage, entityKv, entityName, entityOf, entityTags, isUnique, ownedCount, parseRef, protagonist, receiversOf, receiveThing, releaseThing, resolveYou, traitOf, withTrait, writeEntity } from '@ifloom/engine'
+import type { EntityDef, EntityState, KindDef, Played, Select, Someone, TraitData, TraitRegistry, TraitSource, TraitTable } from '@ifloom/engine'
+import { anyOf, bindCurrent, everyEntity, hasEntity, setTraitState, traitState } from '@ifloom/engine/plugin'
 ```
 
 ## KindDef
@@ -32,7 +34,7 @@ export const kinds: KindDef[] = [
 
 ### unique
 
-`true` when each entity of the kind is one particular thing, such as a person, a location or a scarf, rather than a sort of thing, such as an apple. Only a unique entity holds things, and a unique thing is held by one holder at a time, with a count of 0 or 1. Things of a kind that isn't unique stack, so the player holds 3 of `'food:apple'`. It's `false` if left out, and the view passes it on as `unique`.
+`true` when each entity of the kind is one particular thing, such as a person, a location or a scarf, rather than a sort of thing, such as an apple. Only a unique entity can be [someone](#someone-and-played): a protagonist the player plays, or who a `receive` gives a thing to. The inventory keeps a unique thing with one holder at a time, with a count of 0 or 1, while things of a kind that isn't unique stack, so the player has 3 of `'food:apple'`. It's `false` if left out, and the view passes it on as `unique`.
 
 ### listed
 
@@ -50,7 +52,7 @@ One entity the game declares in `entities`, there from the start of the game unt
 
 The entity's `id` is unique within its kind, and content names it `'<kind>:<id>'`, an [entity reference](/docs/reference/common#entityref). An id can't be a whole number, because the engine keeps entities in order and JavaScript puts keys that look like whole numbers first. An entity [created](/docs/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/docs/reference/state#created) and never given twice.
 
-`name` and `description` are words in place, with [prose tokens](/docs/reference/prose#tokens) filled each time they're read, so `'{{partnerName}}'` shows the name the player typed. `image` goes through [`artSrc`](/docs/reference/prose#artsrc). `stats` are starting values for stats declared `of` its kind, and `kv` is its own [kv store](/docs/reference/glossary#kv) at the start. `at` says who holds it at the start, a [`Placement`](#holder-and-placement). `visible` is a condition asked with `'$'` as the entity, which narrows its kind's [`listed`](#listed).
+`name` and `description` are words in place, with [prose tokens](/docs/reference/prose#tokens) filled each time they're read, so `'{{partnerName}}'` shows the name the player typed. `image` goes through [`artSrc`](/docs/reference/prose#artsrc). `stats` are starting values for stats declared `of` its kind, and `kv` is its own [kv store](/docs/reference/glossary#kv) at the start. Who has it at the start is a plugin's trait, such as the inventory's `inventory/at`. `visible` is a condition asked with `'$'` as the entity, which narrows its kind's [`listed`](#listed).
 
 Entities merge by kind and id, in the order your content lists them, and a pack's entity replaces one with the same kind and id whole. A [plugin](/docs/reference/plugin-views)'s `entities` adds more once the content and packs are merged, after the game's own, and the game's wins over a plugin's with the same kind and id. Only [`loadGame`](/docs/reference/content#loadgame) asks plugins for entities.
 
@@ -60,7 +62,7 @@ import type { EntityDef } from '@ifloom/engine'
 export const staff: EntityDef[] = [
   { id: 'ana', of: 'staff', name: 'Ana', description: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } },
   { id: 'ben', of: 'staff', name: 'Ben', visible: { kv: 'benStarted' } },
-  { id: 'apple', of: 'food', name: 'Apple', at: { player: 2, 'location:larder': 6 } },
+  { id: 'apple', of: 'food', name: 'Apple', traits: { 'inventory/at': { player: 2, 'location:larder': 6 } } },
 ]
 ```
 
@@ -81,53 +83,71 @@ The functions on this page read each value in this order:
 A thing made with `create` and `like`, such as a cake that goes stale, reads whatever it wasn't given from the entity it was made like. A copy reads the pattern as it reads now, so copies that never set a stat of their own follow the pattern's.
 
 ```ts fragment
-{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
+{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, effects: [{ receive: '$' }] }
 ```
 
-## `Holder` and `Placement`
+## `Someone` and `Played`
 
-A holder is who has things, and a placement says where a thing starts or is put. Every form is in [`Holder`](/docs/api/engine#holder) and [`Placement`](/docs/api/engine#placement).
+Someone is a person content names: who a `receive` gives a thing to, who a `release` takes it from, whose things `owned` counts, and whom the player plays. Every form is in [`Someone`](/docs/api/engine#someone) and [`Played`](/docs/api/engine#played).
 
-A holder is one of three:
+Someone is one of three:
 
 - **`'player'`** is the person playing the game, whoever they're playing.
-- **A unique entity**, such as `'character:ava'` or `'location:larder'`, holds things while it's in the game.
+- **A unique entity**, such as `'character:ava'`, while it's in the game.
 - **`'you'`** is whoever the player is playing now, `'player'` until a [`you`](/docs/reference/effects#you) effect chooses a protagonist.
 
-A placement is one holder for one of the thing, or a record of how many each holder has, such as `{ player: 2, 'location:larder': 6 }`. A unique thing starts with one holder. Nothing holds itself, however far round, so the gift box can't go into the scarf it holds.
+`Played` is whom the player plays, a protagonist or `'player'`, never `'you'`. The content checker reports a name that can't be someone ([Someone](/docs/reference/checks#someone)).
 
-A new game's [`state.held`](/docs/reference/state#held) is empty, and holdings read from each entity's `at` until play changes them. Once an effect writes a count, the save keeps it, 0 included. A thing that was used up stays used up, while a thing an update places for the first time reaches every save that never touched it. Removing a holder with `remove` hands what it held to whoever held it. When nobody held it, the things it held stay in the game, held by nobody.
+### PLAYER and YOU
+
+The two reserved names, `'player'` and `'you'`, as constants for code. Every value is in [`PLAYER`](/docs/api/engine#player) and [`YOU`](/docs/api/engine#you).
+
+A game where the player plays more than one person, such as two siblings taking turns, sets [`state.you`](/docs/reference/state#you) with `{ you: 'character:sam' }` and clears it with `{ you: null }`. While Sam is played, `'you'` is Sam, and `of: 'you'` in a `stat`, `level` or `kv` condition or effect is Sam. A receiver gives a thing to the protagonist being played when content leaves out `to`. Declare the stats that belong to a body, such as energy, `of` the protagonists' kind and read them `of: 'you'`. `'player'` stays the player, for the money the household shares. A game with one protagonist never runs a `you` effect, so `'you'` and `of: 'you'` mean the player.
+
+## Receivers
+
+A receiver is a plugin that keeps things, as the [`receive`](/docs/reference/effects#receive) and [`release`](/docs/reference/effects#release) effects and the [`owned`](/docs/reference/conditions#owned) condition ask it. The engine keeps nothing itself: it hands each call to the game's receivers. Every field a plugin gives is in [`Receiver`](/docs/reference/plugin-api#receiver).
+
+- **`receive`** goes to the first receiver that claims the thing, in the order of the game's [`receivers`](/docs/reference/content#gamebase), else of its `plugins`. `via` names one receiver and skips the rest, whether it claims the thing or not. When none claims it, nothing happens beyond the content's own effects.
+- **`release`** asks the receivers in the same order until the count is taken, and never takes more than there is.
+- **`owned`** is the total across every receiver, so content asks "do they have it" once, whichever plugin keeps the thing.
+
+`to`, `from` and `of` name [someone](#someone-and-played). The engine passes them on without reading them, and each receiver chooses its own default when content leaves one out: the first-party ones use the protagonist being played, else the player. A game with no receiver can still use the effects, but they do nothing, and the checker reports them so a writer who expected an inventory isn't left guessing.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
-export const house: Content = {
-  kinds: [{ id: 'gift', label: 'Gift', unique: true }, { id: 'food', label: 'Food' }],
+export const errand: Content = {
+  kinds: [{ id: 'food', label: 'Food' }, { id: 'clothing', label: 'Clothing' }],
   entities: [
-    { id: 'scarf', of: 'gift', name: 'A red scarf', at: 'player' },
-    { id: 'box', of: 'gift', name: 'A gift box' },
-    { id: 'apple', of: 'food', name: 'Apple', at: 'player' },
+    { id: 'coffee', of: 'food', name: 'Coffee' },
+    { id: 'shirt', of: 'clothing', name: 'A shirt' },
+  ],
+  scenes: [
+    {
+      id: 'counter',
+      title: 'The counter',
+      body: [{ text: 'The barista slides a cup across.' }],
+      choices: [
+        { id: 'take', label: 'Take the coffee', effects: [{ receive: 'food:coffee' }] },
+        { id: 'drink', label: 'Drink it', when: { owned: 'food:coffee' }, effects: [{ release: 'food:coffee' }, { stat: 'energy', by: 10 }] },
+      ],
+    },
   ],
 }
 ```
 
-### PLAYER and YOU
-
-The two reserved holders, `'player'` and `'you'`, as constants for code. Every value is in [`PLAYER`](/docs/api/engine#player) and [`YOU`](/docs/api/engine#you).
-
-A game where the player plays more than one person, such as two siblings taking turns, sets [`state.you`](/docs/reference/state#you) with `{ you: 'character:sam' }` and clears it with `{ you: null }`. While Sam is played, `'you'` as a holder is Sam, and `of: 'you'` in a `stat`, `level` or `kv` condition or effect is Sam. Declare the stats that belong to a body, such as energy, `of` the protagonists' kind and read them `of: 'you'`. `'player'` stays the player, for the money the household shares. A game with one protagonist never runs a `you` effect, so `'you'` and `of: 'you'` mean the player.
-
 ## Select
 
-Which entities a `count` condition or an `each` effect looks at, narrowed by kind, holder, tag, trait and condition. Every field is in [`Select`](/docs/api/engine#select).
+Which entities a `count` condition or an `each` effect looks at, narrowed by kind, tag, trait and condition. Every field is in [`Select`](/docs/api/engine#select).
 
-Each field narrows the set. `at` takes what a holder holds, `tag` matches the kind's tags or the entity's own, and `where` is a condition asked with `'$'` as each entity. With no field, it's every entity in the game. The entities come in the game's order, declared ones as your content lists them, then those created in play. `count` counts distinct things unless it has `units: true`, which adds up how many of each a holder holds, so 2 apples and a scarf are 2 things and 3 units.
+Each field narrows the set. `tag` matches the kind's tags or the entity's own, and `where` is a condition asked with `'$'` as each entity, so `where: { owned: '$' }` picks the things someone has. With no field, it's every entity in the game. The entities come in the game's order, declared ones as your content lists them, then those created in play. `count` counts distinct things, so 2 apples and a scarf are 2 things. How many of each someone has is [`owned`](/docs/reference/conditions#owned), or a receiver's own value, such as `inventory/count`.
 
 `'$'` is the entity being looked at inside an `each` effect's `where` and `effects` and a `count` condition's `where`. The view binds it in the same way for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind. Anywhere else `'$'` names nothing, so an effect with it does nothing and a condition with it fails. A nested `each` or `count` binds its own `'$'`, and there is no way to name the outer one. [`bindCurrent`](#bindcurrent) lists the fields where the engine replaces it.
 
 ```ts fragment
-{ count: { at: 'you', tag: 'fruit' }, gte: 3 }
-{ count: { of: 'food', at: 'location:larder' }, units: true, lt: 4 }
+{ count: { tag: 'fruit', where: { owned: '$' } }, gte: 3 }
+{ count: { of: 'food', where: { owned: '$', of: 'character:ava' } }, lt: 4 }
 { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
 
@@ -170,11 +190,11 @@ With this content, `traitOf` reads the scarf's `laundry/washable` as `{ temp: 40
 
 ## State
 
-[`state.entities`](/docs/reference/state#entities) holds each changed entity's [`EntityState`](#entitystate), and [`state.held`](/docs/reference/state#held) the counts play has written, by holder. [`state.created`](/docs/reference/state#created) counts the entities made in play per kind, and [`state.you`](/docs/reference/state#you) is the protagonist. A declared entity is in the game whether or not the save has a record of it, so an entity an update or a mod adds is there the moment an old save loads. A `remove` on a declared entity records it in [`state.removed`](/docs/reference/state#removed), and it stays gone. A `create` that names a removed declared entity's id brings it back and takes it out of `removed`.
+[`state.entities`](/docs/reference/state#entities) holds each changed entity's [`EntityState`](#entitystate). Who has what is in each receiver's own state, under [`state.plugins`](/docs/reference/state#plugins). [`state.created`](/docs/reference/state#created) counts the entities made in play per kind, and [`state.you`](/docs/reference/state#you) is the protagonist. A declared entity is in the game whether or not the save has a record of it, so an entity an update or a mod adds is there the moment an old save loads. A `remove` on a declared entity records it in [`state.removed`](/docs/reference/state#removed), and it stays gone. A `create` that names a removed declared entity's id brings it back and takes it out of `removed`.
 
 ## View
 
-`view.held` lists what you hold, the protagonist's things and then the player's, each a [`HeldView`](/docs/api/engine#heldview) with its name, description, picture and count. `view.entities` lists each [listed](#listed) kind with its entities, as [`EntitiesView`](/docs/api/engine#entitiesview), each entity with the stats the player can see and its `flags`. A kind with `listed: false` still shows in `view.held` when you hold one of it, while an entity's `visible` hides it there too. To render them, see [Render what the player holds](/docs/how-to/render/stats-and-things#render-what-the-player-holds).
+`view.entities` lists each [listed](#listed) kind with its entities, as [`EntitiesView`](/docs/api/engine#entitiesview), each entity with the stats the player can see and its `flags`. What the player has is each receiver's own view, such as `view.plugins.inventory`, and a kind with `listed: false` still shows there. To render them, see [Render what the player holds](/docs/how-to/render/stats-and-things#render-what-the-player-holds).
 
 ## Functions
 
@@ -321,7 +341,7 @@ export const when = bindCurrent({ stat: 'morale', of: '$', gte: 75 }, anyOf('sta
 
 Returns a copy of a condition or of effects with every `'$'` set to an entity. Every parameter is in [`bindCurrent`](/docs/api/engine-plugin#bindcurrent).
 
-It replaces `'$'` where it's the value of an `of`, `entity`, `at` or `like` key, the target of a `remove`, `move` or `you` effect, or a `move`'s `from` or `to`, at any depth. It also replaces every `'$'` in a call's arguments and in what a `create` is made `with`, so `{ 'game/payBonus': { of: '$' } }` is called with `args.of` set to each entity in turn. A `'$'` under any other key, such as a kv condition's `is`, stays as it is. A nested `each`'s `effects` and a nested `count`'s `where` keep their own `'$'`, so pass what's inside an `each` or a `count`, not the `each` or `count` itself.
+It replaces `'$'` where it's the value of an `of`, `entity` or `like` key, the target of a `remove`, `you`, `receive`, `release` or `owned`, or a `receive`'s `to` or a `release`'s `from`, at any depth. It also replaces every `'$'` in a call's arguments and in what a `create` is made `with`, so `{ 'game/payBonus': { of: '$' } }` is called with `args.of` set to each entity in turn. A `'$'` under any other key, such as a kv condition's `is`, stays as it is. A nested `each`'s `effects`, a nested `count`'s `where` and a nested `create`'s `effects` keep their own `'$'`, so pass what's inside them, not the `each`, `count` or `create` itself.
 
 ```ts given
 import { holds } from '@ifloom/engine'
@@ -330,53 +350,30 @@ import { bindCurrent } from '@ifloom/engine/plugin'
 holds(state, game, bindCurrent({ stat: 'morale', of: '$', gte: 75 }, 'staff:ana'))
 ```
 
-### heldCount
+### everyEntity and hasEntity
 
-Returns how many of a thing a holder holds, `'you'` if the holder is left out. Every parameter is in [`heldCount`](/docs/api/engine#heldcount). It's 0 for a thing held elsewhere or not in the game, and for a holder that can't hold.
-
-```ts given
-import { heldCount } from '@ifloom/engine'
-
-heldCount(state, game, 'food:apple') // 2
-heldCount(state, game, 'food:apple', 'location:larder') // 6
-```
-
-### heldBy
-
-Returns everything a holder holds, `'you'` if left out, with how many of each, in the game's order of its entities. Every parameter is in [`heldBy`](/docs/api/engine#heldby). Things the holder has none of aren't listed.
-
-### holderOf
-
-Returns who holds a thing, or `undefined` when nobody does. Every parameter is in [`holderOf`](/docs/api/engine#holderof). A unique thing has one holder at most. The engine works out a reverse index once for each state and never saves it.
-
-### canHold
-
-Returns whether a holder can hold things now, `'player'` always and a unique entity while it's in the game. Every parameter is in [`canHold`](/docs/api/engine#canhold). It doesn't resolve `'you'`, so pass the holder through [`resolveHolder`](#protagonist-and-resolveholder) first.
+`everyEntity` returns every entity in the game, declared ones in content order and then those made in play. `hasEntity` returns whether one is in the game now. Every parameter is in [`everyEntity`](/docs/api/engine-plugin#everyentity) and [`hasEntity`](/docs/api/engine-plugin#hasentity). A plugin that keeps things asks them to forget things removed in play.
 
 ### isUnique
 
-Returns whether an entity's kind is [`unique`](#unique). Every parameter is in [`isUnique`](/docs/api/engine#isunique). A plugin asks it to treat a person or a coat differently from a stack of apples, as the [shop plugin](/docs/reference/plugins/shop) does when it sells a unique thing only from the vendor's stock.
+Returns whether an entity's kind is [`unique`](#unique). Every parameter is in [`isUnique`](/docs/api/engine#isunique). A plugin asks it to treat a person or a coat differently from a stack of apples, as the inventory does when it keeps a unique thing with one holder.
 
-### protagonist and resolveHolder
+### protagonist and resolveYou
 
-`protagonist` returns who is played now, [`state.you`](/docs/reference/state#you) or `'player'`. `resolveHolder` returns that for `'you'` and any other holder as it is. Every parameter is in [`protagonist`](/docs/api/engine#protagonist) and [`resolveHolder`](/docs/api/engine#resolveholder).
+`protagonist` returns who is played now, [`state.you`](/docs/reference/state#you) or `'player'`. `resolveYou` returns that for `'you'` and any other name as it is. Every parameter is in [`protagonist`](/docs/api/engine#protagonist) and [`resolveYou`](/docs/api/engine#resolveyou).
 
-### give, take, move and holding
+### receiveThing, releaseThing and ownedCount
 
-Return the holding effects and condition, written for you. Every parameter is in [`give`](/docs/api/engine#give), [`take`](/docs/api/engine#take), [`move`](/docs/api/engine#move) and [`holding`](/docs/api/engine#holding).
+Do what the [`receive`](/docs/reference/effects#receive) and [`release`](/docs/reference/effects#release) effects and the [`owned`](/docs/reference/conditions#owned) condition do, for code. `receiversOf` returns the game's receivers in the order `receive` asks them. Every parameter is in [`receiveThing`](/docs/api/engine#receivething), [`releaseThing`](/docs/api/engine#releasething), [`ownedCount`](/docs/api/engine#ownedcount) and [`receiversOf`](/docs/api/engine#receiversof).
 
-`give` and `take` change what `'you'` hold by `n`, 1 if left out. `move` writes a [`move`](/docs/reference/effects#move) effect, which moves a unique thing from wherever it is. `holding` asks whether you hold at least `n`. Giving a unique thing to a holder takes it from whoever had it.
+A plugin that moves things between receivers without naming them, such as the wardrobe putting a shirt away, calls these with `via`.
 
-```ts
-import { give, holding, move, take } from '@ifloom/engine'
+```ts given
+import { ownedCount, receiveThing, releaseThing } from '@ifloom/engine'
 
-export const examples = [
-  give('food:apple', 2), // { entity: 'food:apple', by: 2 }
-  take('food:apple'), // { entity: 'food:apple', by: -1 }
-  move('food:apple', 'location:larder', { by: 1 }),
-  move('gift:scarf', 'character:ava'),
-  holding('food:apple', 3), // { entity: 'food:apple', at: 'you', gte: 3 }
-]
+const more = receiveThing(state, game, 'food:apple', 2)
+const less = releaseThing(more, game, 'food:apple', 1)
+ownedCount(less, game, 'food:apple') // 1, with a receiver in the game
 ```
 
 ## Checks
@@ -388,14 +385,15 @@ The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/c
 | `an entity id must not be a whole number` | A declared entity's id is a whole number, such as `'7'`. |
 | A kind the game doesn't declare | An entity's `of`, a stat's `of`, a `count`, an `each` or a `create` names an undeclared kind. |
 | A stat on the wrong owner | An effect or condition names a stat with an `of` whose kind doesn't keep it. |
-| A holder that can't hold | An `at`, an `entity` effect or a `move` names a holder the checker can tell isn't the player, `'you'` or a unique entity ([Holders](/docs/reference/checks#checks)). |
+| Someone who can't be | A `receive`'s `to`, a `release`'s `from` or an `owned`'s `of` names someone the checker can tell isn't the player, `'you'` or a unique entity ([Someone](/docs/reference/checks#someone)). |
+| No receiver | A `receive`, `release` or `owned` in a game with no plugin that keeps things ([Receivers](/docs/reference/checks#receivers)). |
 | A trait's own problem | A plugin's trait reports its data on an entity ([Traits](/docs/reference/checks#traits)). |
 
 ## Caveats
 
-- An effect that can't happen does nothing. Giving to a holder that isn't there, or to an entity whose kind isn't unique, changes nothing, and a `move` moves at most what's there.
+- An effect that can't happen does nothing. A `receive` no receiver claims changes nothing, and a `release` takes at most what's there.
 - A moving `max` on a stat kept on entities is worked out against the whole state, so it is the same for every entity.
 - A declaration's or a `create`'s `stats` aren't held to the range until the next effect moves them.
 - An entity the game no longer declares stays in a save that has a record of it, after the declared ones, as if created in play.
 
-The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove), [`each`](/docs/reference/effects#each), [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change entities, and the [`entity`](/docs/reference/conditions#entity) and [`count`](/docs/reference/conditions#count) conditions ask about them.
+The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove) and [`each`](/docs/reference/effects#each) effects change entities, [`receive`](/docs/reference/effects#receive) and [`release`](/docs/reference/effects#release) hand them to receivers, and the [`entity`](/docs/reference/conditions#entity), [`count`](/docs/reference/conditions#count) and [`owned`](/docs/reference/conditions#owned) conditions ask about them.

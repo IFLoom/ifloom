@@ -9,7 +9,7 @@ Use this when something happens outside the story the player is reading, such as
 Add a trigger to your content's `triggers`, with the condition in `when` and the effects to run. A trigger fires once in the whole game unless it says otherwise:
 
 ```ts
-import { give, type Content } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
 export const movingDay: Content = {
@@ -19,13 +19,13 @@ export const movingDay: Content = {
     {
       id: 'welcome',
       when: places.at('high-street'),
-      effects: [{ notify: 'A note under your door', text: 'Welcome to the building! Bins go out Thursday.', tag: 'post' }, give('note:welcome')],
+      effects: [{ notify: 'A note under your door', text: 'Welcome to the building! Bins go out Thursday.', tag: 'post' }, { receive: 'note:welcome' }],
     },
   ],
 }
 ```
 
-The first command that leaves the player on the high street fires `welcome`. It raises the notice and gives the player the note to keep.
+The first command that leaves the player on the high street fires `welcome`. It raises the notice and gives the player the note to keep, through the game's [inventory](/docs/how-to/give-the-player-things).
 
 ## Tell the player with a notice
 

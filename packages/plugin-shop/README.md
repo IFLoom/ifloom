@@ -1,6 +1,6 @@
 # @ifloom/plugin-shop
 
-Shops for IFLoom: vendors that sell entities for any spendable stat, stock the vendor holds and restocks, selling back, and seeded daily discounts. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
+Shops for IFLoom: vendors that sell entities for any spendable stat, with stock that restocks, runs out once or never, selling back, seeded daily discounts and `onBuy` effects. A bought thing goes to the game's receivers through the engine's `receive`, or only sets flags. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
 
 ## Install
 

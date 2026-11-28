@@ -663,11 +663,6 @@ body {
   image-rendering: pixelated;
 }
 
-[data-part="thing-name"]::before {
-  content: "- ";
-  color: var(--muted-foreground);
-}
-
 [data-kit="label"] {
   text-transform: uppercase;
 }

@@ -28,7 +28,7 @@ Each change is an [effect](/docs/reference/effects), and a choice runs its list 
 { kv: 'visits', by: 1 }
 ```
 
-A number the player sees, earns or spends is a [stat](/docs/reference/stats), declared with a range, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the kv store, keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. A thing the player carries is an [entity](/docs/reference/entities#holder-and-placement) they hold, so `{ entity: 'item:umbrella', by: 1 }` gives one.
+A number the player sees, earns or spends is a [stat](/docs/reference/stats), declared with a range, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the kv store, keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. A thing the player carries is a kv key too, such as `hasUmbrella`, or with the inventory plugin an [entity](/docs/reference/entities#receivers) given with `{ receive: 'item:umbrella' }`, as [`$inventory` and things](#inventory-and-things) shows.
 
 IFLoom has no temporary `_variable`. A value needed only while a scene is on screen is a condition written where it's used.
 
@@ -87,7 +87,7 @@ A `<<print>>` with a ternary, such as `<<print $tired ? "slowly" : "briskly">>`,
 
 ```ts fragment
 { all: [{ stat: 'coins', gte: 3 }, { not: { kv: 'hadCoffee' } }] }
-{ any: [{ entity: 'item:umbrella', at: 'you' }, { entity: 'item:raincoat', at: 'you' }] }
+{ any: [{ kv: 'hasUmbrella' }, { kv: 'hasRaincoat' }] }
 { kv: 'errand', is: 'bread' }
 ```
 
@@ -288,11 +288,40 @@ stats: [
   { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true },
   { id: 'energy', label: 'Energy', start: 80 },
 ],
-kinds: [{ id: 'item', label: 'Thing', listed: false }],
-entities: [{ id: 'umbrella', of: 'item', name: 'umbrella', description: 'Big enough for two.', at: 'player' }],
+kv: { hasUmbrella: true },
 ```
 
-A thing starts with the holder its `at` names, here the player, and with nobody when it gives none. A kv key needs no declaration and reads as 0 until set, so `$visits` needs no line at all. A kv key that starts at another value goes in the content's starting `kv`, such as `kv: { mood: 'tired' }`. The first scene is the content's `introScene`.
+A kv key needs no declaration and reads as 0 until set, so `$visits` needs no line at all. A kv key that starts at another value goes in the content's starting `kv`, here `$hasUmbrella`. A game with the inventory plugin can start the player with an umbrella entity instead, as [`$inventory` and things](#inventory-and-things) shows. The first scene is the content's `introScene`.
+
+### `$inventory` and things
+
+```html
+<<set $inventory to []>>
+<<run $inventory.push("umbrella")>>
+<<if $inventory.includes("umbrella")>>You shake out the umbrella.<</if>>
+<<set $inventory.delete("umbrella")>>
+```
+
+The SugarCube way works as it is. A thing the player has is a kv key, set by an effect and read by a condition or a phrase, and no plugin is needed. One key per thing reads best, a number for a thing the player can have several of:
+
+```ts fragment
+effects: [{ kv: 'hasUmbrella', to: true }]
+{ text: 'You shake out the umbrella.', when: { kv: 'hasUmbrella' } }
+effects: [{ kv: 'hasUmbrella', to: false }]
+effects: [{ kv: 'coffees', by: 1 }]
+when: { kv: 'coffees', gte: 2 }
+```
+
+[Hand-roll an inventory with variables](/docs/how-to/hand-roll-an-inventory) builds one this way, with a list the player sees. When the game needs more, such as a use button on each thing, things given to other people, or clothes that go on in slots, add the [inventory](/docs/reference/plugins/inventory) or [wardrobe](/docs/reference/plugins/wardrobe) plugin. Each thing is then an entity, given with [`receive`](/docs/reference/effects#receive), taken with [`release`](/docs/reference/effects#release) and asked about with [`owned`](/docs/reference/conditions#owned):
+
+```ts fragment
+entities: [{ id: 'umbrella', of: 'item', name: 'umbrella', description: 'Big enough for two.', traits: { ...inventory.at('player') } }],
+effects: [{ receive: 'item:umbrella' }]
+when: { owned: 'item:umbrella' }
+effects: [{ release: 'item:umbrella' }]
+```
+
+The two mix. A coffee machine the player buys can set `kitchen.coffeeMachine` and go nowhere, while the umbrella goes in the inventory.
 
 ### `State.variables` and `setup`
 
@@ -304,7 +333,7 @@ setup.dishes = {
 }
 ```
 
-The whole game is one [state](/docs/reference/state) object, which is also the save. Stats are in `state.stats`, the kv store in `state.kv` and what the player holds in `state.held`. Content reads them with conditions, and only the game's own code and the UI read the object itself.
+The whole game is one [state](/docs/reference/state) object, which is also the save. Stats are in `state.stats`, the kv store in `state.kv`, and what a plugin such as the inventory keeps in `state.plugins`. Content reads them with conditions, and only the game's own code and the UI read the object itself.
 
 Data in `setup` that never changes is content, plain TypeScript beside the scenes. Several of something, each with numbers that change in play, are a kind and its [entities](/docs/reference/entities#kinddef):
 

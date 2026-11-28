@@ -7,7 +7,7 @@
  * writes it.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
+import { apply, applyEffects, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { feed, type FeedDef, type FeedsView } from '@ifloom/plugin-feed'
 import { messages, type Channel, type MessagesView } from '@ifloom/plugin-messages'
@@ -49,7 +49,7 @@ const phone: Content = {
           sections: [{ plugin: 'feed', with: { feed: entry.id } }],
         })),
         { id: 'contacts', name: 'Contacts', icon: 'contacts', on: 'phone', sections: [{ contacts: true }] },
-        { id: 'gallery', name: 'Gallery', icon: 'gallery', on: 'phone', sections: [{ things: { of: 'photo' } }] },
+        { id: 'gallery', name: 'Gallery', icon: 'gallery', on: 'phone', sections: [{ things: { of: 'photo', where: { not: { kv: 'deleted', of: '$' } } } }] },
         {
           id: 'camera',
           name: 'Camera',
@@ -86,13 +86,13 @@ const town: Content = {
     {
       id: 'photo',
       blocked: [{ when: { not: cast.here('ava') }, reason: 'Nobody to take a picture of.' }],
-      effects: [{ create: 'photo', with: { id: 'ava.cafe', name: 'Ava at the café', image: 'art/ava-cafe.jpg' }, at: 'player' }],
+      effects: [{ create: 'photo', with: { id: 'ava.cafe', name: 'Ava at the café', image: 'art/ava-cafe.jpg' } }],
     },
     {
       id: 'post',
       cost: { stats: { energy: 10 } },
       blocked: [
-        { when: { not: { count: { of: 'photo', at: 'you' } } }, reason: 'Nothing to post yet.' },
+        { when: { not: { count: { of: 'photo' } } }, reason: 'Nothing to post yet.' },
         { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
       effects: [
@@ -201,6 +201,9 @@ describe('a smartphone on the sidebar', () => {
       type: 'list',
       entries: [{ id: 'photo:ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' }],
     })
+    // `where` narrows the list, `'$'` as each photo.
+    const deleted = applyEffects(state, g, [{ kv: 'deleted', of: 'photo:ava.cafe', to: true }])
+    expect(phoneOf(deleted, g).open?.sections[0]).toEqual({ type: 'list', entries: [] })
   })
 
   it('posts to the creator app once a day, at a price, and the post does what the game rolls', () => {

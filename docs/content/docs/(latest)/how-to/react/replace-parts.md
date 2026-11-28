@@ -12,7 +12,8 @@ The page is your layout, `src/layout.tsx`, which the `react` and `next` template
 
 ```tsx
 // src/layout.tsx
-import { Clock, Game, GameMenu, Inventory, Notices, PanelHost, RoomActions, Scene, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Clock, Game, GameMenu, Notices, PanelHost, RoomActions, Scene, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { InventoryCard } from '@ifloom/plugin-inventory/react'
 import { Exits } from '@ifloom/plugin-places/react'
 import { PeopleHere } from '@ifloom/plugin-cast/react'
 
@@ -32,7 +33,7 @@ export function Layout() {
         <RoomActions />
         <PeopleHere />
         <Section id="inventory" title="In your bag" collapsible open={false}>
-          <Inventory title={false} />
+          <InventoryCard title={false} />
         </Section>
       </Story>
       <PanelHost />
